@@ -50,106 +50,13 @@ def wrap_in_command(line, start, length, command="textbf"):
     result += line[start+length:]
     return result
 
-# These just get replaced according to the key/value of the dict.
-# USING lstlisting these should not be replaced.
-bnf_bracket_replacements = { # Replace these first
-#    "{"   : "\\{",
-#    "}"   : "\\}",
-}
+# Scan for these and then bold them
+bnf_nonterminals = []
 
-# These are replaced directly (no word edge check)
-bnf_simple_replacements = {
-    '"*"' : '"@\\textbf{*}@"',
-    '"+"' : '"@\\textbf{+}@"',
-    '"-"' : '"@\\textbf{-}@"',
-    '"["' : '"@\\textbf{[}@"',
-    '"]"' : '"@\\textbf{]}@"',
-    '"|"' : '"@\\textbf{|}@"',
-    "'"   : "@\\textbf{'}@",
-    "."   : "@\\textbf{.}@",
-    '<<' : '"@\\textbf{<{}<{}}@"',
-    '>>' : '"@\\textbf{>{}>{}}@"',
-}
-
-# These are checked for being words
-bnf_terminals = [
-    "_", "<<", ">>", "\&", "\^", "\~", "-", ">", ">=", "==", 
-    "<=", "<", "!=",
-    "a", "A", "b", "B", "c", "C", "d", "D", "e", "E", "f", "F",
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-    "0b", "0B", "0x", "0X",
-    "action",
-    "action_profile",
-    "action_selector",
-    "algorithm",
-    "and",
-    "apply",
-    "attributes",
-    "bytes",
-    "calculated_field",
-    "control",
-    "counter",
-    "current",
-    "default",
-    "direct",
-    "drop",
-    "else",
-    "false",
-    "field_list",
-    "field_list_calculation",
-    "fields",
-    "header",
-    "header_type",
-    "hit",
-    "if",
-    "input",
-    "instance_count",
-    "last",
-    "latest",
-    "layout",
-    "length",
-    "mask",
-    "max_length",
-    "metadata",
-    "meter",
-    "min_width",
-    "miss",
-    "or",
-    "output_width",
-    "packets",
-    "parse_error",
-    "parser",
-    "parser_drop",
-    "parser_exception",
-    "parser_value_set",
-    "payload",
-    "primitive_action",
-    "register",
-    "result",
-    "return",
-    "saturating",
-    "select",
-    "signed",
-    "static",
-    "table",
-    "true",
-    "type",
-    "update",
-    "valid",
-    "verify",
-    "width",
-]
+# Scan for these from the BNF, then bold them in code fragments
+p4_keywords = []
 
 def bnf_replacements(line):
-    for s, r in bnf_bracket_replacements.iteritems():
-        line = line.replace(s, r)
-    for s, r in bnf_simple_replacements.iteritems():
-        line = line.replace(s, r)
-    for k in bnf_terminals:
-        exp = "\\b" + k + "\\b"
-        new = "@\\\\textbf{" + k + "}@"
-        new = new.replace("_", "\\_")
-        (line, _) = re.subn(exp, new, line)
     return line
 
 # Line processor for when BNF is being processed.
@@ -164,10 +71,57 @@ def accumulate_bnf(outfile, line):
     outfile.write(line)
     all_bnf += line
 
+# Line processor for when P4 code is being processed.
+def process_code(outfile, line):
+    outfile.write(line)
+
 # Call to deposit the accumulated BNF to the output file
 def deposit_bnf(outfile, line):
     outfile.write(all_bnf)
-    
+
+# Call to deposit the accumulated P4 keywords
+def deposit_keywords(outfile, line):
+    outfile.write("\\begin{Verbatim}[commandchars=\\\\\\{\\}]\n")
+    for keyword in p4_keywords:
+        outfile.write(keyword+"\n")
+    outfile.write("\\end{Verbatim}\n")
+
+# Set up appropriate keywords to be bolded in the BNF and P4 listing
+# environments, respectively
+
+def set_bnf_lstlisting_keywords(outfile, line):
+    outfile.write("""
+\\lstdefinestyle{BNFstyle}{
+    language=BNF,%%
+    frame=single,%%
+    backgroundcolor=\\color{bnfgreen},%%
+    morekeywords={%s}%%
+}
+""" % ", ".join(bnf_nonterminals))
+
+def set_p4_lstlisting_keywords(outfile, line):
+    outfile.write("""
+\\lstdefinestyle{P4style}{
+    language=C,%%
+    frame=single,%%
+    backgroundcolor=\\color{codeblue},%%
+    keywords={%s},%%
+    basicstyle=\\ttfamily,%%
+    aboveskip=3mm,%%
+    belowskip=3mm,%%
+    fontadjust=true,%%
+    keepspaces=true,%%
+    keywordstyle=\\bfseries,%%
+    captionpos=b,%%
+    framerule=0.3pt,%%
+    firstnumber=0,%%
+    numbersep=1.5mm,%%
+    numberstyle=\\tiny,%%
+}
+""" % ", ".join(p4_keywords))
+
+
+
 # These are the tags that are processed from the input; 
 # Each tag must appear alone on an input line
 #
@@ -183,7 +137,7 @@ global process_tags
 process_tags = {
     "%%bnf" : {
         #"add_text" : "%%bnf\n\\begin{Verbatim}[commandchars=\\\\\{\}]\n",
-        "add_text" : "%%bnf\n\\begin{lstlisting}[frame=single,backgroundcolor=\color{bnfgreen},escapechar=\\@]\n",
+        "add_text" : "%%bnf\n\\begin{lstlisting}[style=BNFstyle]\n",
         "line_processor" : accumulate_bnf,
     },
     "%%endbnf" : {
@@ -192,22 +146,75 @@ process_tags = {
         "line_processor" : None,
     },
     "%%code" : {
-        "add_text" : "%%code\n\\begin{lstlisting}[keywords={},frame=single,escapechar=\@]\n",
-        "line_processor" : None,
+        "add_text" : "%%code\n\\begin{lstlisting}[style=P4style]\n",
+        "line_processor" : process_code,
     },
     "%%endcode" : {
         "add_text" : "\end{lstlisting}\n%%endcode\n",
         "line_processor" : None,
     },
     "%%bnfsummarystart" : {
-        "add_text" : "%%bnf\n\\begin{lstlisting}[frame=single,backgroundcolor=\color{bnfgreen},escapechar=\\@]\n",
+        "add_text" : "%%bnf\n\\begin{lstlisting}[style=BNFstyle]\n",
         "line_processor" : None,
     },
     "%%bnfsummary" : {
         "call" : deposit_bnf,
         "line_processor" : None,
     },
+    "%%listkeywords" : {
+        "call" : deposit_keywords,
+        "line_processor" : None,
+    },
+    "%%set_bnf_lstlisting_keywords" : {
+        "call" : set_bnf_lstlisting_keywords,
+        "line_processor" : None,
+    },
+    "%%set_p4_lstlisting_keywords" : {
+        "call" : set_p4_lstlisting_keywords,
+        "line_processor" : None,
+    }
 }
+
+def scrape_bnf_nonterminals(input):
+    global p4_keywords
+    global bnf_nonterminals
+
+    suppressed_keywords = set()
+
+    within_bnf = False
+    for line in input:
+        key = line.strip()
+        if key.startswith("%%not_a_keyword"):
+            match = re.match(r"%%not_a_keyword\s+([0-9A-Za-z_]+)", key)
+            if match:
+                suppressed_keywords.add(match.group(1))
+        if not within_bnf:
+            if key == "%%bnf" or key == "%%bnfsummarystart":
+                within_bnf = True
+        else:
+            if key == "%%endbnf":
+                within_bnf = False
+            else:
+                match = re.match(r"([0-9A-Za-z_]+)\s*::=", key)
+                if match != None:
+                    bnf_nonterminals.append(match.group(1))
+                
+                tokens = re.split(r"\s+",key)
+                for token in tokens:
+                    if len(token) <= 1:
+                        continue
+                    if token.endswith("_name"):
+                        continue
+                    if token.endswith("_text"):
+                        continue
+                    if re.match(r'[A-Za-z][0-9A-Za-z_]+$', token) == None:
+                        continue
+                    p4_keywords.append(token)
+
+    p4_keywords = set(p4_keywords) - set(bnf_nonterminals)
+    p4_keywords -= suppressed_keywords
+    p4_keywords = list(p4_keywords)
+    p4_keywords.sort()
 
 # Lines starting with this are removed from the input
 global comment_string
@@ -238,6 +245,9 @@ if __name__ == "__main__":
     for fname in args.sources:
         with open(fname, "r") as infile:
             input.extend(infile.readlines())
+
+    # Scan for BNF terminals
+    scrape_bnf_nonterminals(input)
 
     # Process line by line
     for line in input:

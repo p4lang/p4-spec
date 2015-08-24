@@ -20,6 +20,8 @@
 // Parser functions and related definitions
 ////////////////////////////////////////////////////////////////
 
+#import <simple_switch_architecture.h>
+
 ////////////////////////////////////////////////////////////////
 //
 // Header instance definitions
@@ -29,52 +31,58 @@
 //
 ////////////////////////////////////////////////////////////////
 
-header ethernet_t ethernet;
-header vlan_t vlan;
-header mTag_t mtag;
-header ipv4_t ipv4;
+struct_type packet_data_t {
+    header ethernet_t ethernet;
+    header vlan_t vlan;
+    header mTag_t mtag;
+    header ipv4_t ipv4;
 
-// Local metadata instance declaration
-metadata local_metadata_t local_metadata;
-
+    metadata global_metadata_t global_metadata;    
+}
 
 ////////////////////////////////////////////////////////////////
 // Parser state machine description
 ////////////////////////////////////////////////////////////////
 
-// Start with ethernet always.
-parser start {
-    return ethernet;    
-}
+whitebox_type mtag_parser (
+    out struct packet_data_t        p,
+    in  metadata packet_metadata_t  packet_metadata
+) {
 
-parser ethernet {
-    extract(ethernet);   // Start with the ethernet header
-    return select(latest.ethertype) {
-        0x8100:     vlan;
-        0x800:      ipv4;
-        default:    ingress;
+    parser start {
+        // Start with ethernet always.
+        return p.ethernet;    
     }
-}
 
-parser vlan {
-    extract(vlan);
-    return select(latest.ethertype) {
-        0xaaaa:     mtag;
-        0x800:      ipv4;
-        default:    ingress;
+    parser ethernet {
+        extract(p.ethernet);
+        return select(latest.ethertype) {
+            0x8100:     vlan;
+            0x800:      ipv4;
+            default:    accept;
+        }
     }
-}
 
-// mTag is allowed after a VLAN tag only
-parser mtag {
-    extract(mtag);
-    return select(latest.ethertype) {
-        0x800:      ipv4;
-        default:    ingress;
+    parser vlan {
+        extract(p.vlan);
+        return select(latest.ethertype) {
+            0xaaaa:     mtag;
+            0x800:      ipv4;
+            default:    accept;
+        }
     }
-}
 
-parser ipv4 {
-    extract(ipv4);
-    return ingress;  // All done with parsing; start matching
+    // mTag is allowed after a VLAN tag only
+    parser mtag {
+        extract(p.mtag);
+        return select(latest.ethertype) {
+            0x800:      ipv4;
+            default:    accept;
+        }
+    }
+
+    parser ipv4 {
+        extract(p.ipv4);
+        return accept;  // All done with parsing; start matching
+    }
 }
