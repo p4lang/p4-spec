@@ -102,7 +102,7 @@ the expression of existing and future forwarding plane protocols.
 
 It is based upon a set of common abstractions for packet processing including a
 state machine \textit{parser} to describe the order and connection between
-packet headers and a set \matchaction tables arranged into an imperatively
+packet headers and a set of \matchaction tables arranged into an imperatively
 executed program. The parser identifies the headers present in each incoming
 packet. Each \matchaction table performs a lookup on a subset of header fields
 and applies the actions corresponding to the first match within each table.
@@ -168,7 +168,7 @@ port and length, and may write intrinsic metadata controlling the packet's
 egress port and queue priority.
 
 The P4 portion of the architecture may also provide definitions of primitive
-actions (Section~\ref{sec:actions}) and blackbox objec types
+actions (Section~\ref{sec:actions}) and blackbox object types
 (Section~\ref{sec:bboxes}), which represent the fundamental processing
 capabilities of the target. Examples of these include arithmetic functions and
 checksum generators.
@@ -496,7 +496,7 @@ Section~\ref{sec:p4casting} for more information.
 The \textit{varbit} type represents a bitstring with a length that is variable
 at run time, but \textit{at most} the length specified within angle brackets
 (again, a compile time constant). This datatype is used for quickly parsing
-through variable legnth headers and does not currently have utility beyond
+through variable length headers and does not currently have utility beyond
 that. More functionality may be added for this type in subsequent versions of P4
 (such as the ability to read it from a \matchaction pipeline).
 
@@ -515,7 +515,7 @@ Types which are followed by an optional identifier like \textit{header} and
 \textit{struct} can be used in two ways:
 \begin{itemize}
 \item
-    "\texttt{header foo}"" refers to a header instance specifically of
+    "\texttt{header foo}" refers to a header instance specifically of
     header_type \textit{foo}
 \item
     "\texttt{header}" without an identifier refers to any header instance,
@@ -1016,7 +1016,7 @@ into structs for convenience.
 %%bnf
 \begin{lstlisting}[style=BNFstyle]
 struct_type_declaration ::=
-    struct_type struct_type_name { [struct_member]* }
+    struct_type struct_type_name { struct_member* }
 
 struct_member ::=
     header_instance_declaration |
@@ -1361,7 +1361,7 @@ returns to the point control left off at in the calling state, instead of
 exiting the parser entirely. Parser exceptions, however, still halt parsing
 regardless of being in a subroutine or not.
 
-Parser subroutine calls may be nested, but targets are free to impose the
+Parser subroutine calls may be nested, but targets are free to impose
 limits on the depth of the call stack or disallow recursive calls.
 
 \SUBSECTION{Parser Exceptions}{parserexceptions}
@@ -1542,7 +1542,7 @@ action_function_declaration ::=
 action_header ::= action_name ( [ param_list ] )
 
 param_list ::= param [, param]*
-param ::= [param_qualifier]* type_spec param_name
+param ::= param_qualifier* type_spec param_name
 
 param_qualifier ::= in | out | inout | optional
 
@@ -1585,7 +1585,8 @@ directionality is not otherwise specified, this is assumed by default.
 \textit{optional:} This parameter is optional and may be omitted.
 \end{itemize}
 \item
-Compound actions must be declared with bodies, even if those bodies are empty.Primitive actions must be declared without bodies.
+Compound actions must be declared with bodies, even if those bodies are empty.
+Primitive actions must be declared without bodies.
 \item
 For compound actions, all parameters specified in the signature are required. 
 Optional parameters are \textit{not} supported.
@@ -1695,7 +1696,7 @@ field_match ::= possibly_masked_ref : field_match_type ;
 possibly_masked_ref ::= 
     object_ref | object_ref mask const_value
 
-field_match_type ::= exact | ternary | lpm | range | valid
+field_match_type ::= exact | ternary | lpm | index | range | valid
 
 \end{lstlisting}
 %%endbnf
@@ -1744,6 +1745,8 @@ with each entry in a table using ternary matches.
 a prefix by having a divide between 1s in the high order bits and 0s in the 
 low order bits. The number of 1 bits gives the length of the prefix which 
 is used as the priority of the entry.
+\item
+\texttt{index}: The field value is directly used as the index of a table entry.
 \item
 \texttt{range}: Each entry specifies a low and high value for the entry and the field 
 matches only if it is in this range. Range end points are inclusive. Signedness 
@@ -1838,6 +1841,7 @@ The \texttt{modifier} attribute is an optional attribute that points to a
 blackbox which modifies the table's behavior or further specifies its
 underlying implementation. It is up to the target which blackbox types
 constitute valid table modifiers.
+\item The index table entry should be pre-populated before runtime. Accessing an empty entry or providing an out-of-bound index is considered a runtime exception. The behavior is undefined.  
 \end{itemize}
 
 
@@ -4132,7 +4136,7 @@ metadata_initializer ::= { [ field_name : field_value ; ] + }
 local_variable_declaration ::= local type_spec variable_name;
 
 struct_type_declaration ::=
-    struct_type struct_type_name { [struct_member]* }
+    struct_type struct_type_name { struct_member* }
 
 struct_member ::=
     header_instance_declaration |
@@ -4209,7 +4213,7 @@ action_function_declaration ::=
 action_header ::= action_name ( [ param_list ] )
 
 param_list ::= param [, param]*
-param ::= [param_qualifier]* type_spec param_name
+param ::= param_qualifier* type_spec param_name
 
 param_qualifier ::= in | out | inout | optional
 
@@ -4238,7 +4242,7 @@ field_match ::= possibly_masked_ref : field_match_type ;
 possibly_masked_ref ::= 
     object_ref | object_ref mask const_value
 
-field_match_type ::= exact | ternary | lpm | range | valid
+field_match_type ::= exact | ternary | lpm | index | range | valid
 
 control_function_declaration ::=
     control control_fn_name control_block
