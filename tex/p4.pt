@@ -1564,32 +1564,81 @@ action route_ipv4(
 }
 %%endcode
 
-\SUBSUBSECTION{Parallel and Serial Semantics}{actionsemantics}
+\SUBSUBSECTION{Sequential Semantics}{actionsemantics}
 
-In any instruction execution model, identifying whether a set of instructions 
-is executed in parallel or in sequence must be identified in order to determine 
-the behavior of the system. As an example, consider the statements:
+Similarly, actions across different tables
+are also assumed to execute sequentially, where the sequence is determined by
+the control flow, described  in Section~\ref{sec:controlflow}. As an example,
+consider the code fragment given below, repeated from Section~\ref{sec:controlflow}.
 
+\begin{lstlisting}[style=P4style]
+control main {
+  apply(check_mtag);
+  apply(identify_port);
+}
+\end{lstlisting}
+
+Here, the \texttt{check_mtag} table and its associated actions are applied
+first, followed by the \texttt{identify_port} table and its actions.
+
+Primitive actions within a compound action are assumed to execute sequentially,
+in other words, the result is the same as executing the first to completion,
+followed by executing the second to completion. Concretely, consider the two
+primitive actions \texttt{modify_field(hdr.fieldA, 1)} and
+\texttt{modify_field(hdr.fieldB, hdr.fieldA)} appearing within the compound
+action \texttt{compound} as shown below.
 %%code
-modify_field(hdr.fieldA, 1);
-modify_field(hdr.fieldB, hdr.fieldA);
+\begin{lstlisting}[caption={Sequential Semantics}, label={lst:seq}, style=P4style]
+action compound () {
+  modify_field(hdr.fieldA, 1);
+  modify_field(hdr.fieldB, hdr.fieldA);
+}
+\end{lstlisting}
 %%endcode
 
+Let's say \texttt{hdr.fieldA} started with a value of 0. The first statement is
+completed first, leaving 1 in \texttt{fieldA}.  Then, the second instruction is
+executed, propagating 1 to \texttt{fieldB}.
 
-Supposing that \texttt{hdr.fieldA} started with a value of 0, the question is: what 
-value will \texttt{hdr.fieldB} have after this instruction set is executed? Will 
-it be 0 or 1? With sequential semantics, the first statement is completed, 
-leaving 1 in \texttt{fieldA}; then the second instruction is executed, propagating 
-the 1 to \texttt{fieldB}.  With parallel semantics, both actions are started at the 
-same time, so the evaluation of \texttt{hdr.fieldA} in the second instruction resolves 
-to 0 (since it has not yet changed), and so \texttt{hdr.fieldB} receives the value 
-0.
+While the language permits arbitrarily long sequences of primitive actions
+within a compound action, each target can choose to impose its own restrictions
+for performance.  For instance, a line-rate switching chip might provide
+limited or no capability to sequence one action after another, instead
+executing a large number of instructions in parallel. In such cases, the target
+compiler is expected to infer dependencies between primitive actions and reject
+compound actions that strictly require actions to be sequenced one after
+another for correctness. As an example, the code fragment in
+Listing~\ref{lst:seq} might be rejected by a target on the grounds that there
+is no capability to write a header field (\texttt{fieldA}) and \textit{then}
+read it into another header field within the same table. At the same time, the
+compiler could accept the code fragment in Listing~\ref{lst:nodeps}.
+%%code
+\begin{lstlisting}[caption={Code fragment with no dependencies}, label={lst:nodeps}, style=P4style]
+action compound() {
+  modify_field(hdr.fieldX, hdr.fieldY);
+  modify_field(hdr.fieldB, hdr.fieldC);
+}
+\end{lstlisting}
+%%endcode
+because there is no dependency between the two primitive actions.
 
-P4 assumes \textbf{parallel} semantics for the application of all the 
-primitive actions executing as a result of a match in a given table. The
-execution of actions across different tables assumes \textbf{sequential} 
-semantics where the sequence is determined by the control flow, described 
-in Section~\ref{sec:controlflow}.
+The compiler may also choose to rewrite code while preserving correctness to
+remove spurious dependencies. For instance, the code fragment in
+Listing~\ref{lst:seq} is equivalent to the code fragment in
+Listing~\ref{lst:rewrite}, which has no dependencies between primitive actions.
+%%code
+\begin{lstlisting}[caption={Listing~\ref{lst:rewrite} rewritten to remove dependencies}, label={lst:seq}, style=P4style]
+action compound () {
+  modify_field(hdr.fieldA, 1);
+  modify_field(hdr.fieldB, 1);
+}
+\end{lstlisting}
+%%endcode
+
+Note that this is a change in behavior relative to P4 Version 1.0.2, which
+mandated sequential semantics across tables, but parallel semantics within
+compound actions. The reasons for this change are documented here:
+https://github.com/p4lang/p4-spec/files/16575/sequential.execution.semantics.--.Anirudh.pdf
 
 \SECTION{Table Declarations}{tabledecs}
 
