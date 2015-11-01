@@ -1571,12 +1571,10 @@ the sequence is determined by the control flow, described  in
 Section~\ref{sec:controlflow}. As an example, consider the code fragment given
 below, repeated from Section~\ref{sec:controlflow}.
 %%code
-\begin{lstlisting}[style=P4style]
 control main {
   apply(check_mtag);
   apply(identify_port);
 }
-\end{lstlisting}
 %%endcode
 
 Here, the \texttt{check_mtag} table and its associated actions are applied
@@ -1589,12 +1587,10 @@ primitive actions \texttt{modify_field(hdr.fieldA, 1)} and
 \texttt{modify_field(hdr.fieldB, hdr.fieldA)} appearing within the compound
 action \texttt{compound} as shown below.
 %%code
-\begin{lstlisting}[caption={Sequential Semantics}, label={lst:seq}, style=P4style]
 action compound () {
   modify_field(hdr.fieldA, 1);
   modify_field(hdr.fieldB, hdr.fieldA);
 }
-\end{lstlisting}
 %%endcode
 
 Let's say \texttt{hdr.fieldA} started with a value of 0. The first statement is
@@ -1614,12 +1610,10 @@ is no capability to write a header field (\texttt{fieldA}) and \textit{then}
 read it into another header field within the same table. At the same time, the
 compiler could accept the code fragment in Listing~\ref{lst:nodeps}.
 %%code
-\begin{lstlisting}[caption={Code fragment with no dependencies}, label={lst:nodeps}, style=P4style]
 action compound() {
   modify_field(hdr.fieldX, hdr.fieldY);
   modify_field(hdr.fieldB, hdr.fieldC);
 }
-\end{lstlisting}
 %%endcode
 because there is no dependency between the two primitive actions.
 
@@ -1628,12 +1622,10 @@ remove spurious dependencies. For instance, the code fragment in
 Listing~\ref{lst:seq} is equivalent to the code fragment in
 Listing~\ref{lst:rewrite}, which has no dependencies between primitive actions.
 %%code
-\begin{lstlisting}[caption={Listing~\ref{lst:rewrite} rewritten to remove dependencies}, label={lst:seq}, style=P4style]
 action compound () {
   modify_field(hdr.fieldA, 1);
   modify_field(hdr.fieldB, 1);
 }
-\end{lstlisting}
 %%endcode
 
 Note that this is a change in behavior relative to P4 Version 1.0.2, which
