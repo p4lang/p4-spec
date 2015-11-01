@@ -1566,7 +1566,7 @@ action route_ipv4(
 
 \SUBSUBSECTION{Sequential Semantics}{actionsemantics}
 
-Actions across different tables are also assumed to execute sequentially, where
+Actions across different tables are assumed to execute sequentially, where
 the sequence is determined by the control flow, described  in
 Section~\ref{sec:controlflow}. As an example, consider the code fragment given
 below, repeated from Section~\ref{sec:controlflow}.
@@ -1580,10 +1580,10 @@ control main {
 Here, the \texttt{check_mtag} table and its associated actions are applied
 first, followed by the \texttt{identify_port} table and its actions.
 
-Primitive actions within a compound action are also assumed to execute sequentially,
-in other words, the result is the same as executing the first to completion,
-followed by executing the second to completion. Concretely, consider the two
-primitive actions \texttt{modify_field(hdr.fieldA, 1)} and
+Primitive actions within a compound action are also assumed to execute
+sequentially i.e. the first primitive action executes to completion, and then
+the second executes to completion. Concretely, consider the two primitive
+actions \texttt{modify_field(hdr.fieldA, 1)} and
 \texttt{modify_field(hdr.fieldB, hdr.fieldA)} appearing within the compound
 action \texttt{compound} as shown below.
 %%code
@@ -1602,25 +1602,28 @@ within a compound action, each target can choose to impose its own restrictions
 for performance.  For instance, a line-rate switching chip might provide
 limited or no capability to sequence one action after another, instead
 executing a large number of instructions in parallel. In such cases, the target
-compiler is expected to infer dependencies between primitive actions and reject
+compiler must infer dependencies between primitive actions and reject
 compound actions that strictly require actions to be sequenced one after
-another for correctness. As an example, the code fragment in
-Listing~\ref{lst:seq} might be rejected by a target on the grounds that there
-is no capability to write a header field (\texttt{fieldA}) and \textit{then}
-read it into another header field within the same table. At the same time, the
-compiler could accept the code fragment in Listing~\ref{lst:nodeps}.
+another for correctness.
+
+As an example, the code fragment in Listing~\ref{lst:seq} might be rejected by
+a target compiler on the grounds that there is no capability to write a header
+field (\texttt{fieldA}) and \textit{then} read it into another header field
+within the same table. At the same time, the compiler could accept the code
+fragment in Listing~\ref{lst:nodeps} below, because there is no dependency
+between the two primitive actions and both can execute in parallel.
 %%code
 action compound() {
   modify_field(hdr.fieldX, hdr.fieldY);
   modify_field(hdr.fieldB, hdr.fieldC);
 }
 %%endcode
-because there is no dependency between the two primitive actions.
 
 The compiler may also choose to rewrite code while preserving correctness to
 remove spurious dependencies. For instance, the code fragment in
 Listing~\ref{lst:seq} is equivalent to the code fragment in
-Listing~\ref{lst:rewrite}, which has no dependencies between primitive actions.
+Listing~\ref{lst:rewrite} below, which has no dependencies between primitive
+actions and hence can be run on a constrained target.
 %%code
 action compound () {
   modify_field(hdr.fieldA, 1);
