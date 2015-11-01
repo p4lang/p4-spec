@@ -1566,22 +1566,23 @@ action route_ipv4(
 
 \SUBSUBSECTION{Sequential Semantics}{actionsemantics}
 
-Similarly, actions across different tables
-are also assumed to execute sequentially, where the sequence is determined by
-the control flow, described  in Section~\ref{sec:controlflow}. As an example,
-consider the code fragment given below, repeated from Section~\ref{sec:controlflow}.
-
+Actions across different tables are also assumed to execute sequentially, where
+the sequence is determined by the control flow, described  in
+Section~\ref{sec:controlflow}. As an example, consider the code fragment given
+below, repeated from Section~\ref{sec:controlflow}.
+%%code
 \begin{lstlisting}[style=P4style]
 control main {
   apply(check_mtag);
   apply(identify_port);
 }
 \end{lstlisting}
+%%endcode
 
 Here, the \texttt{check_mtag} table and its associated actions are applied
 first, followed by the \texttt{identify_port} table and its actions.
 
-Primitive actions within a compound action are assumed to execute sequentially,
+Primitive actions within a compound action are also assumed to execute sequentially,
 in other words, the result is the same as executing the first to completion,
 followed by executing the second to completion. Concretely, consider the two
 primitive actions \texttt{modify_field(hdr.fieldA, 1)} and
