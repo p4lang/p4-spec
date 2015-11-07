@@ -353,7 +353,7 @@ decimal_digit ::= binary_digit | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 hexadecimal_digit ::= 
     decimal_digit | a | A | b | B | c | C | d | D | e | E | f | F
 
-width_spec ::= decimal_digit+ [ w | s ]:
+width_spec ::= decimal_digit+ [ w | s ]
 field_value ::= const_value
 %%endbnf
 
@@ -469,13 +469,10 @@ type_spec ::=
 
 data_type ::=
     bit |
-    bit < decimal_digit+ [ , data_type_qualifier ]* > |
-    bit < auto > |
+    bit < decimal_digit+ > |
     varbit < decimal_digit+ > |
-    int | 
+    int < decimal_digit+ > | 
     void
-
-data_type_qualifier ::= signed
 
 typedef_declaration ::=
     typedef type_spec new_type_name ;
@@ -1003,10 +1000,10 @@ defined with the given names, and targets may support others.
 \item
 \textbf{xor16:} Simply the XOR of bytes taken two at a time.
 \item
-\textbf{csum16:}  See the IPv4 header checksum description in \\
+\textbf{csum16:} See the IPv4 header checksum description in \\
 \url{https://tools.ietf.org/html/rfc791\#page-14}.
 \item
-\textbf{optional_csum16:}  See the UDP header checksum description in \\
+\textbf{optional_csum16:} See the UDP header checksum description in \\
 \url{https://tools.ietf.org/html/rfc768#page-2}.
 \item
 \textbf{crc16:} See \url{http://en.wikipedia.org/wiki/Crc16}.
@@ -1862,19 +1859,16 @@ action add_mTag(in bit<8> up1, in bit<8> up2,
 
 \SUBSECTION{Primitive Actions}{primitiveactions}
 
-P4 supports an extensible set of primitive actions.  Primitive actions can 
+P4 supports an extensible set of primitive actions. Primitive actions can 
 be declared as part of a P4 program. This allows the front-end of a compiler 
 to verify calls to primitive actions. Only the parameter list is identified 
 for primitive actions; no body is defined. 
 
 %%bnf
 primitive_action_declaration ::= 
-    action action_name ( [ param_list ] ) ;
+    primitive_action action_name ( [ simple_param_list ] ) ;
 
-param_list ::= param [, param]*
-param ::= param_qualifier* type_spec param_name [ "[" "]" ]
-
-param_qualifier ::= in | out | inout | optional
+simple_param_list ::= param_name [, param_name]*
 %%endbnf
 
 Not all targets will support all actions. Target switches may have
@@ -1933,544 +1927,564 @@ Send a copy of the egress packet to the Buffer Mechanism. Alias: \texttt{clone_e
 \label{tab:primitiveactions}
 \end{table}
 
-Here is the specification for the standard primitive actions.
-
-%%code
-/**
- * add_header
- * Add a header to the packet's Parsed Representation
- *
- * @param dst  The name of the header instance to add.
- * 
- * The indicated header instance is set valid. If the header instance
- * was invalid, all its fields are initialized to 0. If the header
- * instance is already valid, it is not changed.
- *
- * It is invalid to use this primitive on an element of a header
- * stack.
- **/
-
-action add_header(out header dst);
-
-%%endcode
-
-
-%%code
-/**
- * copy_header
- * Copy one header instance to another.
- * 
- * @param dst  The name of the destination header instance.
- * @param src  The name of the source header instance.
- * 
- * Copy all the field values from the source header instance into
- * the destination header instance. If the source header instance
- * was invalid, the destination header instance becomes invalid;
- * otherwise the destination will be valid  after the operation.
- * The source and destination instances must be of the same type.
- **/
-
-action copy_header(out header dst, in header src);
-
-%%endcode
-
-
-%%code
-/**
- * remove_header
- * Mark a header instance as invalid.
- * 
- * @param dst  The name of the header instance to remove.
- * 
- * The indicated header instance is marked invalid. It will not
- * be available for matching in subsequent match+action stages.
- * The header will not be serialized on egress. All field values
- * in the header instance become uninitialized.
- * 
- * It is invalid to use this primitive on an element of a header
- * stack.
- **/
-
-action remove_header(out header dst);
-
-%%endcode
-
-
-%%code
-/**
- * modify_field
- * Set the value of the given field in packet's Parsed
- * Representation
- * 
- * @param dst    The name of the field instance to modify.
- * @param value  The value to write into the destinatino field.
- * @param mask   An optional mask to use identifying which
- *               destination bits to change.
- * 
- * Update the indicated field's value. 
- *
- * The dst parameter may be:
- *   - A field from the parsed representation (\texttt{field_ref}).
- *   - A register reference (\texttt{register_ref}).
- *
- * The src parameter may be:
- *   - An immediate value (a number).
- *   - A value from the matching entry's action parameter data;
- *      in this case, the name of a parameter from the enclosing
- *      function is used.
- *   - A field from the parsed representation (\texttt{field_ref}).
- *   - A register reference (\texttt{register_ref}).
- *   - An arithmetic expression involving any of the above (\texttt{general_expr}).
- * Targets may impose restrictions on the complexity and content
- * of expressions bound to the source parameter. Refer to the
- * appropriate target architecture's documentation for what is
- * supported.
- *
- * If the width of the source or mask is greater than that of the
- * destination field, then the value in the source field is first
- * truncated to the low order bits to fit into the destination field.
- * If the width of the source field  is less than that of the
- * destination, it will be coerced to the larger field size according
- * to the source expression's signedness.
- *
- * If the parent header instance of dst is not valid, the action has
- * no effect. If the src expression references any fields from an
- * invalid header, the action also has no effect.
- *
- * If a mask is specified, then the dst field becomes:
- *     (current_value & ~mask) | (value & mask)}. 
- * If a mask is not specified, the operation has the effect of a
- * "set" operation, modifying all bits of the destination.
- **/
-
-action modify_field(out bit<0> dst, in bit<0> src,
-                    optional in bit<0> mask);
-
-%%endcode
-
-
-%%code
-/**
- * set_field_to_hash_index
- * Set the value of a field using a calculated hash value and ...
- * Representation
- * 
- * @param dst    The name of the field instance to modify.
- * @param hash   The field list calculation to use to generate the hash value.
- * @param base   The base value to use for the index.
- * @param size   The maximum value to use for the index if > 0.
- *
- * The dst parameter may be:
- *   - A field from the parsed representation (\texttt{field_ref}).
- *   - A register reference (\texttt{register_ref}).
- *
- * Both the base and the size parameters are:
- *   - An immediate value (a number).
- *   - A value from the matching entry's action parameter data;
- *      in this case, the name of a parameter from the enclosing
- *      function is used.
- * 
- * Perform the following calculation and write it into the destination.
- *
- * If the base argument is present, the value returned is the result
- * summed with the base:
- *
- *      destination = base + calc_result
- *
- * If the size argument is present, the value returned is fit into
- * the range [base, base+size):
- *
- *      destination = base + (calc_result \% size)
- *
- * Normal value conversion takes place when setting the final resulting
- * value into the destination.
- **/
-
-action set_field_to_hash_index(out bit<0> dst, in field_list_calc hash,
-                               optional in int base, optional in int size);
-
-%%endcode
-
-%%code
-/**
- * truncate
- * Truncate the packet on egress.
- *
- * @param length  The number of bytes to transmit.
- *
- * Indicate that the packet should be truncated on egress. The number of bytes 
- * to transmit from the packet is indicated in the parameter to the action.  If 
- * the packet has fewer bytes than \texttt{length}, then it will not be changed.
- *
- * Normally this action would be specified on the egress pipeline, though this 
- * is not required.
- **/
-
-action truncate(in int length);
-
-%%endcode
-
-
-%%code
-/**
- * drop
- * Drop the packet on egress.
- *
- * Indicate that the packet should not be transmitted. This primitive is intended 
- * for the egress pipeline where it is the only way to indicate that the packet 
- * should not be transmitted. On the ingress pipeline, this primitive is equivalent 
- * to setting the \texttt{egress_spec} metadata to a drop value (specific to the target). 
- *
- * If executed on the ingress pipeline, the packet will continue through the 
- * end of the pipeline. A subsequent table may change the value of \texttt{egress_spec} which 
- * will override the drop action. The action cannot be overridden in the egress 
- * pipeline.
- **/
-
-action drop();
-
-%%endcode
-
-
-%%code
-/**
- * no_op
- * Do nothing.
- **/
-
-action no_op();
-
-%%endcode
-
-
-%%code
-/**
- * push
- * Push all header instances in an array down and add a new
- * header at the top.
- * 
- * @param array  The name of the instance array to be modified.
- * @param count  An optional value indicating the number of
- *               elements to push, by default 1.
- * 
- * This primitive is used to make room for a new element in an
- * array of header instances without knowing in advance how many
- * elements are already valid. An element at index N will be moved
- * to index N+1, and the element at index 0 will be zeroed out and
- * set valid.
- * 
- * If a count is specified, elements will be shifted by count
- * instead of 1 and count header instances will be zeroed and set
- * valid.
- * 
- * This primitive leaves the array's size constant; if an array is
- * already full, elements pushed to indices beyond the static array
- * size will be lost.
- **/
-
-action push(out header array[], optional in int count);
-
-%%endcode
-
-
-%%code
-/**
- * pop
- * Pop header instances from the top of an array, moving all
- * subsequent array elements up.
- * 
- * @param array  The name of the instance array to be modified.
- * @param count  An optional value indicating the number of
- *               elements to pop, by default 1.
- *  
- * This primitive is used to remove elements from an array of header
- * instances without knowing in advance how many elements are
- * already valid. An element at index N will be moved to index N-1,
- * and the element at index 0 will be lost. The bottom-most elements
- * that had nothing shifted into them are invalidated.
- * 
- * If a count is specified, elements will be shifted by count instead
- * of 1.
- * 
- * Popping from an empty array (or popping more elements than are in
- * the array) results in an empty array.
- **/
-
-action pop(out header array[], optional in int count);
-
-%%endcode
-
-
-%%code
-/**
- * count
- * Update a counter.
- *
- * @param cntr   The name of the counter array (\texttt{counter_name}).
- * @param index  The offset in the array to get a counter reference.
- *
- * The given counter is incremented by 1, if it is a packet counter, or by the 
- * packet length, if it is a byte counter.  The counter array is determined 
- * at compile time.  The index may be a table entry parameter or determined at 
- * compile time. It is an error to reference a direct-mapped counter array from 
- * this action.
- **/
-
-action count(in counter cntr, in int index);
-
-%%endcode
-
-
-%%code
-/**
- * meter
- * Execute a metering operation.
- *
- * @param mtr    The name of the meter array (\texttt{meter_name}).
- * @param index  The offset in the array to get a meter reference.
- * @param field  The field reference to store the meter state (\texttt{field_ref}).
- *
- * The given meter reference, determined by mtr and index, is executed. If the 
- * meter is direct, then index is ignored as the table entry determines which 
- * cell to reference. The length of the packet is passed to the meter. The state 
- * of meter is updated and the meter returns information (a "color") which is 
- * stored in field. If the parent header of field is not valid, the meter 
- * state is updated, but the state of the meter is discarded.
- **/
-
-action meter(in meter mtr, in int index, in bit<0> field);
-
-%%endcode
-
-
-%%code
-/**
- * generate_digest
- * Generate a digest of a packet and send to a receiver.
- * 
- * @param receiver  An opaque value identifying the receiver.
- * @param digest    A list of field references (\texttt{field_list_name}).
- *
- * The indicated field list is populated with the packet's data and sent by 
- * a target-specific mechanism to an agent capable of processing the object. 
- * The specification of receivers is outside of the scope of P4. Example receivers 
- * might be the CPU through a channel parallel to that for transferring packets, 
- * or a co-processor connected by a bus dedicated to this operation. 
- * 
- * This function might also be used to represent a self-updating operation such 
- * as address learning.
- **/
-
-action generate_digest(in int receiver, in field_list digest);
-
-%%endcode
-
-
-%%code
-/**
- * resubmit
- * Applied in the ingress pipeline, mark the packet to be resubmitted to the parser.
- *
- * @param digest  An optional list of metadata field references (\texttt{field_list_name)}.
- *
- * Only valid on the ingress pipeline.
- *
- * The packet is marked for resubmission. It will complete the ingress pipeline 
- * to generate any necessary metadata values. Then, the \textbf{original} packet data 
- * will be resubmitted to the parser with values of the fields in digest from 
- * the ingress processing on the packet. These values replace the normal initial 
- * values of the metadata fields indicated in the initializer of the instance 
- * declaration.
- * 
- * If multiple resubmit actions get executed on one packet, the union of all 
- * the fields in the field lists should be resubmitted with the packet.
- * 
- * See Section~\ref{sec:recirc} for more details.
- **/
-
-action resubmit(optional in field_list digest);
-
-%%endcode
-
-
-%%code
-/**
- * recirculate
- * On egress, mark the packet to be resubmitted to the parser.
- *
- * @param digest  An optional list of metadata field references (\texttt{field_list_name)}.
- *
- * Only valid on the egress pipeline.
- * 
- * The packet is marked for resubmission. It will complete the egress pipeline 
- * and be deparsed.  This version of the packet is then resubmitted to the parser 
- * with values of the fields in digest from the processing on the packet. 
- * These values replace the normal initial values of the metadata fields indicated 
- * in the initializer of the instance declaration.
- *
- * See Section~\ref{sec:recirc} for more details.
- **/
-
-action recirculate(optional in field_list digest);
-
-%%endcode
-
-
-%%code
-/**
- * clone_ingress_pkt_to_ingress
- * Generate a copy of the original packet and submit it to the ingress parser.
- *
- * @param clone_spec  An opaque identifier indicating additional run time 
- *                    characteristics of the clone operation.
- * @param digest      An optional list of metadata field references (\texttt{field_list_name}).
- * 
- * This action indicates that the switch should generate a copy of the original 
- * packet (prior to any modifications from \matchaction) and submit it to the 
- * parser as an independent packet instance. This may occur immediately when 
- * the action executes or be deferred until the the original packet is buffered. 
- *
- * The original packet continues to be processed as though the clone had not 
- * been produced.
- *
- * The clone_spec is used to allow the configuration of other target specific 
- * characteristics of the clone operation. It may be a simple identifier indicating 
- * a session. For instance, the clone operation may support truncating the cloned 
- * instance. The truncation length would be a property of the session. The concept 
- * of session is optional and the parameter may be ignored on some targets.
- *
- * The cloned instance will have \texttt{instance_type} set to indicate that it is an 
- * ingress clone. 
- *
- * The fields indicated in digest are copied to the Parsed Representation 
- * of the clone instance. These values replace the normal initial values of the 
- * metadata fields indicated in the initializer of the instance declaration (which 
- * occurs before parsing).
- * 
- * The function may also be referred to as \texttt{clone_i2i}.
- * 
- * See the Section~\ref{sec:recirc} for more details.
- **/
-
-action clone_ingress_pkt_to_ingress(in int clone_spec, optional in field_list digest);
-
-%%endcode
-
-
-%%code
-/**
- * clone_egress_pkt_to_ingress
- * Generate a copy of the egress packet and submit it to the ingress parser.
- *
- * @param clone_spec  An opaque identifier indicating additional run time 
- *                    characteristics of the clone operation.
- * @param digest      An optional list of metadata field references (\texttt{field_list_name}).
- * 
- * The packet is marked for cloning at egress. Once the original packet completes 
- * the egress pipeline, a copy of the deparsed packet (including all modifications 
- * due to \matchaction) is passed to the parser as an independent packet instance. 
- * The original packet is forwarded as normal.
- *
- * The original packet continues to be processed as though the clone had not 
- * been produced.
- *
- * The clone_spec is used to allow the configuration of other target specific 
- * characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
- *
- * The cloned instance will have \texttt{instance_type} set to indicate that it is an 
- * ingress clone. 
- *
- * The fields indicated in digest are copied to the Parsed Representation 
- * of the clone instance. These values replace the normal initial values of the 
- * metadata fields indicated in the initializer of the instance declaration (which 
- * occurs before parsing).
- * 
- * The function may also be referred to as \texttt{clone_e2i}.
- * 
- * See the Section~\ref{sec:recirc} for more details.
- **/
-
-action clone_egress_pkt_to_ingress(in int clone_spec, optional in field_list digest);
-
-%%endcode
-
-
-%%code
-/**
- * clone_ingress_pkt_to_egress
- * Generate a copy of the original packet and submit it to the Buffering Mechanisms.
- *
- * @param clone_spec  An opaque identifier indicating additional run time 
- *                    characteristics of the clone operation.
- * @param digest      An optional list of metadata field references (\texttt{field_list_name}).
- * 
- * This action indicates that the switch should generate a copy of the original 
- * packet. The clone's Parsed Representation will match the original's immediately 
- * after parsing, with the exception that the fields listed in \texttt{field_list} are 
- * replaced with the original packet's values after being processed by the 
- * ingress pipeline.
- * 
- * The clone of the packet is submitted directly to the Buffering Mechanism as 
- * an independent packet instance. It does not go through ingress \matchaction 
- * processing.
- * 
- * The original packet continues to be processed as though the clone had not 
- * been produced.
- * 
- * The clone_spec is used to allow the configuration of other target specific 
- * characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
- * In addition to other session attributes, clone_spec determines the egress 
- * specification (standard metadata \texttt{egress_spec}) that is presented to the 
- * Buffering Mechanism.
- * 
- * The cloned instance will have \texttt{instance_type} set to indicate that it is an 
- * egress clone. 
- * 
- * The function may also be referred to as \texttt{clone_i2e}.
- * 
- * See the Section~\ref{sec:recirc} for more details.
- **/
-
-action clone_ingress_pkt_to_egress(in int clone_spec, optional in field_list digest);
-
-%%endcode
-
-
-%%code
-/**
- * clone_egress_pkt_to_egress
- * Generate a copy of the egress packet and submit it to the Buffering Mechanisms.
- *
- * @param clone_spec  An opaque identifier indicating additional run time 
- *                    characteristics of the clone operation.
- * @param digest      An optional list of metadata field references (\texttt{field_list_name}).
- * 
- * The packet is marked for cloning at egress. Once the original packet completes 
- * the egress pipeline, the packet and its Parsed Representation of packet headers 
- * (including all modifications due to \matchaction) along with the metadata 
- * fields specified in digest are submitted to the Buffering Mechanism as 
- * a new packet instance. 
- * 
- * The original packet is forwarded as normal.
- * 
- * The clone_spec is used to allow the configuration of other target specific 
- * characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
- * In addition to other session attributes, clone_spec determines the egress 
- * specification (standard metadata \texttt{egress_spec}) that is presented to the 
- * Buffering Mechanism.
- * 
- * The cloned instance will have \texttt{instance_type}set to indicate that it is an 
- * egress clone. 
- * 
- * The function may also be referred to as \texttt{clone_e2e}.
- * 
- * See the Section~\ref{sec:recirc} for more details.
- **/
-
-action clone_egress_pkt_to_egress(in int clone_spec, optional in field_list digest);
-
-%%endcode
-
+Parameters of the primitive actions are typed as follows:
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{| l | p{.7\textwidth} |} \hline
+\textbf{Notation} &
+\textbf{Type Description} \\ \hline
+HDR &
+The literal name of a header instance. \\ \hline
+ARR &
+The name of a header instance array, with no subscript. \\ \hline
+FLD &
+A field reference of form header_instance.field_name which refers to the Parsed Representation. \\ \hline
+FLDLIST &
+A field list instance declared with field_list. \\ \hline
+VAL &
+An immediate value or a value from a table entry's action parameters. 
+The latter is represented as a parameter from the enclosing function (see examples below). \\ \hline
+C-REF &
+The name of a counter array; determined at compile time. \\ \hline
+M-REF &
+The name of a meter array; determined at compile time. \\ \hline
+R-REF &
+The name of a register array; determined at compile time. \\ \hline
+FLC-REF &
+Field list calculation reference; determined at compile time. \\ \hline
+\end{tabular}
+\end{center}
+\caption{Action Parameter Types}
+\label{tab:actionparamtypes}
+\end{table}
+
+Here is the API specification for standard primitive actions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{add_header(header_instance)}
+{ % Summary
+Add a header to the packet's Parsed Representation
+}
+{ % Parameters
+\paramdoc{header_instance}{(HDR) The name of the header instance to add.}
+}
+{ % Description
+If the \texttt{header_instance} is not an element in a header stack, the indicated 
+header instance is set valid. If the header instance was invalid, all its 
+fields are initialized to 0. If the header instance is already valid, it is 
+not changed.
+
+If \texttt{header_instance} is an element in a header stack, the effect is to push 
+a new header into the stack at the indicated location. Any existing valid 
+instances from the given index or higher are copied to the next higher index. 
+The given instance is set to valid. If the array is fully populated when this 
+operation is executed, then no change is made to the Parsed Representation.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{copy_header(destination, source)}
+{ % Summary
+Copy one header instance to another.
+}
+{ % Parameters
+\paramdoc{destination}{(HDR) The name of the destination header instance.}
+\paramdoc{source}{(HDR) The name of the source header instance.}
+}
+{ % Description
+Copy all the field values from the source header instance into the destination 
+header instance. If the source header instance was invalid, the destination 
+header instance becomes invalid; otherwise the destination will be valid 
+after the operation. The source and destination instances must be of the 
+same type.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{remove_header(header_instance)}
+{ % Summary
+Mark a header instance as invalid.
+}
+{ % Parameters
+\paramdoc{header_instance}{(HDR) The name of the header instance to remove.}
+}
+{ % Description
+If the \texttt{header_instance} is not an element in a header stack, then the indicated 
+header instance is marked invalid. It will not be available for matching in 
+subsequent \matchaction stages. The header will not be serialized on egress. 
+All field values in the header instance become uninitialized.
+
+If the \texttt{header_instance} is an element in a header stack, the effect is to 
+pop the indicated element from the stack. Any valid instances in the stack 
+at higher indices are copied to the next lower index.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{modify_field(dest, value [, mask] )}
+{ % Summary
+Set the value of the given field in packet's Parsed Representation
+}
+{ % Parameters
+\paramdoc{dest}{(FLD or R-REF) The name of the field instance to modify (destination).}
+\paramdoc{value}{(VAL, FLD or R-REF) The value to use (source).}
+\paramdoc{mask}{(VAL) An optional mask to use identifying the bits to change.}
+}
+{ % Description
+Update the indicated field's value. The \texttt{value} parameter may be any of:
+
+\begin{itemize}
+\item
+An immediate value (a number).
+\item
+A value from the matching entry's action parameter data; in this case, the 
+name of a parameter from the enclosing function is used.
+\item
+A Parsed Representation field reference.
+\item
+A register reference.
+\end{itemize}
+
+
+This allows the programmer to copy one field to another. If the width of 
+the source field, \texttt{value}, or the \texttt{mask} is greater than that of the destination 
+field, then the value in the source field is first truncated to the low order 
+bits to fit into the destination field. If the width of the source field 
+is less than that of the destination, it will be coerced to the larger field 
+size according to its signedness.
+
+If the parent header instance of \texttt{dest} is not valid, the action has no effect. 
+If \texttt{value} is a field reference and its parent header is not valid, the operation 
+has no effect.
+
+If \texttt{mask} is specified, then the field becomes \texttt{(current_value \& $\sim$ mask) | 
+(value \& mask)}.  If \texttt{mask} is not specified, the operation has the effect 
+of a "set", modifying all bits of the destination.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{add_to_field(dest, value)}
+{ % Summary
+Add a value to a field.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified.}
+\paramdoc{value}{(VAL, FLD or R-REF) The value to use.}
+}
+{ % Description
+The \texttt{dest} field's value is updated by adding the value parameter. The \texttt{value} parameter 
+may be from a table parameter, an immediate a value, a field reference or 
+a register reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
+and its parent header is not valid, then no change is made to \texttt{dest}. A description 
+of the logical behavior follows in the Section~\ref{sec:fieldasgmt} below.
+If \texttt{value} is an immediate value, it may 
+be negative.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{add(dest, value1, value2)}
+{ % Summary
+Add value1 and value2 and store in dest.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL, FLD or R-REF) The first value to use.}
+\paramdoc{value2}{(VAL, FLD or R-REF) The second value to use.}
+}
+{ % Description
+The \texttt{dest} field's value is updated with the result of adding
+the two value parameters. Each \texttt{value} parameter may be from a
+table parameter, an immediate a value, a field reference or a register
+reference; see \texttt{modify_field} above.  If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}.  A description of the logical
+behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
+\texttt{value} is an immediate value, it may be negative.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{set_field_to_hash_index(dest, field_list_calc, base, size)}
+{ % Summary
+Add a value to a field.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified (destination)}
+\paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
+\paramdoc{base}{(VAL) The base value to use for the index.}
+\paramdoc{size}{(VAL) The maximum value to use for the index if > 0.}
+}
+{ % Description
+The field list calculation is executed to generate a hash value.  If size 
+is not zero, the hash value is used to generate a value between \texttt{base} and 
+\texttt{(base + size - 1)} by calculating \texttt{(base + (hash_value \% size))}.  
+
+If size is 0 then the value used is \texttt{(base + hash_value)}.
+
+Normal value conversion takes place when setting \texttt{dest} to the result.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{truncate(length)}
+{ % Summary
+Truncate the packet on egress.
+}
+{ % Parameters
+\paramdoc{length}{(VAL) The number of bytes to transmit.}
+}
+{ % Description
+Indicate that the packet should be truncated on egress.  The number of bytes 
+to transmit from the packet is indicated in the parameter to the action.  If 
+the packet has fewer bytes than \texttt{length}, then it will not be changed.
+
+Normally this action would be specified on the egress pipeline, though this 
+is not required.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{drop()}
+{ % Summary
+Drop the packet on egress.
+}
+{ % Parameters
+}
+{ % Description
+Indicate that the packet should not be transmitted. This primitive is intended 
+for the egress pipeline where it is the only way to indicate that the packet 
+should not be transmitted. On the ingress pipeline, this primitive is equivalent 
+to setting the \texttt{egress_spec} metadata to a drop value (specific to the target). 
+
+
+If executed on the ingress pipeline, the packet will continue through the 
+end of the pipeline. A subsequent table may change the value of \texttt{egress_spec} which 
+will override the drop action. The action cannot be overridden in the egress 
+pipeline.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{no_op()}
+{ % Summary
+Take no action.
+}
+{ % Parameters
+}
+{ % Description
+This indicates that no action should be taken on the packet. Control flow 
+continues as per the current control function specification. 
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{push(array [, count])}
+{ % Summary
+Push all header instances in an array down and add a new header at the top.
+}
+{ % Parameters
+\paramdoc{array}{(ARR) The name of the instance array to be modified.}
+\paramdoc{count}{(VAL) An optional value indicating the number of elements to push, by default 1.}
+}
+{ % Description
+This primitive is used to make room for a new element in an array of header
+instances without knowing in advance how many elements are already valid. An
+element at index N will be moved to index N+1, and the element at index 0 will
+be zeroed out and set valid.
+
+
+If a count is specified, elements will be shifted by count instead of 1 and
+count header instances will be zeroed and set valid.
+
+
+This primitive leaves the array's size constant; if an array is already full,
+elements pushed to indices beyond the static array size will be lost.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{pop(array [, count])}
+{ % Summary
+Pop header instances from the top of an array, moving all subsequent array elements up.
+}
+{ % Parameters
+\paramdoc{array}{(ARR) The name of the instance array to be modified.}
+\paramdoc{count}{(VAL) An optional value indicating the number of elements to pop, by default 1.}
+}
+{ % Description
+This primitive is used to remove elements from an array of header instances
+without knowing in advance how many elements are already valid. An element at
+index N will be moved to index N-1, and the element at index 0 will be lost. The
+bottom-most elements that had nothing shifted into them are invalidated.
+
+
+If a count is specified, elements will be shifted by count instead of 1.
+
+
+Popping from an empty array (or popping more elements than are in the array)
+results in an empty array.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{count(counter_ref, index)}
+{ % Summary
+Update a counter.
+}
+{ % Parameters
+\paramdoc{counter_ref}{(C-REF) The name of the counter array.}
+\paramdoc{index}{(VAL) The offset in the array to get a counter reference.}
+}
+{ % Description
+The given counter is incremented by 1, if it is a packet counter, or by the 
+packet length, if it is a byte counter.  The counter array is determined 
+at compile time.  The index may be a table entry parameter or determined at 
+compile time. It is an error to reference a direct-mapped counter array from 
+this action.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{meter(meter_ref, index, field)}
+{ % Summary
+Execute a meter operation.
+}
+{ % Parameters
+\paramdoc{meter_ref}{(M-REF) The name of the meter array.}
+\paramdoc{index}{(VAL) The offset in the array to get a meter reference.  Applicable only if the meter type is indirect.}
+\paramdoc{field}{(FLD) A field reference to store the meter state.}
+}
+{ % Description
+The given meter, determined by \texttt{meter_ref} and \texttt{index}, is executed. If the 
+meter is direct, then \texttt{index} is ignored as the table entry determines which 
+cell to reference. The length of the packet is passed to the meter. The state 
+of meter is updated and the meter returns information (a "color") which is 
+stored in \texttt{field}. If the parent header of \texttt{field} is not valid, the meter 
+state is updated, but the state of the meter is discarded.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{generate_digest(receiver, field_list)}
+{ % Summary
+Generate a digest of a packet and send to a receiver.
+}
+{ % Parameters
+\paramdoc{receiver}{(VAL) An opaque value identifying the receiver.}
+\paramdoc{field_list}{(FLDLIST) A list of field references.} 
+}
+{ % Description
+The indicated field list is populated with the packet's data and sent by 
+a target-specific mechanism to an agent capable of processing the object. 
+ The specification of receivers is outside of the scope of P4. Example receivers 
+might be the CPU through a channel parallel to that for transferring packets, 
+or a co-processor connected by a bus dedicated to this operation. 
+
+This function might also be used to represent a self-updating operation such 
+as address learning.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{resubmit( [ field_list ] )}
+{% textbf  
+Applied in the ingress pipeline, mark the packet to be resubmitted to the 
+parser.
+}
+{ % Parameters
+\paramdoc{field_list}{(FLDLIST) An optional list of metadata field references.} 
+}
+{ % Description
+Only valid on the ingress pipeline.
+
+The packet is marked for resubmission. It will complete the ingress pipeline 
+to generate any necessary metadata values. Then, the \textbf{original} packet data 
+will be resubmitted to the parser with values of the fields in \texttt{field_list} from 
+the ingress processing on the packet. These values replace the normal initial 
+values of the metadata fields indicated in the initializer of the instance 
+declaration.
+
+If multiple resubmit actions get executed on one packet, the union of all 
+the fields in the field lists should be resubmitted with the packet.
+
+See Section~\ref{sec:recirc} for more details.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{recirculate( [ field_list ] )}
+{ % Summary
+On egress, mark the packet to be resubmitted to the parser.
+}
+{ % Parameters
+\paramdoc{field_list}{(FLDLIST) An optional list of metadata field references.} 
+}
+{ % Description
+Only valid on the egress pipeline.
+
+The packet is marked for resubmission. It will complete the egress pipeline 
+and be deparsed.  This version of the packet is then resubmitted to the parser 
+with values of the fields in \texttt{field_list} from the processing on the packet. 
+These values replace the normal initial values of the metadata fields indicated 
+in the initializer of the instance declaration.
+
+See Section~\ref{sec:recirc} for more details.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{clone_ingress_pkt_to_ingress(clone_spec, [ field_list ] )}
+{ % Summary
+Generate a copy of the original packet and submit it to the ingress parser.
+}
+{ % Parameters
+\paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
+\paramdoc{field_list}{(FLDLIST) An optional list of metadata field references.}
+}
+{ % Description
+This action indicates that the switch should generate a copy of the original 
+packet (prior to any modifications from \matchaction) and submit it to the 
+parser as an independent packet instance.  This may occur immediately when 
+the action executes or be deferred until the the original packet is buffered. 
+ 
+
+The original packet continues to be processed as though the clone had not 
+been produced.
+
+The \texttt{clone_spec} is used to allow the configuration of other target specific 
+characteristics of the clone operation. It may be a simple identifier indicating 
+a session. For instance, the clone operation may support truncating the cloned 
+instance. The truncation length would be a property of the session. The concept 
+of session is optional and the parameter may be ignored on some targets.
+
+The cloned instance will have \texttt{instance_type} set to indicate that it is an 
+ingress clone. 
+
+The fields indicated in \texttt{field_list} are copied to the Parsed Representation 
+of the clone instance. These values replace the normal initial values of the 
+metadata fields indicated in the initializer of the instance declaration (which 
+occurs before parsing).
+
+The function may also be referred to as \texttt{clone_i2i}.
+
+See the Section~\ref{sec:recirc} for more details.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{clone_egress_pkt_to_ingress(clone_spec [ , field_list])}
+{ % Summary
+Generate a duplicate of the egress packet and submit it to the parser.
+}
+{ % Parameters
+\paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
+\paramdoc{field_list}{(FLDLIST) An optional list of metadata field references.}
+}
+{ % Description
+The packet is marked for cloning at egress. Once the original packet completes 
+the egress pipeline, a copy of the deparsed packet (including all modifications 
+due to \matchaction) is passed to the parser as an independent packet instance. 
+The original packet is forwarded as normal.
+
+The \texttt{clone_spec} is used to allow the configuration of other target specific 
+characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
+
+
+The fields indicated in \texttt{field_list} are copied to the clone instance. These 
+values replace the normal initial values of the metadata fields indicated 
+in the initializer of the instance declaration. 
+
+The cloned instance will have \texttt{instance_type} set to indicate that it is an 
+ingress clone. 
+
+The function may also be referred to as \texttt{clone_e2i}.
+
+See the Section~\ref{sec:recirc} for more details.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{clone_ingress_pkt_to_egress(clone_spec [ , field_list ] )}
+{ % Summary
+Generate a copy of the original packet and submit it to the Buffering Mechanism.
+}
+{ % Parameters
+\paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
+\paramdoc{field_list}{(FLDLIST) An optional list of metadata field references.}
+}
+{ % Description
+This action indicates that the switch should generate a copy of the original 
+packet. The clone's Parsed Representation will match the original's immediately 
+after parsing, with the exception that the fields listed in \texttt{field_list} are 
+replaced with the original packet's values after being processed by the 
+ingress pipeline.
+
+The clone of the packet is submitted directly to the Buffering Mechanism as 
+an independent packet instance. It does not go through ingress \matchaction 
+processing.
+
+The original packet continues to be processed as though the clone had not 
+been produced.
+
+The \texttt{clone_spec} is used to allow the configuration of other target specific 
+characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
+In addition to other session attributes, \texttt{clone_spec} determines the egress 
+specification (standard metadata \texttt{egress_spec}) that is presented to the 
+Buffering Mechanism.
+
+The cloned instance will have \texttt{instance_type} set to indicate that it is an 
+egress clone. 
+
+The function may also be referred to as \texttt{clone_i2e}.
+
+See the Section~\ref{sec:recirc} for more details.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{clone_egress_pkt_to_egress(clone_spec [ , field_list ] )}
+{ % Summary
+Duplicate the egress version of the packet and submit it to the Buffering 
+Mechanism.
+}
+{ % Parameters
+\paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
+\paramdoc{field_list}{(FLDLIST) An optional list of metadata field references.}
+}
+{ % Description
+The packet is marked for cloning at egress. Once the original packet completes 
+the egress pipeline, the packet and its Parsed Representation of packet headers 
+(including all modifications due to \matchaction) along with the metadata 
+fields specified in \texttt{field_list}are submitted to the Buffering Mechanism as 
+a new packet instance. 
+
+The original packet is forwarded as normal.
+
+The \texttt{clone_spec}is used to allow the configuration of other target specific 
+characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
+In addition to other session attributes, \texttt{clone_spec}determines the egress 
+specification (standard metadata \texttt{egress_spec}) that is presented to the 
+Buffering Mechanism.
+
+The cloned instance will have \texttt{instance_type}set to indicate that it is an 
+egress clone. 
+
+The function may also be referred to as \texttt{clone_e2e}.
+
+See the Section~\ref{sec:recirc} for more details.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \SUBSUBSECTION{Field Assignment and Saturation Attributes}{fieldasgmt}
 
@@ -2539,8 +2553,13 @@ Compound actions are declared as functions.
 
 %%bnf
 compound_action_function_declaration ::=
-    action action_name ( [ param_list ] ) { action_statement + } |
-    action action_name ( [ param_list ] ) ;
+    action action_name ( [ action_param_list ] ) { action_statement + } |
+    action action_name ( [ action_param_list ] ) ;
+
+action_param_list ::= action_param [, action_param]*
+action_param ::= param_qualifier* data_type param_name
+
+param_qualifier ::= in | inout | optional
 
 action_statement ::= 
     action_name ( [ arg_list ] ) ; |
@@ -2569,9 +2588,6 @@ before the parameter's type:
 \item
 \textit{in:} This parameter is effectively readonly and must not be modified
 by the code enclosed by the parameter list.
-\item
-\textit{out:} This parameter might be written to and thus must be bound to an
-object that can be updated (eg, a header field and not a numeric constant).
 \item
 \textit{inout:} This parameter has no read/write usage restrictions. If a
 directionality is not otherwise specified, this is assumed by default.
@@ -3023,7 +3039,10 @@ extern_type_declaration ::=
 member_declaration ::= attribute_declaration | method_declaration
 
 method_declaration ::= 
-    method method_name ( param_list );
+    method method_name ( method_param_list );
+
+method_param_list ::= method_param [, method_param]*
+method_param ::= param_qualifier* type_spec param_name
 
 attribute_declaration ::= 
     attribute attribute_name {
@@ -3295,7 +3314,7 @@ First, a table that matches on these characteristics would be declared. It
 would reference an action like the following:
 
 %%code
-action mirror_select(in int session) { // Select packets; map to session
+action mirror_select(in int<8> session) { // Select packets; map to session
     modify_field(local_metadata.mirror_session, session);
     clone_i2e(session, mirror_fld_list);
 }
@@ -3324,7 +3343,7 @@ for those marked with a mirror session. This table would exercise an action
 like:
 
 %%code
-action mirror_execute(in int trunc_length) {
+action mirror_execute(in int<16> trunc_length) {
     truncate(trunc_length);
 }
 %%endcode
@@ -3824,7 +3843,7 @@ meter per_dest_by_source {
     instance_count : PORT_COUNT * PORT_COUNT;  // Per source/dest pair
 }
 
-action meter_pkt(in int meter_idx) {
+action meter_pkt(in int<12> meter_idx) {
     meter(per_dest_by_source, meter_idx, local_metadata.color);
 }
         
@@ -4177,7 +4196,7 @@ action mark_pkt(in bit<8> color) {
 }
 
 // Update meter packet action to save data
-action meter_pkt(in int meter_idx) {
+action meter_pkt(in int<12> meter_idx) {
     // Save index and previous color in packet metadata
     modify_field(local_metadata.meter_idx, meter_idx);
     modify_field(local_metadata.prev_color, prev_color[meter_idx]);
