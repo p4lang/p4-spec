@@ -2562,42 +2562,6 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\SUBSUBSECTION{Field Assignment and Saturation Attributes}{fieldasgmt}
-
-\underline{TODO: DO WE NEED THIS SECTION?}
-
-Recall that a field may have sign and saturation attributes in its declaration. 
-The logical behavior of the add_to_field is determined by these attributes 
-as shown in the following logic for an unsigned field.
-
-%%code
-\begin{lstlisting}[style=P4style]
-tmp = field + value
-if (field.@saturating@ && tmp < field.min)
-    field = field.min
-else if (field.@saturating@ && tmp > field.max)
-    field = field.max
-else
-    field = tmp % @$2^{field.width}$@
-\end{lstlisting}
-%%endcode
-
-
-where:
-
-\begin{itemize}
-\item
-\texttt{field.saturating}: boolean value indicating that the field is saturating.
-\item
-\texttt{field.min}: minimum allowed value determined by the field's bit width and 
-signedness
-\item
-\texttt{field.max}: maximum allowed value determined by the field's bit width and 
-signedness
-\item
-\texttt{field.width}: bit width of field
-\end{itemize}
-
 \SUBSUBSECTION{Parameter Binding}{parameterbinding}
 
 In several primitive actions above, a parameter may take one of:
@@ -2718,9 +2682,82 @@ action route_ipv4(
 \end{lstlisting}
 %%endcode
 
-\SUBSUBSECTION{Execution Semantics}{executionsemantics}
+\SUBSUBSECTION{Sequential Execution Semantics}{executionsemantics}
 
-\underline{TODO: Add Anirudh's proposal here.}
+Actions across different tables are assumed to execute sequentially, where
+the sequence is determined by the control flow, described  in
+Section~\ref{sec:controlflow}. As an example, consider the code fragment given
+below, repeated from Section~\ref{sec:controlflow}.
+
+%%code
+\begin{lstlisting}[style=P4style]
+control main {
+  apply(check_mtag);
+  apply(identify_port);
+}
+\end{lstlisting}
+%%endcode
+
+Here, the \texttt{check_mtag} table and its associated actions are applied
+first, followed by the \texttt{identify_port} table and its actions.
+
+The body of a compound action is also assumed to execute
+sequentially -- i.e. the first primitive action executes to completion, and then
+the second executes to completion. Concretely, consider the two primitive
+actions \texttt{modify_field(hdr.fieldA, 1)} and
+\texttt{modify_field(hdr.fieldB, hdr.fieldA)} appearing within the compound
+action \texttt{compound} as shown below.
+
+%%code
+\begin{lstlisting}[style=P4style]
+action compound1() {
+  modify_field(hdr.fieldA, 1);
+  modify_field(hdr.fieldB, hdr.fieldA);
+}
+\end{lstlisting}
+%%endcode
+
+Let's say \texttt{hdr.fieldA} started with a value of 0. The first statement is
+completed first, leaving 1 in \texttt{fieldA}. Then, the second instruction is
+executed, propagating 1 to \texttt{fieldB}.
+
+While the language permits arbitrarily-long dependency chain of primitive actions
+within a compound action, each target can choose to impose its own restrictions
+for performance. For instance, a target might introduce a limit to the maximum 
+length of a dependency chain it supports. In such cases, the target
+compiler must infer dependencies between primitive actions and reject
+compound actions that strictly require primitive actions to be sequenced one after
+another longer than the target's limit.
+
+As an example, action \texttt{compound1} above might be 
+rejected by a target compiler on the grounds that there is no capability to write 
+a header field (\texttt{fieldA}) and \textit{then} read it into another header field
+within the same table. At the same time, the compiler could accept the action below 
+(action \texttt{compound2}) because there is no dependency between the two primitive 
+actions and both can execute in parallel.
+
+%%code
+\begin{lstlisting}[style=P4style]
+action compound2() {
+  modify_field(hdr.fieldX, hdr.fieldY);
+  modify_field(hdr.fieldB, hdr.fieldC);
+}
+\end{lstlisting}
+%%endcode
+
+The compiler may also choose to rewrite code while preserving correctness to
+remove spurious dependencies. For instance, the code in action \texttt{compound1} 
+is equivalent to the code in action \texttt{compound3} below, which has no 
+dependencies between primitive actions and hence can be run on a constrained target.
+
+%%code
+\begin{lstlisting}[style=P4style]
+action compound3() {
+  modify_field(hdr.fieldA, 1);
+  modify_field(hdr.fieldB, 1);
+}
+\end{lstlisting}
+%%endcode
 
 %%%%%%
 %%%%%%
@@ -3099,121 +3136,6 @@ Note that the two modes (match selection versus action selection) cannot be
 intermixed. They are differentiated due to the fact that \texttt{hit} and
 \texttt{miss} are reserved words and cannot be used as action function names.
 
-%%%%%%
-%%%%%%
-\SECTION{Extern objects}{externs}
-%%%%%%
-%%%%%%
-
-Although P4 uses \matchaction tables and actions to express basic forwarding
-logic, P4 programs might require functionality built out of components
-whose behavior is not expressible in P4 itself. Examples of this include
-stateful metering operations and parameterizable hash calculations. For this
-purpose, P4 allows the specification of extern object types that the
-user can instantiate in their P4 program.
-
-Extern types are provided by both standardized and target-specific libraries.
-P4 programmers are not intended to define their own extern types, so much
-as use the set of supported extern types as a palette of components from which
-to compose their programs. 
-
-\SUBSECTION{Extern types}{externtypes} An extern type definition is intended to be 
-used by both the programmer and compiler front-end to specify how extern
-instances of that type must be instantiated and where they may be used.
-
-An extern type may specify both attributes and methods. Attributes are
-properties of the extern object that are bound inside the object
-instantiation. Methods are functions that can be called on a given extern
-instance at various places in the P4 program.
-
-%%bnf
-\begin{lstlisting}[style=BNFstyle]
-extern_type_declaration ::= 
-    extern_type type_name {
-        member_declaration*
-    }
-
-member_declaration ::= attribute_declaration | method_declaration
-
-method_declaration ::= 
-    method method_name ( method_param_list );
-
-method_param_list ::= method_param [, method_param]*
-method_param ::= param_qualifier* type_spec param_name
-
-attribute_declaration ::= 
-    attribute attribute_name {
-        type : attribute_type ;
-        [ optional ; ]
-        [ local_variables : { identifier_list+ } ]
-    }
-
-identifier_list ::= variable_name ;
-
-attribute_type ::=  type_spec
-\end{lstlisting}
-%%endbnf
-
-The extern type indicates that the P4 programmer can instantiate objects of
-type \textit{type_name}. Each attribute declaration inside the extern type 
-indicates an attribute its instances contain, and the attribute's expected type.
-
-In addition to standard P4 type specifications that appear in signatures
-and variable declarations, an attribute type may also be \textit{void}.
-In the latter case, the attribute is immediately followed by a semicolon 
-and has no value other than its presence (or lack of absence).
-Attributes marked with the \textit{optional} property are not required to
-appear in object instantiations, though the compiler backend may impose further
-rules as to when an attribute truly is or is not optional.
-
-Attributes of type \textit{expression} may include identifiers named in the
-\textit{local_variables} property (in addition to P4 identifiers
-already in the current scope). The actual types and values of these identifiers
-is entirely determined by the compiler backend. The expression is not
-necessarily evaluated upon object instantiation; the documentation for the
-extern type supplied the target provider is responsible for explaining when 
-exactly it is evaluated.
-
-Each method declaration inside the extern type indicates a method that can be
-called on its instances, with standard \textit{object.method(parameters)} 
-notation. Methods may have optional parameters, but may not be overloaded (that
-is, method names within an extern type must be unique).
-
-While a P4 \textit{extern_type} object describes the interface by which a
-extern instance interacts with the code around it, it (by design) does not
-express anything about the object's actual behavior. For target-specific
-libraries of extern types, human language documentation is likely sufficient 
-to fully specify an extern's behavior. For standardized libraries, however,
-it is \textit{strongly} recommended that the P4 extern_type is accompanied
-with pseudocode written in a general-purpose programming language to rigorously 
-document the behavior and semantics of the type and its methods.
-
-\SUBSECTION{Extern Instances}{externinstances}
-
-The P4 programmer can declare instances of these extern types the same way they
-declare tables and other standard P4 objects.
-
-%%bnf
-\begin{lstlisting}[style=BNFstyle]
-extern_instance_declaration ::= 
-    extern type_name instance_name ; |
-    extern type_name instance_name { 
-        extern_attribute_binding +
-    }
-
-extern_attribute_binding ::=
-    attribute_name : object_ref ;
-
-extern_method_call ::= 
-    object_ref . method_name ( arg_list )
-\end{lstlisting}
-%%endbnf
-
-Method calls must include arguments for all parameters specified by the
-object interface. If the method includes any optional parameters, their
-arguments may follow the required arguments (similar to optional arguments
-in primitive actions).
-
 
 %%%%%%
 %%%%%%
@@ -3329,7 +3251,6 @@ continues to be processed as if the clone operation did not take place. We
 use the term clone (rather than mirror) to emphasize that this action is only 
 responsible for generating a new version of the packet. Mirroring requires 
 additional configuration. The clone mechanism may have additional applications. 
-
 
 The source of the clone may be the original instance of the packet (an ingress 
 clone), or the packet as it would exit the switch (an egress clone). The processing 
@@ -3454,7 +3375,6 @@ action mirror_execute(in int<16> trunc_length) {
 \end{lstlisting}
 %%endcode
 
-
 For this example, the only action taken is the truncation of the mirrored 
 packet. However the function could include the data used for an encapsulation 
 header allowing each mirror session to be sent to a different remote monitoring 
@@ -3491,6 +3411,123 @@ pipeline as usual.
 For \texttt{resubmit} and \texttt{recirculate}, the
 \texttt{instance_type} metadata field distinguishes between first and
 later times the packet is being processed.
+
+
+%%%%%%
+%%%%%%
+\SECTION{Extern objects}{externs}
+%%%%%%
+%%%%%%
+
+Although P4 uses \matchaction tables and actions to express basic forwarding
+logic, P4 programs might require functionality built out of components
+whose behavior is not expressible in P4 itself. Examples of this include
+stateful metering operations and parameterizable hash calculations. For this
+purpose, P4 allows the specification of extern object types that the
+user can instantiate in their P4 program.
+
+Extern types are provided by both standardized and target-specific libraries.
+P4 programmers are not intended to define their own extern types, so much
+as use the set of supported extern types as a palette of components from which
+to compose their programs. 
+
+\SUBSECTION{Extern types}{externtypes} An extern type definition is intended to be 
+used by both the programmer and compiler front-end to specify how extern
+instances of that type must be instantiated and where they may be used.
+
+An extern type may specify both attributes and methods. Attributes are
+properties of the extern object that are bound inside the object
+instantiation. Methods are functions that can be called on a given extern
+instance at various places in the P4 program.
+
+%%bnf
+\begin{lstlisting}[style=BNFstyle]
+extern_type_declaration ::= 
+    extern_type type_name {
+        member_declaration*
+    }
+
+member_declaration ::= attribute_declaration | method_declaration
+
+method_declaration ::= 
+    method method_name ( method_param_list );
+
+method_param_list ::= method_param [, method_param]*
+method_param ::= param_qualifier* type_spec param_name
+
+attribute_declaration ::= 
+    attribute attribute_name {
+        type : attribute_type ;
+        [ optional ; ]
+        [ local_variables : { identifier_list+ } ]
+    }
+
+identifier_list ::= variable_name ;
+
+attribute_type ::=  type_spec
+\end{lstlisting}
+%%endbnf
+
+The extern type indicates that the P4 programmer can instantiate objects of
+type \textit{type_name}. Each attribute declaration inside the extern type 
+indicates an attribute its instances contain, and the attribute's expected type.
+
+In addition to standard P4 type specifications that appear in signatures
+and variable declarations, an attribute type may also be \textit{void}.
+In the latter case, the attribute is immediately followed by a semicolon 
+and has no value other than its presence (or lack of absence).
+Attributes marked with the \textit{optional} property are not required to
+appear in object instantiations, though the compiler backend may impose further
+rules as to when an attribute truly is or is not optional.
+
+Attributes of type \textit{expression} may include identifiers named in the
+\textit{local_variables} property (in addition to P4 identifiers
+already in the current scope). The actual types and values of these identifiers
+is entirely determined by the compiler backend. The expression is not
+necessarily evaluated upon object instantiation; the documentation for the
+extern type supplied the target provider is responsible for explaining when 
+exactly it is evaluated.
+
+Each method declaration inside the extern type indicates a method that can be
+called on its instances, with standard \textit{object.method(parameters)} 
+notation. Methods may have optional parameters, but may not be overloaded (that
+is, method names within an extern type must be unique).
+
+While a P4 \textit{extern_type} object describes the interface by which a
+extern instance interacts with the code around it, it (by design) does not
+express anything about the object's actual behavior. For target-specific
+libraries of extern types, human language documentation is likely sufficient 
+to fully specify an extern's behavior. For standardized libraries, however,
+it is \textit{strongly} recommended that the P4 extern_type is accompanied
+with pseudocode written in a general-purpose programming language to rigorously 
+document the behavior and semantics of the type and its methods.
+
+\SUBSECTION{Extern Instances}{externinstances}
+
+The P4 programmer can declare instances of these extern types the same way they
+declare tables and other standard P4 objects.
+
+%%bnf
+\begin{lstlisting}[style=BNFstyle]
+extern_instance_declaration ::= 
+    extern type_name instance_name ; |
+    extern type_name instance_name { 
+        extern_attribute_binding +
+    }
+
+extern_attribute_binding ::=
+    attribute_name : object_ref ;
+
+extern_method_call ::= 
+    object_ref . method_name ( arg_list )
+\end{lstlisting}
+%%endbnf
+
+Method calls must include arguments for all parameters specified by the
+object interface. If the method includes any optional parameters, their
+arguments may follow the required arguments (similar to optional arguments
+in primitive actions).
+
 
 %%%%%%
 %%%%%%
