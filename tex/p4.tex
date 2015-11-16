@@ -597,9 +597,9 @@ the same type.  No operations produce runtime exceptions.
 
 \SUBSUBSECTION{Portability}{typing-portability}
 
-No P4 target will support all possible types and operations.  For
+No P4 target can support all possible types and operations.  For
 example, the following type is legal in P4: \bit{23132312}.
-Each target can impose restrictions on the values it can support.
+Hence, each target can impose restrictions on the values it can support.
 Such restrictions may include:
 
 \begin{itemize}
@@ -618,11 +618,9 @@ well-typed P4 program and still be conformant to the P4 spec.
 However, if an architecture accepts a P4 program as valid, the runtime
 program behavior should match this specification.
 
-\SUBSUBSECTION{Elimination of saturated types}{typing-saturated}
+\SUBSUBSECTION{No saturated types}{typing-saturated}
 
-The P4 v1.0 specification includes saturated integer types.  We
-propose to eliminate these from the P4 specification, for the following
-reasons:
+P4 does not support saturated integer types for the following reasons:
 
 \begin{itemize}
 \item Saturated types are unlikely to be portable.
@@ -2698,7 +2696,7 @@ Copy one header instance to another. \\ \hline
 Mark a header instance as invalid. \\ \hline
 \texttt{modify_field} &
 Set the value of a field in the packet's Parsed Representation. \\ \hline
-\texttt{set_field_to_hash_index} &
+\texttt{modify_field_with_hash_based_offset} &
 Apply a field list calculation and use the result to generate an offset value. \\ \hline
 \texttt{truncate} &
 Truncate the packet on egress. \\ \hline
@@ -2871,28 +2869,7 @@ of a "set", modifying all bits of the destination.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{add(dest, value1, value2)}
-{ % Summary
-Add value1 and value2 and store in dest.
-}
-{ % Parameters
-\paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified.}
-\paramdoc{value1}{(VAL, FLD or R-REF) The first value to use.}
-\paramdoc{value2}{(VAL, FLD or R-REF) The second value to use.}
-}
-{ % Description
-The \texttt{dest} field's value is updated with the result of adding
-the two value parameters. Each \texttt{value} parameter may be from a
-table parameter, an immediate a value, a field reference or a register
-reference; see \texttt{modify_field} above.  If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}.  A description of the logical
-behavior follows in the Section~\ref{sec:fieldasgmt} below.
-}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\primact{set_field_to_hash_index(dest, field_list_calc, base, size)}
+\primact{modify_field_with_hash_based_offset(dest, field_list_calc, base, size)}
 { % Summary
 Add a value to a field.
 }
