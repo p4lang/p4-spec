@@ -10,6 +10,8 @@
 \usepackage{soul}
 \usepackage{float}
 \usepackage{underscore}
+\usepackage{tablefootnote}
+\usepackage{courier}
 \usepackage[table]{xcolor}
 
 \usepackage[parfill]{parskip}
@@ -21,8 +23,6 @@
 
 %%not_a_keyword auto
 %%not_a_keyword default
-
-%%not_a_keyword local_variables
 
 %%not_a_keyword ternary
 %%not_a_keyword exact
@@ -45,14 +45,14 @@
     language=BNF,%
     frame=single,%
     backgroundcolor=\color{bnfgreen},%
-    morekeywords={const_value, unsigned_value, bool_value, binary_value, decimal_value, hexadecimal_value, binary_base, hexadecimal_base, binary_digit, decimal_digit, hexadecimal_digit, width_spec, field_value, type_spec, data_type, typedef_declaration, object_ref, general_expr, bool_expr, arith_expr, bin_op, un_op, bool_op, rel_op, header_type_declaration, header_dec_body, field_dec, length_bin_op, length_exp, header_instance_declaration, header_instance, scalar_instance, array_instance, metadata_instance, metadata_initializer, header_ref, index, field_ref, field_list_declaration, field_list_entry, field_list_calculation_declaration, calculated_field_declaration, update_verify_spec, update_or_verify, if_cond, calc_bool_cond, value_set_declaration, parser_function_declaration, parser_function_body, parser_body_call, extract_statement, header_extract_ref, header_extract_index, set_statement, return_statement, return_value_type, case_entry, value_list, case_return_value_type, value_or_masked, select_exp, field_or_data_ref, parser_exception_declaration, return_or_drop, return_to_control, counter_declaration, counter_type, direct_or_static, direct_attribute, static_attribute, meter_declaration, meter_type, register_declaration, width_or_layout, width_declaration, layout_declaration, attribute_list, attr_entry, register_ref, primitive_action_declaration, simple_param_list, compound_action_function_declaration, action_param_list, action_param, param_qualifier, action_statement, arg_list, action_profile_declaration, action_specification, action_selector_declaration, table_declaration, field_match, field_or_masked_ref, field_match_type, table_actions, action_specification, action_profile_specification, control_function_declaration, control_block, control_statement, apply_call, apply_and_select_block, case_list, action_case, action_or_default, hit_miss_case, hit_or_miss, if_else_statement, else_block, extern_type_declaration, member_declaration, method_declaration, method_param_list, method_param, attribute_declaration, identifier_list, attribute_type, extern_instance_declaration, extern_attribute_binding, extern_method_call, p4_program, p4_declaration}%
+    morekeywords={const_value, unsigned_value, bool_value, binary_value, decimal_value, hexadecimal_value, binary_base, hexadecimal_base, binary_digit, decimal_digit, hexadecimal_digit, width_spec, field_value, type_spec, data_type, object_ref, general_expr, bool_expr, arith_expr, bin_op, un_op, bool_op, rel_op, header_type_declaration, header_dec_body, field_dec, length_bin_op, length_exp, header_instance_declaration, header_instance, scalar_instance, array_instance, metadata_instance, metadata_initializer, header_ref, index, field_ref, field_list_declaration, field_list_entry, field_list_calculation_declaration, calculated_field_declaration, update_verify_spec, update_or_verify, if_cond, calc_bool_cond, value_set_declaration, parser_function_declaration, parser_function_body, parser_body_call, extract_statement, header_extract_ref, header_extract_index, set_statement, return_statement, return_value_type, case_entry, value_list, case_return_value_type, value_or_masked, select_exp, field_or_data_ref, parser_exception_declaration, return_or_drop, return_to_control, counter_declaration, counter_type, direct_or_static, direct_attribute, static_attribute, meter_declaration, meter_type, register_declaration, width_or_layout, width_declaration, layout_declaration, attribute_list, attr_entry, register_ref, primitive_action_declaration, simple_param_list, compound_action_function_declaration, action_param_list, action_param, param_qualifier, action_statement, arg_list, action_profile_declaration, action_specification, action_selector_declaration, table_declaration, field_match, field_or_masked_ref, field_match_type, table_actions, action_specification, action_profile_specification, control_function_declaration, control_block, control_statement, apply_call, apply_and_select_block, case_list, action_case, action_or_default, hit_miss_case, hit_or_miss, if_else_statement, else_block, extern_type_declaration, member_declaration, method_declaration, method_param_list, method_param, attribute_declaration, identifier_list, attribute_type, extern_instance_declaration, extern_attribute_binding, extern_method_call, p4_program, p4_declaration}%
 }
 
 \lstdefinestyle{P4style}{
     language=C,%
     frame=single,%
     backgroundcolor=\color{codeblue},%
-    keywords={action, action_function_declaration, action_profile, action_selector, algorithm, and, apply, attribute, attributes, bit, bytes, calculated_field, control, counter, direct, direct_attibute, dynamic_action_selection, else, extern, extern_type, extract, false, field_list, field_list_calculation, fields, header, header_type, hit, if, in, inout, input, instance_count, int, last, layout, mask, max, metadata, meter, method, min, min_width, miss, next, not, optional, or, output_width, packets, parse_error, parser, parser_drop, parser_exception, parser_value_set, primitive_action, range, register, result, return, saturating, select, selection_key, set_metadata, signed, static, table, true, typedef, update, valid, value, varbit, verify, void, width},%
+    keywords={action, action_function_declaration, action_profile, action_selector, algorithm, and, apply, attribute, attributes, bit, bytes, calculated_field, control, counter, direct, direct_attibute, dynamic_action_selection, else, extern, extern_type, extract, false, field_list, field_list_calculation, fields, header, header_type, hit, if, in, inout, input, instance_count, int, last, layout, mask, max, metadata, meter, method, min, min_width, miss, next, not, optional, or, output_width, packets, parse_error, parser, parser_drop, parser_exception, parser_value_set, primitive_action, range, register, result, return, saturating, select, selection_key, set_metadata, signed, static, table, true, update, valid, value, varbit, verify, width},%
     basicstyle=\ttfamily,%
     aboveskip=3mm,%
     belowskip=3mm,%
@@ -281,6 +281,8 @@ P4 provides the following top-level abstractions:
 \textit{Headers:}
 \begin{itemize}
 \item
+\textit{Base types:} Integers and bitstrings with arbitrary widths.
+\item
 \textit{Header types:} A specification of fields within a header.
 \item
 \textit{Header instances:} A specific instance of a packet header or metadata.
@@ -395,16 +397,8 @@ ignored otherwise. Examples include: \texttt{78_256_803} (replacing commas in
 decimal representation) or \texttt{0b1101_1110_0101} (grouping bits into nibbles
 or bytes in binary representation).
 
-Optionally, the bit-width of the value may be specified as indicated by
-\texttt{width_spec}. If no width precedes the value, or a width of 0 is used,
-then the width is inferred. For positive values the inferred width is the
-smallest number of bits required to contain the value. For negative values the
-inferred width is one more than the smallest number of bits required to contain
-the positive value.
-
-Negative numbers are represented in two's complement. See 
-Section~\ref{sec:p4casting} regarding conversions and sign extension of field 
-values.
+Negative numbers are represented in two's complement.  See
+Section~\ref{sec:p4casting} for the P4 typing rules.
 
 Here are some example values.
 
@@ -426,11 +420,7 @@ The same value, but explicitly given a width of 16 bits. \\ \hline
 \texttt{0b101010} &
 42 &
 6 &
-Binary representation of same with implicit width \\ \hline
-\texttt{0w0x2a} &
-42 &
-6 &
-The width '0' is the same as not specifying a width meaning the width is inferred from the value.   \\ \hline
+Binary representation of 42  \\ \hline
 \texttt{12w0x100} &
 256 &
 12 &
@@ -442,7 +432,7 @@ Binary value specified with explicit width \\ \hline
 \texttt{-0B101} &
 -5 &
 4 &
-The negative is not applied until the rest of the value is evaluated. \\ \hline
+\\ \hline
 \end{tabular}
 \end{center}
 \caption{Value Representation Examples}
@@ -492,12 +482,7 @@ data_type ::=
     bit |
     bit < decimal_digit+ > |
     varbit < decimal_digit+ > |
-    int < decimal_digit+ > | 
-    void
-
-typedef_declaration ::=
-    typedef type_spec new_type_name ;
-
+    int < decimal_digit+ >
 \end{lstlisting}
 %%endbnf
 
@@ -508,11 +493,7 @@ parameters in these signatures must be one of the above.
 The \textit{bit} type represents a bitstring of the length specified within
 angle brackets (a compile time constant). If the angle brackets are omitted, the
 length is implied to be 1. Most of the data processed by P4 is stored in a
-bitstring of some sort, cast appropriately when arithmetic must be performed.
-They are, by default, unsigned and non-saturating (i.e., addition/subtraction
-causing overflow/underflow will wrap). These properties can be changed by adding
-type qualifiers inside the type's angle brackets. See
-Section~\ref{sec:xxx} for more information.
+bitstring of some sort, as described in Section~\ref{sec:p4casting}.
 
 The \textit{varbit} type represents a bitstring with a length that is variable
 at run time, but \textit{at most} the length specified within angle brackets
@@ -520,17 +501,6 @@ at run time, but \textit{at most} the length specified within angle brackets
 through variable-length headers and does not currently have utility beyond
 that. More functionality may be added for this type in subsequent versions of P4
 (such as the ability to read it from a \matchaction pipeline).
-
-The \textit{int} type represents a signed arbitrarily large integer, which is
-used for numeric constant parameters and other situations in which a
-bitstring-like type is needed but doesn't have a well-defined bit width
-apparent from context.
-
-Bit strings with a width of 0 are used for action and method parameters which are
-agnostic to the bit width of the arguments bound to them, but require a finite-width 
-bitstring all the same. It is an error to use this except for a parameter
-list or an attribute declaration of an extern type, since it implies a fixed-width 
-bitstring whose width is inferred at compile-time.
 
 Types which are followed by an optional identifier like \textit{header} can be 
 used in two ways:
@@ -543,12 +513,777 @@ used in two ways:
     of \textit{any} type.
 \end{itemize}
 
-New types may be derived from pre-existing ones using the standard typedef
-mechanism.
-
 \SUBSECTION{P4 data types}{p4casting}
 
-\underline{TODO: import Mihai's spec here.}
+\newtoggle{conditionalExpression}
+\togglefalse{conditionalExpression}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\bool}{\code{\textbf{bool}}}
+\newcommand{\infint}{\code{\textbf{int}}}
+\newcommand{\W}{\code{\emph{W}}}
+\newcommand{\Wone}{\code{\emph{W1}}}
+\newcommand{\bit}[1]{\code{\textbf{bit}<#1>}}
+\newcommand{\Int}[1]{\code{\textbf{int}<#1>}}
+\newlength{\descwidth}
+\setlength{\descwidth}{12cm}
+
+P4 is a strongly-typed language; all values are statically
+typed. Programs that do not pass type-checking are invalid.
+
+P4 supports several base types and allows the construction of derived
+types.  This section discusses only the following base types: Booleans
+and types for representing integers (bitstrings).
+
+\SUBSUBSECTION{Principles}{typing-principles}
+
+The typing rules for the integer types are chosen according to the
+following principles:
+
+\begin{description}
+\item[Inspired from C:] Typing of integers is modeled after the
+  well-defined parts of C, expanded to cope with arbitrary fixed-width
+  integers.  In particular, the type of the result of an expression
+  only depends on the expression operands, and not on how the result
+  of the expression is consumed.
+\item[No undefined behaviors:] P4 attempts to remedy the undefined C
+  behaviors.  Unfortunately C has many undefined behaviors, including
+  specifying the size of an integer (\code{int}), results produced on
+  overflow, and results for some arguments values (e.g., shifts with
+  negative amounts, division of negative numbers, overflows on signed
+  numbers, etc.).  In contrast, P4 computations on integer types have
+  \emph{no undefined behaviors}.
+\item[Least surprise:] The P4 typing rules are chosen to behave as
+  closely as possible to traditional well-behaved C programs.
+\item[Forbid rather than surprise:] Rather than provide surprising or
+  undefined results (e.g., in C comparisons between signed and
+  unsigned integers), we have chosen to forbid expressions with
+  ambiguous interpretations.  For example, P4 does not allow binary
+  operations that combine signed and unsigned integers.
+\end{description}
+
+The priority of arithmetic operations is also chosen similar to C
+(e.g., multiplication binds stronger than addition).
+
+\SUBSUBSECTION{Base types}{typing-base-types}
+
+The P4 base types are shown in Table~\ref{tab:summary}.
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|lp{6.5cm}ll|} \hline
+    \textbf{Type} & \textbf{Description} & \textbf{Example} &
+    \textbf{Section} \\ \hline
+    
+    \bool & Boolean values & \bool & \ref{sec:bool} \\ 
+    \bit{\W} & Fixed-width unsigned integers of an arbitrary width~\W &
+    \bit{20} & \ref{sec:unsigned} \\
+    \Int{\W} & Fixed-width signed integers of an arbitrary width~\W,
+    represented using two's complement & \Int{33} & \ref{sec:signed} \\
+    \code{\textbf{varbit}<\W>} & Bit-strings of dynamically-computed width
+    (also called \emph{varbits}) with a
+    maximum width~\W & \code{\textbf{varbit}<1024>} & \ref{sec:varbit} \\
+    \code{\textbf{int}} & Infinite-precision integer constant values & \infint &
+    \ref{sec:integer} \\
+
+    \hline
+  \end{tabular}
+  \caption{Base P4 Types\label{tab:summary}}
+\end{table}
+
+Values can be converted to a different type by using casts.  The range
+of casts available is intentionally restricted.  There are very few
+implicit casts.  Most binary operations require both operands to be of
+the same type.  No operations produce runtime exceptions.
+
+\SUBSUBSECTION{Portability}{typing-portability}
+
+No P4 target will support all possible types and operations.  For
+example, the following type is legal in P4: \bit{23132312}.
+Each target can impose restrictions on the values it can support.
+Such restrictions may include:
+
+\begin{itemize}
+\item The maximum width supported
+\item Alignment and padding constraints (e.g., arithmetic may only be
+  supported on widths which are an integral number of bytes).
+\item Constraints on some operands (e.g., some architectures may only
+  support multiplications with small constants, or shifts with small
+  values).
+\end{itemize}
+
+Target-specific documentation should describe such restrictions, and
+target-specific compilers should provide clear error messages when
+such restrictions are encountered.  An architecture may reject a
+well-typed P4 program and still be conformant to the P4 spec.
+However, if an architecture accepts a P4 program as valid, the runtime
+program behavior should match this specification.
+
+\SUBSUBSECTION{Elimination of saturated types}{typing-saturated}
+
+The P4 v1.0 specification includes saturated integer types.  We
+propose to eliminate these from the P4 specification, for the following
+reasons:
+
+\begin{itemize}
+\item Saturated types are unlikely to be portable.
+\item The semantics of many operations on saturated types may be open
+  for debate.
+\item Most operations may be unnecessary on saturated types (addition,
+  subtraction and multiplication seem to be the most frequent ones).
+\item Finally, saturated arithmetic can be implemented by using P4
+  v1.1 \code{extern} custom constructs that operate on bitstrings
+  rather than by built-in arithmetic operators.  For example, an
+  architecture could provide an \code{extern saturated\_alu} whose
+  methods operate on unsigned bitstrings but perform saturated
+  operations.
+\end{itemize}
+
+\SUBSUBSECTION{Boolean\label{sec:bool}}{typing-boolean}
+
+The Boolean type contains two values, \code{\textbf{false}} and
+\code{\textbf{true}}.  The type is written as \bool.  Operations on
+Boolean values are described in Section~\ref{sec:booloperations}.
+Booleans are not integers.
+
+\SUBSUBSECTION{Unsigned integers (bit-strings)}{unsigned}
+
+An unsigned integer (which we also call a ``bit-string'') has an
+arbitrary width, expressed in bits.  A bit-string of width \W{} is
+declared as: \bit{\W}.  \W{} must be a compile-time constant value
+evaluating to a positive integer greater than 0.
+
+Bits within a bit-string are numbered from 0 to \W-1.  Bit 0 is the
+least significant, and bit \W-1 is the most significant\footnote{No P4
+  operation currently depends on the bit numbering within an integer,
+  but future language additions may.}.
+
+For example, the type \bit{128} denotes the type of bit-string
+values with 128 bits numbered from 0 to 127, where bit 127 is the most
+significant.
+
+The type \code{\textbf{bit}} is a shorthand for \bit{1}.
+
+P4 target architectures may impose additional compile-time or runtime
+constraints on \code{bit} types: for example, they may limit the
+maximum size, or they may only support some arithmetic operations on
+certain sizes (e.g., 16-, 32- and 64- bit values).
+
+All operations that can be performed on unsigned integers are
+described in Section~\ref{sec:unsignedoperations}.
+
+\SUBSUBSECTION{Signed Integers}{signed}
+
+Signed integers are represented using 2's complement.  An integer with
+\W{} bits is declared as: \Int{\W}.  \W{} must be a compile-time
+constant value evaluating to a positive integer greater than 0.
+
+Bits within an integer are numbered from 0 to \W-1. Bit 0 is the least
+significant, and bit \W-1 is the sign bit.
+
+For example, the type \Int{64} describes the type of integers
+represented using exactly 64 bits.
+
+There are no constraints of the value of \W, but specific targets may
+impose limits.
+
+All operations that can be performed on signed integers are
+described in Section~\ref{sec:signedoperations}.
+
+\SUBSUBSECTION{Dynamically-sized bit-strings}{varbit}
+
+Some network protocols use fields whose size is only known at runtime
+(e.g., IPv4 options). To support restricted manipulations of such
+values, P4 provides a special bit-string type whose size is set at
+runtime, called a varbit.
+
+\code{\textbf{varbit}<\W>} denotes a bit-string with a width of
+\emph{at most} \W{} bits, where \W{} is a compile-time constant value
+evaluating to a positive integer.  For example, the type
+\code{\textbf{varbit}<120>} denotes the type of bit-string values that
+may have between 0 and 120 bits.  Most operations that are applicable
+to fixed-size bit-strings (unsigned numbers) cannot be performed on
+dynamically sized bit-strings.
+
+P4 target architectures may impose additional compile-time or runtime
+constraints on \code{\textbf{varbit}} types: for example, they may limit the
+maximum size, or they may require \code{\textbf{varbit}} values to always
+contain an integer number of bytes at runtime.
+
+All operations that can be performed on dynamically-sized bitstrings
+are described in Section~\ref{sec:varbitoperations}.
+
+\SUBSUBSECTION{Infinite-precision integers}{integer}
+
+The infinite-precision datatype describes integers with an unlimited
+precision.  This type is written as \infint.  This type is reserved
+for compile-time integer literals only.  No P4 run-time value can have
+an \infint{} type; at compile time the compiler will convert all
+\infint{} values that have a runtime component to fixed-width types,
+according to the rules described below.
+
+All operations that can be performed on infinite-precision integers
+are described in Section~\ref{sec:intoperations}.
+
+\SUBSUBSECTION{Integer literal types}
+
+As described in Section~\ref{sec:valuespec}, there are three types of integer
+literals (constants):
+
+\begin{itemize}
+\item A simple integer constant has type \infint.
+\item A simple positive integer can be prefixed with a width and the
+  character 'w'  (no spaces) to indicate an unsigned integer with the
+  specified width in bits.
+\item A simple integer (positive or negative) can be prefixed with a
+  width and the character 's' (no spaces) to indicate a signed integer
+  with the specified width in bits.
+\end{itemize}
+
+Table~\ref{tab:literals} shows several examples of integer literals
+and their types.
+
+\begin{table}[!h]
+  \center
+    \begin{tabular}{|rl|} \hline
+      \textbf{Literal} & \textbf{Interpretation} \\ \hline
+      \code{10} & Type is \infint, value is 10. \\
+      \code{-10} & Type is \infint, value is -10. \\
+      \code{8w10} & Type is \bit{8}, value is 10. \\
+      \code{8w-10} & Illegal: negative unsigned number. \\
+      \code{8s10} & Type is \Int{8}, value is 10. \\
+      \code{8s-10} & Type is \Int{8}, value is -10. \\
+      \code{2s3} & Type is \Int{2}, value is -1 (last 2 bits), overflow warning. \\
+      \code{1w10} & Type is \bit{1}, value is 0 (last bit), overflow warning. \\
+      \code{1s10} & Type is \Int{1}, value is 0 (last bit), overflow warning. \\
+      
+      \hline
+    \end{tabular}
+  \caption{Integer literals and their types.\label{tab:literals}}
+\end{table}
+
+\SUBSECTION{Base type operations}{typing-operations}
+
+This section describes all legal operations that can be performed on
+base types.  For each operation we describe the input operand types
+and the result type.
+
+\SUBSUBSECTION{Computations on Boolean values}{booloperations}
+
+\textbf{Note:} In C binary Boolean operations are performed using
+short-circuit evaluation, where the second operand is only evaluated
+if necessary.  This is important only if the evaluation of an operand
+can produce side-effects.  Currently there are no operations in P4
+that produce side-effects.  In consequence, there is no semantic
+difference between short-circuit and full evaluation.  If the P4
+language is extended in the future to encompass operations with
+side-effects, the semantics of Boolean operations may have to be
+revisited.
+
+Table~\ref{tab:booloperations} describes all operations available on
+Boolean values.
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|lp{\descwidth}|} \hline
+    \textbf{Operation} & \textbf{Description} \\ \hline
+    \code{\textbf{and}}\tablefootnote{We propose replacing the keyword
+      \code{\textbf{and}} with the equivalent C operator \code{\&\&} in a
+      future P4 revision.} & Binary associative operation; both
+    operands must be Boolean; result is Boolean. \\
+
+    \code{\textbf{or}}\tablefootnote{We propose replacing the keyword \code{\textbf{or}} with
+      the equivalent C operator \code{||} in a future P4 revision.}
+    & Binary associative operation; both operands must be Boolean;
+    result is Boolean. \\
+    
+    \code{\textbf{not}}\tablefootnote{We propose replacing the keyword \code{\textbf{not}}
+      with the equivalent C operator \code{!} in a future P4
+      revision.} & Unary operation; operand is Boolean, result is
+    Boolean. \\
+
+    \code{==}, \code{!=} & Test for equality/inequality; result is
+    Boolean. \\
+
+    \hline
+  \end{tabular}
+  \caption{Boolean operations\label{tab:booloperations}}
+\end{table}
+
+In addition, all comparison operations (\code{==}, \code{!=},
+\code{>}, \code{<}, \code{<=}, \code{>=}), described below, produce as
+results Boolean values.
+
+There are no implicit casts from bit-strings to Booleans or
+vice-versa.  In consequence, a C program fragment such as: \\
+\code{if (x) ... } \\
+(for \code{x} an integer base type) must be written in P4 as: \\
+\code{if (x != 0) ... } \\
+(see also the discussion on infinite-precision types and implicit
+casts~\ref{sec:implicitcasts} for how the 0 in this expression is
+evaluated).
+
+\iftoggle{conditionalExpression}{
+\paragraph{The conditional expression} \mbox{}\\
+
+We propose adding the P4 a conditional expression operator, similar to
+C's ternary \code{?:} operator.  The \code{?:} expression behaves as
+in C.  The first argument is Boolean, and the second and third
+arguments must have the exact same type.
+}
+
+\SUBSUBSECTION{Operations on unsigned fixed-width integers}{unsignedoperations}
+
+This section discusses all operations that can be performed on values
+with \bit{\W} types.
+
+Operations ``wrap-around'', similar to C operations on unsigned values
+(i.e., representing a large value on \W{} bits will only keep the
+least-significant \W{} bits of the value).  There are no arithmetic
+exceptions; the runtime result of an arithmetic operation is defined
+for all combinations of input arguments.
+
+All binary operations (except shifts) require both operands to have
+the same exact type and width; supplying operands with different
+widths produces a compile-time error.  No implicit casts are inserted
+by the compiler to equalize the widths.  There are no binary
+operations that combine signed and unsigned values (except shifts).
+
+Table~\ref{tab:unsignedoperations} shows all operations available on
+  unsigned values.
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|lp{\descwidth}|} \hline
+    \textbf{Operation} & \textbf{Description} \\ \hline
+
+    \code{==}, \code{!=} & Test for equality/inequality.  Both
+    operands must have the same width.  The result is a Boolean
+    value. \\
+
+    \code{<}, \code{>}, \code{<=}, \code{>=} & Unsigned comparisons.
+    Both operands must have the same width.  The result is a Boolean
+    value. \\
+    
+    \code{\&}, \code{|}, \verb|^| & Bitwise operations; both operands
+    must have the same width; result is unsigned and has the same
+    width.  \\
+    
+    \code{\~{}} & Result is unsigned and has the same width as the
+    input.  Bitwise complement. \\
+
+    \verb|<<|, \verb|>>| & Left operand is unsigned, right operand
+    must be either an unsigned number or a non-negative constant
+    integer.  The result has the same type as the left operand.  These
+    perform logical shifts (fill with zero.)  Shifts with an amount
+    greater or equal to the width of the input produce a result with
+    all bits zero. \\
+
+    \code{+} (unary) & Unary plus sign; behaves as a no-op. \\
+    
+    \code{-} (unary) & Unary negation; the result is computed by by
+    subtracting its value from $2^\W$.  The result is always unsigned
+    and it has the same width as the input.  The semantics is the same
+    as the C negation of unsigned numbers. \\
+
+    \code{+} (binary) & Binary addition; associative.  Both operands
+    must have the same type; result has the same type.  Result is
+    computed by truncating the result of the mathematical addition to
+    the width of the output (similar to C). \\
+    
+    \code{-} (binary) & Binary subtraction; associative.  Both
+    operands must have the same type; result is unsigned, and has the
+    same type.  Result is computed by adding the negation of the
+    second operand (similar to C). \\
+    
+    \code{*} & Binary unsigned multiplication; associative.  Both
+    inputs must have the same width; result has the same width as
+    the inputs, and is unsigned.  P4 targets may impose additional
+    restrictions (e.g., may require one of the operands to be a
+    compile-time constant value, or only allow multiplications with
+    powers of two). \\
+    
+    \hline
+  \end{tabular}
+  \caption{Operations on unsigned values.\label{tab:unsignedoperations}}
+\end{table}
+
+There is no unsigned integer division operator.
+
+\SUBSUBSECTION{Operations on signed fixed-width integers}{signedoperations}
+
+This section discusses all operations that can be performed on
+\Int{\W} types.  An \Int{\W} type is a signed integer with \W{} bits
+represented using 2's complement.
+
+``Underflow'' or ``overflow'' produced by arithmetic cannot be
+detected: operations ``wrap-around'', similar to C operations on
+unsigned values (i.e., representing a large value on \W{} bits will
+only keep the least-significant \W{} bits of the value).  (Note that C
+does not define the result of operations that overflow when computing
+on signed values, whereas P4 does.)  There are no arithmetic
+exceptions; the runtime result of an arithmetic operation is defined
+for all combinations of input arguments.
+
+All binary operations (except shifts) require both operands to have
+the same exact type (signedness) and width; supplying operands with
+different widths or signedness produces a compile-time error.  No
+implicit casts are inserted by the compiler to equalize the widths.
+there are no binary operations that combine signed and unsigned values
+(except shifts).
+
+Table~\ref{tab:signedoperations} shows all operations available on
+signed values.
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|lp{\descwidth}|} \hline
+    \textbf{Operation} & \textbf{Description} \\ \hline
+    \code{==}, \code{!=} & Test for equality/inequality.  Both
+    operands must have the same width.  The result is a Boolean
+    value. \\
+
+    \code{<}, \code{>}, \code{<=}, \code{>=} & Signed comparisons.
+    Both operands must have the same width.  The result is a Boolean
+    value. \\
+    
+    \code{\&}, \code{|}, \verb|^| & Bitwise operations; both operands
+    must have the same width; result is signed and has the same width. \\
+    
+    \code{\~{}} & Result is signed and has the same width as the
+    input.  Bitwise complement. \\
+
+    \verb|<<|, \verb|>>| & Left operand is signed, right operand must
+    be either an unsigned number or a non-negative constant integer.
+    The result has the same type as the left operand.  These perform
+    arithmetic shifts.  Shifts with an amount greater or equal to the
+    width of the input are allowed. \\
+
+    \code{+} (unary) & Unary plus sign; behaves as a no-op. \\
+    
+    \code{-} (unary) & Unary negation; the result is signed and it
+    has the same width as the input. \\
+
+    \code{+} (binary) & Binary addition; associative.  Both operands
+    must have the same type; result has the same type.  \\
+    
+    \code{-} (binary) & Binary subtraction; associative.  Both
+    operands must have the same type; result is signed, and has
+    the same type.  \\
+    
+    \code{*} & Binary signed multiplication; associative.  Both
+    inputs must have the same width; result has the same width as
+    the inputs, and is signed.  P4 targets may impose additional
+    restrictions (e.g., may require one of the operands to be a
+    compile-time constant value, or only allow multiplications with
+    powers of two). \\
+    
+    \hline
+  \end{tabular}
+  \caption{Operations on signed values.\label{tab:signedoperations}}
+\end{table}
+
+Note that bitwise operations are well-defined, since the
+representation is mandated to be 2's complement.
+
+There is no signed integer division operator.
+
+\SUBSUBSECTION{A note about shifts}{typing-shifts}
+
+Shifts (on signed and unsigned values) deserve a special discussion,
+due to the following reasons:
+
+\begin{itemize}
+  \item As in C, right shift behaves differently for signed and
+    unsigned values: right shift for signed values is an arithmetic
+    shift.
+  \item Shifting with a negative amount does not have a clear
+    semantics: while in C the result is undefined, in P4 the type
+    system makes it illegal to shift with a negative amount.
+  \item In C, shifting with an amount larger or equal to the number of
+    bits has an undefined result (unlike our definition).
+  \item Finally, shifting may require doing work which is exponential
+    in the number of bits of the right-hand-side operand.  Consider
+    the following examples:
+
+%%code
+\begin{lstlisting}[style=P4style]
+bit<8> x;
+bit<16> y;
+... y << x ...
+... y << 1024 ...
+\end{lstlisting}
+%%endcode
+    
+    Unlike C, P4 gives a precise meaning shifting with an amount
+    larger than the size of the shifted value.
+\end{itemize}
+
+Due to these reasons, P4 targets may impose additional restrictions to
+shift operations:
+
+\begin{itemize}
+\item Targets may reject shifts by non-constant amounts.
+\item Targets may reject shifts with large non-constant amounts.  For
+  example, a target may forbid shifting an 8-bit value by a value
+  wider than 3 bits.
+\end{itemize}
+
+\SUBSUBSECTION{\code{varbit} operations}{varbitoperations}
+
+The type \code{\textbf{varbit}<\W>} denotes variable-size bitstrings (varbit)
+with a maximum static width of \W{} bits.  Such a bit-string has a
+\emph{dynamic} width, which must be smaller or equal than \W.  Prior
+to initialization a varbit has a dynamic width of 0.  Varbits support
+a limited set of operations:
+
+\begin{itemize}
+\item Parser extraction into a varbit. This operation sets the dynamic
+  width of the value.  The extracted value must be shorter than the
+  static width \W.
+\item deparsers can use the emit method to insert the contents of a
+  varbit into a packet.
+\end{itemize}
+
+There are no arithmetic, comparisons, bit-wise, or bit extraction
+operators on varbits.  If these are desired, \code{\textbf{varbit}} types
+should not be used.
+
+\SUBSUBSECTION{Operations on arbitrary-precision integers}{intoperations}
+
+The type \infint{} denotes integer values on which computations are
+performed with arbitrary precision.  Table~\ref{tab:intoperations}
+shows all operations that are defined for \infint{} values.  The only
+values that can have the type \infint{} are compile-time constants.
+
+All the operands that participate in an operation must have type
+\infint{}; binary operations (except shift) cannot combine \infint{}
+values with fixed-width types.  For such expressions the compiler will
+always insert an implicit cast; this cast will always convert the
+\infint{} value to the fixed-width type.
+
+All computations on \infint{} values are carried without information
+loss.  For example, multiplying two 1024-bit values may produce a
+2048-bit value (note that concrete representation of \infint{} values
+is not specified).
+
+Casting an \infint{} value to a fixed-width type will preserve the
+least-significant bits.  If the truncation causes significant bits to
+be lost, the compiler should emit a suitable warning. 
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|lp{\descwidth}|} \hline
+    \textbf{Operation} & \textbf{Description} \\ \hline
+
+    \code{==}, \code{!=} & Test for equality/inequality.  Both
+    operands must be \infint{}s.  The result is a Boolean value. \\
+
+    \code{<}, \code{>}, \code{<=}, \code{>=} & Signed comparisons.
+    Both operands must be \infint{}s.  The result is a Boolean
+    value. \\
+    
+    \verb|<<|, \verb|>>| & Right operand must be a positive \infint.
+    The result has the same type as the left operand.  $a$ \verb|<<|
+    $b$ is $a \times 2^b$.  $a$ \code{>>} $b$ is $\lfloor a /
+    2^b\rfloor$ (expressed using real-number division). \\
+
+    \code{+} (unary) & Unary plus sign; behaves as a no-op. \\
+    
+    \code{-} (unary) & Unary negation; the result is an \infint; no
+    information is lost in negation. \\
+
+    \code{+} (binary) & Binary addition; associative.  Both operands
+    must be \infint; result is \infint, and no information is lost in
+    addition (no overflow). \\
+    
+    \code{-} (binary) & Binary subtraction; associative.  Both
+    operands must be \infint; result is \infint; no information is
+    lost in subtraction (no overflow).  \\
+    
+    \code{*} & Binary signed multiplication; associative.  Both
+    inputs must be \infint; result is \infint.  No overflow
+    occurs. \\
+
+    \code{/, \%} & Binary signed division and modulo.  Both inputs
+    must be positive \infint{} values; result is a positive \infint{}
+    value. \\
+
+    \hline
+  \end{tabular}
+  \caption{Operations on arbitrary-precision constant
+    integers.\label{tab:intoperations}}
+\end{table}
+
+Note: bitwise-operations (\code{|}, \code{\&}, \verb|^|, \code{\~{}})
+are \emph{not} defined for \infint{} values.  Division and modulo are
+illegal for negative values (the C language does not give a clear
+semantics to division of signed integers when values are negative).
+
+\SUBSECTION{Casts}{typing-casts}
+
+\SUBSUBSECTION{Explicit casts}{typing-explicit-casts}
+
+P4 supports a very limited range of casts.  Most casts must be
+explicit.  Most binary operations require both operands to have the
+exact same type.  Some type conversions may require multiple chained
+casts.  While more onerous for the user, this approach has several
+benefits:
+
+\begin{itemize}
+\item Makes user intent unambiguous.  
+\item Makes the conversion cost explicit.  Some casts involve
+  sign-extensions, and thus require significant computational
+  resources.
+\item Reduces the number of cases that have to be considered in the P4
+  specification.
+\end{itemize}
+
+A cast expression is written as in C, \code{(typeRef)exp}, where
+\code{typeRef} is a reference to a type (e.g., a type name).
+
+All legal casts are shown in table~\ref{tab:casts}.
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|llp{\descwidth}|} \hline
+    \textbf{From} & \textbf{To} & \textbf{Description} \\ \hline
+
+    \bit{1} & \bool & 0 is false, 1 is true \\
+    \bool & \bit{1} & reverse of the above \\
+    \bit{\W} & \Int{\W} & Preserves all bits unchanged \\
+    \Int{\W} & \bit{\W} & Preserves all bits unchanged \\
+
+    \bit{\W} & \bit{\Wone} & if \W $\geq$ \Wone{} this keeps
+    least-significant \Wone{} bits, if \W $<$ \Wone{} this causes
+    extension with zero bits \\
+    
+    \Int{\W} & \Int{W1} & if \W $\geq$ \Wone{} this keeps least-significant
+    \Wone{} bits, if \W $<$ \Wone{} this causes extension with the sign
+    bits \\
+
+    \infint & \bit{W} & Represents the integer value using two's
+    complement on a large enough number of bits and keeps the
+    least-significant \W{} bits; overflow should lead to a warning,
+    including conversion of a negative number \\
+
+    \infint & \Int{W} & Represents the integer value using two's
+    complement on a large enough number of bits and keeps the
+    least-significant \W{} bits; overflow should lead to a warning \\
+    
+    \hline
+  \end{tabular}
+  \caption{Legal P4 casts.\label{tab:casts}}
+\end{table}
+
+\SUBSUBSECTION{Implicit casts}{implicitcasts}
+
+Unlike C, P4 allows a very limited number of implicit casts.  The
+reason is that often the implicit casts have a non-trivial semantics,
+which is invisible for the programmer.  Implicit casts are allowed in
+P4 only when their meaning is completely unambiguous:
+
+\begin{itemize}
+\item To convert an \infint{} value to a fixed-width type.
+\item In assignments (including passing arguments to method calls),
+  when RHS has a different type from LHS.
+\end{itemize}
+
+Most binary operations that take an \infint{} and a fixed-width
+operand will insert an implicit cast to convert the \infint{} operand to
+the type of the fixed-width operand.
+
+Consider a program with the following values:
+
+%%code
+\begin{lstlisting}[style=P4style]
+bit<8>  x;
+bit<16> y;
+int<8>  z;
+\end{lstlisting}
+%%endcode
+
+Table~\ref{tab:implicit} shows how implicit casts are inserted by the compiler:
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|ll|} \hline
+    \textbf{Expression} & \textbf{Implementation} \\ \hline
+    
+    \code{x+1} & \code{x+(\bit{8})1} \\
+
+    \code{z<0} & \code{z<(\Int{8})0} \\
+
+    \iftoggle{conditionalExpression}{
+    \code{(x==0)?y:0} & \code{(x==(\bit{8})0)?y:(\bit{16})0} \\
+    }
+    
+    \code{x<{}<13} & \code{0}; overflow warning \\
+
+    \code{x|0xFFF} & \code{x|(\bit{8})0xFFF}; overflow warning \\
+    
+    \hline
+  \end{tabular}
+  \caption{Examples of implicit casts.\label{tab:implicit}}
+\end{table}
+
+\SUBSUBSECTION{Illegal expressions}{typing-illegal}
+
+Consider a program with the following values:
+
+%%code
+\begin{lstlisting}[style=P4style]
+bit<8>  x;
+bit<16> y;
+int<8>  z;
+\end{lstlisting}
+%%endcode
+
+Table~\ref{tab:illegal} shows several expressions which are illegal
+because they do not obey the P4 typing rules.  For each expression we
+provide several ways that the expression could be manually rewritten
+into a legal expression.  Note that for some expression there are
+several legal alternatives, which may produce different results!
+
+\begin{table}[!h]
+  \center
+  \begin{tabular}{|lll|} \hline
+    \textbf{Expression} & \textbf{Why is it illegal} & \textbf{Alternatives} \\ \hline
+
+    \code{x+y} & Different widths & \code{(\bit{16})x+y} or \\
+               &                  & \code{x+(\bit{8})y} \\ \hline
+
+    \code{x+z} & Different signs  & \code{(\Int{8})x+z} or \\
+               &                  & \code{x+(\bit{8})z} \\ \hline
+           
+    \code{(\Int{8})y} & Cannot change both size and width & \code{(\Int{8})(\bit{8})y} or  \\
+               &         & \code{(\Int{8})(\Int{16})y} \\ \hline
+
+    \code{y+z} & Different widths and signs & \code{(\Int{8})(\bit{8})y+z} or \\
+               &                  & \code{y+(\bit{16})(\bit{8})z} or \\
+               &                  & \code{(\bit{8})y+(\bit{8})z} or \\
+               &                  & \code{(\Int{16})y+(\Int{16})z} \\ \hline
+
+    \code{x<{}<z} & RHS of shift cannot be signed & \code{x<{}<(\bit{8})z} \\ \hline
+
+    \iftoggle{conditionalExpression}{
+    \code{x?y:0} & First operand must be \bool & \code{(x!=0)?y:0} \\ \hline
+    }
+    
+    \code{x<z}  & Different signs & \code{x<(\bit{8})z} or \\
+                &                 & \code{(\Int{8})x<z} \\ \hline
+    
+    \code{1<{}<x} & Width of 1 unknown & \code{((\bit{32})1)<{}<x} or \\
+                &                 & \code{32w1<{}<x} \\ \hline
+
+    \code{\~{}1}   & Bitwise operation on \infint & \code{\~{}32w1} \\ \hline
+
+    \code{5\&-3} & Bitwise operation on \infint & \code{32w5\&-3} \\
+    
+    \hline
+  \end{tabular}
+  \caption{Illegal P4 expressions.\label{tab:illegal}}
+\end{table}
 
 \SUBSECTION{References}{p4refs}
 
@@ -587,7 +1322,8 @@ bool_expr ::=
 arith_expr ::=
     object_ref | value | 
     max ( arith_expr , arith_expr ) | min ( arith_expr , arith_expr ) |
-    ( arith_expr ) | arith_expr bin_op arith_expr | un_op arith_expr
+    ( arith_expr ) | arith_expr bin_op arith_expr | un_op arith_expr |
+    ( data_type ) arith_expr
 
 bin_op ::= "+" | "*" | - | << | >> | & | "|" | ^
 un_op ::= ~ | -
@@ -1121,8 +1857,7 @@ given field set calculation on the packet. Note that although this declaration
 may occur anywhere in the P4 program, the declaration \textbf{should} be placed immediately 
 after the header instance declaration for the field referenced.
 
-Fields that are variable length (width is "*") are not allowed to be declared 
-as calculated fields.
+Fields with type \texttt{varbit} cannot be declared as calculated fields.
 
 The \texttt{verify} option indicates that the parser should calculate the expected 
 value and check if that value is stored in the indicated field. If the value 
@@ -1503,13 +2238,10 @@ considerations:
 \item
 Only headers which are valid are serialized.
 \item
-If the parse graph is acyclic, then a topological ordering (that is, a linear 
-order that respects the parse graph's ordering) can be generated and used 
-to determine the order by which headers should be serialized.
-\item
-In general, cycles occur in the parse graph when parsing header stacks or 
-a set of optional headers.  These may be treated as a single node in the parse 
-graph and serialized as a group. 
+For some parse graphs it is impossible to infer a deparser that
+produces headers in the same order as they may appear in the input
+packets.  For example, consider the case when two headers A and B may
+appear in either order in the input packet.
 \item
 Metadata fields are not serialized directly (as they are not parsed).  Metadata 
 fields may be copied to packet header fields in \matchaction processing, allowing 
@@ -1813,7 +2545,7 @@ of the register to be copied to a packet's metadata and be available
 for matching in subsequent tables.
 
 If a register is declared with a layout declaration, the header type must 
-be fixed length (no "\texttt{*"} width fields).
+be fixed length (no \texttt{varbit} fields).
 
 A register reference is done with array syntax.
 
@@ -2124,12 +2856,9 @@ A register reference.
 \end{itemize}
 
 
-This allows the programmer to copy one field to another. If the width of 
-the source field, \texttt{value}, or the \texttt{mask} is greater than that of the destination 
-field, then the value in the source field is first truncated to the low order 
-bits to fit into the destination field. If the width of the source field 
-is less than that of the destination, it will be coerced to the larger field 
-size according to its signedness.
+This allows the programmer to copy one field to another.  An implicit
+cast is inserted by the compiler if the types of the source and
+destination differ, as described in Section~\ref{sec:p4casting}.
 
 If the parent header instance of \texttt{dest} is not valid, the action has no effect. 
 If \texttt{value} is a field reference and its parent header is not valid, the operation 
@@ -2139,26 +2868,6 @@ If \texttt{mask} is specified, then the field becomes \texttt{(current_value \& 
 (value \& mask)}.  If \texttt{mask} is not specified, the operation has the effect 
 of a "set", modifying all bits of the destination.
 
-}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\primact{add_to_field(dest, value)}
-{ % Summary
-Add a value to a field.
-}
-{ % Parameters
-\paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified.}
-\paramdoc{value}{(VAL, FLD or R-REF) The value to use.}
-}
-{ % Description
-The \texttt{dest} field's value is updated by adding the value parameter. The \texttt{value} parameter 
-may be from a table parameter, an immediate a value, a field reference or 
-a register reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
-and its parent header is not valid, then no change is made to \texttt{dest}. A description 
-of the logical behavior follows in the Section~\ref{sec:fieldasgmt} below.
-If \texttt{value} is an immediate value, it may 
-be negative.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2179,8 +2888,7 @@ table parameter, an immediate a value, a field reference or a register
 reference; see \texttt{modify_field} above.  If either \texttt{value}
 is a field reference and its parent header is not valid, then no
 change is made to \texttt{dest}.  A description of the logical
-behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
-\texttt{value} is an immediate value, it may be negative.
+behavior follows in the Section~\ref{sec:fieldasgmt} below.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2602,7 +3310,7 @@ compound_action_function_declaration ::=
 action_param_list ::= action_param [, action_param]*
 action_param ::= param_qualifier* data_type param_name
 
-param_qualifier ::= in | inout | optional
+param_qualifier ::= in | inout
 
 action_statement ::= 
     action_name ( [ arg_list ] ) ; |
@@ -2635,19 +3343,10 @@ by the code enclosed by the parameter list.
 \item
 \textit{inout:} This parameter has no read/write usage restrictions. If a
 directionality is not otherwise specified, this is assumed by default.
-\item
-\textit{optional:} This parameter is optional and may be omitted.
 \end{itemize}
 \item
 Compound actions must be declared with bodies, even if those bodies are empty.
 Primitive actions must be declared without bodies.
-\item
-For compound actions, all parameters specified in the signature are required. 
-Optional parameters are \textit{not} supported.
-\item
-For primitive actions, optional parameters may only be declared at the end of
-the parameter list. When calling primitive actions, once one optional parameter
-is omitted \textit{all} remaining optional parameters must be omitted.
 \end{itemize}
 
 Not all targets will support all forms of action expression. In particular:
@@ -3459,7 +4158,6 @@ attribute_declaration ::=
     attribute attribute_name {
         type : attribute_type ;
         [ optional ; ]
-        [ local_variables : { identifier_list+ } ]
     }
 
 identifier_list ::= variable_name ;
@@ -3472,21 +4170,9 @@ The extern type indicates that the P4 programmer can instantiate objects of
 type \textit{type_name}. Each attribute declaration inside the extern type 
 indicates an attribute its instances contain, and the attribute's expected type.
 
-In addition to standard P4 type specifications that appear in signatures
-and variable declarations, an attribute type may also be \textit{void}.
-In the latter case, the attribute is immediately followed by a semicolon 
-and has no value other than its presence (or lack of absence).
 Attributes marked with the \textit{optional} property are not required to
 appear in object instantiations, though the compiler backend may impose further
 rules as to when an attribute truly is or is not optional.
-
-Attributes of type \textit{expression} may include identifiers named in the
-\textit{local_variables} property (in addition to P4 identifiers
-already in the current scope). The actual types and values of these identifiers
-is entirely determined by the compiler backend. The expression is not
-necessarily evaluated upon object instantiation; the documentation for the
-extern type supplied the target provider is responsible for explaining when 
-exactly it is evaluated.
 
 Each method declaration inside the extern type indicates a method that can be
 called on its instances, with standard \textit{object.method(parameters)} 
@@ -3627,8 +4313,6 @@ p4_declaration ::=
     extern_type_declaration |
     extern_instance_declaration |
     control_function_declaration |
-    typedef_declaration
-
 const_value ::=
     bool_value |
     [ "+" | - ] [ width_spec ] unsigned_value
@@ -3676,12 +4360,7 @@ data_type ::=
     bit |
     bit < decimal_digit+ > |
     varbit < decimal_digit+ > |
-    int < decimal_digit+ > | 
-    void
-
-typedef_declaration ::=
-    typedef type_spec new_type_name ;
-
+    int < decimal_digit+ >
 object_ref ::=
     instance_name |
     header_ref |
@@ -3698,7 +4377,8 @@ bool_expr ::=
 arith_expr ::=
     object_ref | value | 
     max ( arith_expr , arith_expr ) | min ( arith_expr , arith_expr ) |
-    ( arith_expr ) | arith_expr bin_op arith_expr | un_op arith_expr
+    ( arith_expr ) | arith_expr bin_op arith_expr | un_op arith_expr |
+    ( data_type ) arith_expr
 
 bin_op ::= "+" | "*" | - | << | >> | & | "|" | ^
 un_op ::= ~ | -
@@ -3867,7 +4547,7 @@ compound_action_function_declaration ::=
 action_param_list ::= action_param [, action_param]*
 action_param ::= param_qualifier* data_type param_name
 
-param_qualifier ::= in | inout | optional
+param_qualifier ::= in | inout
 
 action_statement ::= 
     action_name ( [ arg_list ] ) ; |
@@ -3953,7 +4633,6 @@ attribute_declaration ::=
     attribute attribute_name {
         type : attribute_type ;
         [ optional ; ]
-        [ local_variables : { identifier_list+ } ]
     }
 
 identifier_list ::= variable_name ;
@@ -4049,13 +4728,11 @@ signed
 static
 table
 true
-typedef
 update
 valid
 value
 varbit
 verify
-void
 width
 \end{Verbatim}
 
@@ -4862,48 +5539,6 @@ action_selector ecmp_selector {
 }
 \end{lstlisting}
 %%endcode
-
-\SUBSECTION{Feature Proposals for Future Versions}{featureproposals}
-
-P4 is expected to evolve and develop as its features are exercised and issues 
-are found. Incremental improvements will be released with minor version number 
-updates. This section lists features under consideration for coming P4 versions.
-
-
-\begin{table}[H]
-\begin{center}
-\begin{tabular}{| p{.4\textwidth} | p{.6\textwidth} |} \hline
-\textbf{Title} &
-\textbf{Summary} \\ \hline
-Enum types &
-Allow declaration and comparison of enum types similar to that of C
-or Java \\ \hline
-Support Assignment Operators &
-Allow fields and headers to be manipulated with assignment operators 
-such as = or +=. \\ \hline
-Better Encapsulation Support &
-Support better action primitives and parsing functionality for encapsulation 
-applications. \\ \hline
-Run Time Reconfiguration &
-Consider language features and conventions that would better enable consistent 
-run time reconfigurability. \\ \hline
-Field and Header Aliasing &
-Support a mechanism allowing references to different field or header instances 
-via indirection (an alias) to allow the application of policy across multiple 
-packet formats simultaneously.  \\ \hline
-Flexible feature inclusion &
-Add facilities allowing compile or run time selection of features based on 
-availability. \\ \hline
-Debugging Features &
-Support better debuggability with the addition of features such as object 
-introspection, variable logging levels and event triggering. \\ \hline
-Indirect Table Matching &
-Support database-like tables which can be queried multiple times by \matchaction. \\ \hline
-\end{tabular}
-\end{center}
-\caption{Feature Proposals}
-\label{tab:featureprops}
-\end{table}
 
 \SUBSECTION{References}{references}
 
