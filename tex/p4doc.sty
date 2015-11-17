@@ -15,7 +15,7 @@
 
 \definecolor{bnfgreen}{HTML}{E6FFD4}
 \definecolor{codeblue}{HTML}{DEF0FE}
-\definecolor{nonp4orange}{HTML}{FFEFC3}
+\definecolor{actionorange}{HTML}{FFEFC3}
 
 % This accumulates the BNF for final summary
 \newcommand\bnfsummary{}
@@ -179,6 +179,41 @@
 \newcommand{\matchaction}{match\raise.30ex\hbox{\smaller{+}}{\allowbreak}action\xspace}
 \newcommand{\Matchaction}{Match\raise.30ex\hbox{\smaller{+}}{\allowbreak}action\xspace}
 \newcommand{\MatchAction}{Match\raise.30ex\hbox{\smaller{+}}{\allowbreak}Action\xspace}
+
+% Define a primitive action
+%   Macro params are:  name, summary, parameters, description
+%   Parameters (for action) is a sequence of \paramdoc decs
+\newcommand{\primact}[4]{%
+\begin{tabular}{|l|}
+\hline
+\cellcolor{actionorange}%
+\begin{minipage}{.95\textwidth}%
+\vspace{2mm}%
+\texttt{#1}%
+\vspace{2mm}%
+\newline%
+\textbf{Summary}%
+\begin{adjustwidth}{1.5cm}{4mm}%
+#2%
+\end{adjustwidth}%
+\ifthenelse{\isempty{#3}}{}{%
+\textbf{Parameters}%
+\begin{adjustwidth}{1.3cm}{4mm}%
+\begin{tabularx}{\textwidth-1.3cm}{p{3cm}X}%
+#3%
+\end{tabularx}%
+\end{adjustwidth}%
+}% if #3 empty
+\textbf{Description}%
+\begin{adjustwidth}{1.5cm}{4mm}%
+#4%
+\end{adjustwidth}%
+\vspace{2mm}%
+\end{minipage}%
+\\
+\hline
+\end{tabular}%
+}
 
 \newcommand{\docauthor}{Author}
 \newcommand{\doctitle}{Title}

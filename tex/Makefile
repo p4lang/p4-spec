@@ -8,4 +8,4 @@ p4.tex: p4.pt pretext.py
 	./pretext.py p4.pt --output=$@
 
 clean:
-	rm -f *.aux *.log *.out *.bbl *.blg *~ *.bak *.ps *.pdf *.tpt
+	rm -f *.tex *.aux *.log *.out *.bbl *.blg *~ *.bak *.ps *.pdf *.tpt
