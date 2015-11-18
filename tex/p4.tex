@@ -26,6 +26,7 @@
 %%not_a_keyword ternary
 %%not_a_keyword exact
 %%not_a_keyword lpm
+%%not_a_keyword index
 
 %%not_a_keyword length
 
@@ -105,7 +106,7 @@ consisting of a parser and a set of \matchaction table resources, divided
 between ingress and egress. The parser identifies the headers present in 
 each incoming packet. Each \matchaction table performs a lookup on a subset 
 of header fields and applies the actions corresponding to the first match 
-within each table. Figure 1 shows this model.
+within each table. Figure~\ref{fig:abstractmodel} shows this model.
 
 P4 itself is protocol independent but allows for the expression of forwarding 
 plane protocols. A P4 program specifies the following for each forwarding 
@@ -182,7 +183,7 @@ of packets.  This is described in detail in Section~\ref{sec:recirc}.
 P4 focuses on the specification of the parser, \matchaction tables and the 
 control flow through the pipelines. Programmers control this by writing a 
 P4 program which specifies the switch configuration as shown at the top of 
-Figure 1. 
+Figure~\ref{fig:abstractmodel}. 
 
 A machine that can run a P4 program is called \textit{target}. Although a target 
 may directly execute a P4 program, it is assumed in this document that the 
@@ -575,7 +576,7 @@ The P4 base types are shown in Table~\ref{tab:summary}.
     \textbf{Type} & \textbf{Description} & \textbf{Example} &
     \textbf{Section} \\ \hline
     
-    \bool & Boolean values & \bool & \ref{sec:bool} \\ 
+    \bool & Boolean values & \bool & \ref{sec:boolean} \\ 
     \bit{\W} & Fixed-width unsigned integers of an arbitrary width~\W &
     \bit{20} & \ref{sec:unsigned} \\
     \Int{\W} & Fixed-width signed integers of an arbitrary width~\W,
@@ -637,7 +638,7 @@ P4 does not support saturated integer types for the following reasons:
   operations.
 \end{itemize}
 
-\SUBSUBSECTION{Boolean}{typing-boolean}
+\SUBSUBSECTION{Boolean}{boolean}
 
 The Boolean type contains two values, \code{\textbf{false}} and
 \code{\textbf{true}}.  The type is written as \bool.  Operations on
@@ -1651,7 +1652,7 @@ Used primarily for parsing header data into a stack in a loop.
 \end{itemize}
 
 The special primitive actions \texttt{push()} and \texttt{pop()} are used to add 
-and remove headers from the stack inside a \matchaction table. See Section~\ref{sec:xxx} 
+and remove headers from the stack inside a \matchaction table. See Section~\ref{sec:primitiveactions} 
 for more details.
 
 \SUBSECTION{Header and Field References}{headerreferences}
@@ -1859,7 +1860,7 @@ Fields with type \texttt{varbit} cannot be declared as calculated fields.
 
 The \texttt{verify} option indicates that the parser should calculate the expected 
 value and check if that value is stored in the indicated field. If the value 
-is not equal, then a \texttt{p4_pe_checksum} exception is generated; see 6.6.1. 
+is not equal, then a \texttt{p4_pe_checksum} exception is generated; see Section~\ref{sec:standardparserex}. 
 Standard Parser Exceptions. This check occurs at the end of parsing and is 
 performed only if \texttt{field_ref} is valid.
 
@@ -1875,7 +1876,7 @@ applies, the field retains its value from the \matchaction pipeline.
 %%%%%%
 
 P4 models the parser as a state machine. This can be represented as a parse 
-graph with each state a node and the state transitions as edges. Figure 2 
+graph with each state a node and the state transitions as edges. Figure~\ref{fig:parsegraphs} 
 shows a very simple example. Note that this figure identifies a header with 
 each state. While P4 supports this approach, it does not require it. A node 
 in the parse graph may be purely a decision node and not bound to a particular 
@@ -1988,8 +1989,8 @@ A \texttt{select} operation is defined to allow branching to different
 states depending on expressions involving fields or packet data.
 
 If headers are to be extracted when entering a state, these are
-signaled explicitly by calls to an extract function (defined in~\ref{xxx}) 
-at the beginning of the parser function definition (defined in~\ref{xxx}).
+signaled explicitly by calls to an extract function (defined in~\ref{sec:extract}) 
+at the beginning of the parser function definition (defined in~\ref{sec:parserbnf}).
 
 \SUBSECTION{Value Sets}{valuesets}
 
@@ -2107,14 +2108,13 @@ The field reference \texttt{current(...)} allows the parser to reference bits th
 have not yet been parsed into fields. Its first argument is the bit offset 
 from the current offset and its second argument is the bit width.  The result 
 is treated as an unsigned field-value of the given bit width. It is converted 
-to the metadata field according to the conversion rules described in Appendix 
-17.5. Field Value Conversions.
+to the metadata field according to the conversion rules described in Section~\ref{sec:implicitcasts}.
 
 In a \texttt{set_metadata} statement, the first argument (\texttt{field_ref}) 
 is the destination of the operation, and the second the source. The destination 
 argument must be a metadata instance. If the evaluated value of the second argument 
 has a different width than the destination metadata field, then conversion occurs 
-as described in Section~\ref{sec:fieldconversions}. Targets may introduce 
+as described in Section~\ref{sec:implicitcasts}. Targets may introduce 
 limitations to the level of complexity they support for the \texttt{general_expr} 
 argument.
 
@@ -3536,7 +3536,7 @@ field_match ::= field_or_masked_ref : field_match_type ;
 field_or_masked_ref ::= 
     header_ref | field_ref | field_ref mask const_value
 
-field_match_type ::= exact | ternary | lpm | range | valid
+field_match_type ::= exact | ternary | lpm | index | range | valid
 
 table_actions ::= 
     action_specification | action_profile_specification
@@ -3592,6 +3592,8 @@ a prefix by having a divide between 1s in the high order bits and 0s in the
 low order bits. The number of 1 bits gives the length of the prefix which 
 is used as the priority of the entry.
 \item
+\texttt{index}: The field value is used as the index of a table entry.
+\item
 \texttt{range}: Each entry specifies a low and high value for the entry and the field 
 matches only if it is in this range. Range end points are inclusive. Signedness 
 of the field is used in evaluating the order.
@@ -3632,9 +3634,9 @@ action function when it is called.
 \end{itemize}
 
 \item
-A default action is taken when no table entry matches.  This action is specified 
+A default action is taken when no table entry matches. This action is specified 
 at run time. If no default action is specified and no entry matches, the table 
-does not affect the packet and processing continues according to the imperative 
+does not affect the packet, and processing continues according to the imperative 
 control flow.
 \item
 If \texttt{reads} is not present, the table will always execute the default action. 
@@ -3652,6 +3654,11 @@ not valid. As a reminder, the table does not have to explicitly include a
 match on a field's validity to safely match on its value - invalid fields 
 will never match on a table entry that includes it. Note that metadata fields 
 are \textit{always} valid.
+\item
+The match type \texttt{index} cannot be used with other match types.
+A table with the match type \texttt{index} can still lead to a miss if the table 
+is not fully populated or the index is out of range. For a table with the 
+\texttt{index} match type, targets may or may not support a default action even upon a miss. 
 \item
 The \texttt{min_size} attribute indicates the minimum number of entries required 
 for the table. If this cannot be supported, an error will be signaled when 
@@ -3841,7 +3848,7 @@ The run time table programing interfaces must have access to this information
 to properly program the tables declared in the P4 program.
 
 The flow of packets through a forwarding element is as follows. Recall that, 
-as depicted in Figure 1, processing is divided between ingress and egress 
+as depicted in Figure~\ref{fig:abstractmodel}, processing is divided between ingress and egress 
 with the packet possibly being buffered between the two. The parser normally 
 terminates by indicating the control function used to begin processing.  Upon 
 completion of that control function, the packet is submitted to the buffering 
@@ -3951,7 +3958,7 @@ of clone instances supported.
 \end{figure}
 
 
-Figure 3 shows the paths for a cloned packet submitted to the ingress.  The 
+Figure~\ref{fig:ingressclone} shows the paths for a cloned packet submitted to the ingress.  The 
 source may be from the ingress itself, indicating that a copy of the original 
 packet is given to the parser, or from the egress, in which case a copy of 
 the packet as it is transmitted is created and submitted to the parser. 
@@ -3965,7 +3972,7 @@ the packet as it is transmitted is created and submitted to the parser.
     \label{fig:egressclone}
 \end{figure}
 
-Figure 4 shows the paths for a cloned packet submitted to the egress pipeline. 
+Figure~\ref{fig:egressclone} shows the paths for a cloned packet submitted to the egress pipeline. 
  The source may be from the ingress, indicating that a copy of the original 
 packet as parsed is submitted to the Buffering Mechanism; or the source may 
 be from the egress, in which case a copy of the packet (and some of its Parsed 
@@ -4069,7 +4076,7 @@ being the primitive action used would be \texttt{clone_e2e}.
     \label{fig:recirc}
 \end{figure}
 
-Figure 5 shows the paths for resubmitting a packet to the parser for
+Figure~\ref{fig:recirc} shows the paths for resubmitting a packet to the parser for
 processing.  The top path shows a resubmit process.  The
 \texttt{resubmit} action is signalled in the ingress pipeline. Upon
 completing that pipeline, the \textbf{original} packet seen on ingress
@@ -4559,7 +4566,7 @@ field_match ::= field_or_masked_ref : field_match_type ;
 field_or_masked_ref ::= 
     header_ref | field_ref | field_ref mask const_value
 
-field_match_type ::= exact | ternary | lpm | range | valid
+field_match_type ::= exact | ternary | lpm | index | range | valid
 
 table_actions ::= 
     action_specification | action_profile_specification
