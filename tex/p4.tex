@@ -489,17 +489,18 @@ P4 actions consist of signatures which look like the typed
 parameter lists of traditional programming languages. The types of the
 parameters in these signatures must be one of the above.
 
+Section~\ref{sec:p4casting} explains the details of \textit{data_type}.
 The \textit{bit} type represents a bitstring of the length specified within
 angle brackets (a compile time constant). If the angle brackets are omitted, the
 length is implied to be 1. Most of the data processed by P4 is stored in a
 bitstring of some sort, as described in Section~\ref{sec:p4casting}.
-
 The \textit{varbit} type represents a bitstring with a length that is variable
 at run time, but \textit{at most} the length specified within angle brackets
 (again, a compile time constant). This data type is used for quickly parsing
 through variable-length headers and does not currently have utility beyond
 that. More functionality may be added for this type in subsequent versions of P4
 (such as the ability to read it from a \matchaction pipeline).
+The \textit{int} type represetns a fixed-width signed integer
 
 Types which are followed by an optional identifier like \textit{header} can be 
 used in two ways:
@@ -636,7 +637,7 @@ P4 does not support saturated integer types for the following reasons:
   operations.
 \end{itemize}
 
-\SUBSUBSECTION{Boolean\label{sec:bool}}{typing-boolean}
+\SUBSUBSECTION{Boolean}{typing-boolean}
 
 The Boolean type contains two values, \code{\textbf{false}} and
 \code{\textbf{true}}.  The type is written as \bool.  Operations on
@@ -722,7 +723,7 @@ according to the rules described below.
 All operations that can be performed on infinite-precision integers
 are described in Section~\ref{sec:intoperations}.
 
-\SUBSUBSECTION{Integer literal types}
+\SUBSUBSECTION{Integer literal types}{integerliteral}
 
 As described in Section~\ref{sec:valuespec}, there are three types of integer
 literals (constants):
@@ -4102,7 +4103,7 @@ purpose, P4 allows the specification of extern object types that the
 user can instantiate in their P4 program.
 
 Extern types are provided by both standardized and target-specific libraries.
-P4 programmers are not intended to define their own extern types, so much
+P4 programmers are not supposed to define their own extern types, so much
 as use the set of supported extern types as a palette of components from which
 to compose their programs. 
 
