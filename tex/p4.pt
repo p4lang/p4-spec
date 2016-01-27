@@ -1653,11 +1653,14 @@ depend on the context.
 \SUBSECTION{Field Lists}{fieldlists}
 
 In many cases, it is convenient to specify a sequence of fields. For example, 
-a hash function may take a sequence of fields as input or a checksum may be 
-calculated based on a sequence of fields.  P4 allows such declarations. Each 
+a hash function may take a sequence of fields as input, or a checksum may be 
+calculated based on a sequence of fields. P4 allows such declarations. Each 
 entry may be a specific field instance reference, a header instance (which 
-is equivalent to listing all the header's fields in order) or a fixed value. 
-Packet headers and metadata may be referenced in a field list.
+is equivalent to listing all the header's fields in order), or a fixed value. 
+Packet headers and metadata may be referenced in a field list. If a field list
+contains an invalid field (i.e., if the field's parent header is invalid) when
+it is evaluated (e.g., for hash calculation or checksum generation),
+then such an evaluation may lead to an undefined behavior.
 
 %%bnf
 field_list_declaration ::=
@@ -2176,8 +2179,11 @@ Only headers which are valid are serialized.
 \item
 For some parse graphs it is impossible to infer a deparser that
 produces headers in the same order as they may appear in the input
-packets.  For example, consider the case when two headers A and B may
-appear in either order in the input packet.
+packets. For example, consider the case when two headers A and B may
+appear in either order in the input packet. The exact deparsing behavior
+in such a case is currently un-defined\footnote{We recognize this problem and
+intend address it in the upcoming spec release by introducing an optional feature
+via which one can specify the desired deparsing behavior explicitly.}.
 \item
 Metadata fields are not serialized directly (as they are not parsed).  Metadata 
 fields may be copied to packet header fields in \matchaction processing, allowing 
@@ -2395,7 +2401,7 @@ Meter declarations follow those of counters.
 meter_declaration ::= 
     meter meter_name {
         type : meter_type ;
-        result : field_ref ;
+        [ result : field_ref ; ]
         [ direct_or_static ; ]
         [ instance_count : const_value ; ]
     }
@@ -2403,20 +2409,41 @@ meter_declaration ::=
 meter_type ::= bytes | packets
 %%endbnf
 
-Meters may be declared to measure packets or bytes. The configuration
-of meters is not defined by P4, but a meter is assumed to return a
-status (usually called a color). That status is stored in the field
-specified by the \texttt{result} attribute.
+Meters are stateful objects that measure the data rate, either in 
+packets or bytes per second, and output the result as one of three 
+colors: red, yellow or green, which are encoded as a 2-bit-wide field.
+
+The encoding of these values is target-specific. It is, however, 
+expected that each target will define the appropriate constants: 
+\texttt{P4_METER_COLOR_RED}, \texttt{P4_METER_COLOR_YELLOW},
+and \texttt{P4_METER_COLOR_GREEN}, which are understood by the compiler
+and hence can be used in a portable P4 program.
+
+P4 specification does not currently mandate any specific metering 
+algorithm for the meter implementations, and hence ascribing the 
+detailed semantics of the colors is beyond the scope of P4. While 
+the three-color marking algorithms, specified in RFC 2697 and RFC 2698 
+serve as good references, other options are also possible. Subsequently, 
+meter configuration also remains target-specific and not defined 
+in P4\footnote{In general, any run-time configuration aspects related 
+to the control plane are currently out of scope of this P4 spec. In future, 
+the P4 community may address these issues in a separate spec.}.
 
 If the meter is declared with the \texttt{direct} attribute, one meter
-is associated with each entry in the named table. In this case, no
-meter index is required to determine which cell is being used. However
-the meter call is needed to identify where the return state is stored.
+is associated with each entry in the named table. In this case, no 
+meter action needs to be given for the table actions; the meters are 
+automatically updated whenever the corresponding entry is applied,
+and the meter result (i.e., color) is stored in the field specified 
+by the \texttt{result} attribute. Hence, the \texttt{result} attribute
+is required if a meter is declared with the \texttt{direct} attribute.
+Consequently meter names declared as direct are not allowed to be 
+referenced in the \texttt{execute_meter} primitive, and a compiler must
+raise an error if this occurs. 
 
-If a meter is declared with the \texttt{static} attribute, it may only
-be referenced by actions invoked in the indicated table. The compiler
-must raise an error if a different table attempts to invoke an action
-with this meter.
+If the meter is declared with the \texttt{static} attribute, it may only
+be referenced by actions invoked in the indicated table via the \texttt{execute_meter}
+primitive. The compiler must raise an error if a different table 
+attempts to invoke an action with this meter.
 
 The \texttt{instance_count} attribute indicates the number of
 instances (cells) of the meter to allocate.  The
@@ -2933,7 +2960,7 @@ this action.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{meter(meter_ref, index, field)}
+\primact{execute_meter(meter_ref, index, field)}
 { % Summary
 Execute a meter operation.
 }
@@ -2948,8 +2975,7 @@ meter is direct, then \texttt{index} is ignored as the table entry determines wh
 cell to reference. The length of the packet is passed to the meter. The state 
 of meter is updated and the meter returns information (a "color") which is 
 stored in \texttt{field}. If the parent header of \texttt{field} is not valid, the meter 
-state is updated, but the state of the meter is discarded.
-
+state is updated, but the color of the packet is discarded.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4550,7 +4576,7 @@ meter per_dest_by_source {
 }
 
 action meter_pkt(in int<12> meter_idx) {
-    meter(per_dest_by_source, meter_idx, local_metadata.color);
+    execute_meter(per_dest_by_source, meter_idx, local_metadata.color);
 }
         
 // Mark packet color, for uplink ports only
@@ -4906,7 +4932,7 @@ action meter_pkt(in int<12> meter_idx) {
     // Save index and previous color in packet metadata
     modify_field(local_metadata.meter_idx, meter_idx);
     modify_field(local_metadata.prev_color, prev_color[meter_idx]);
-    meter(per_dest_by_source, meter_idx, local_metadata.color);
+    execute_meter(per_dest_by_source, meter_idx, local_metadata.color);
 }
 
 

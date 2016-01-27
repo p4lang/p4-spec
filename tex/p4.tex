@@ -108,8 +108,9 @@ each incoming packet. Each \matchaction table performs a lookup on a subset
 of header fields and applies the actions corresponding to the first match 
 within each table. Figure~\ref{fig:abstractmodel} shows this model.
 
-P4 itself is protocol independent but allows for the expression of forwarding 
-plane protocols. A P4 program specifies the following for each forwarding 
+P4 itself is protocol independent, and hence users can define the forwarding
+behavior of their own data-plane protocols in P4.
+A P4 program specifies the following for each forwarding 
 element.
 
 \begin{itemize}
@@ -180,7 +181,7 @@ transmitted.
 Although not shown in this diagram, P4 supports recirculation and cloning 
 of packets.  This is described in detail in Section~\ref{sec:recirc}.
 
-P4 focuses on the specification of the parser, \matchaction tables and the 
+P4 focuses on the specification of the parser, \matchaction tables, and the 
 control flow through the pipelines. Programmers control this by writing a 
 P4 program which specifies the switch configuration as shown at the top of 
 Figure~\ref{fig:abstractmodel}. 
@@ -1030,18 +1031,16 @@ shift operations:
 
 \SUBSUBSECTION{\code{varbit} operations}{varbitoperations}
 
-The type \code{\textbf{varbit}<\W>} denotes variable-size bitstrings (varbit)
+The type \code{\textbf{varbit}<\W>} denotes variable-size bitstrings
 with a maximum static width of \W{} bits.  Such a bit-string has a
 \emph{dynamic} width, which must be smaller or equal than \W.  Prior
 to initialization a varbit has a dynamic width of 0.  Varbits support
-a limited set of operations:
+the following operation:
 
 \begin{itemize}
 \item Parser extraction into a varbit. This operation sets the dynamic
   width of the value.  The extracted value must be shorter than the
   static width \W.
-\item deparsers can use the emit method to insert the contents of a
-  varbit into a packet.
 \end{itemize}
 
 There are no arithmetic, comparisons, bit-wise, or bit extraction
@@ -1401,6 +1400,9 @@ indicates it is of variable length.
 If all fields are fixed width (no fields of type \textit{varbit}) then the header is 
 said to be of \textit{fixed length}. Otherwise it is of \textit{variable length}.
 \item
+A header length in bits \textit{must} be a multiple of eight. In other words, a 
+header can have only a natural number of bytes.
+\item
 The \texttt{length} attribute specifies an expression whose evaluation gives
 the length  of the header in \textit{bytes} for variable length headers. 
 \begin{itemize}
@@ -1699,11 +1701,14 @@ depend on the context.
 \SUBSECTION{Field Lists}{fieldlists}
 
 In many cases, it is convenient to specify a sequence of fields. For example, 
-a hash function may take a sequence of fields as input or a checksum may be 
-calculated based on a sequence of fields.  P4 allows such declarations. Each 
+a hash function may take a sequence of fields as input, or a checksum may be 
+calculated based on a sequence of fields. P4 allows such declarations. Each 
 entry may be a specific field instance reference, a header instance (which 
-is equivalent to listing all the header's fields in order) or a fixed value. 
-Packet headers and metadata may be referenced in a field list.
+is equivalent to listing all the header's fields in order), or a fixed value. 
+Packet headers and metadata may be referenced in a field list. If a field list
+contains an invalid field (i.e., if the field's parent header is invalid) when
+it is evaluated (e.g., for hash calculation or checksum generation),
+then such an evaluation may lead to an undefined behavior.
 
 %%bnf
 \begin{lstlisting}[style=BNFstyle]
@@ -2238,8 +2243,11 @@ Only headers which are valid are serialized.
 \item
 For some parse graphs it is impossible to infer a deparser that
 produces headers in the same order as they may appear in the input
-packets.  For example, consider the case when two headers A and B may
-appear in either order in the input packet.
+packets. For example, consider the case when two headers A and B may
+appear in either order in the input packet. The exact deparsing behavior
+in such a case is currently un-defined\footnote{We recognize this problem and
+intend address it in the upcoming spec release by introducing an optional feature
+via which one can specify the desired deparsing behavior explicitly.}.
 \item
 Metadata fields are not serialized directly (as they are not parsed).  Metadata 
 fields may be copied to packet header fields in \matchaction processing, allowing 
@@ -2255,20 +2263,20 @@ them to be serialized for egress.
 Metadata is state associated with each packet. It can be treated like a set 
 of variables associated with each packet, read and written by actions executed 
 by tables. However, some metadata has special significance to the operation 
-of the switch. This is called \textit{Intrinsic Metadata} as it has semantics intrinsic 
-to the operation of the machine. Examples include the ingress port number 
+of the target. This is called \textit{intrinsic metadata} as it has semantics intrinsic 
+to the operation of the target machine. Examples include the ingress port number 
 or the egress selection. The first is an example of read only data which is 
-set by the switch when the packet arrives; the second is set by table actions, 
+set by the target when the packet arrives; the second is set by table actions, 
 but then is processed by the Buffer Mechanism and results in the packet being 
 sent to a particular egress port or ports.
 
-This specification identifies \textit{Standard Intrinsic Metadata} fields for which 
+This specification identifies \textit{standard intrinsic metadata} fields for which 
 support is mandatory for P4 compliant targets. Although these fields are mandatory, 
 the format of these fields may be target specific. The definition for these 
 formats must be provided by the target, either as a header to be automatically 
 included by a compiler, or internally in the compiler's implementation.
 
-Standard Intrinisic Metadata is called out in this section either because 
+Standard intrinisic metadata is called out in this section either because 
 it is automatically populated (\texttt{ingress_port} for instance) or because it 
 is necessary to describe how the abstract machine operates (\texttt{egress_port} for 
 instance).
@@ -2276,7 +2284,10 @@ instance).
 Targets may provide their own definitions of intrinsic metadata in addition to the standard
 intrinsic metadata, although programs which depend on such definitions may not be portable.
 
-This table shows the fields defined for the metadata instance \texttt{standard_metadata}:
+This table shows the fields defined for the metadata instance 
+\texttt{standard_metadata}\footnote{We will thoroughly specify the details of these metadata 
+-- including their exact meaning and specific availability scope (within a target) -- in 
+the next spec revision. See Section~\ref{addendum} for our current tentative approach.}.
 
 \begin{table}[H]
 \begin{center}
@@ -2288,8 +2299,8 @@ The port on which the packet arrived. Set prior to parsing. Always defined.
 Read only. \\ \hline
 \texttt{packet_length} &
 The number of bytes in the packet.  For Ethernet, does not include the CRC. 
- Set prior to parsing. Cannot be used for matching or referenced in actions 
-if the switch is in "cut-through" mode.  Read only. \\ \hline
+Set prior to parsing. Cannot be used for matching or referenced in actions 
+if the switch is in "cut-through" mode. Read only. \\ \hline
 \texttt{egress_spec} &
 Specification of an egress. Undefined until set by \matchaction during
 ingress processing.  This is the ``intended'' egress as opposed to the
@@ -2313,8 +2324,7 @@ Represents the type of instance of the packet:
 \item egress clone
 \item recirculated
 \end{itemize}
-TBD: Either flags or type value; for example, could a clone be recirculated? 
-Do we need a counter too?  \\ \hline
+\\ \hline
 \texttt{parser_status} &
 Result of the parser. 0 means no error. Otherwise, the value indicates what 
 error occurred during parsing. Specific representation is TBD. \\ \hline
@@ -2462,7 +2472,7 @@ Meter declarations follow those of counters.
 meter_declaration ::= 
     meter meter_name {
         type : meter_type ;
-        result : field_ref ;
+        [ result : field_ref ; ]
         [ direct_or_static ; ]
         [ instance_count : const_value ; ]
     }
@@ -2471,20 +2481,41 @@ meter_type ::= bytes | packets
 \end{lstlisting}
 %%endbnf
 
-Meters may be declared to measure packets or bytes. The configuration
-of meters is not defined by P4, but a meter is assumed to return a
-status (usually called a color). That status is stored in the field
-specified by the \texttt{result} attribute.
+Meters are stateful objects that measure the data rate, either in 
+packets or bytes per second, and output the result as one of three 
+colors: red, yellow or green, which are encoded as a 2-bit-wide field.
+
+The encoding of these values is target-specific. It is, however, 
+expected that each target will define the appropriate constants: 
+\texttt{P4_METER_COLOR_RED}, \texttt{P4_METER_COLOR_YELLOW},
+and \texttt{P4_METER_COLOR_GREEN}, which are understood by the compiler
+and hence can be used in a portable P4 program.
+
+P4 specification does not currently mandate any specific metering 
+algorithm for the meter implementations, and hence ascribing the 
+detailed semantics of the colors is beyond the scope of P4. While 
+the three-color marking algorithms, specified in RFC 2697 and RFC 2698 
+serve as good references, other options are also possible. Subsequently, 
+meter configuration also remains target-specific and not defined 
+in P4\footnote{In general, any run-time configuration aspects related 
+to the control plane are currently out of scope of this P4 spec. In future, 
+the P4 community may address these issues in a separate spec.}.
 
 If the meter is declared with the \texttt{direct} attribute, one meter
-is associated with each entry in the named table. In this case, no
-meter index is required to determine which cell is being used. However
-the meter call is needed to identify where the return state is stored.
+is associated with each entry in the named table. In this case, no 
+meter action needs to be given for the table actions; the meters are 
+automatically updated whenever the corresponding entry is applied,
+and the meter result (i.e., color) is stored in the field specified 
+by the \texttt{result} attribute. Hence, the \texttt{result} attribute
+is required if a meter is declared with the \texttt{direct} attribute.
+Consequently meter names declared as direct are not allowed to be 
+referenced in the \texttt{execute_meter} primitive, and a compiler must
+raise an error if this occurs. 
 
-If a meter is declared with the \texttt{static} attribute, it may only
-be referenced by actions invoked in the indicated table. The compiler
-must raise an error if a different table attempts to invoke an action
-with this meter.
+If the meter is declared with the \texttt{static} attribute, it may only
+be referenced by actions invoked in the indicated table via the \texttt{execute_meter}
+primitive. The compiler must raise an error if a different table 
+attempts to invoke an action with this meter.
 
 The \texttt{instance_count} attribute indicates the number of
 instances (cells) of the meter to allocate.  The
@@ -3011,7 +3042,7 @@ this action.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{meter(meter_ref, index, field)}
+\primact{execute_meter(meter_ref, index, field)}
 { % Summary
 Execute a meter operation.
 }
@@ -3026,8 +3057,7 @@ meter is direct, then \texttt{index} is ignored as the table entry determines wh
 cell to reference. The length of the packet is passed to the meter. The state 
 of meter is updated and the meter returns information (a "color") which is 
 stored in \texttt{field}. If the parent header of \texttt{field} is not valid, the meter 
-state is updated, but the state of the meter is discarded.
-
+state is updated, but the color of the packet is discarded.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3508,12 +3538,11 @@ Tables are declarative structures specifying match and action operations, and
 possibly other attributes. The action specification in a table indicates which
 action functions are available to this table's entries.
 
-Note that masks may be specified for fields in the table declaration. This 
-should not be confused with masks for ternary matches. The masks specified 
-in table declarations are statically applied to fields before the start of 
-the match process. This allows arbitrary subfields to be used in exact match 
-tables. This is intended for exact match tables; it is allowed for ternary 
-matches in the syntax, though it is functionally redundant.
+Note that masks may be specified for the match fields (i.e., lookup keys) in the 
+table declaration. This enables table lookup with arbitrary sub-fields, rather 
+than only with the whole fields. These masks are applied statically to the fields
+prior to the table-lookup operation and hence should not be confused with 
+the value mask for a field with the field-match type \texttt{ternary}.
 
 The table key matches an entry if the conjunction (AND) of all fields in
 the key match their corresponding values in the table entry.
@@ -3618,7 +3647,7 @@ will be run when a table processes a packet.
 Entries are inserted at run time and each rule specifies the single action 
 to be run if that entry is matched.
 \item
-Actions in the list may be primitive actions or compound actions.
+Actions in the list should be compound actions.
 \end{itemize}
 
 \item
@@ -3626,12 +3655,22 @@ At run time, the table entry insert operation (not part of P4) must specify:
 
 \begin{itemize}
 \item
-Values for each field specified in the \texttt{reads} entry.
+Values for all fields specified in the \texttt{reads} entry along with optional 
+value masks, prefix lengths, and an entry priority, depending on the field-match type.
+The value mask and entry priority are necessary for the \texttt{ternary} match type, and 
+the prefix length for the \rexttt{lpm} match type.
 \item
 The name of the action from the \texttt{action_specification} or the
 \texttt{action_profile_specification} and the parameters to be passed to the
 action function when it is called.
 \end{itemize}
+
+\item
+A table \textit{must} not have entries with the same key. In other words, looking up a table
+must lead to either one or zero match entry. This means, for an \texttt{exact} 
+match-type key, a table is not allowed to have more than one entry with the same key value.
+Similarly, for a \texttt{ternary} (\texttt{lpm} respectively) match-type key, a table is 
+not allowed to have more than one entry with the same key value and mask (prefix length respectively).
 
 \item
 A default action is taken when no table entry matches. This action is specified 
@@ -4498,7 +4537,7 @@ static_attribute ::= static : table_name
 meter_declaration ::= 
     meter meter_name {
         type : meter_type ;
-        result : field_ref ;
+        [ result : field_ref ; ]
         [ direct_or_static ; ]
         [ instance_count : const_value ; ]
     }
@@ -5074,7 +5113,7 @@ meter per_dest_by_source {
 }
 
 action meter_pkt(in int<12> meter_idx) {
-    meter(per_dest_by_source, meter_idx, local_metadata.color);
+    execute_meter(per_dest_by_source, meter_idx, local_metadata.color);
 }
         
 // Mark packet color, for uplink ports only
@@ -5434,7 +5473,7 @@ action meter_pkt(in int<12> meter_idx) {
     // Save index and previous color in packet metadata
     modify_field(local_metadata.meter_idx, meter_idx);
     modify_field(local_metadata.prev_color, prev_color[meter_idx]);
-    meter(per_dest_by_source, meter_idx, local_metadata.color);
+    execute_meter(per_dest_by_source, meter_idx, local_metadata.color);
 }
 
 
