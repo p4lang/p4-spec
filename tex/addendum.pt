@@ -52,7 +52,7 @@
     \pdfinfo {
         /Author   (The P4 Language Consortium)
         /Title    (The P4 Language Specification, v 1.1.0 Addendum)
-        /Keywords (P4)x3
+        /Keywords (P4)
         /Subject  ()
         /Creator  (TeX)
         /Producer (PDFLaTeX)
@@ -67,112 +67,92 @@
 \vspace{3mm}
 \centerline{\sffamily\Large Version 1.1.0 Addendum}
 \vspace{3mm}
-\centerline{\sffamily\large January 27, 2016}
+\centerline{\sffamily\large January 11, 2016}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{January 27, 2016}
+\date{January 11, 2016}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
-This addendum captures some of the technical discussions going on
-in the P4 Language Design working group, for information about possible future
-directions.  \textit{It does not contain any
-official specifications of the P4 language.} The working group may or may not
-take the technical ideas proposed here into a future P4 specification.
 
-\SECTION{Architecture-language separation}{separation}
 
+\SECTION{Addendum: Preview of architecture-language separation}{separation}
 The current P4 specification defines the language relative to an
 abstract forwarding model with a specific architecture, as described
 in Section~\ref{sec:absmod}.  The P4 Language Design group is working
 towards the separation of language features from architecture features,
 and this addendum gives a summary preview of ideas under consideration.
-The aim is to ensure that the P4 language specification itself is no longer
-bound to a particular target architecture.  Instead, the intent is to
-allow target providers to introduce different target architectures
-(which are heterogeneous compositions of programmable and non-programmable
-regions) for their targets, while allowing the users of the targets to program
-any of the programmable regions in the targets in P4.  In doing this, an
-important goal is to make it possible to write portable P4 code, with ways to
-easily combine that portable code into programs for specific architectures.
-While target-specific extensions will be allowed, the mission is to encourage
-portable programs and portable implementations.  To ensure portability,
-the P4 working groups will define one or more standard architecture(s).
-A P4 program written for a standard architecture will be portable across all
-the targets conforming to the standard architecture.  It is expected that target
-vendors will implement extensions with the expectation of (some of) those
-extensions may make their way into future versions of the standard architecture.
 
-
-\SUBSECTION{Targets}
 A machine that can run a P4 program is called \textit{target}.
 While P4 provides a standard language for describing the logic within
 programmable regions of a forwarding element, the programmable regions that are
-actually available and the data flow between those regions can vary
+actually available and the data flow between those regions will likely vary
 from target to target.  For example, one target may consist of a parser,
 ingress \matchaction pipeline and egress \matchaction pipeline, connected in
 sequence.  Another target may consist of several parser-pipeline pairs,
 which the packet may flow through in any order by setting appropriate
 control signals.
 
-With architecture-language separation, the P4 language itself would address
-only the contents of each programmable region.  Then the overall P4 framework
-would provide the setting for target providers and standards bodies to
-define architectures that complement the standard architecture(s).  To
-accomplish this, each target would conform to a
+With architecture-language separation, the P4 language would address
+the contents of each programmable region, but would not attempt to standardize
+any one architectural model. Instead, the overall P4 framework would provide
+the facilities for target providers and standards bodies to define multiple
+such architectures.  To accomplish this, each target would conform to a
 \textit{Target Architecture}, specified partially as a collection of
-P4 code, and partially as a set of specifications that describe the
-P4-programmable regions of the target and how those regions interact with
-each other.  The latter specifications may involve non-P4 (or possibly
-extended P4 in the future) rigorous written descriptions and/or simulation
-models.  Examples of programmable regions would be packet parsers, and
-pipelines of tables and actions.  The existing P4 abstract forwarding model
-would be one example of a standard architecture.
-
-In addition to the Target Architecture specification, there is a
-\textit{Target-Specific Library} specification.  This provides definitions
-of available P4 extern object types (Section~\ref{sec:externs}), which
-represent the processing capabilities of the target beyond the standard P4
-primitive actions.  The functional specifications of these objects may involve
-non-P4 (or possibly extended P4 in the future) rigorous written descriptions
-and/or simulation models.  Examples of these capabilities could include
-arithmetic functions and checksum generators.
+P4 code, and partially as a set of non-P4 (or possible extended P4
+in the future) specifications that describe the P4-programmable regions of
+the target and how those regions interact with each other. Examples of
+programmable regions would be packet parsers, and pipelines of tables
+and actions.  The existing P4 abstract forwarding model would be one standard
+example of a target architecture.
 
 
-\SUBSECTION{Target Architecture Structure}{archsstruct}
+
+\SUBSECTION{Target Architectures}{archs}
+A P4 \textit{Target Architecture} is the complete specification of a P4
+target's programmable resources and the way those resources are connected.
+The architecture consists of both P4 code and an accompanying rigorous
+specification.
+
+
+\SUBSUBSECTION{Target Architecture Structure}{archsstruct}
 The P4 portion of a target architecture description provides
 \textit{prototypes} for the programmable regions of the target. These
 prototypes specify the input and output interfaces to each region, including
 the format of metadata passed across each interface.  These interfaces form
-the connection between the region of P4 code in question and the surrounding
-non-P4-programmable regions.  For instance, a region of code may receive
+the conection between the region of P4 code in question and the surrounding
+non-P4-programmable environment.  For instance, a region of code may receive
 intrinsic metadata reporting a packet's ingress port and length, and may write
 intrinsic metadata controlling the packet's egress port and queue priority.
 
-Together with this P4-described portion, the additional non-P4
-specification clarifies the meaning of the context for the P4 portion of
-the architecture and explains how these portions fit together.  Initially, this
-is envisaged to be mostly human-language documentation and visual diagrams to
+The P4 portion of the target architecture description also provides
+definitions of the available primitive actions (Section~\ref{sec:actions}) and
+extern object types (Section~\ref{sec:externs}), which represent the
+fundamental processing capabilities of the target.  Examples of these include
+arithmetic functions and checksum generators.
+
+Together with these two P4-described portions, the additional non-P4
+specification clarifies the meaning of the definitions in the P4 portion of
+the architecture and explains how they fit together. Initially, this is
+envisaged to be mostly human-language documentation and visual diagrams to
 show the flow of data between programmable regions, though it may also
-contain pseudocode or simulation models to specify rigorously the behavior of
-logic not expressible in P4.  Looking further out, there has already been
-experimentation with some extension of P4 itself, to allow rigorous
-specification of the interaction between regions in terms of established
-P4 mindset and terminology.
+contain pseudocode to rigorously specify the behavior of logic not expressible
+in P4.  Looking further out, there has already been experimentation with
+some extension of P4 itself, to allow rigorous specification of the interaction
+between regions in terms of established P4 mindset and terminology.
 
 
-\SUBSECTION{Target Architecture Selection}{archsselect}
+\SUBSUBSECTION{Target Architecture Selection}{archsselect}
 A program's target architecture is selected by including that architecture's P4
-prototypes in the source code, and then writing structures that conform to the
-prototypes it specifies.  These structures can make use of the extern object
-types that are provided in the accompanying target-specific library.
+library in the source code, and then writing structures that conform to the
+prototypes it specifies and using the actions and externs that it provides.
 
 No one architecture is mandated by the P4 spec, and a given physical target may 
 support multiple architectures.  Some architectures may be written by a target
 provider and highly specialized to the underlying machinary, while others may
 be standardized and intentionally abstract to allow greater portability and
-ease-of-use.  A particular example of the latter is that a standard
+ease-of-use.  A particular example of the latter is that a standard switch
 architecture will be defined based on the existing abstract forwarding model.
 
 An important aspect is that all P4 programs written for a given architecture
@@ -245,13 +225,14 @@ Prototypes may also include type variables, which are resolved to
 concrete types when the prototype is paired with its implementation.  The
 identifiers in a prototype's type variable list are available as valid types
 for the parameters in the prototype's signature. These type variables provide
-a mechanism for architectures to pass user-defined types of header instances
+a mechanism for architectures to pass user-defined structs of header instances
 between P4 code blocks without mandating ahead of time what those structs are.
 
 A target architecture may specify several prototypes for identical underlying
 resources (such as $n$ prototypes for $n$ separately programmable yet
-functionally identical hardware parsers).  A program may use different
-instances of the same programmable block to satisfy all of the identical
+functionally identical hardware parsers). If a program uses the same
+implementation for each of these resources, it can use \textit{typedef} to
+alias the shared implementation's programmable block type to all of the
 prototypes expected by the architecture.
 
 While not explicitly disallowed, P4 programmers are unlikely to find much
@@ -262,11 +243,10 @@ architecture specification only.
 
 \SUBSECTION{Standard Library}{stdlib}
 The P4 portion of a target architecture description provides
-definitions of its extern object types.
-To promote portability of P4 programs, alongside the standard set of primitive
-actions, there is a standard library of extern object types
-for common packet processing operations.  While targets may provide
-target-specific libraries that offer more specific and finely-tuned
+definitions of the available primitive actions and extern object types.
+To promote portability of P4 programs, a standard library of actions and externs
+for common packet processing operations is defined.  While targets may provide
+target-specific definitions that offer more specific and finely-tuned
 functionality, this library provides more generalized functionality that
 all targets should be able to support.
 
@@ -279,8 +259,8 @@ the core P4 language significantly.
 \SUBSUBSECTION{Primitive Actions}{stdlib-primitives}
 The primitive actions are standard and expected to be supported
 by \textit{all} targets, regardless of the target architecture being used.
-The list of library actions may be a subset of the current P4 list which
-is given in Section~\ref{sec:primitiveactions}:
+The list of library actions is a subset of the current P4 list, as
+given in Section~\ref{sec:primitiveactions}:
 
 \begin{table}[H]
 \begin{center}
@@ -311,8 +291,7 @@ Pop header instances from the top of an array, moving all subsequent array eleme
 \SUBSUBSECTION{Parser Exceptions}{standardparserex}
 The parser exceptions are standard, regardless of target architecture.
 The prefix "pe" stands for parser exception.  The list of parser
-exceptions may be a superset of the current P4 list which
-is given in Section~\ref{sec:parserexceptions}:
+exceptions is as in Section~\ref{sec:parserexceptions}, with one addition:
 
 \begin{table}[H]
 \begin{center}
@@ -396,17 +375,15 @@ While this architecture is designed primarily to allow the expression of packet
 switching programs, it is flexible enough to implement more advanced behavior.
 Other simple architectures geared towards different environments, such as NICs,
 could also be defined.  The architecture is described in
-Section~\ref{sec:absmod}.  As for all targets, there is an associated
-Standard Switch Library, containing extern type objects.
+Section~\ref{sec:absmod}.
 
 
 \SUBSUBSECTION{Programmable regions}{simplearch-prototypes}
-The Standard Switch Architecture has three P4-programmable regions: parser,
+The Simple Switch Architecture has three P4-programmable regions: parser,
 ingress, and egress.  It provides prototypes for these.  Note that this gives
 a more explicit meaning to the blocks declared in traditional P4 programs.
-A draft form of the intrinsic metadata associated with the various interfaces
-to these regions is given next, to give more detail on how this works.
-The metadata is defined using standard P4 \textit{header_type} ojects.
+A draft form of the intrinsic metadata associated with the interfaces
+to these regions is given next.
 
 
 \SUBSUBSECTION{Intrinsic Metadata}{simplearch-intrinsicmd}
@@ -514,16 +491,16 @@ header_type egress_pipe_controls_t {
 
 
 \SUBSUBSECTION{Egress Port Selection, Replication and Queuing}{simplearch-egress}
-The Standard Switch Architecture's egress mechanism is as described
+The Simple Switch Architecture's egress mechanism is as described
 in Section~\ref{sec:egress}.  This is a mechanism that is provided by
 this particular architecture, rather than something inherent to P4.
 
 
 \SUBSUBSECTION{Cloning, Mirroring, Resubmission and Recirculation}{simplearch-clone}
-The Standard Switch Architecture's cloning, mirroring, and resubmission
+The Simple Switch Architecture's cloning, mirroring, and resubmission
 and recirculation mechanism are as described in Section~\ref{sec:recirc}.
-These involve extern object types that are provided by the associated
-Standard Switch library, rather than actions inherent to P4.
+These involve primitive actions that are provided by this particular
+architecture, rather than actions inherent to P4.
 
 
 

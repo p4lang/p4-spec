@@ -52,7 +52,7 @@
     language=C,%
     frame=single,%
     backgroundcolor=\color{codeblue},%
-    keywords={action, action_function_declaration, action_profile, action_selector, algorithm, and, apply, attribute, attributes, bit, bytes, bytes_and_packets, calculated_field, control, counter, direct, direct_attibute, dynamic_action_selection, else, extern, extern_type, extract, false, field_list, field_list_calculation, fields, header, header_type, hit, if, in, inout, input, instance_count, int, last, layout, mask, max, metadata, meter, method, min, min_width, miss, next, not, optional, or, output_width, packets, parse_error, parser, parser_drop, parser_exception, parser_value_set, primitive_action, range, register, result, return, saturating, select, selection_key, set_metadata, signed, static, table, true, update, valid, value, varbit, verify, width},%
+    keywords={action, action_function_declaration, action_profile, action_selector, algorithm, and, apply, attribute, attributes, bit, bytes, calculated_field, control, counter, direct, direct_attibute, dynamic_action_selection, else, extern, extern_type, extract, false, field_list, field_list_calculation, fields, header, header_type, hit, if, in, inout, input, instance_count, int, last, layout, mask, max, metadata, meter, method, min, min_width, miss, next, not, optional, or, output_width, packets, parse_error, parser, parser_drop, parser_exception, parser_value_set, primitive_action, range, register, result, return, saturating, select, selection_key, set_metadata, signed, static, table, true, update, valid, value, varbit, verify, width},%
     basicstyle=\ttfamily,%
     aboveskip=3mm,%
     belowskip=3mm,%
@@ -83,13 +83,13 @@
 %\title{\sffamily\bfseries\huge The P4 Language Specification\\ \vspace{3mm} \Large Version 1.0.2}
 \centerline{\sffamily\bfseries\huge The P4 Language Specification}
 \vspace{3mm}
-\centerline{\sffamily\Large Version 1.1.0}
+\centerline{\sffamily\Large Version 1.1.0 - Release Candidate}
 \vspace{3mm}
-\centerline{\sffamily\large January 27, 2016}
+\centerline{\sffamily\large November 18, 2015}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{January 27, 2016}
+\date{November 6, 2015}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
@@ -2418,7 +2418,7 @@ counter_declaration ::=
         [ saturating ; ]
     }
 
-counter_type ::= bytes | packets | bytes_and_packets
+counter_type ::= bytes | packets
 direct_or_static ::= direct_attibute | static_attribute
 direct_attribute ::= direct : table_name
 static_attribute ::= static : table_name
@@ -2462,15 +2462,6 @@ is not declared with the \texttt{direct} attribute.  The compiler
 should raise an error if both \texttt{instance_count} and
 \texttt{direct} are specified together, or if neither \texttt{direct}
 nor \texttt{instance_count} are specified.  
-
-A \texttt{bytes} type counter gets incremented by the packet length in bytes 
-whenever the count action is executed either implicitly (in case of 
-\texttt{direct}) or explictly (in case of \texttt{static}) for the counter. 
-A \texttt{packets} type counter gets incremented by just one whenever 
-the count action is executed for the counter. 
-A \texttt{bytes_and_packets} type counter is comprised of two sub-counters 
-internally, and each sub-counter is incremented by the packet length and 
-by one respectively.
 
 \SUBSECTION{Meters}{meters}
 
@@ -3698,9 +3689,10 @@ mask which may differ from entry to entry).
 The match type \texttt{valid} indicates that the field's parent header (or, in the 
 case of metadata, the field itself) should be tested for validity.  The value 
 of \texttt{1} will match when the header is valid; \texttt{0} will match when the header is 
-not valid. Note that metadata fields are \textit{always} valid.
-\item
-Using an invalid field or header as a match key may lead to an undefined behavior. 
+not valid. As a reminder, the table does not have to explicitly include a 
+match on a field's validity to safely match on its value - invalid fields 
+will never match on a table entry that includes it. Note that metadata fields 
+are \textit{always} valid.
 \item
 The match type \texttt{index} cannot be used with other match types.
 A table with the match type \texttt{index} can still lead to a miss if the table 
@@ -4115,6 +4107,7 @@ being the primitive action used would be \texttt{clone_e2e}.
 
 \SUBSECTION{Resubmit and Recirculate}{resubmit}
 
+
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\textwidth]{figures/recirculate.png}
@@ -4232,16 +4225,12 @@ extern_instance_declaration ::=
     }
 
 extern_attribute_binding ::=
-    attribute_name : object_ref | general_expr;
+    attribute_name : object_ref ;
 
 extern_method_call ::= 
     object_ref . method_name ( arg_list )
 \end{lstlisting}
 %%endbnf
-
-If an expression that is used as an attribute value for an extern
-instance cannot be evaluated at compile time, the compiler should
-generate an error.
 
 Method calls must include arguments for all parameters specified by the
 object interface. If the method includes any optional parameters, their
@@ -4541,7 +4530,7 @@ counter_declaration ::=
         [ saturating ; ]
     }
 
-counter_type ::= bytes | packets | bytes_and_packets
+counter_type ::= bytes | packets
 direct_or_static ::= direct_attibute | static_attribute
 direct_attribute ::= direct : table_name
 static_attribute ::= static : table_name
@@ -4679,7 +4668,7 @@ extern_instance_declaration ::=
     }
 
 extern_attribute_binding ::=
-    attribute_name : object_ref | general_expr;
+    attribute_name : object_ref ;
 
 extern_method_call ::= 
     object_ref . method_name ( arg_list )
@@ -4705,7 +4694,6 @@ attribute
 attributes
 bit
 bytes
-bytes_and_packets
 calculated_field
 control
 counter
