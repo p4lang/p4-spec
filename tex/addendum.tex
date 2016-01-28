@@ -1,8 +1,3 @@
-%%ptcomment This file is intended to be processed by the pretext.py
-%%ptcomment script to produce p4.tex.
-%%ptcomment Lines starting with %%ptcomment are removed during processing
-%%ptcomment Other keys are for processing BNF and code listings
-%%ptcomment See pretext.py for more information
 
 \documentclass[12pt]{article}
 
@@ -45,8 +40,31 @@
 %%not_a_keyword modifier
 %%not_a_keyword support_timeout
 
-%%set_bnf_lstlisting_keywords
-%%set_p4_lstlisting_keywords
+
+\lstdefinestyle{BNFstyle}{
+    language=BNF,%
+    frame=single,%
+    backgroundcolor=\color{bnfgreen},%
+    morekeywords={}%
+}
+
+\lstdefinestyle{P4style}{
+    language=C,%
+    frame=single,%
+    backgroundcolor=\color{codeblue},%
+    keywords={},%
+    basicstyle=\ttfamily,%
+    aboveskip=3mm,%
+    belowskip=3mm,%
+    fontadjust=true,%
+    keepspaces=true,%
+    keywordstyle=\bfseries,%
+    captionpos=b,%
+    framerule=0.3pt,%
+    firstnumber=0,%
+    numbersep=1.5mm,%
+    numberstyle=\tiny,%
+}
 
 \ifpdf
     \pdfinfo {
@@ -414,6 +432,7 @@ All three blocks receive a read-only metadata header containing basic
 information about the packet:
 
 %%code
+\begin{lstlisting}[style=P4style]
 header_type packet_metadata_t {
     fields {
         bit<16> ingress_port; // The port on which the packet arrived.
@@ -432,11 +451,13 @@ header_type packet_metadata_t {
                               // appropriate values
     }
 }
+\end{lstlisting}
 %%endcode
 
 The ingress block also receives the exit result of the parser: 
 
 %%code
+\begin{lstlisting}[style=P4style]
 header_type parser_status_t {
     fields {
         bit<16> return_code;       // The final status of the parser.
@@ -446,12 +467,14 @@ header_type parser_status_t {
                                    // user-defined parser exceptions
     }
 }
+\end{lstlisting}
 %%endcode
 
 The ingress block's output intrinsic metadata controls how the packet will be
 forwarded, and possibly replicated:
 
 %%code
+\begin{lstlisting}[style=P4style]
 header_type ingress_pipe_controls_t {
     fields {
         bit<16> egress_spec;   // Specification of an egress.
@@ -474,12 +497,14 @@ header_type ingress_pipe_controls_t {
                                // slow path.
     }
 }
+\end{lstlisting}
 %%endcode
 
 The egress block receives further read-only information about the packet
 determined while it was in the queueing system:
 
 %%code
+\begin{lstlisting}[style=P4style]
 header_type egress_aux_packet_metadata_t {
     fields {
         bit<16> egress_port;      // The physical port to which this
@@ -488,6 +513,7 @@ header_type egress_aux_packet_metadata_t {
                                   // instances of a replicated packet.
     }
 }
+\end{lstlisting}
 %%endcode
 
 The egress block's output intrinsic metadata no longer has access to the egress
@@ -495,6 +521,7 @@ spec for writing, since the packet has already been committed to a physical
 port:
 
 %%code
+\begin{lstlisting}[style=P4style]
 header_type egress_pipe_controls_t {
     fields {
         bit     drop;          // Do not send the packet out of its
@@ -510,6 +537,7 @@ header_type egress_pipe_controls_t {
                                // ingress parser
     }
 }
+\end{lstlisting}
 %%endcode
 
 

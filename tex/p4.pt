@@ -65,13 +65,13 @@
 %\title{\sffamily\bfseries\huge The P4 Language Specification\\ \vspace{3mm} \Large Version 1.0.2}
 \centerline{\sffamily\bfseries\huge The P4 Language Specification}
 \vspace{3mm}
-\centerline{\sffamily\Large Version 1.1.0 - Release Candidate}
+\centerline{\sffamily\Large Version 1.1.0}
 \vspace{3mm}
-\centerline{\sffamily\large November 18, 2015}
+\centerline{\sffamily\large January 27, 2016}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{November 6, 2015}
+\date{January 27, 2016}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
@@ -2349,7 +2349,7 @@ counter_declaration ::=
         [ saturating ; ]
     }
 
-counter_type ::= bytes | packets
+counter_type ::= bytes | packets | bytes_and_packets
 direct_or_static ::= direct_attibute | static_attribute
 direct_attribute ::= direct : table_name
 static_attribute ::= static : table_name
@@ -2392,6 +2392,15 @@ is not declared with the \texttt{direct} attribute.  The compiler
 should raise an error if both \texttt{instance_count} and
 \texttt{direct} are specified together, or if neither \texttt{direct}
 nor \texttt{instance_count} are specified.  
+
+A \texttt{bytes} type counter gets incremented by the packet length in bytes 
+whenever the count action is executed either implicitly (in case of 
+\texttt{direct}) or explictly (in case of \texttt{static}) for the counter. 
+A \texttt{packets} type counter gets incremented by just one whenever 
+the count action is executed for the counter. 
+A \texttt{bytes_and_packets} type counter is comprised of two sub-counters 
+internally, and each sub-counter is incremented by the packet length and 
+by one respectively.
 
 \SUBSECTION{Meters}{meters}
 
@@ -3558,7 +3567,7 @@ At run time, the table entry insert operation (not part of P4) must specify:
 Values for all fields specified in the \texttt{reads} entry along with optional 
 value masks, prefix lengths, and an entry priority, depending on the field-match type.
 The value mask and entry priority are necessary for the \texttt{ternary} match type, and 
-the prefix length for the \rexttt{lpm} match type.
+the prefix length for the \texttt{lpm} match type.
 \item
 The name of the action from the \texttt{action_specification} or the
 \texttt{action_profile_specification} and the parameters to be passed to the
@@ -3589,10 +3598,9 @@ mask which may differ from entry to entry).
 The match type \texttt{valid} indicates that the field's parent header (or, in the 
 case of metadata, the field itself) should be tested for validity.  The value 
 of \texttt{1} will match when the header is valid; \texttt{0} will match when the header is 
-not valid. As a reminder, the table does not have to explicitly include a 
-match on a field's validity to safely match on its value - invalid fields 
-will never match on a table entry that includes it. Note that metadata fields 
-are \textit{always} valid.
+not valid. Note that metadata fields are \textit{always} valid.
+\item
+Using an invalid field or header as a match key may lead to an undefined behavior. 
 \item
 The match type \texttt{index} cannot be used with other match types.
 A table with the match type \texttt{index} can still lead to a miss if the table 
@@ -3993,7 +4001,6 @@ being the primitive action used would be \texttt{clone_e2e}.
 
 \SUBSECTION{Resubmit and Recirculate}{resubmit}
 
-
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\textwidth]{figures/recirculate.png}
@@ -4108,11 +4115,15 @@ extern_instance_declaration ::=
     }
 
 extern_attribute_binding ::=
-    attribute_name : object_ref ;
+    attribute_name : object_ref | general_expr;
 
 extern_method_call ::= 
     object_ref . method_name ( arg_list )
 %%endbnf
+
+If an expression that is used as an attribute value for an extern
+instance cannot be evaluated at compile time, the compiler should
+generate an error.
 
 Method calls must include arguments for all parameters specified by the
 object interface. If the method includes any optional parameters, their
