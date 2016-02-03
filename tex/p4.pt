@@ -74,6 +74,10 @@
 \date{January 27, 2016}
 \thispagestyle{firstpagestyle}
 %\maketitle
+\newpage
+
+\tableofcontents
+\newpage
 
 %%%%%%
 %%%%%%
@@ -81,7 +85,7 @@
 %%%%%%
 %%%%%%
 
-P4 is a declarative language for expressing how packets are processed by the 
+P4 is a language for expressing how packets are processed by the 
 pipeline of a network forwarding element such as a switch, NIC, router or 
 network function appliance. It is based upon an abstract forwarding model 
 consisting of a parser and a set of \matchaction table resources, divided 
@@ -168,9 +172,9 @@ control flow through the pipelines. Programmers control this by writing a
 P4 program which specifies the switch configuration as shown at the top of 
 Figure~\ref{fig:abstractmodel}. 
 
-A machine that can run a P4 program is called \textit{target}. Although a target 
-may directly execute a P4 program, it is assumed in this document that the 
-program is compiled into a suitable configuration for the target.
+A packet-processing machine that can be programmed in P4 is called a \textit{target}. 
+Although a target may directly execute a P4 program, it is assumed in this document 
+that the program is compiled into a suitable configuration for the target.
 
 In the current version, P4 does not expose, for example, the functionality 
 of the Queuing Mechanism and does not specify the semantics of the Egress 
@@ -897,9 +901,9 @@ represented using 2's complement.
 ``Underflow'' or ``overflow'' produced by arithmetic cannot be
 detected: operations ``wrap-around'', similar to C operations on
 unsigned values (i.e., representing a large value on \W{} bits will
-only keep the least-significant \W{} bits of the value).  (Note that C
+only keep the least-significant \W{} bits of the value)\footnote{Note that C
 does not define the result of operations that overflow when computing
-on signed values, whereas P4 does.)  There are no arithmetic
+on signed values, whereas P4 does.}. There are no arithmetic
 exceptions; the runtime result of an arithmetic operation is defined
 for all combinations of input arguments.
 
@@ -911,7 +915,9 @@ there are no binary operations that combine signed and unsigned values
 (except shifts).
 
 Table~\ref{tab:signedoperations} shows all operations available on
-signed values.
+signed values. Note that bitwise operations are well-defined, since the
+representation is mandated to be 2's complement. There is no signed 
+integer division operator.
 
 \begin{table}[!h]
   \center
@@ -961,15 +967,11 @@ signed values.
   \caption{Operations on signed values.\label{tab:signedoperations}}
 \end{table}
 
-Note that bitwise operations are well-defined, since the
-representation is mandated to be 2's complement.
-
-There is no signed integer division operator.
 
 \SUBSUBSECTION{A note about shifts}{typing-shifts}
 
-Shifts (on signed and unsigned values) deserve a special discussion,
-due to the following reasons:
+Shifts (on signed and unsigned values) deserve a special discussion for
+the following reasons:
 
 \begin{itemize}
   \item As in C, right shift behaves differently for signed and
@@ -990,7 +992,7 @@ bit<16> y;
 ... y << x ...
 ... y << 1024 ...
 %%endcode
-    
+
     Unlike C, P4 gives a precise meaning shifting with an amount
     larger than the size of the shifted value.
 \end{itemize}
@@ -1029,21 +1031,6 @@ The type \infint{} denotes integer values on which computations are
 performed with arbitrary precision.  Table~\ref{tab:intoperations}
 shows all operations that are defined for \infint{} values.  The only
 values that can have the type \infint{} are compile-time constants.
-
-All the operands that participate in an operation must have type
-\infint{}; binary operations (except shift) cannot combine \infint{}
-values with fixed-width types.  For such expressions the compiler will
-always insert an implicit cast; this cast will always convert the
-\infint{} value to the fixed-width type.
-
-All computations on \infint{} values are carried without information
-loss.  For example, multiplying two 1024-bit values may produce a
-2048-bit value (note that concrete representation of \infint{} values
-is not specified).
-
-Casting an \infint{} value to a fixed-width type will preserve the
-least-significant bits.  If the truncation causes significant bits to
-be lost, the compiler should emit a suitable warning. 
 
 \begin{table}[!h]
   \center
@@ -1088,6 +1075,19 @@ be lost, the compiler should emit a suitable warning.
   \caption{Operations on arbitrary-precision constant
     integers.\label{tab:intoperations}}
 \end{table}
+
+All the operands that participate in an operation must have type
+\infint{}; binary operations (except shift) cannot combine \infint{}
+values with fixed-width types.  For such expressions the compiler will
+always insert an implicit cast; this cast will always convert the
+\infint{} value to the fixed-width type.
+
+All computations on \infint{} values are carried without information
+loss.  For example, multiplying two 1024-bit values may produce a
+2048-bit value (note that concrete representation of \infint{} values
+is not specified). Casting an \infint{} value to a fixed-width type 
+will preserve the least-significant bits.  If the truncation causes 
+significant bits to be lost, the compiler should emit a suitable warning. 
 
 Note: bitwise-operations (\code{|}, \code{\&}, \verb|^|, \code{\~{}})
 are \emph{not} defined for \infint{} values.  Division and modulo are
@@ -2223,7 +2223,7 @@ intrinsic metadata, although programs which depend on such definitions may not b
 This table shows the fields defined for the metadata instance 
 \texttt{standard_metadata}\footnote{We will thoroughly specify the details of these metadata 
 -- including their exact meaning and specific availability scope (within a target) -- in 
-the next spec revision. See Section~\ref{addendum} for our current tentative approach.}.
+the next spec revision. See Section~\ref{sec:addendum} for our current tentative approach.}.
 
 \begin{table}[H]
 \begin{center}
@@ -2564,10 +2564,16 @@ action associated with each entry. These are called \textit{compound
 actions} to differentiate them from \textit{primitive actions}, or
 simply \textit{actions} when the context is clear.
 
-Action functions take typed, pass-by-reference parameters. The values 
-passed to these parameters are programmed into the table entry by the run-time
-API. When that entry is selected due to a match, those parameters are
-passed to the action. The P4 table declarations might be used to
+Action functions take typed and annotated parameters. P4 assumes the
+copy-in copy-out evaluation semantics for the action parameters. When 
+action parameters alias one another in a P4 program, the target may
+introduce undefined behaviors. Hence, the P4 authors are recommended
+not to introduce parameter aliasing. In addition, a compiler may
+generate an error upon detecting parameter aliasing.
+
+The values passed to these parameters are programmed into the table entry 
+by the run-time API. When that entry is selected due to a match, those 
+parameters are passed to the action. The P4 table declarations might be used to
 generate run-time APIs which would have parameters corresponding to
 the action parameters for the entry's action. Typically, the compiler
 would be responsible for ensuring that the values in the run-time APIs
@@ -2623,19 +2629,8 @@ action add_mTag(in bit<8> up1, in bit<8> up2,
 
 \SUBSECTION{Primitive Actions}{primitiveactions}
 
-P4 supports an extensible set of primitive actions. Primitive actions can 
-be declared as part of a P4 program. This allows the front-end of a compiler 
-to verify calls to primitive actions. Only the parameter list is identified 
-for primitive actions; no body is defined. 
-
-%%bnf
-primitive_action_declaration ::= 
-    primitive_action action_name ( [ simple_param_list ] ) ;
-
-simple_param_list ::= param_name [, param_name]*
-%%endbnf
-
-Not all targets will support all actions. Target switches may have
+P4 supports an extensible set of primitive actions. Not all targets 
+may support all primitive actions. Target switches may have
 limits on when variables are bound and what combinations of parameter
 types are allowed.
 
@@ -3389,9 +3384,8 @@ action compound3() {
 In some instances, action parameter values are not specific to a match entry but
 could be shared between different entries. Some tables might even want to share
 the same set of action parameter values. This can be expressed in P4 with
-action profiles.
-Action profiles are declarative structures specifying a list of potential
-actions, and possibly other attributes.
+action profiles. Action profiles are declarative structures specifying a list 
+of potential actions, and possibly other attributes.
 
 Entries are inserted at run time to specify the single action to be run if that
 entry is chosen - among the candidates included in the action profile
@@ -4046,7 +4040,9 @@ P4 programmers are not supposed to define their own extern types, so much
 as use the set of supported extern types as a palette of components from which
 to compose their programs. 
 
-\SUBSECTION{Extern types}{externtypes} An extern type definition is intended to be 
+\SUBSECTION{Extern types}{externtypes} 
+
+An extern type definition is intended to be 
 used by both the programmer and compiler front-end to specify how extern
 instances of that type must be instantiated and where they may be used.
 
@@ -4126,20 +4122,22 @@ instance cannot be evaluated at compile time, the compiler should
 generate an error.
 
 Method calls must include arguments for all parameters specified by the
-object interface. If the method includes any optional parameters, their
+extern type definition. If the method includes any optional parameters, their
 arguments may follow the required arguments (similar to optional arguments
-in primitive actions).
+in primitive actions). 
 
+Extern methods take typed and annotated parameters. P4 assumes the
+copy-in and copy-out evaluation semantics for the extern-method parameters.
+When extern-method parameters alias one another, the target may introduce
+undefined behaviors. Hence, the P4 authors are recommended not to
+introduce parameter aliasing. In addition, a compiler may generate
+an error upon detecting parameter aliasing.
 
 %%%%%%
 %%%%%%
 \SECTION{Appendices}{append}
 %%%%%%
 %%%%%%
-
-\SUBSECTION{Errata}{errata}
-
-TODO
 
 \SUBSECTION{Programming Conventions}{progconventions}
 
@@ -4150,7 +4148,7 @@ The following is a list of conventions suggested for P4 programs.
 Parsing begins with the parser state function named \texttt{start}.
 \item
 Control flow begins with the control function \texttt{ingress}.
-\end{itemize}The following is a list of conventions suggested for P4 programs.
+\end{itemize}
 
 \SUBSECTION{Revision History}{revhistory}
 
@@ -4165,13 +4163,64 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.0-rc3 & 2014-12-30 & Fixed some missing tildes (negations). Drop in parser is now \texttt{parser_drop}. Added \texttt{add} primitive action. Added errata section. \\  \hline
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
-1.1.0-rc1 & - & Added types, typed signatures, and externs. \\  \hline 
-\underline{TODO: add more} \\ \hline
+1.1.0-rc1 & 2016-11-12 & Added preliminary designs for strong typing, expressions, typed action parameters, sequential action-execution semantics, and extern types. \\  \hline 
+1.1.0 & 2016-1-27 & See \ref{sec:change-summary-1.1.0} for details. \\ \hline
 \end{tabular}
 \end{center}
 \caption{Revision History}
 \label{tab:revhistory}
 \end{table}
+
+\SUBSUBSECTION{Summary of changes introduced in 1.1.0}{change-summary-1.1.0}
+
+\begin{itemize}
+
+\item New typing syntax (Sections \ref{sec:p4types} \& \ref{sec:p4casting})
+  \begin{itemize}
+  \item Action parameters take types and directionality annotations. 
+  This helps the compiler disambiguate parameter types.
+  \item New data types. This helps the compiler disambiguates data types. 
+  It also lays foundation for strong typing.
+  \item New width specification syntax for constant (\texttt{'} --> \texttt{w}).
+  \end{itemize}
+
+\item Support for expression (Sections \ref{sec:p4expressions}, 
+\ref{sec:parserbnf}, and \ref{sec:primitiveactions})
+  \begin{itemize}
+  \item \texttt{set_metadata()} takes expressions. 
+  This enables TLV-style header parsing and improves code readability.
+  \item \texttt{modify_field()} takes expressions. 
+  This enables supports for various arithmetic operations while avoiding
+  the proliferation of additional primitive actions.
+  \end{itemize}
+
+\item Support for \texttt{extern} (Section \ref{sec:externs})
+  \begin{itemize}
+  \item Support for \texttt{extern_type} and \texttt{extern} instances.
+  This allows P4 to embrace functional heterogeneity in a unified and well-defined
+  fashion.
+  \end{itemize}
+
+\item Strong typing (Sections \ref{sec:p4casting} -- \ref{sec:typing-casts})
+  \begin{itemize}
+  \item Specification of type conversion rules, along with legitimate operators 
+  for each supported type. This improves the safety of the language.
+  \end{itemize}
+
+\item Sequential action-execution semantics (Section \ref{sec:executionsemantics})
+  \begin{itemize}
+  \item This improves code readability and understandability without 
+  hampering capabilities for performance optimization (e.g., parallelization).
+  \end{itemize}
+
+\item Miscallenous 
+  \begin{itemize}
+  \item \texttt{execute_meter()} replaces \texttt{meter()}, avoiding
+  ambiguity in parsing (Section \ref{sec:primitiveactions}). 
+  \item A new counter type \texttt{bytes_and_packets} (Section \ref{sec:counters}).
+  \end{itemize}
+
+\end{itemize}
 
 
 \SUBSECTION{Terminology (Incomplete)}{terms}
@@ -4197,6 +4246,8 @@ Pipeline &
 A sequence of \matchaction tables.  \\ \hline
 Run time &
 When a switch is processing packets. This is distinguished from configuration time, though these operations may occur at the same time in some implementations. \\ \hline
+Target &
+A packet-processing machine that can be programmed in P4. \\ \hline
 \end{tabular}
 \end{center}
 \caption{Terminology}
@@ -5029,6 +5080,10 @@ action_selector ecmp_selector {
     selection_key : ecmp_hash;
 }
 %%endcode
+
+
+\input{addendum}
+
 
 \SUBSECTION{References}{references}
 

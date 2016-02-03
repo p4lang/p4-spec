@@ -1,87 +1,12 @@
-%%ptcomment This file is intended to be processed by the pretext.py
-%%ptcomment script to produce p4.tex.
-%%ptcomment Lines starting with %%ptcomment are removed during processing
-%%ptcomment Other keys are for processing BNF and code listings
-%%ptcomment See pretext.py for more information
-
-\documentclass[12pt]{article}
-
-\usepackage[bottom=3cm]{geometry}
-\usepackage{p4doc}
-\usepackage{fleqn}
-\usepackage{fancyvrb}
-\usepackage{graphicx}
-\usepackage{tabularx}
-\usepackage{soul}
-\usepackage{float}
-\usepackage{underscore}
-\usepackage[table]{xcolor}
-
-\usepackage[parfill]{parskip}
-
-\usepackage{silence}
-\WarningFilter{Fancyhdr}{\headheight is too small}
-\WarningFilter{latex}{Overfull \hbox}
-
-
-%%not_a_keyword auto
-%%not_a_keyword default
-
-%%not_a_keyword expression_local_variables
-
-%%not_a_keyword ternary
-%%not_a_keyword exact
-%%not_a_keyword lpm
-
-%%not_a_keyword length
-
-%%not_a_keyword type
-
-%%not_a_keyword reads
-%%not_a_keyword actions
-%%not_a_keyword min_size
-%%not_a_keyword max_size
-%%not_a_keyword size
-%%not_a_keyword modifier
-%%not_a_keyword support_timeout
-
-%%set_bnf_lstlisting_keywords
-%%set_p4_lstlisting_keywords
-
-\ifpdf
-    \pdfinfo {
-        /Author   (The P4 Language Consortium)
-        /Title    (The P4 Language Specification, v 1.1.0 Addendum)
-        /Keywords (P4)x3
-        /Subject  ()
-        /Creator  (TeX)
-        /Producer (PDFLaTeX)
-    }
-\fi
-
-\begin{document}
-\vspace{2cm}
-
-%\title{\sffamily\bfseries\huge The P4 Language Specification\\ \vspace{3mm} \Large Version 1.0.2}
-\centerline{\sffamily\bfseries\huge The P4 Language Specification}
-\vspace{3mm}
-\centerline{\sffamily\Large Version 1.1.0 Addendum}
-\vspace{3mm}
-\centerline{\sffamily\large January 27, 2016}
-\vspace{8mm}
-\centerline{\sffamily\large The P4 Language Consortium}
-
-\date{January 27, 2016}
-\thispagestyle{firstpagestyle}
-%\maketitle
+\SUBSECTION{Addendum for Version 1.1.0}{addendum}
 
 This addendum captures some of the technical discussions going on
 in the P4 Language Design working group, for information about possible future
-directions.  \textit{It does not contain any
+directions. \textit{It does not contain any
 official specifications of the P4 language.} The working group may or may not
 take the technical ideas proposed here into a future P4 specification.
 
-\SECTION{Architecture-language separation}{separation}
+\SUBSUBSECTION{Architecture-language separation}{separation}
 
 The current P4 specification defines the language relative to an
 abstract forwarding model with a specific architecture, as described
@@ -105,7 +30,7 @@ vendors will implement extensions with the expectation of (some of) those
 extensions may make their way into future versions of the standard architecture.
 
 
-\SUBSECTION{Targets}
+\SUBSUBSECTION{Targets}{targets}
 A machine that can run a P4 program is called \textit{target}.
 While P4 provides a standard language for describing the logic within
 programmable regions of a forwarding element, the programmable regions that are
@@ -140,7 +65,7 @@ and/or simulation models.  Examples of these capabilities could include
 arithmetic functions and checksum generators.
 
 
-\SUBSECTION{Target Architecture Structure}{archsstruct}
+\SUBSUBSECTION{Target Architecture Structure}{archsstruct}
 The P4 portion of a target architecture description provides
 \textit{prototypes} for the programmable regions of the target. These
 prototypes specify the input and output interfaces to each region, including
@@ -162,7 +87,7 @@ specification of the interaction between regions in terms of established
 P4 mindset and terminology.
 
 
-\SUBSECTION{Target Architecture Selection}{archsselect}
+\SUBSUBSECTION{Target Architecture Selection}{archsselect}
 A program's target architecture is selected by including that architecture's P4
 prototypes in the source code, and then writing structures that conform to the
 prototypes it specifies.  These structures can make use of the extern object
@@ -196,8 +121,7 @@ programmers using clear compiler error messages when attempting to compile
 programs that use unsupported features.
 
 
-
-\SUBSECTION{Programmable blocks}{blocks}
+\SUBSUBSECTION{Programmable blocks}{blocks}
 Programmable blocks are user-defined blocks of P4 code that can be
 instantiated multiple times within a program, and interact with the enclosing
 target architecture by occupying its programmable regions.  Each instance
@@ -205,7 +129,7 @@ of a programmable block matches a P4-described prototype in the
 architecture specification.
 
 
-\SUBSUBSECTION{Programmable block types}{pbtypes}
+\parab{Programmable block types.}
 A programmable block type is comprised of a signature and code body. The body
 forms a new scope that can contain any normal P4 declaration. The enclosed
 code is lexically scoped and additionally has access to the external
@@ -218,7 +142,7 @@ type is declaring a "template" of P4 code that can be stamped down into the
 program.
 
 
-\SUBSUBSECTION{Programmable block instances}{pbinstances}
+\parab{Programmable block instances.}
 An instance of a programmable block type represents concrete resource
 declarations of the contents of the block.  Because of this, blocks cannot
 be instantiated dynamically at run time: they are static, compile-time
@@ -233,7 +157,7 @@ instances of the type's component objects which the surrounding architecture
 and/or a runtime API can refer to using dotted notation.
 
 
-\SUBSUBSECTION{Programmable block prototypes}{pbprototypes}
+\parab{Programmable block prototypes.}
 Target architectures use programmable blocks to segment P4 code into the
 various programmable regions of the underlying target.  The architecture
 specifies the prototypes of the blocks it expects to be filled in by the
@@ -259,8 +183,7 @@ benefit from writing their own prototypes.  Their utility is in target
 architecture specification only.
 
 
-
-\SUBSECTION{Standard Library}{stdlib}
+\SUBSUBSECTION{Standard Library}{stdlib}
 The P4 portion of a target architecture description provides
 definitions of its extern object types.
 To promote portability of P4 programs, alongside the standard set of primitive
@@ -276,7 +199,7 @@ currently in the language can be delegated to extern objects, thus simplifying
 the core P4 language significantly.
 
 
-\SUBSUBSECTION{Primitive Actions}{stdlib-primitives}
+\parab{Primitive Actions.}
 The primitive actions are standard and expected to be supported
 by \textit{all} targets, regardless of the target architecture being used.
 The list of library actions may be a subset of the current P4 list which
@@ -308,7 +231,7 @@ Pop header instances from the top of an array, moving all subsequent array eleme
 \end{table}
 
 
-\SUBSUBSECTION{Parser Exceptions}{standardparserex}
+\parab{Parser Exceptions.}
 The parser exceptions are standard, regardless of target architecture.
 The prefix "pe" stands for parser exception.  The list of parser
 exceptions may be a superset of the current P4 list which
@@ -346,7 +269,7 @@ to specify the default behavior if no handler for the condition exists. \\
 \end{table}
 
 
-\SUBSUBSECTION{Stateful Objects}{stdlib-state}
+\parab{Stateful Objects.}
 Counters, meters and registers maintain state for longer than one packet. 
 Together they are called stateful memories.  These are described in
 Section~\ref{sec:stateful}.  They are accessed via respective extern
@@ -354,7 +277,7 @@ object types in the standard library.  Generic method calls on these objects
 replace the earlier custom P4 syntax.
 
 
-\SUBSUBSECTION{Checksums and Calculations}{stdlib-calc}
+\parab{Checksums and Calculations.}
 Checksums and hash value generators are examples of functions that operate on a
 stream of bytes from a packet to produce an integer.  These are described
 in Section~\ref{sec:checksandhash}.   They are accessed via respective extern
@@ -362,7 +285,7 @@ object types in the standard library.  Generic method calls on these objects
 replace the earlier custom P4 syntax.
 
 
-\SUBSUBSECTION{Action profiles}{stdlib-actprof}
+\parab{Action profiles.}
 In some instances, action parameter values are not specific to a match entry but
 could be shared between different entries. Some tables might even want to share
 the same set of action parameter values. This can be expressed in P4 with
@@ -372,7 +295,7 @@ Generic method calls on these objects replace the earlier custom P4 syntax.
 Action profiles are an example of a table modifier extern object type.
 
 
-\SUBSUBSECTION{Digests}{stdlib-digest}
+\parab{Digests.}
 Digests serve as a generic mechanism to send data from the middle of a P4 block
 to an external non-P4 receiver. This receiver can be anything from a
 fixed-function piece of hardware to a control-plane function.  The
@@ -382,8 +305,7 @@ type in the standard library.  A generic method call on such objects replaces
 the earlier custom P4 action.
 
 
-
-\SUBSECTION{Standard Switch Architecture}{simplearch}
+\SUBSUBSECTION{Standard Switch Architecture}{simplearch}
 The Standard Switch Architecture defines a highly abstract packet forwarding
 architecture geared towards packet switching.  It serves as:
 \begin{itemize}
@@ -400,7 +322,7 @@ Section~\ref{sec:absmod}.  As for all targets, there is an associated
 Standard Switch Library, containing extern type objects.
 
 
-\SUBSUBSECTION{Programmable regions}{simplearch-prototypes}
+\parab{Programmable regions.}
 The Standard Switch Architecture has three P4-programmable regions: parser,
 ingress, and egress.  It provides prototypes for these.  Note that this gives
 a more explicit meaning to the blocks declared in traditional P4 programs.
@@ -409,7 +331,7 @@ to these regions is given next, to give more detail on how this works.
 The metadata is defined using standard P4 \textit{header_type} ojects.
 
 
-\SUBSUBSECTION{Intrinsic Metadata}{simplearch-intrinsicmd}
+\parab{Intrinsic Metadata.}
 All three blocks receive a read-only metadata header containing basic
 information about the packet:
 
@@ -513,18 +435,14 @@ header_type egress_pipe_controls_t {
 %%endcode
 
 
-\SUBSUBSECTION{Egress Port Selection, Replication and Queuing}{simplearch-egress}
+\parab{Egress Port Selection, Replication and Queuing.}
 The Standard Switch Architecture's egress mechanism is as described
 in Section~\ref{sec:egress}.  This is a mechanism that is provided by
 this particular architecture, rather than something inherent to P4.
 
 
-\SUBSUBSECTION{Cloning, Mirroring, Resubmission and Recirculation}{simplearch-clone}
+\parab{Cloning, Mirroring, Resubmission and Recirculation.}
 The Standard Switch Architecture's cloning, mirroring, and resubmission
 and recirculation mechanism are as described in Section~\ref{sec:recirc}.
 These involve extern object types that are provided by the associated
 Standard Switch library, rather than actions inherent to P4.
-
-
-
-\end{document}
