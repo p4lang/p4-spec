@@ -360,7 +360,9 @@ decimal_digit ::= binary_digit | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 hexadecimal_digit ::= 
     decimal_digit | a | A | b | B | c | C | d | D | e | E | f | F
 
-width_spec ::= decimal_digit+ [ w | s ]
+width_spec ::=
+    decimal_digit+ w |
+    decimal_digit+ s
 field_value ::= const_value
 %%endbnf
 
@@ -732,9 +734,9 @@ and their types.
       \code{10} & Type is \infint, value is 10. \\
       \code{-10} & Type is \infint, value is -10. \\
       \code{8w10} & Type is \bit{8}, value is 10. \\
-      \code{8w-10} & Illegal: negative unsigned number. \\
+      \code{-8w10} & Illegal: negative unsigned number. \\
       \code{8s10} & Type is \Int{8}, value is 10. \\
-      \code{8s-10} & Type is \Int{8}, value is -10. \\
+      \code{-8s10} & Type is \Int{8}, value is -10. \\
       \code{2s3} & Type is \Int{2}, value is -1 (last 2 bits), overflow warning. \\
       \code{1w10} & Type is \bit{1}, value is 0 (last bit), overflow warning. \\
       \code{1s10} & Type is \Int{1}, value is 0 (last bit), overflow warning. \\
@@ -1624,8 +1626,10 @@ Dotted notation is used to refer to a particular field inside of a header
 instance. 
 
 %%bnf
-header_ref ::= header_instance_name | header_instance_name "[" index "]"
-index ::= const_value | last | next
+header_ref ::=
+    header_instance_name | header_instance_name "[" header_ref_index "]"
+
+header_ref_index ::= const_value | last | next
 
 field_ref ::= header_ref . field_name
 %%endbnf
@@ -2350,7 +2354,7 @@ counter_declaration ::=
     }
 
 counter_type ::= bytes | packets | bytes_and_packets
-direct_or_static ::= direct_attibute | static_attribute
+direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= direct : table_name
 static_attribute ::= static : table_name
 %%endbnf
@@ -2488,8 +2492,8 @@ register_declaration ::=
     }
 
 width_or_layout ::= width_declaration | layout_declaration
-width_declaration ::= width : const_value ;
-layout_declaration ::= layout : header_type_name ;
+width_declaration ::= width : const_value
+layout_declaration ::= layout : header_type_name
 
 attribute_list ::= attributes : attr_entry
 attr_entry ::= signed | attr_entry , attr_entry
@@ -2823,14 +2827,14 @@ of a "set", modifying all bits of the destination.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{modify_field_with_hash_based_offset(dest, field_list_calc, base, size)}
+\primact{modify_field_with_hash_based_offset(dest, base, field_list_calc, size)}
 { % Summary
 Add a value to a field.
 }
 { % Parameters
 \paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified (destination)}
-\paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
 \paramdoc{base}{(VAL) The base value to use for the index.}
+\paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
 \paramdoc{size}{(VAL) The maximum value to use for the index if > 0.}
 }
 { % Description
@@ -3232,7 +3236,7 @@ Compound actions are declared as functions.
 
 %%bnf
 compound_action_function_declaration ::=
-    action action_name ( [ action_param_list ] ) { action_statement + } |
+    action action_name ( [ action_param_list ] ) { action_statement * } |
     action action_name ( [ action_param_list ] ) ;
 
 action_param_list ::= action_param [, action_param]*
@@ -3415,7 +3419,7 @@ action_profile_declaration ::=
     }
 
 action_specification ::= 
-    actions { [ action_name ] + }
+    actions { [ action_name ; ] + }
 
 action_selector_declaration ::=
     action_selector selector_name {
@@ -3476,11 +3480,8 @@ field_match_type ::= exact | ternary | lpm | index | range | valid
 table_actions ::= 
     action_specification | action_profile_specification
 
-action_specification ::= 
-    actions { [ action_name ; ] + }
-
 action_profile_specification ::= 
-    action_profile : action_profile_name
+    action_profile : action_profile_name ;
 %%endbnf
 
 This example is from the mTag edge switch program.  It maps the packet's 
@@ -4060,9 +4061,9 @@ extern_type_declaration ::=
 member_declaration ::= attribute_declaration | method_declaration
 
 method_declaration ::= 
-    method method_name ( method_param_list );
+    method method_name ( [ method_param_list ] );
 
-method_param_list ::= method_param [, method_param]*
+method_param_list ::= method_param [, method_param ]*
 method_param ::= param_qualifier* type_spec param_name
 
 attribute_declaration ::= 
@@ -4114,7 +4115,7 @@ extern_attribute_binding ::=
     attribute_name : object_ref | general_expr;
 
 extern_method_call ::= 
-    object_ref . method_name ( arg_list )
+    object_ref . method_name ( [ arg_list ] )
 %%endbnf
 
 If an expression that is used as an attribute value for an extern
@@ -4954,15 +4955,15 @@ local metadata for convenience.
 
 header_type local_metadata_t {
     fields {
-        bit<16> cpu_code        // Code for packet going to CPU
-        bit<4> port_type        // Type of port: up, down, local...
-        bit ingress_error       // An error in ingress port check
-        bit was_mtagged         // Track if pkt was mtagged on ingr
-        bit copy_to_cpu         // Special code resulting in copy to CPU
-        bit bad_packet          // Other error indication
-        bit<8> color            // For metering
-        bit<8> prev_color       // For metering hysteresis
-        bit<16> meter_idx       // Index used for metering
+        bit<16> cpu_code;       // Code for packet going to CPU
+        bit<4> port_type;       // Type of port: up, down, local...
+        bit ingress_error;      // An error in ingress port check
+        bit was_mtagged;        // Track if pkt was mtagged on ingr
+        bit copy_to_cpu;        // Special code resulting in copy to CPU
+        bit bad_packet;         // Other error indication
+        bit<8> color;           // For metering
+        bit<8> prev_color;      // For metering hysteresis
+        bit<16> meter_idx;      // Index used for metering
     }
 }
 

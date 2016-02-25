@@ -45,14 +45,14 @@
     language=BNF,%
     frame=single,%
     backgroundcolor=\color{bnfgreen},%
-    morekeywords={const_value, unsigned_value, bool_value, binary_value, decimal_value, hexadecimal_value, binary_base, hexadecimal_base, binary_digit, decimal_digit, hexadecimal_digit, width_spec, field_value, type_spec, data_type, object_ref, general_expr, bool_expr, arith_expr, bin_op, un_op, bool_op, rel_op, header_type_declaration, header_dec_body, field_dec, length_bin_op, length_exp, header_instance_declaration, header_instance, scalar_instance, array_instance, metadata_instance, metadata_initializer, header_ref, index, field_ref, field_list_declaration, field_list_entry, field_list_calculation_declaration, calculated_field_declaration, update_verify_spec, update_or_verify, if_cond, calc_bool_cond, value_set_declaration, parser_function_declaration, parser_function_body, parser_body_call, extract_statement, header_extract_ref, header_extract_index, set_statement, return_statement, return_value_type, case_entry, value_list, case_return_value_type, value_or_masked, select_exp, field_or_data_ref, parser_exception_declaration, return_or_drop, return_to_control, counter_declaration, counter_type, direct_or_static, direct_attribute, static_attribute, meter_declaration, meter_type, register_declaration, width_or_layout, width_declaration, layout_declaration, attribute_list, attr_entry, register_ref, compound_action_function_declaration, action_param_list, action_param, param_qualifier, action_statement, arg_list, action_profile_declaration, action_specification, action_selector_declaration, table_declaration, field_match, field_or_masked_ref, field_match_type, table_actions, action_specification, action_profile_specification, control_function_declaration, control_block, control_statement, apply_call, apply_and_select_block, case_list, action_case, action_or_default, hit_miss_case, hit_or_miss, if_else_statement, else_block, extern_type_declaration, member_declaration, method_declaration, method_param_list, method_param, attribute_declaration, identifier_list, attribute_type, extern_instance_declaration, extern_attribute_binding, extern_method_call, p4_program, p4_declaration}%
+    morekeywords={const_value, unsigned_value, bool_value, binary_value, decimal_value, hexadecimal_value, binary_base, hexadecimal_base, binary_digit, decimal_digit, hexadecimal_digit, width_spec, field_value, type_spec, data_type, object_ref, general_expr, bool_expr, arith_expr, bin_op, un_op, bool_op, rel_op, header_type_declaration, header_dec_body, field_dec, length_bin_op, length_exp, header_instance_declaration, header_instance, scalar_instance, array_instance, metadata_instance, metadata_initializer, header_ref, header_ref_index, field_ref, field_list_declaration, field_list_entry, field_list_calculation_declaration, calculated_field_declaration, update_verify_spec, update_or_verify, if_cond, calc_bool_cond, value_set_declaration, parser_function_declaration, parser_function_body, parser_body_call, extract_statement, header_extract_ref, header_extract_index, set_statement, return_statement, return_value_type, case_entry, value_list, case_return_value_type, value_or_masked, select_exp, field_or_data_ref, parser_exception_declaration, return_or_drop, return_to_control, counter_declaration, counter_type, direct_or_static, direct_attribute, static_attribute, meter_declaration, meter_type, register_declaration, width_or_layout, width_declaration, layout_declaration, attribute_list, attr_entry, register_ref, compound_action_function_declaration, action_param_list, action_param, param_qualifier, action_statement, arg_list, action_profile_declaration, action_specification, action_selector_declaration, table_declaration, field_match, field_or_masked_ref, field_match_type, table_actions, action_profile_specification, control_function_declaration, control_block, control_statement, apply_call, apply_and_select_block, case_list, action_case, action_or_default, hit_miss_case, hit_or_miss, if_else_statement, else_block, extern_type_declaration, member_declaration, method_declaration, method_param_list, method_param, attribute_declaration, identifier_list, attribute_type, extern_instance_declaration, extern_attribute_binding, extern_method_call, p4_program, p4_declaration}%
 }
 
 \lstdefinestyle{P4style}{
     language=C,%
     frame=single,%
     backgroundcolor=\color{codeblue},%
-    keywords={action, action_function_declaration, action_profile, action_selector, algorithm, and, apply, attribute, attributes, bit, bytes, bytes_and_packets, calculated_field, control, counter, direct, direct_attibute, dynamic_action_selection, else, extern, extern_type, extract, false, field_list, field_list_calculation, fields, header, header_type, hit, if, in, inout, input, instance_count, int, last, layout, mask, max, metadata, meter, method, min, min_width, miss, next, not, optional, or, output_width, packets, parse_error, parser, parser_drop, parser_exception, parser_value_set, primitive_action_declaration, range, register, result, return, saturating, select, selection_key, set_metadata, signed, static, table, true, update, valid, value, varbit, verify, width},%
+    keywords={action, action_function_declaration, action_profile, action_selector, algorithm, and, apply, attribute, attributes, bit, bytes, bytes_and_packets, calculated_field, control, counter, direct, dynamic_action_selection, else, extern, extern_type, extract, false, field_list, field_list_calculation, fields, header, header_type, hit, if, in, inout, input, instance_count, int, last, layout, mask, max, metadata, meter, method, min, min_width, miss, next, not, optional, or, output_width, packets, parse_error, parser, parser_drop, parser_exception, parser_value_set, primitive_action_declaration, range, register, result, return, saturating, select, selection_key, set_metadata, signed, static, table, true, update, valid, value, varbit, verify, width},%
     basicstyle=\ttfamily,%
     aboveskip=3mm,%
     belowskip=3mm,%
@@ -379,7 +379,9 @@ decimal_digit ::= binary_digit | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 hexadecimal_digit ::= 
     decimal_digit | a | A | b | B | c | C | d | D | e | E | f | F
 
-width_spec ::= decimal_digit+ [ w | s ]
+width_spec ::=
+    decimal_digit+ w |
+    decimal_digit+ s
 field_value ::= const_value
 \end{lstlisting}
 %%endbnf
@@ -754,9 +756,9 @@ and their types.
       \code{10} & Type is \infint, value is 10. \\
       \code{-10} & Type is \infint, value is -10. \\
       \code{8w10} & Type is \bit{8}, value is 10. \\
-      \code{8w-10} & Illegal: negative unsigned number. \\
+      \code{-8w10} & Illegal: negative unsigned number. \\
       \code{8s10} & Type is \Int{8}, value is 10. \\
-      \code{8s-10} & Type is \Int{8}, value is -10. \\
+      \code{-8s10} & Type is \Int{8}, value is -10. \\
       \code{2s3} & Type is \Int{2}, value is -1 (last 2 bits), overflow warning. \\
       \code{1w10} & Type is \bit{1}, value is 0 (last bit), overflow warning. \\
       \code{1s10} & Type is \Int{1}, value is 0 (last bit), overflow warning. \\
@@ -1671,8 +1673,10 @@ instance.
 
 %%bnf
 \begin{lstlisting}[style=BNFstyle]
-header_ref ::= header_instance_name | header_instance_name "[" index "]"
-index ::= const_value | last | next
+header_ref ::=
+    header_instance_name | header_instance_name "[" header_ref_index "]"
+
+header_ref_index ::= const_value | last | next
 
 field_ref ::= header_ref . field_name
 \end{lstlisting}
@@ -2419,7 +2423,7 @@ counter_declaration ::=
     }
 
 counter_type ::= bytes | packets | bytes_and_packets
-direct_or_static ::= direct_attibute | static_attribute
+direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= direct : table_name
 static_attribute ::= static : table_name
 \end{lstlisting}
@@ -2561,8 +2565,8 @@ register_declaration ::=
     }
 
 width_or_layout ::= width_declaration | layout_declaration
-width_declaration ::= width : const_value ;
-layout_declaration ::= layout : header_type_name ;
+width_declaration ::= width : const_value
+layout_declaration ::= layout : header_type_name
 
 attribute_list ::= attributes : attr_entry
 attr_entry ::= signed | attr_entry , attr_entry
@@ -2903,14 +2907,14 @@ of a "set", modifying all bits of the destination.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{modify_field_with_hash_based_offset(dest, field_list_calc, base, size)}
+\primact{modify_field_with_hash_based_offset(dest, base, field_list_calc, size)}
 { % Summary
 Add a value to a field.
 }
 { % Parameters
 \paramdoc{dest}{(FLD or R-REF) The name of the field instance to be modified (destination)}
-\paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
 \paramdoc{base}{(VAL) The base value to use for the index.}
+\paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
 \paramdoc{size}{(VAL) The maximum value to use for the index if > 0.}
 }
 { % Description
@@ -3313,7 +3317,7 @@ Compound actions are declared as functions.
 %%bnf
 \begin{lstlisting}[style=BNFstyle]
 compound_action_function_declaration ::=
-    action action_name ( [ action_param_list ] ) { action_statement + } |
+    action action_name ( [ action_param_list ] ) { action_statement * } |
     action action_name ( [ action_param_list ] ) ;
 
 action_param_list ::= action_param [, action_param]*
@@ -3508,7 +3512,7 @@ action_profile_declaration ::=
     }
 
 action_specification ::= 
-    actions { [ action_name ] + }
+    actions { [ action_name ; ] + }
 
 action_selector_declaration ::=
     action_selector selector_name {
@@ -3571,11 +3575,8 @@ field_match_type ::= exact | ternary | lpm | index | range | valid
 table_actions ::= 
     action_specification | action_profile_specification
 
-action_specification ::= 
-    actions { [ action_name ; ] + }
-
 action_profile_specification ::= 
-    action_profile : action_profile_name
+    action_profile : action_profile_name ;
 \end{lstlisting}
 %%endbnf
 
@@ -4173,9 +4174,9 @@ extern_type_declaration ::=
 member_declaration ::= attribute_declaration | method_declaration
 
 method_declaration ::= 
-    method method_name ( method_param_list );
+    method method_name ( [ method_param_list ] );
 
-method_param_list ::= method_param [, method_param]*
+method_param_list ::= method_param [, method_param ]*
 method_param ::= param_qualifier* type_spec param_name
 
 attribute_declaration ::= 
@@ -4229,7 +4230,7 @@ extern_attribute_binding ::=
     attribute_name : object_ref | general_expr;
 
 extern_method_call ::= 
-    object_ref . method_name ( arg_list )
+    object_ref . method_name ( [ arg_list ] )
 \end{lstlisting}
 %%endbnf
 
@@ -4418,7 +4419,9 @@ decimal_digit ::= binary_digit | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 hexadecimal_digit ::= 
     decimal_digit | a | A | b | B | c | C | d | D | e | E | f | F
 
-width_spec ::= decimal_digit+ [ w | s ]
+width_spec ::=
+    decimal_digit+ w |
+    decimal_digit+ s
 field_value ::= const_value
 
 type_spec ::=
@@ -4495,8 +4498,10 @@ metadata_instance ::=
        instance_name [ metadata_initializer ] | ;
 
 metadata_initializer ::= { [ field_name : field_value ; ] + }
-header_ref ::= header_instance_name | header_instance_name "[" index "]"
-index ::= const_value | last | next
+header_ref ::=
+    header_instance_name | header_instance_name "[" header_ref_index "]"
+
+header_ref_index ::= const_value | last | next
 
 field_ref ::= header_ref . field_name
 field_list_declaration ::=
@@ -4591,7 +4596,7 @@ counter_declaration ::=
     }
 
 counter_type ::= bytes | packets | bytes_and_packets
-direct_or_static ::= direct_attibute | static_attribute
+direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= direct : table_name
 static_attribute ::= static : table_name
 meter_declaration ::= 
@@ -4612,15 +4617,15 @@ register_declaration ::=
     }
 
 width_or_layout ::= width_declaration | layout_declaration
-width_declaration ::= width : const_value ;
-layout_declaration ::= layout : header_type_name ;
+width_declaration ::= width : const_value
+layout_declaration ::= layout : header_type_name
 
 attribute_list ::= attributes : attr_entry
 attr_entry ::= signed | attr_entry , attr_entry
 register_ref ::=
     register_name "[" const_value "]" [.field_name]
 compound_action_function_declaration ::=
-    action action_name ( [ action_param_list ] ) { action_statement + } |
+    action action_name ( [ action_param_list ] ) { action_statement * } |
     action action_name ( [ action_param_list ] ) ;
 
 action_param_list ::= action_param [, action_param]*
@@ -4641,7 +4646,7 @@ action_profile_declaration ::=
     }
 
 action_specification ::= 
-    actions { [ action_name ] + }
+    actions { [ action_name ; ] + }
 
 action_selector_declaration ::=
     action_selector selector_name {
@@ -4666,11 +4671,8 @@ field_match_type ::= exact | ternary | lpm | index | range | valid
 table_actions ::= 
     action_specification | action_profile_specification
 
-action_specification ::= 
-    actions { [ action_name ; ] + }
-
 action_profile_specification ::= 
-    action_profile : action_profile_name
+    action_profile : action_profile_name ;
 control_function_declaration ::=
     control control_fn_name control_block
 control_block ::= { control_statement * }
@@ -4703,9 +4705,9 @@ extern_type_declaration ::=
 member_declaration ::= attribute_declaration | method_declaration
 
 method_declaration ::= 
-    method method_name ( method_param_list );
+    method method_name ( [ method_param_list ] );
 
-method_param_list ::= method_param [, method_param]*
+method_param_list ::= method_param [, method_param ]*
 method_param ::= param_qualifier* type_spec param_name
 
 attribute_declaration ::= 
@@ -4727,7 +4729,7 @@ extern_attribute_binding ::=
     attribute_name : object_ref | general_expr;
 
 extern_method_call ::= 
-    object_ref . method_name ( arg_list )
+    object_ref . method_name ( [ arg_list ] )
 
 \end{lstlisting}
 %%endbnf
@@ -4755,7 +4757,6 @@ calculated_field
 control
 counter
 direct
-direct_attibute
 dynamic_action_selection
 else
 extern
@@ -5490,15 +5491,15 @@ local metadata for convenience.
 
 header_type local_metadata_t {
     fields {
-        bit<16> cpu_code        // Code for packet going to CPU
-        bit<4> port_type        // Type of port: up, down, local...
-        bit ingress_error       // An error in ingress port check
-        bit was_mtagged         // Track if pkt was mtagged on ingr
-        bit copy_to_cpu         // Special code resulting in copy to CPU
-        bit bad_packet          // Other error indication
-        bit<8> color            // For metering
-        bit<8> prev_color       // For metering hysteresis
-        bit<16> meter_idx       // Index used for metering
+        bit<16> cpu_code;       // Code for packet going to CPU
+        bit<4> port_type;       // Type of port: up, down, local...
+        bit ingress_error;      // An error in ingress port check
+        bit was_mtagged;        // Track if pkt was mtagged on ingr
+        bit copy_to_cpu;        // Special code resulting in copy to CPU
+        bit bad_packet;         // Other error indication
+        bit<8> color;           // For metering
+        bit<8> prev_color;      // For metering hysteresis
+        bit<16> meter_idx;      // Index used for metering
     }
 }
 
