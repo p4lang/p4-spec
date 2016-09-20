@@ -1362,7 +1362,7 @@ according to availability on the target. However, target constraints may make
 this impossible; for example, a target may not allow references to the same 
 global resource in both the ingress and egress pipelines.
 
-{\color{blue} Counters, meters and registers are referenced in special primitive actions as defined 
+{\color{red} Counters, meters and registers are referenced in special primitive actions as defined 
 in Section~\ref{sec:primitiveactions}.}
 
 \SUBSECTION{Counters}{counters}
@@ -1477,7 +1477,7 @@ metadata for the packet and a subsequent table could check that the
 flow was marked as active.
 
 Register declarations are similar to those of meters and
-counters. {\color{blue} Registers are declared with a width
+counters. {\color{red} Registers are declared with a width
 attribute that indicates the bit-width of each instance of
 the register.}
 
@@ -1522,7 +1522,7 @@ register is not declared with the \texttt{direct} attribute.
 %If the register is declared with a layout, then the reference can be refined 
 %with a field name as indicated.
 
-{\color{blue}
+{\color{red}
 A register can be accessed by \texttt{register_read} and 
 \texttt{register_write} primitives, which will be detailed in the 
 next section.
@@ -1657,7 +1657,7 @@ Set the value of a field in the packet's Parsed Representation. \\ \hline
 Add a value to a field. \\ \hline
 \texttt{add} &
 Add two values together and store in a field. \\ \hline
-\texttt{\color{blue}modify_field_with_hash_based_offset} &
+\texttt{\color{red}modify_field_with_hash_based_offset} &
 Apply a field list calculation and use the result to generate an offset value. \\ \hline
 \texttt{truncate} &
 Truncate the packet on egress. \\ \hline
@@ -1671,12 +1671,12 @@ Push all header instances in an array down and add a new header at the top. \\ \
 Pop header instances from the top of an array, moving all subsequent array elements up. \\ \hline
 \texttt{count} &
 Update a counter. \\ \hline
-\texttt{\color{blue}execute_meter} &
+\texttt{\color{red}execute_meter} &
 Execute a meter operation. \\ \hline
-\texttt{\color{blue}register_read} &
-{\color{blue}Read from an indexed instance of a register and store the value into a field.} \\ \hline
-\texttt{\color{blue}register_write} &
-{\color{blue}Write a value into an indexed instance of a register. }\\ \hline
+\texttt{\color{red}register_read} &
+{\color{red}Read from an indexed instance of a register and store the value into a field.} \\ \hline
+\texttt{\color{red}register_write} &
+{\color{red}Write a value into an indexed instance of a register. }\\ \hline
 
 \texttt{generate_digest} &
 Generate a packet digest and send to a receiver. \\ \hline
@@ -1799,8 +1799,8 @@ at higher indices are copied to the next lower index.
 Set the value of the given field in packet's Parsed Representation
 }
 { % Parameters
-\paramdoc{dest}{{\color{blue}(FLD) The name of the field instance to modify (destination).}}
-\paramdoc{value}{{\color{blue}(VAL or FLD) The value to use (source).}}
+\paramdoc{dest}{{\color{red}(FLD) The name of the field instance to modify (destination).}}
+\paramdoc{value}{{\color{red}(VAL or FLD) The value to use (source).}}
 \paramdoc{mask}{(VAL) An optional mask to use identifying the bits to change.}
 }
 { % Description
@@ -1841,12 +1841,12 @@ of a "set", modifying all bits of the destination.
 Add a value to a field.
 }
 { % Parameters
-\paramdoc{dest}{{\color{blue}(FLD) The name of the field instance to be modified.}}
-\paramdoc{value}{{\color{blue}(VAL or FLD) The value to use.}}
+\paramdoc{dest}{{\color{red}(FLD) The name of the field instance to be modified.}}
+\paramdoc{value}{{\color{red}(VAL or FLD) The value to use.}}
 }
 { % Description
 The \texttt{dest} field's value is updated by adding the value parameter. The \texttt{value} parameter 
-may be from a table parameter, an immediate value {\color{blue}or a field reference}; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
+may be from a table parameter, an immediate value {\color{red}or a field reference}; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
 and its parent header is not valid, then no change is made to \texttt{dest}. A description 
 of the logical behavior follows in the Section~\ref{sec:fieldasgmt} below.
 If \texttt{value} is an immediate value, it may 
@@ -1867,7 +1867,7 @@ Add value1 and value2 and store in dest.
 { % Description
 The \texttt{dest} field's value is updated with the result of adding
 the two value parameters. Each \texttt{value} parameter may be from a
-table parameter, an immediate a value {\color{blue}or a field reference}; see \texttt{modify_field} above.  If either \texttt{value}
+table parameter, an immediate a value {\color{red}or a field reference}; see \texttt{modify_field} above.  If either \texttt{value}
 is a field reference and its parent header is not valid, then no
 change is made to \texttt{dest}.  A description of the logical
 behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
@@ -1876,21 +1876,21 @@ behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{{\color{blue}modify_field_with_hash_based_offset(dest, base, field_list_calc, size)}}
+\primact{{\color{red}modify_field_with_hash_based_offset(dest, base, field_list_calc, size)}}
 { % Summary
-{\color{blue}Apply a field list calculation to compute a hash value.}
+{\color{red}Apply a field list calculation to compute a hash value.}
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified (destination).}
 \paramdoc{base}{(VAL) The base value to add to the hash value.}
 \paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
-\paramdoc{size}{(VAL)  \color{blue} The size of the hash value range. Must be larger than 0.}
+\paramdoc{size}{(VAL)  \color{red} The size of the hash value range. Must be larger than 0.}
 }
 { % Description
 The field list calculation is executed to generate a hash value.  
 The hash value is used to generate a value between \texttt{base} and 
 \texttt{(base + size - 1)} by calculating \texttt{(base + (hash_value \% size))}. 
-{\color{blue}
+{\color{red}
 The result can be used as a hash digest of a long key (such as 5-tuple) or as 
 an offset/index to reference a register array. }
 
@@ -1951,18 +1951,18 @@ continues as per the current control function specification.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}push(array, count)}
+\primact{\color{red}push(array, count)}
 { % Summary
 Push all header instances in an array down and add a new header at the top.
 }
 { % Parameters
 \paramdoc{array}{(ARR) The name of the instance array to be modified.}
-\paramdoc{count}{(VAL) \color{blue}A value indicating the number of elements to push.}
+\paramdoc{count}{(VAL) \color{red}A value indicating the number of elements to push.}
 }
 { % Description
 This primitive is used to make room for a new element in an array of header
 instances without knowing in advance how many elements are already valid. 
-{\color{blue}Existing elements will be shifted by \texttt{count}: an
+{\color{red}Existing elements will be shifted by \texttt{count}: an
 element at index N will be moved to index N+\texttt{count}. 
 \texttt{count} number of new elements will be pushed at indices 0 to 
 \texttt{count}-1, zeroed out and set valid.}
@@ -1973,17 +1973,17 @@ elements pushed to indices beyond the static array size will be lost.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}pop(array, count)}
+\primact{\color{red}pop(array, count)}
 { % Summary
 Pop header instances from the top of an array, moving all subsequent array elements up.
 }
 { % Parameters
 \paramdoc{array}{(ARR) The name of the instance array to be modified.}
-\paramdoc{count}{(VAL) \color{blue}A value indicating the number of elements to pop.}
+\paramdoc{count}{(VAL) \color{red}A value indicating the number of elements to pop.}
 }
 { % Description
 This primitive is used to remove elements from an array of header instances
-without knowing in advance how many elements are already valid. {\color{blue}An element at
+without knowing in advance how many elements are already valid. {\color{red}An element at
 index N will be moved to index N-\texttt{count}, and the elements at indices 0 to 
 \texttt{count}-1 will be lost. The
 bottom-most elements that had nothing shifted into them are invalidated.}
@@ -2012,7 +2012,7 @@ this action.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}execute_meter(meter_ref, index, field)}
+\primact{\color{red}execute_meter(meter_ref, index, field)}
 { % Summary
 Execute a meter operation.
 }
@@ -2033,7 +2033,7 @@ state is updated, but the state of the meter is discarded.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{\color{blue}
+{\color{red}
 \primact{register_read(dest, register_ref, index)}
 { % Summary
 Read from a register.
@@ -2051,7 +2051,7 @@ cell to reference.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{\color{blue}
+{\color{red}
 \primact{register_write(register_ref, index, value)}
 { % Summary
 Write to a register.
@@ -2093,13 +2093,13 @@ as address learning.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}resubmit(field_list)}
+\primact{\color{red}resubmit(field_list)}
 {% textbf  
 Applied in the ingress pipeline, mark the packet to be resubmitted to the 
 parser.
 }
 { % Parameters
-\paramdoc{field_list}{(FLDLIST) \color{blue}A list of metadata field references.} 
+\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.} 
 }
 { % Description
 Only valid on the ingress pipeline.
@@ -2120,18 +2120,18 @@ See Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}recirculate(field_list)}
+\primact{\color{red}recirculate(field_list)}
 { % Summary
 On egress, mark the packet to be resubmitted to the parser.
 }
 { % Parameters
-\paramdoc{field_list}{(FLDLIST) \color{blue}A list of metadata field references.} 
+\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.} 
 }
 { % Description
 Only valid on the egress pipeline.
 
-The packet is marked for  {\color{blue}recirculation}. It will complete the egress pipeline 
-and be deparsed.  This version of the packet is then {\color{blue}recirculated} to the parser 
+The packet is marked for  {\color{red}recirculation}. It will complete the egress pipeline 
+and be deparsed.  This version of the packet is then {\color{red}recirculated} to the parser 
 with values of the fields in \texttt{field_list} from the processing on the packet. 
 These values replace the normal initial values of the metadata fields indicated 
 in the initializer of the instance declaration.
@@ -2142,13 +2142,13 @@ See Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}clone_ingress_pkt_to_ingress(clone_spec, field_list)}
+\primact{\color{red}clone_ingress_pkt_to_ingress(clone_spec, field_list)}
 { % Summary
 Generate a copy of the original packet and submit it to the ingress parser.
 }
 { % Parameters
 \paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
-\paramdoc{field_list}{(FLDLIST) \color{blue}A list of metadata field references.}
+\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.}
 }
 { % Description
 This action indicates that the switch should generate a copy of the original 
@@ -2181,13 +2181,13 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}clone_egress_pkt_to_ingress(clone_spec, field_list)}
+\primact{\color{red}clone_egress_pkt_to_ingress(clone_spec, field_list)}
 { % Summary
 Generate a duplicate of the egress packet and submit it to the parser.
 }
 { % Parameters
 \paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
-\paramdoc{field_list}{(FLDLIST) \color{blue}A list of metadata field references.}
+\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.}
 }
 { % Description
 The packet is marked for cloning at egress. Once the original packet completes 
@@ -2214,7 +2214,7 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}clone_ingress_pkt_to_egress(clone_spec, field_list)}
+\primact{\color{red}clone_ingress_pkt_to_egress(clone_spec, field_list)}
 { % Summary
 Generate a copy of the original packet and submit it to the Buffering Mechanism.
 }
@@ -2253,14 +2253,14 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{blue}clone_egress_pkt_to_egress(clone_spec, field_list)}
+\primact{\color{red}clone_egress_pkt_to_egress(clone_spec, field_list)}
 { % Summary
 Duplicate the egress version of the packet and submit it to the Buffering 
 Mechanism.
 }
 { % Parameters
 \paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
-\paramdoc{field_list}{(FLDLIST) \color{blue}A list of metadata field references.}
+\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.}
 }
 { % Description
 The packet is marked for cloning at egress. Once the original packet completes 
@@ -3102,8 +3102,8 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.0-rc3 & 2014-12-30 & Fixed some missing tildes (negations). Drop in parser is now \texttt{parser_drop}. Added \texttt{add} primitive action. Added errata section. \\  \hline
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
-{\color{blue}
-1.0.3 & \color{blue} 2016-09-13 & \color{blue} Added \texttt{register_read} and \texttt{register_write} primitive actions and removed reigster layout and bracket-based access method. Replaced \texttt{meter} primitive action by \texttt{execute_meter}. Replaced \texttt{set_field_to_hash_index} primitive action by \texttt{modify_field_with_hash_based_offset}. Changed optional parameters of \texttt{push, pop, resubmit, recirculate, clone_*} primitive actions to mandatory parameters.
+\color{red} 1.0.3 & \color{red} 2016-09-13 & \color{red} Added \texttt{register_read} and \texttt{register_write} primitive actions and removed reigster layout and bracket-based access method. Replaced \texttt{meter} primitive action by \texttt{execute_meter}. Replaced \texttt{set_field_to_hash_index} primitive action by \texttt{modify_field_with_hash_based_offset}. Changed optional parameters of \texttt{push, pop, resubmit, recirculate, clone_*} primitive actions to mandatory parameters.
+\\ \hline
 }
 \end{tabular}
 \end{center}
