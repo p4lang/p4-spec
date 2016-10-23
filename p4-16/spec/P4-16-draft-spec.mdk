@@ -197,7 +197,7 @@ The P4~16~ language also introduces and repurposes some v1.1 language constructs
 
 One important goal of the P4~16~ language revision is to provide a *stable* programming language definition, that promotes backwards-compatibility. In other words, we strive for programs written in P4~16~ to remain syntactically correct and to behave identically when treated as programs later versions.
 
-#	Data Plane interfaces and the Target Architecture Model
+#	Data Plane interfaces and the Architecture Model
 
 ##	The architecture { #sec-arch }
 
@@ -368,7 +368,7 @@ extern Checksum16 {
 ~ End P4Example
 Let us describe some of these elements:
 
-- The included file core.p4 is described in more detail in Appendix 21. We use it here for some standard data-types and error codes.
+- The included file core.p4 is described in more detail in Appendix [#sec-p4-core-lib]. We use it here for some standard data-types and error codes.
 - bit<4> is the type of bit-strings with 4 bits.
 - The syntax 4w0xF indicates the value 15 represented using 4 bits. An alternative notation is 4w15. In some circumstances the width modifier can be omitted, writing just 15.
 - error is a built-in P4 type for holding error codes
@@ -692,7 +692,7 @@ The P4 language can be viewed as having several distinct components, which we de
 
 ##	Syntax and semantics { #sec-syntax }
 ###	Grammar
-The complete grammar of P4~16~ is given in Appendix 23, using the YACC/bison grammar description language. In this text we use the same grammar; we use the following conventions when we provide excerpts from the grammar:
+The complete grammar of P4~16~ is given in Appendix [#sec-grammar], using the YACC/bison grammar description language. In this text we use the same grammar; we use the following conventions when we provide excerpts from the grammar:
 
 - grammar rules are written using fixed-size font
 - UPPERCASE symbols denote grammar terminals
@@ -755,7 +755,7 @@ This functionality allows P4 programs to be built from multiple source files, po
 
 ###	P4 core library
 
-Similar to the C standard library, the P4 language specification defines a core library that declares useful P4 constructs. A description of the P4 core library is provided in the Appendix 21. All P4 programs must include the core library. Including the core library is done with
+Similar to the C standard library, the P4 language specification defines a core library that declares useful P4 constructs. A description of the P4 core library is provided in the Appendix [#sec-p4-core-lib]. All P4 programs must include the core library. Including the core library is done with
 ~ Begin P4Example
 #include <core.p4>
 ~ End P4Example
@@ -2046,7 +2046,7 @@ header itself is valid.
  ~ Figure { #fig-headerstack; caption: "Example header stacks with 6 elements." }
  ![headerstack]
  ~
- [headerstack]: figs/headerstack.png { width: 100%; page-align: here }
+ [headerstack]: figs/headerstack.png { width: 5cm; page-align: here }
 
 A header stack is a fixed-size array of headers with the same type. Figure
 [#fig-headerstack] shows an example header stack with 6 elements, with the
@@ -2383,7 +2383,7 @@ This section describes the P4 constructs specific to parsing network packets.
  ~ Figure { #fig-parserstatemachine; caption: "Parser FSM structure." }
  ![parserstatemachine]
  ~
- [parserstatemachine]: figs/parserstatemachine.png { width: 100%; page-align: here }
+ [parserstatemachine]: figs/parserstatemachine.png { height: 5cm; page-align: here }
 
 A parser describes a finite state-machine (FSM) with one start state and two
 final states. The start state is named with the reserved keyword ```start```.
@@ -2897,7 +2897,7 @@ Semantics: the semantics of a subparser invocation can be described as follows:
  ~ Figure { #fig-subparser; caption: "Semantics of invoking a sub-parser:  top - original program, bottom - equivalent program." }
  ![subparser]
  ~
- [subparser]: figs/subparser.png { width: 100%; page-align: here }
+ [subparser]: figs/subparser.png { width: 80%; page-align: here }
 
 Figure [#fig-subparser] shows a diagram of this process.
 
@@ -2946,7 +2946,7 @@ We start by describing the core components of a ```control``` block, starting wi
  ~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is set by the control plane. Parameters are bound by the data plane." }
  ![actions]
  ~
- [actions]: figs/actions.png { width: 100%; page-align: here }
+ [actions]: figs/actions.png { width: 8cm; page-align: here }
 
 Actions are code fragments that can read and write the data being processed. Actions may contain data values that can be written by the control plane and read by the data plane. Actions are the fundamental construct by which the control-plane can influence dynamically the behavior of the data plane. Figure [#fig-actions] shows the abstract model of an ```action```. Formally, actions are [function objects](https://en.wikipedia.org/wiki/Function_object).
 
@@ -2982,7 +2982,7 @@ Actions can be executed in two ways:
  ~ Figure { #fig-maudataflow; caption: "Match-Action Unit Dataflow." }
  ![maudataflow]
  ~
- [maudataflow]: figs/maudataflow.png { width: 100%; page-align: here }
+ [maudataflow]: figs/maudataflow.png { width: 80%; page-align: here }
 
 The P4 ```table``` construct describes a match-action unit. The structure of a match-action unit is shown in Figure [#fig-maudataflow]. The match-action processing consists of the following steps:
 
@@ -3444,7 +3444,7 @@ package Switch<T>( // Top-level switch contains two packages
  ~ Figure { #fig-switcharch; caption: "Switch architecture fragment implied by the previous set of declarations." }
  ![switcharch]
  ~
- [switcharch]: figs/switcharch.png { width: 100%; page-align: here }
+ [switcharch]: figs/switcharch.png { width: 80%; page-align: here }
 
 Just from these declarations, even without reading a precise description of the target, the programmer can infer some useful information about the architecture of the described switch, as shown in Figure [#fig-switcharch]:
 
@@ -3495,7 +3495,7 @@ Switch<bit<32>>(P(), Pipe1()) main;
 ~ Figure { #fig-packetfilter; caption: "A packet filter target model. The parser computes a Boolean value, which is used to decide whether the packet is dropped." }
  ![packetfilter]
 ~
- [packetfilter]: figs/packetfilter.png { page-align: here }
+ [packetfilter]: figs/packetfilter.png { width: 5cm; page-align: here }
 
 
 To illustrate the versatility of P4 architecture description language, we give an example of another architecture, which models a packet filter that makes a drop/no drop decision based only on the computation in a P4 parser.
@@ -3591,7 +3591,7 @@ Figure [#fig-compileeval] shows the result of the evaluation in a graphical form
 ~ Figure { #fig-compileeval; caption: "Evaluation result." }
 ![compileeval]
 ~
-[compileeval]: figs/compileeval.png { page-align: here }
+[compileeval]: figs/compileeval.png { width: 5cm; page-align: here }
 
 ##	Control plane names { #sec-cp-names }
 
@@ -3620,7 +3620,7 @@ The compile-time evaluation of this program produces the structure in Figure [#f
 ~ Figure { #fig-evalmultiple; caption: "Evaluating a program that has several instantiations of the same component." }
 ![evalmultiple]
 ~
-[evalmultiple]: figs/evalmultiple.png { page-align: here }
+[evalmultiple]: figs/evalmultiple.png { width: 5cm; page-align: here }
 
 ##	Dynamic evaluation { #sec-dynamic-eval }
 
