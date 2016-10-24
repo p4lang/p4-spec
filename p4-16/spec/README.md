@@ -19,8 +19,7 @@ Files:
   off from the cpp.json provided by Madoko (the "extend" clause does
   not work, my version of Madoko asks for a "tokenizer" to be
   defined). Style customization for each token can be done using CSS
-  style attributes (see token.keyword in line 20 of
-  ```P4-16-draft-spec.mdk```).
+  style attributes (see token.keyword in line 20 of ```P4-16-draft-spec.mdk```).
 - ```figs/*.png``` exported figures from the P4-16-draft-spec.pptx
 - ```Makefile``` builds documentation in the build subdirectory
 
