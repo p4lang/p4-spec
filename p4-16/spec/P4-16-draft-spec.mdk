@@ -2415,7 +2415,7 @@ parserStates
     ;
 ~ End P4Grammar
 
-Prior to the parser states, a parser may also contain a list of local elements. These can be constants, variables, or instantiations (see Section [#sec-parser-abstract-machine]) of objects that may be used within the parser. Such objects may be instantiations of ```extern``` objects, or other ```parser```s or ```control```s that may be invoked as subroutines. (Specific architectures may forbid the instantiation of ```control``` blocks within a ```parser```.)
+Prior to the parser states, a parser may also contain a list of local elements. These can be constants, variables, or instantiations (see Section [#sec-parser-abstract-machine]) of objects that may be used within the parser. Such objects may be instantiations of ```extern``` objects, or other ```parser```s or ```control```s that may be invoked as subroutines. The architecture forbids the instantiation of ```control``` blocks within a ```parser```.
 
 ~ Begin P4Grammar
 parserLocalElement
@@ -2910,6 +2910,8 @@ Various targets may impose (static or dynamic) constraints on the number of pars
 P4 parsers are responsible for extracting bits from a packet into headers. The headers can be manipulated and transformed within ```control``` blocks. Control blocks are a P4 construct that are used for describing match-action pipelines. The body of a control block resembles a traditional C program. Within the body of a control block, match-action units can be invoked to perform data transformations. Match-action units are represented in P4 by constructs called ```tables```.
 
 There is no exceptional control-flow in a ```control``` block: no equivalent of the ```verify``` parser statement or of the ```reject``` state. Error handling has to be performed explicitly by users.
+
+The architecture forbids the instantiation of ```parser``` instances within a ```control``` block.
 
 A ```control``` block may start with declarations of ```action```s, ```table```s, constants, variables and instantiations.
 
