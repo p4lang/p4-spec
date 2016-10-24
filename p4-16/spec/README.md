@@ -1,14 +1,10 @@
 # Markup version
 
 The markup version uses Madoko (https://www.madoko.net) to produce
-HTML and PDF versions of the documentation. We use the [local
-installation](http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html#sec-installation-and-usage)
-method. For Mac OS, I installed node.js using Homebrew and then Madoko
-using npm:
-```
-brew install node.js
-npm install madoko -g
-```
+HTML and PDF versions of the documentation. Pre-built versions of the
+documentation are available on the
+[wiki](https://github.com/p4lang/p4-spec/wiki).
+
 
 Files:
 - ```P4-16-draft-spec.mdk``` is the main file. It's markup, with two custom
@@ -25,3 +21,16 @@ Files:
   defined). Style customization for each token can be done using CSS
   style attributes (see token.keyword in line 20 of
   ```P4-16-draft-spec.mdk```).
+- ```figs/*.png``` exported figures from the P4-16-draft-spec.pptx
+- ```Makefile``` builds documentation in the build subdirectory
+
+## Building
+We use the [local
+installation](http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html#sec-installation-and-usage)
+method. For Mac OS, I installed node.js using Homebrew and then Madoko
+using npm:
+```
+brew install node.js
+npm install madoko -g
+```
+Note that to build the PDF you need a functional TeX version innstalled.
