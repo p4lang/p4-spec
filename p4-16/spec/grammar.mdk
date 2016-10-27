@@ -115,8 +115,7 @@ parserLocalElement
     ;
 
 parserTypeDeclaration
-    : optAnnotations PARSER name optTypeParameters
-     '(' parameterList ')'
+    : optAnnotations PARSER name optTypeParameters '(' parameterList ')'
     ;
 
 parserStates
@@ -125,8 +124,7 @@ parserStates
     ;
 
 parserState
-    : optAnnotations STATE name
-     '{' parserStatements transitionStatement '}'
+    : optAnnotations STATE name '{' parserStatements transitionStatement '}'
     ;
 
 parserStatements
@@ -135,7 +133,13 @@ parserStatements
     ;
 
 parserStatement
-    : assignmentOrMethodCallStatement    | variableDeclaration
+    : assignmentOrMethodCallStatement
+    | parserBlockStatement
+    | variableDeclaration
+    ;
+
+parserBlockStatement
+    : optAnnotations '{' parserStatements '}'
     ;
 
 transitionStatement
@@ -518,6 +522,25 @@ lvalue
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
     ;
+
+%left ','
+%nonassoc '?'
+%nonassoc ':'
+%left OR
+%left AND
+%left '|'
+%left '^'
+%left '&'
+%left EQ NE
+%left '<' '>' LE GE
+%left SHL
+%left PP '+' '-'
+%left '*' '/' '%'
+%right PREFIX
+%nonassoc ']' '(' '['
+%left '.'
+
+// Additional precedences need to be specified
 
 expression
     : INTEGER
