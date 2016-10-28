@@ -2,7 +2,7 @@ Title : P4~16~ Language Specification
 Title Note : (draft)
 Title Footer: October 23, 2016
 Author : The P4.org language consortium
-Heading depth: 4
+Heading depth: 5
 
 Pdf Latex: pdflatex
 Document Class: [10pt]article
@@ -78,7 +78,7 @@ p4grammar {
 ~ Begin Abstract
 P4 is a language for programming the data plane of network devices. This
 document provides a precise definition of the P4~16~ language, which is the 2016
-revision of the P4 language (http://p4.org).  The primary target audience for this document
+revision of the P4 language <http://p4.org>.  The primary target audience for this document
 includes developers who want to write compilers/simulators/IDEs/debuggers for
 P4 programs. This document may also be useful for P4 programmers who are
 interested in understanding the language syntax and semantics at a deeper level.
@@ -134,7 +134,7 @@ Throughout this specification, the following terms will be used. Terms, explicit
 ~
 [prgswitch]: figs/prgswitch.png { width: 100%; page-align: forcehere }  
 
-P4 is a language for expressing how packets are processed by the data plane of a programmable network forwarding element such as a programmable hardware or software switch, network interface card, router or network function appliance. The name comes from the original paper that introduced the language, "Programming Protocol-independent Packet Processors," [https://arxiv.org/pdf/1312.1719.pdf](https://arxiv.org/pdf/1312.1719.pdf). While initially P4 was designed for programming network switches, its scope has been broadened to cover a large variety of packet processing systems. In the rest of this document we use the generic term _target_ for all such network processing system devices.
+P4 is a language for expressing how packets are processed by the data plane of a programmable network forwarding element such as a programmable hardware or software switch, network interface card, router or network function appliance. The name comes from the original paper that introduced the language, "Programming Protocol-independent Packet Processors," <https://arxiv.org/pdf/1312.1719.pdf>. While initially P4 was designed for programming network switches, its scope has been broadened to cover a large variety of packet processing systems. In the rest of this document we use the generic term _target_ for all such network processing system devices.
 
 Many target devices contain both a control plane and a data plane. P4 is designed to specify only the target data plane functionality. P4 programs also partially define the interface by which the control plane and the data-plane communicate, but P4 cannot be used to describe the target's control-plane functionality. In the rest of this document, when we talk about P4 as "programming a target", we mean "programming the target data plane".
 
@@ -198,7 +198,7 @@ Compared to the state-of-the-art method of programming network processing system
 - **Decoupling hardware and software evolution**: Target manufacturers may use abstract architectures to further decouple the evolution of low-level architectural details from high-level processing.
 - **Debugging**: Manufacturers can provide their customers software models of an architecture to aid in the development and debugging of P4 programs.
 
-##	P4 language evolution: comparison to versions P4~14~ (P4 v1.0/v1.1)
+##	P4 language evolution: comparison to previous versions (P4 v1.0/v1.1)
 
 ~ Figure { #fig-p4transition; caption: "Evolution of the language between versions P4~14~ (versions 1.0 and 1.1) and P4~16~." }
 ![p4transition]
@@ -710,7 +710,9 @@ The P4 language can be viewed as having several distinct components, which we de
 
 
 ##	Syntax and semantics { #sec-syntax }
-###	Grammar
+
+###	Grammar { #sec-grammar-intro }
+
 The complete grammar of P4~16~ is given in Appendix [#sec-grammar], using the YACC/bison grammar description language. In this text we use the same grammar; we use the following conventions when we provide excerpts from the grammar:
 
 - grammar rules are written using ```fixed-size font```
@@ -1122,10 +1124,10 @@ baseType
     ;
 ~ End P4Grammar
 
-###	The ```void``` type
+###	The void type
 The void type is written as ```void```. It contains no values. It can only appear in few restricted places in P4 programs.
 
-###	The ```error``` type
+###	The error type
 The error type contains opaque values that can be used to signal errors. It is written as ```error```. New constants of the error type are defined with the syntax:
 ~ Begin P4Grammar
 errorDeclaration
@@ -1141,7 +1143,7 @@ error { ParseError, PacketTooShort }
 ~ End P4Example
 The underlying representation of errors is target-dependent.
 
-###	The ```match_kind type``` { #sec-match-kind-type }
+###	The match kind type { #sec-match-kind-type }
 The ```match_kind``` type is very similar to the ```error``` type, and to a C enum type. All declared identifiers are inserted in the top-level namespace. It is used to declare a set of names that may be used in a table's key property (described in Section [#sec-table-props]). It is an error to declare the same ```match_kind``` identifier multiple times.
 
 ~ Begin P4Grammar
@@ -1159,7 +1161,7 @@ match_kind {
 ~ End P4Example
 Architectures may support additional ```match_kind```s. The declaration of new ```match_kind```s can only occur within model description files; P4 programmers cannot declare new match kinds.
 
-###	The ```bool``` type { #sec-bool-type }
+###	The Boolean type { #sec-bool-type }
 The Boolean type contains two values, ```false``` and ```true```. The type is written as ```bool```. Booleans are not integers or bit-strings.
 
 ###	Strings { #sec-strings }
@@ -1445,7 +1447,6 @@ For the purposes of type-checking the P4 compiler can synthesize some type repre
 
 ####	Set types
 
-[]{tex-cmd: "\indent"}
 ```set<T>``` is a type that describes _sets_ of values of type ```T```.  Set types can only appear in restricted contexts in P4 programs. For example, the range expression ```8w5 .. 8w8``` describes a set containing the 8-bit numbers 5, 6, 7 and 8, so its type is ```set<bit<8>>;```.
 This expression can be used as a label in a ```select``` expression (see Section [#sec-select]), matching any value in this range. Set types cannot be named or declared by P4 programmers, they are only synthesized by the compiler internally and used for type-checking. Expressions with set types are described in Section [#sec-set-exprs].
 
@@ -1465,7 +1466,7 @@ extern void random(in bit<5> logRange, out bit<32> value);
 - first input has direction ```in```, type ```bit<5>```, and name ```logRange```
 - second input has direction ```out```, type ```bit<32>```, and name ```value```
 
-###	```extern``` types { #sec_extern }
+###	Extern types { #sec_extern }
 
 []{tex-cmd: "\indent"}
 P4 programs can invoke the service of fixed-function blocks. A typical example of such a fixed-function block is a checksum unit. The functionality of such blocks is exposed to P4 programs through ```extern``` declarations.
@@ -1478,7 +1479,7 @@ externDeclaration
     ;
 ~ End P4Grammar
 
-####	```extern``` functions
+####	Extern functions
 
 []{tex-cmd: "\indent"}
 An extern function declaration describes a function and its signature, but not the function's implementation.
@@ -1490,7 +1491,7 @@ functionPrototype
 
 For an example of an ```extern``` function declaration, see Section [#sec-function-type].
 
-####	```extern``` objects
+####	Extern objects
 
 []{tex-cmd: "\indent"}
 An extern object declaration declares an object and *all methods* that can be invoked to perform computations and to alter the state of the object. Extern object declarations can also optionally declare constructor methods; these must have the same name as the enclosing ```extern``` type, no type parameters, and no return type. Extern declarations can only appear in architecture model libraries specific to a target.
@@ -1640,6 +1641,7 @@ expression
     | '-' expression
     | '+' expression
     | typeName '.' member
+    | ERROR '.' member
     | expression '.' member
     | expression '*' expression
     | expression '/' expression
@@ -1717,7 +1719,7 @@ Given a complex expression, the order in which sub-expressions are evaluated can
 - All other expressions are evaluated left-to-right as they appear in the source program.
 - Function and method calls are evaluated as described in Section [#sec-calling-convention].
 
-##	Expression on ```error``` values { #sec-error-exprs }
+##	Expression on error values { #sec-error-exprs }
 
 Symbolic names declared by an ```error``` declaration belong to the ```error``` namespace.
 The ```error``` type only supports comparisons for equality and difference.  The result of a comparison is a Boolean value.
@@ -1729,7 +1731,7 @@ error errorFromParser;
 if (errorFromParser != error.NoError) { ... }
 ~ End P4Example
 
-##	Expressions on ```enum``` values { #sec-enum-exprs }
+##	Expressions on enum values { #sec-enum-exprs }
 
 Symbolic names declared by an ```enum``` do not belong to the global namespace, but to a newly introduced namespace.
 ~ Begin P4Example
@@ -2074,14 +2076,14 @@ select(hdr.ipv4.ihl, hdr.ipv4.protocol) {
 
 The type of a tuple of sets is a set of tuples.
 
-##	Operations on ```struct``` types { #sec-ops-on-structs }
+##	Operations on struct types { #sec-ops-on-structs }
 
 The only operation defined on values with a structure type is member access
 operation, indicated using the dot (".") operator (e.g., ```s.field```). Field
 extraction from an l-value produces an l-value. Structs can also be copied
 using assignment; this is only possible between structs that have the same type.
 
-##	Operations on ```header```s { #sec-ops-on-hdrs }
+##	Operations on headers { #sec-ops-on-hdrs }
 
 Headers provide the same operations as structs. Assignment between headers also
 copies the "validity" header bit.
@@ -2356,7 +2358,7 @@ statementOrDeclaration
     ;
 ~ End P4Grammar
 
-##	The ```return``` statement { #sec-return-stmt }
+##	The return statement { #sec-return-stmt }
 
 The ```return``` statement immediately terminates the execution of the ```action``` or ```control``` that contains the ```return``` statement. ```return``` statements are not allowed within parsers.
 
@@ -2366,7 +2368,7 @@ returnStatement
     ;
 ~ End P4Grammar
 
-##	The ```exit``` statement { #sec-exit-stmt }
+##	The exit statement { #sec-exit-stmt }
 
 The ```exit``` statement immediately terminates the execution of all the blocks currently executing: the current ```action``` (if invoked within an ```action```), the current ```control``` and all its callers. ```exit``` statements are not allowed within parsers.
 
@@ -2389,7 +2391,7 @@ conditionalStatement
 
 When using nested ```if``` statements, the ```else``` applies to the innermost ```if``` that does not have an ```else``` statement.
 
-##	The ```switch``` statement { #sec-switch-stmt }
+##	The switch statement { #sec-switch-stmt }
 
 The ```switch``` can only be used within ```control``` blocks.
 ~ Begin P4Grammar
@@ -2569,7 +2571,7 @@ that can be evaluated while executing a parser.
 **Semantics**: The execution of a state entails the sequential execution of the
 statements in the state body.
 
-##	```transition``` statements { #sec-transition }
+##	Transition statements { #sec-transition }
 The ```transition``` statement has the following syntax:
 ~ Begin P4Grammar
 transitionStatement
@@ -2604,7 +2606,7 @@ the implied statement is
 transition reject;
 ~ End P4Example
 
-##	```select``` expressions { #sec-select }
+##	select expressions { #sec-select }
 A ```select``` expression evaluates to a state. The syntax is the following:
 ~ Begin P4Grammar
 selectExpression
@@ -2727,7 +2729,7 @@ packet_in {
 }
 ~ End P4Pseudo
 
-###	````packet_in.extract``` - single argument { #sec-packet-extract-one }
+###	extract --- single argument { #sec-packet-extract-one }
 
 The single-argument extract method has the following P4 declaration:
 ~ Begin P4Example
@@ -2759,7 +2761,7 @@ void packet_in.extract<T>(out T headerLeftValue) {
 }
 ~ End P4Pseudo
 
-###	```packet_in.extract``` --- two arguments { #sec-packet-extract-two }
+###	extract --- two arguments { #sec-packet-extract-two }
 The two-argument extract method has the following declaration:
 ~ Begin P4Example
 void extract<T>(out T variableSizeHeader, in bit<32> variableFieldSize);
@@ -2833,7 +2835,7 @@ parser Top(packet_in b, out Parsed_headers headers) {
 }
 ~ End P4Example
 
-###	```packet_in.lookahead``` { #sec-packet-lookahead }
+###	Lookahead { #sec-packet-lookahead }
 
 ```lookahead``` is a method provided by the ```packet_in``` packet abstraction that evaluates to a set of bits from the input packet without advancing the ```nextBitIndex``` pointer. Similar to ```extract```, it will transition to ```reject``` and set the error if there are not enough bits in the packet. One invokes ```lookahead``` as follows:
 
@@ -3010,7 +3012,7 @@ For a description of the ```optConstructorParameters```, which can be used to bu
 
 We start by describing the core components of a ```control``` block, starting with actions.
 
-##	```action```s { #sec-actions}
+##	Actions { #sec-actions}
 
  ~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is set by the control plane. Parameters are bound by the data plane." }
  ![actions]
@@ -3018,7 +3020,7 @@ We start by describing the core components of a ```control``` block, starting wi
  [actions]: figs/actions.png { width: 8cm; page-align: here }
 
 []{tex-cmd: "\indent"}
-Actions are code fragments that can read and write the data being processed. Actions may contain data values that can be written by the control plane and read by the data plane. Actions are the fundamental construct by which the control-plane can influence dynamically the behavior of the data plane. Figure [#fig-actions] shows the abstract model of an ```action```. Formally, actions are function objects [https://en.wikipedia.org/wiki/Function_object](https://en.wikipedia.org/wiki/Function_object).
+Actions are code fragments that can read and write the data being processed. Actions may contain data values that can be written by the control plane and read by the data plane. Actions are the fundamental construct by which the control-plane can influence dynamically the behavior of the data plane. Figure [#fig-actions] shows the abstract model of an ```action```. Formally, actions are function objects <https://en.wikipedia.org/wiki/Function_object>.
 
 ~ Begin P4Grammar
 actionDeclaration
@@ -3047,7 +3049,7 @@ Actions can be executed in two ways:
 - They can be invoked by tables automatically, during match-action processing
 - Actions can also be explicitly invoked using function call syntax, either from a ```control``` block or from another ```action```. In this case, values for all action parameters must be supplied explicitly, including values for the directionless parameters. The directionless parameters in this case behave like ```in``` parameters.
 
-##	```table```s { #sec-tables }
+##	Tables { #sec-tables }
  ~ Figure { #fig-maudataflow; caption: "Match-Action Unit Dataflow." }
  ![maudataflow]
  ~
@@ -3101,7 +3103,7 @@ A property marked as ```const``` has a value that cannot be changed dynamically 
 
 ###	Table properties { #sec-table-props }
 
-####	```key```
+####	Table keys
 
 The ```key``` is a table property which specifies the key used when looking up an action in the lookup table. The key is given by a set of pairs (expression : matchKind):
 
@@ -3809,7 +3811,7 @@ The P4 compiler should provide:
 - Errors when annotations are used incorrectly (e.g., an annotation expecting a parameter but used without arguments, or with arguments of the wrong type
 - Warnings for unknown annotations.
 
-#	Appendix: P4 reserved keywords { #sec-p4-keywords }
+#	Appendix A: P4 reserved keywords { #sec-p4-keywords }
 The following table shows all P4 reserved keywords. Some identifiers are treated as keywords only in specific contexts (e.g., the keyword ```actions```).
 
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
@@ -3824,7 +3826,7 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 | ```varbit```  | ```verify``` | ```void```       |   |
 |------|------|------|------|
 
-#	Appendix: P4 core library { #sec-p4-core-lib }
+#	Appendix B: P4 core library { #sec-p4-core-lib }
 The P4 core library contains declarations that are useful to most programs.
 
 For example, the core library includes the declarations of the predefined ```packet_in```\
@@ -3862,7 +3864,7 @@ match_kind {
 }
 ~ End P4Example
 
-#	Appendix: checksums { #sec-checksums }
+#	Appendix C: checksums { #sec-checksums }
 
 There are no built-in constructs in P4~16~ for manipulating packet checksums. We expect that all checksum operations can be expressed as ```extern``` library objects that are provided in target-specific libraries. The standard architecture library should provide such checksum units.
 
@@ -3900,7 +3902,7 @@ ck16.update( { header.ipv4.ttl, header.ipv4.proto } );
 header.ipv4.hdrChecksum = ck16.get();
 ~ End P4Example
 
-#	Appendix: P4~16~ grammar { #sec-grammar }
+#	Appendix D: P4 grammar  { #sec-grammar }
 
 This is the grammar of P4~16~ written using the YACC/bison language. Absent from this grammar is the precedence of various operations.
 
