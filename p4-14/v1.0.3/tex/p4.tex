@@ -36,7 +36,7 @@
 \vspace{3mm}
 \centerline{\sffamily\Large Version 1.0.3}
 \vspace{3mm}
-\centerline{\sffamily\large September 13, 2016}
+\centerline{\sffamily\large October 6, 2016}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
@@ -1283,9 +1283,6 @@ it is automatically populated (\texttt{ingress_port} for instance) or because it
 is necessary to describe how the abstract machine operates (\texttt{egress_port} for 
 instance).
 
-Targets may provide their own definitions of intrinsic metadata, although 
-programs which depend on such definitions may not be portable.
-
 This table shows the fields defined for the metadata instance \texttt{standard_metadata}:
 
 \begin{table}[H]
@@ -1336,6 +1333,10 @@ program where the error occurred. Specific representation is TBD. \\ \hline
 \caption{Standard Intrinsic Metadata Fields}
 \label{tab:stanmetadata}
 \end{table}
+
+Targets may provide their own definitions of intrinsic metadata, although 
+programs which depend on such definitions may not be portable. 
+{\color{red} See [3] for the intrinsic metadata fields supported by the reference target (BMv2 Simple Switch Target).}
 
 \SECTION{Counters, Meters and Registers}{stateful}
 
@@ -1398,23 +1399,23 @@ global resource in both the ingress and egress pipelines.
 {\color{red} Counters, meters and registers are referenced in special primitive actions as defined 
 in Section~\ref{sec:primitiveactions}.}
 
-\SUBSECTION{Counters}{counters}
+\SUBSECTION{\color{red}Counters}{counters}
 
 Counters are declared as follows.
 
 %%bnf
 \begin{lstlisting}[frame=single,backgroundcolor=\color{bnfgreen},escapechar=\@]
-counter_declaration ::= 
-    @\textbf{counter}@ counter_name {
+counter_declaration ::=
+    @\textbf{counter}@ counter_name { 
         @\textbf{type}@ : counter_type ;
         [ direct_or_static ; ]
-        [ @\textbf{instance\_count}@ : const_value ; ]
-        [ @\textbf{min\_width}@ : const_value ; ]
+        [ @\textbf{instance\_count}@ : const_expr ; ]
+        [ @\textbf{min\_width}@ : const_expr ; ]
         [ @\textbf{saturating}@ ; ]
     }
 
-counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@
-direct_or_static ::= direct_attibute | static_attribute
+counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@ | bytes_and_packets
+direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= @\textbf{direct}@ : table_name
 static_attribute ::= @\textbf{static}@ : table_name
 \end{lstlisting}
@@ -1458,7 +1459,18 @@ should raise an error if both \texttt{instance_count} and
 \texttt{direct} are specified together, or if neither \texttt{direct}
 nor \texttt{instance_count} are specified.  
 
-\SUBSECTION{Meters}{meters}
+{\color{red}
+A \texttt{bytes} type counter gets incremented by the packet length in bytes 
+whenever the count action is executed either implicitly (in case of 
+\texttt{direct}) or explictly (in case of \texttt{static}) for the counter. 
+A \texttt{packets} type counter gets incremented by just one whenever 
+the count action is executed for the counter. 
+A \texttt{bytes_and_packets} type counter is comprised of two sub-counters 
+internally, and each sub-counter is incremented by the packet length and 
+by one respectively.
+}
+
+\SUBSECTION{\color{red}Meters}{meters}
 
 Meter declarations follow those of counters.
 
@@ -1467,31 +1479,51 @@ Meter declarations follow those of counters.
 meter_declaration ::= 
     @\textbf{meter}@ meter_name {
         @\textbf{type}@ : meter_type ;
-        @\textbf{result}@ : field_ref ;
+        [ @\textbf{result}@ : field_ref ; ]
         [ direct_or_static ; ]
-        [ @\textbf{instance\_count}@ : const_value ; ]
+        [ @\textbf{instance\_count}@ : const_expr ; ]
     }
 
 meter_type ::= @\textbf{bytes}@ | @\textbf{packets}@
 \end{lstlisting}
 %%endbnf
 
+Meters are stateful objects that measure the data rate, either in 
+packets or bytes per second, and output the result as one of three 
+colors: red, yellow or green, which are encoded as a 2-bit-wide field.
 
+The encoding of these values is target-specific. It is, however, 
+expected that each target will define the appropriate constants: 
+{\color{red}
+\texttt{METER_COLOR_RED}, \texttt{METER_COLOR_YELLOW},
+and \texttt{METER_COLOR_GREEN}, } which are understood by the compiler
+and hence can be used in a portable P4 program.
 
-Meters may be declared to measure packets or bytes. The configuration
-of meters is not defined by P4, but a meter is assumed to return a
-status (usually called a color). That status is stored in the field
-specified by the \texttt{result} attribute.
+P4 specification does not currently mandate any specific metering 
+algorithm for the meter implementations, and hence ascribing the 
+detailed semantics of the colors is beyond the scope of P4. While 
+the three-color marking algorithms, specified in RFC 2697 and RFC 2698 
+serve as good references, other options are also possible. Subsequently, 
+meter configuration also remains target-specific and not defined 
+in P4\footnote{In general, any run-time configuration aspects related 
+to the control plane are currently out of scope of this P4 spec. In future, 
+the P4 community may address these issues in a separate spec.}.
 
 If the meter is declared with the \texttt{direct} attribute, one meter
-is associated with each entry in the named table. In this case, no
-meter index is required to determine which cell is being used. However
-the meter call is needed to identify where the return state is stored.
+is associated with each entry in the named table. In this case, no 
+meter action needs to be given for the table actions; the meters are 
+automatically updated whenever the corresponding entry is applied,
+and the meter result (i.e., color) is stored in the field specified 
+by the \texttt{result} attribute. Hence, the \texttt{result} attribute
+is required if a meter is declared with the \texttt{direct} attribute.
+Consequently meter names declared as direct are not allowed to be 
+referenced in the \texttt{execute_meter} primitive, and a compiler must
+raise an error if this occurs. 
 
-If a meter is declared with the \texttt{static} attribute, it may only
-be referenced by actions invoked in the indicated table. The compiler
-must raise an error if a different table attempts to invoke an action
-with this meter.
+If the meter is declared with the \texttt{static} attribute, it may only
+be referenced by actions invoked in the indicated table via the \texttt{execute_meter}
+primitive. The compiler must raise an error if a different table 
+attempts to invoke an action with this meter.
 
 The \texttt{instance_count} attribute indicates the number of
 instances (cells) of the meter to allocate.  The
@@ -1702,8 +1734,33 @@ Set the value of a field in the packet's Parsed Representation. \\ \hline
 Add a value to a field. \\ \hline
 \texttt{add} &
 Add two values together and store in a field. \\ \hline
+\texttt{\color{red}subtract_from_field} &
+Subtract a value from a field. \\ \hline
+\texttt{\color{red}subtract} &
+Subtract a value from another value and store in a field. \\ \hline
 \texttt{\color{red}modify_field_with_hash_based_offset} &
 Apply a field list calculation and use the result to generate an offset value. \\ \hline
+\texttt{\color{red}modify_field_rng_uniform} &
+Generate a random number from a given range and store in a field. \\ \hline
+\texttt{\color{red}bit_and} &
+Perform bitwise AND operation on two values and store in a field  \\ \hline
+\texttt{\color{red}bit_or} &
+Perform bitwise OR operation on two values and store in a field  \\ \hline
+\texttt{\color{red}bit_xor} &
+Perform bitwise XOR operation on two values and store in a field  \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{| l | p{.5\textwidth} |} \hline
+\textbf{API name} &
+\textbf{Summary} \\ \hline
+\texttt{\color{red}shift_left} &
+Performs the operation dst = value1 $<<$ value2 \\ \hline
+\texttt{\color{red}shift_right} &
+Performs the operation dst = value1 $>>$ value2 \\ \hline
 \texttt{truncate} &
 Truncate the packet on egress. \\ \hline
 \texttt{drop} &
@@ -1722,7 +1779,6 @@ Execute a meter operation. \\ \hline
 {\color{red}Read from an indexed instance of a register and store the value into a field.} \\ \hline
 \texttt{\color{red}register_write} &
 {\color{red}Write a value into an indexed instance of a register. }\\ \hline
-
 \texttt{generate_digest} &
 Generate a packet digest and send to a receiver. \\ \hline
 \texttt{resubmit} &
@@ -1912,10 +1968,49 @@ Add value1 and value2 and store in dest.
 { % Description
 The \texttt{dest} field's value is updated with the result of adding
 the two value parameters. Each \texttt{value} parameter may be from a
-table parameter, an immediate a value {\color{red}or a field reference}; see \texttt{modify_field} above.  If either \texttt{value}
+table parameter, an immediate value {\color{red}or a field reference}; see \texttt{modify_field} above.  If either \texttt{value}
 is a field reference and its parent header is not valid, then no
 change is made to \texttt{dest}.  A description of the logical
 behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
+\texttt{value} is an immediate value, it may be negative.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}subtract_from_field(dest, value)}
+{ % Summary
+\color{red}Subtract a value from a field.
+}
+{ % Parameters
+\paramdoc{dest}{{\color{red}(FLD) The name of the field instance to be modified.}}
+\paramdoc{value}{{\color{red}(VAL or FLD) The value to use.}}
+}
+{ % Description
+\color{red} 
+The \texttt{dest} field's value is updated by subtracting the value parameter. The \texttt{value} parameter 
+may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
+and its parent header is not valid, then no change is made to \texttt{dest}. 
+If a \texttt{value} is an immediate value, it may be negative.
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}subtract(dest, value1, value2)}
+{ % Summary
+\color{red}Subtract value2 from value1 and store in dest.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL or FLD) The first value to use.}
+\paramdoc{value2}{(VAL or FLD) The second value to use.}
+}
+{ % Description
+The \texttt{dest} field's value is updated with the result of subtracting
+\texttt{value2} from \texttt{value1}. Each \texttt{value} parameter may be from a
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}. If a
 \texttt{value} is an immediate value, it may be negative.
 }
 
@@ -1941,6 +2036,132 @@ an offset/index to reference a register array. }
 
 Normal value conversion takes place when setting \texttt{dest} to the result.
 }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{{\color{red}modify_field_rng_uniform(dest, lower_bound, upper_bound)}}
+{ % Summary
+{\color{red}Generate a random integer number from a given range.}
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified (destination).}
+\paramdoc{lower_bound}{(VAL or FLD) The lower bound (inclusive) of the range.}
+\paramdoc{upper_bound}{(VAL or FLD) The upper bound (inclusive) of the range.}
+}
+{ % Description
+\color{red}
+A random integer number is chosen in the inclusive range from \texttt{lower_bound} to \texttt{upper_bound}
+and stored in \texttt{dest}. 
+Targets may impose different restrictions to \texttt{lower_bound} to \texttt{upper_bound}: 
+for example, a target may require \texttt{lower_bound} 
+to be zero and \texttt{upper_bound} to be 2**n - 1.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}bit_and(dest, value1, value2)}
+{ % Summary
+\color{red}Compute a bitwise AND of two values.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL or FLD) The first value to use.}
+\paramdoc{value2}{(VAL or FLD) The second value to use.}
+}
+{ % Description
+\color{red}
+The \texttt{dest} field's value is updated with the result of bitwise AND of
+\texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}.
+Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
+be the same bit width.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}bit_or(dest, value1, value2)}
+{ % Summary
+\color{red}Compute a bitwise OR of two values.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL or FLD) The first value to use.}
+\paramdoc{value2}{(VAL or FLD) The second value to use.}
+}
+{ % Description
+\color{red}
+The \texttt{dest} field's value is updated with the result of bitwise OR of
+\texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}. 
+Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
+be the same bit width.
+}\\
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}bit_xor(dest, value1, value2)}
+{ % Summary
+\color{red}Compute a bitwise XOR of two values.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL or FLD) The first value to use.}
+\paramdoc{value2}{(VAL or FLD) The second value to use.}
+}
+{ % Description
+\color{red}
+The \texttt{dest} field's value is updated with the result of bitwise XOR of
+\texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}. 
+Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
+be the same bit width.
+}\\
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}shift_left(dest, value1, value2)}
+{ % Summary
+\color{red}Bitwise shift left of \texttt{value1} by \texttt{value2} number of bits.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL or FLD) The value to shift.}
+\paramdoc{value2}{(VAL or FLD) The number of bits to shift. Must be positive.}
+}
+{ % Description
+\color{red}
+The \texttt{dest} field's value is updated with the result of 
+\texttt{value1} $<<$ \texttt{value2}. Each \texttt{value} parameter may be from a
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}. \texttt{value2} must be positive. 
+}\\
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\primact{\color{red}shift_right(dest, value1, value2)}
+{ % Summary
+\color{red}Bitwise shift right of \texttt{value1} by \texttt{value2} number of bits.
+}
+{ % Parameters
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value1}{(VAL or FLD) The value to shift.}
+\paramdoc{value2}{(VAL or FLD) The number of bits to shift. Must be positive.}
+}
+{ % Description
+\color{red}
+The \texttt{dest} field's value is updated with the result of 
+\texttt{value1} $>>$ \texttt{value2}. Each \texttt{value} parameter may be from a
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
+is a field reference and its parent header is not valid, then no
+change is made to \texttt{dest}. \texttt{value2} must be positive. 
+}\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2214,10 +2435,10 @@ of session is optional and the parameter may be ignored on some targets.
 The cloned instance will have \texttt{instance_type} set to indicate that it is an 
 ingress clone. 
 
-The fields indicated in \texttt{field_list} are copied to the Parsed Representation 
+The {\color{red}metadata} fields indicated in \texttt{field_list} are copied to the Parsed Representation 
 of the clone instance. These values replace the normal initial values of the 
 metadata fields indicated in the initializer of the instance declaration (which 
-occurs before parsing).
+occurs before parsing). {\color{red} Only metadata (and not header) fields can be specified in the \texttt{field_list}.}
 
 The function may also be referred to as \texttt{clone_i2i}.
 
@@ -2244,9 +2465,9 @@ The \texttt{clone_spec} is used to allow the configuration of other target speci
 characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
 
 
-The fields indicated in \texttt{field_list} are copied to the clone instance. These 
+The metadata fields indicated in \texttt{field_list} are copied to the clone instance. These 
 values replace the normal initial values of the metadata fields indicated 
-in the initializer of the instance declaration. 
+in the initializer of the instance declaration.  {\color{red} Only metadata (and not header) fields can be specified in the \texttt{field_list}.}
 
 The cloned instance will have \texttt{instance_type} set to indicate that it is an 
 ingress clone. 
@@ -2268,11 +2489,10 @@ Generate a copy of the original packet and submit it to the Buffering Mechanism.
 \paramdoc{field_list}{(FLDLIST) A list of metadata field references.}
 }
 { % Description
-This action indicates that the switch should generate a copy of the original 
-packet. The clone's Parsed Representation will match the original's immediately 
-after parsing, with the exception that the fields listed in \texttt{field_list} are 
-replaced with the original packet's values after being processed by the 
-ingress pipeline.
+{
+\color{red}
+This action indicates that the switch should generate a copy of the original packet. When egress control flow function starts to process the cloned copy, the metadata fields, specified in the \texttt{field_list} will be initialized to the same values as they would have at the moment the original packet reaches the end of the ingress control flow function. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
+}
 
 The clone of the packet is submitted directly to the Buffering Mechanism as 
 an independent packet instance. It does not go through ingress \matchaction 
@@ -2311,18 +2531,19 @@ Mechanism.
 The packet is marked for cloning at egress. Once the original packet completes 
 the egress pipeline, the packet and its Parsed Representation of packet headers 
 (including all modifications due to \matchaction) along with the metadata 
-fields specified in \texttt{field_list}are submitted to the Buffering Mechanism as 
-a new packet instance. 
+fields specified in \texttt{field_list} are submitted to the Buffering Mechanism as 
+a new packet instance.  {\color{red} Only metadata (and not header) fields can be specified in the \texttt{field_list}.
+}
 
 The original packet is forwarded as normal.
 
 The \texttt{clone_spec}is used to allow the configuration of other target specific 
 characteristics of the clone operation as described in \texttt{clone_ingress_pkt_to_ingress}. 
-In addition to other session attributes, \texttt{clone_spec}determines the egress 
+In addition to other session attributes, \texttt{clone_spec} determines the egress 
 specification (standard metadata \texttt{egress_spec}) that is presented to the 
 Buffering Mechanism.
 
-The cloned instance will have \texttt{instance_type}set to indicate that it is an 
+The cloned instance will have \texttt{instance_type} set to indicate that it is an 
 egress clone. 
 
 The function may also be referred to as \texttt{clone_e2e}.
@@ -2399,7 +2620,7 @@ Actions are declared as functions.
 %%bnf
 \begin{lstlisting}[frame=single,backgroundcolor=\color{bnfgreen},escapechar=\@]
 action_function_declaration ::=
-    @\textbf{action}@ action_header { action_statement + }
+    @\textbf{action}@ action_header { action_statement * }
 
 action_header ::= action_name "(" [ param_list ] ")"
 action_statement ::= action_name "(" [ arg [, arg]* ] ")" ;
@@ -2450,7 +2671,6 @@ action route_ipv4(dst_mac, src_mac, vid) {
 \end{lstlisting}
 %%endcode
 
-
 \SUBSUBSECTION{Parallel and Serial Semantics}{actionsemantics}
 
 In any instruction execution model, identifying whether a set of instructions 
@@ -2478,7 +2698,6 @@ P4 assumes \textbf{parallel} semantics for the application of all the primitive 
 executing as a result of a match in a given table. The execution of actions 
 across different tables assumes \textbf{sequential} semantics where the sequence is 
 determined by the control flow, described in Section~\ref{sec:controlflow}.
-
 
 \SECTION{Action profile declarations}{actprofdecs}
 
@@ -3175,14 +3394,51 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.0-rc3 & 2014-12-30 & Fixed some missing tildes (negations). Drop in parser is now \texttt{parser_drop}. Added \texttt{add} primitive action. Added errata section. \\  \hline
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
-\color{red} 1.0.3 & \color{red} 2016-09-13 & \color{red} Added \texttt{register_read} and \texttt{register_write} primitive actions and removed reigster layout and bracket-based access method. Replaced \texttt{meter} primitive action by \texttt{execute_meter}. Replaced \texttt{set_field_to_hash_index} primitive action by \texttt{modify_field_with_hash_based_offset}. Changed optional parameters of \texttt{push, pop, resubmit, recirculate, clone_*} primitive actions to mandatory parameters.
-\\ \hline
+\color{red} 1.0.3 & \color{red} 2016-10-6 & \color{red} See \ref{sec:change-summary-1.0.3} for details. \\ \hline
 }
 \end{tabular}
 \end{center}
 \caption{Revision History}
 \label{tab:revhistory}
 \end{table}
+
+\SUBSUBSECTION{\color{red}Summary of changes introduced in 1.0.3}{change-summary-1.0.3}
+
+\begin{itemize}
+
+\item Counters and meters (Sections \ref{sec:counters} and \ref{sec:meters})
+  \begin{itemize}
+  \item A new counter type \texttt{bytes_and_packets}.
+  \item An example of meter output/color encoding.
+  \item \texttt{execute_meter()} replaces \texttt{meter()}, avoiding
+  ambiguity in parsing (Section \ref{sec:primitiveactions}). 
+  \end{itemize}
+
+\item Register layout and access methodology (Sections \ref{sec:registers} and \ref{sec:primitiveactions})
+  \begin{itemize}
+  \item Register layout deprecated.  
+  \item New primitive actions \texttt{register_read} and \texttt{register_write} replace bracket-based access method. 
+  \end{itemize}
+
+\item New primitive actions (Section \ref{sec:primitiveactions})
+  \begin{itemize}
+  \item \texttt{subtract()} and \texttt{subtract_from_field()} arithmetic operators
+  \item \texttt{bit_and()}, \texttt{bit_or()} and \texttt{bit_xor()} bitwise logical operators
+  \item \texttt{shift_left()} and \texttt{shift_right()} bit-shifters 
+  \item \texttt{modify_field_rng_uniform()} random number generator
+  \end{itemize}
+
+\item Miscallenous 
+  \begin{itemize}
+  \item \texttt{modify_field_with_hash_based_offset()} replaces \texttt{set_field_to_hash_index} primitive action (Section \ref{sec:primitiveactions}).
+  \item All the parameters of \texttt{push, pop, resubmit, recirculate, clone_*} primitive actions are mandatory.
+  \item \texttt{field_list} parameter of \texttt{clone_*} primitive actions can specify only metadata fields not header fields.
+  \item Empty action bodies are allowed in \texttt{action_function_declaration} (Section \ref{sec:actiondefs}).
+  \item A list of intrinsic metadata supported by the BMv2 reference target [3] is linked in Section \ref{sec:intrinsicmd}.
+  \end{itemize}
+
+\end{itemize}
+
 
 
 \SUBSECTION{Terminology (Incomplete)}{terms}
@@ -3365,25 +3621,25 @@ parser_exception_declaration ::=
 
 return_or_drop ::= return_to_control | @\textbf{parser\_drop}@
 return_to_control ::= @\textbf{return}@ control_function_name
-counter_declaration ::= 
-    @\textbf{counter}@ counter_name {
+counter_declaration ::=
+    @\textbf{counter}@ counter_name { 
         @\textbf{type}@ : counter_type ;
         [ direct_or_static ; ]
-        [ @\textbf{instance\_count}@ : const_value ; ]
-        [ @\textbf{min\_width}@ : const_value ; ]
+        [ @\textbf{instance\_count}@ : const_expr ; ]
+        [ @\textbf{min\_width}@ : const_expr ; ]
         [ @\textbf{saturating}@ ; ]
     }
 
-counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@
-direct_or_static ::= direct_attibute | static_attribute
+counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@ | bytes_and_packets
+direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= @\textbf{direct}@ : table_name
 static_attribute ::= @\textbf{static}@ : table_name
 meter_declaration ::= 
     @\textbf{meter}@ meter_name {
         @\textbf{type}@ : meter_type ;
-        @\textbf{result}@ : field_ref ;
+        [ @\textbf{result}@ : field_ref ; ]
         [ direct_or_static ; ]
-        [ @\textbf{instance\_count}@ : const_value ; ]
+        [ @\textbf{instance\_count}@ : const_expr ; ]
     }
 
 meter_type ::= @\textbf{bytes}@ | @\textbf{packets}@
@@ -3404,7 +3660,7 @@ primitive_action_declaration ::=
 
 param_list ::= param_name [, param_name]*
 action_function_declaration ::=
-    @\textbf{action}@ action_header { action_statement + }
+    @\textbf{action}@ action_header { action_statement * }
 
 action_header ::= action_name "(" [ param_list ] ")"
 action_statement ::= action_name "(" [ arg [, arg]* ] ")" ;
@@ -4428,5 +4684,7 @@ allowing the selection of the header instance to be extracted. \\ \hline
 Computer Communication Review, July 2014.  \url{http://www.sigcomm.org/ccr/papers/2014/July/0000000.0000004}.
 
 [2] The P4 Language Consortium web site. \url{http://www.p4.org}.
+
+[3] The BMv2 Simple Switch target. \url{https://github.com/p4lang/behavioral-model/blob/master/docs/simple_switch.md}.
 
 \end{document}
