@@ -117,6 +117,7 @@ bnf_terminals = [
     "or",
     "output_width",
     "packets",
+    "packets_and_bytes",
     "parse_error",
     "parser",
     "parser_drop",

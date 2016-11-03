@@ -1414,7 +1414,7 @@ counter_declaration ::=
         [ @\textbf{saturating}@ ; ]
     }
 
-counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@ | bytes_and_packets
+counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@ | @\textbf{packets\_and\_bytes}@
 direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= @\textbf{direct}@ : table_name
 static_attribute ::= @\textbf{static}@ : table_name
@@ -1465,7 +1465,7 @@ whenever the count action is executed either implicitly (in case of
 \texttt{direct}) or explictly (in case of \texttt{static}) for the counter. 
 A \texttt{packets} type counter gets incremented by just one whenever 
 the count action is executed for the counter. 
-A \texttt{bytes_and_packets} type counter is comprised of two sub-counters 
+A \texttt{packets_and_bytes} type counter is comprised of two sub-counters 
 internally, and each sub-counter is incremented by the packet length and 
 by one respectively.
 }
@@ -1696,26 +1696,17 @@ action add_mTag(up1, up2, down1, down2) {
 
 \SUBSECTION{Primitive Actions}{primitiveactions}
 
-P4 supports an extensible set of primitive actions.  Primitive actions can 
-be declared as part of a P4 program. This allows the front-end of a compiler 
-to verify calls to primitive actions. Only the parameter list is identified 
-for primitive actions; no body is defined. 
+{\color{red} P4 exposes a standard set of primitive actions. Specific targets may support
+additional primitive actions. How these additional primitive actions are exposed
+to the front-end of a compiler for semantic checking is out of scope of this
+document.
 
-%%bnf
-\begin{lstlisting}[frame=single,backgroundcolor=\color{bnfgreen},escapechar=\@]
-primitive_action_declaration ::= 
-    @\textbf{primitive\_action}@ action_name "(" [ param_list ] ")" ;
+Not all targets will support all standard primitive actions. Target switches may
+have limits on when variables are bound and what combinations of parameter types
+are allowed.
 
-param_list ::= param_name [, param_name]*
-\end{lstlisting}
-%%endbnf
-
-Not all targets will support all actions. Target switches may have
-limits on when variables are bound and what combinations of parameter
-types are allowed.
-
-Here is a brief summary of primitive actions. More detailed documentation 
-is below.
+Here is a brief summary of standard primitive actions. More detailed
+documentation is below.}
 
 \begin{table}[H]
 \begin{center}
@@ -2623,6 +2614,7 @@ action_function_declaration ::=
     @\textbf{action}@ action_header { action_statement * }
 
 action_header ::= action_name "(" [ param_list ] ")"
+param_list ::= param_name [, param_name]*
 action_statement ::= action_name "(" [ arg [, arg]* ] ")" ;
 arg ::= param_name | field_value | field_ref | header_ref
 \end{lstlisting}
@@ -3408,7 +3400,7 @@ Control flow begins with the control function \texttt{ingress}.
 
 \item Counters and meters (Sections \ref{sec:counters} and \ref{sec:meters})
   \begin{itemize}
-  \item A new counter type \texttt{bytes_and_packets}.
+  \item A new counter type \texttt{packets_and_bytes}.
   \item An example of meter output/color encoding.
   \item \texttt{execute_meter()} replaces \texttt{meter()}, avoiding
   ambiguity in parsing (Section \ref{sec:primitiveactions}). 
@@ -3418,6 +3410,13 @@ Control flow begins with the control function \texttt{ingress}.
   \begin{itemize}
   \item Register layout deprecated.  
   \item New primitive actions \texttt{register_read} and \texttt{register_write} replace bracket-based access method. 
+  \end{itemize}
+
+\item Declaring target-specific primitive actions (Section \ref{sec:primitiveactions})
+  \begin{itemize}
+  \item Additional primitive actions cannot be declared in P4 anymore. The lack
+  of strong typing and access qualifiers (in / out) made this feature virtually
+  useless.
   \end{itemize}
 
 \item New primitive actions (Section \ref{sec:primitiveactions})
@@ -3486,7 +3485,6 @@ p4_declaration ::=
     counter_declaration |
     meter_declaration |
     register_declaration |
-    primitive_action_declaration |
     action_function_declaration |
     action_profile_declaration |
     action_selector_declaration |
@@ -3630,7 +3628,7 @@ counter_declaration ::=
         [ @\textbf{saturating}@ ; ]
     }
 
-counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@ | bytes_and_packets
+counter_type ::= @\textbf{bytes}@ | @\textbf{packets}@ | @\textbf{packets\_and\_bytes}@
 direct_or_static ::= direct_attribute | static_attribute
 direct_attribute ::= @\textbf{direct}@ : table_name
 static_attribute ::= @\textbf{static}@ : table_name
@@ -3655,14 +3653,11 @@ width_declaration ::= @\textbf{width}@ : const_value ;
 
 attribute_list ::= @\textbf{attributes}@ : attr_entry
 attr_entry ::= @\textbf{signed}@ | @\textbf{saturating}@ | attr_entry , attr_entry
-primitive_action_declaration ::= 
-    @\textbf{primitive\_action}@ action_name "(" [ param_list ] ")" ;
-
-param_list ::= param_name [, param_name]*
 action_function_declaration ::=
     @\textbf{action}@ action_header { action_statement * }
 
 action_header ::= action_name "(" [ param_list ] ")"
+param_list ::= param_name [, param_name]*
 action_statement ::= action_name "(" [ arg [, arg]* ] ")" ;
 arg ::= param_name | field_value | field_ref | header_ref
 
