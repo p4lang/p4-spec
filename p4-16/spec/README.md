@@ -7,9 +7,9 @@ documentation are available on the
 
 
 Files:
-- ```P4-16-draft-spec.mdk``` is the main file. It's markup, with two custom
-  environments: P4Example (code examples) and P4Grammar (grammar
-  fragments).
+- ```P4-16-draft-spec.mdk``` is the main file. It's markup, with three custom
+  environments: P4Example (code examples), P4Grammar (grammar
+  fragments), and P4PseudoCode (P4 semantics described in pseudo-code).
 - ```grammar.mdk``` is the whole grammar in a single file included at
   the end of the main file. TODO: the intent is to include grammar
   fragments from this file in the different sections using the INCLUDE
@@ -24,6 +24,9 @@ Files:
 - ```Makefile``` builds documentation in the build subdirectory
 
 ## Building
+
+### MacOS
+
 We use the [local
 installation](http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html#sec-installation-and-usage)
 method. For Mac OS, I installed node.js using Homebrew and then Madoko
@@ -33,3 +36,9 @@ brew install node.js
 npm install madoko -g
 ```
 Note that to build the PDF you need a functional TeX version innstalled.
+
+### Windows
+
+You need to install miktex [http://miktex.org/], madoko
+[https://www.madoko.net/] and node.js [https://nodejs.org/en/].  To
+build you can invoke the make.bat script.
