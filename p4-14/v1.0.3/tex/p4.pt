@@ -41,7 +41,7 @@
 \vspace{3mm}
 \centerline{\sffamily\Large Version 1.0.3}
 \vspace{3mm}
-\centerline{\sffamily\large October 6, 2016}
+\centerline{\sffamily\large November 2, 2016}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
@@ -154,7 +154,7 @@ management of such resources from the P4 program.
 The original P4 paper [1] includes an example called mTag. We use this example 
 throughout this specification as a means of explaining the basic language 
 features as they are presented. Complete source for this example, including 
-sample run-time APIs, is available at the P4 web site, [2].
+sample run-time APIs, is available at the P4 web site [2].
 
 We give an overview of the mTag example here.  Quoting from the original paper:
 
@@ -553,8 +553,8 @@ with the \texttt{metadata} keyword) differ only in their validity. Packet header
 maintain a separate valid indication which may be tested explicitly. Metadata 
 is always considered to be valid. This is further explained in 
 Section~\ref{sec:testing}.  Metadata instances are 
-initialized to 0 by default, but initial values may be specified in their 
-declaration.
+initialized to 0 by default.
+%%, but initial values may be specified in their declaration.
 
 The BNF for header and metadata instances is:
 
@@ -1307,7 +1307,7 @@ program where the error occurred. Specific representation is TBD. \\ \hline
 
 Targets may provide their own definitions of intrinsic metadata, although 
 programs which depend on such definitions may not be portable. 
-{\color{red} See [3] for the intrinsic metadata fields supported by the reference target (BMv2 Simple Switch Target).}
+See [3] for the intrinsic metadata fields supported by the reference target (BMv2 Simple Switch Target).
 
 \SECTION{Counters, Meters and Registers}{stateful}
 
@@ -1363,10 +1363,10 @@ according to availability on the target. However, target constraints may make
 this impossible; for example, a target may not allow references to the same 
 global resource in both the ingress and egress pipelines.
 
-{\color{red} Counters, meters and registers are referenced in special primitive actions as defined 
+Counters, meters and registers are referenced in special primitive actions as defined 
 in Section~\ref{sec:primitiveactions}.}
 
-\SUBSECTION{\color{red}Counters}{counters}
+\SUBSECTION{Counters}{counters}
 
 Counters are declared as follows.
 
@@ -1424,7 +1424,6 @@ should raise an error if both \texttt{instance_count} and
 \texttt{direct} are specified together, or if neither \texttt{direct}
 nor \texttt{instance_count} are specified.  
 
-{\color{red}
 A \texttt{bytes} type counter gets incremented by the packet length in bytes 
 whenever the count action is executed either implicitly (in case of 
 \texttt{direct}) or explictly (in case of \texttt{static}) for the counter. 
@@ -1433,9 +1432,9 @@ the count action is executed for the counter.
 A \texttt{packets_and_bytes} type counter is comprised of two sub-counters 
 internally, and each sub-counter is incremented by the packet length and 
 by one respectively.
-}
 
-\SUBSECTION{\color{red}Meters}{meters}
+
+\SUBSECTION{Meters}{meters}
 
 Meter declarations follow those of counters.
 
@@ -1457,9 +1456,8 @@ colors: red, yellow or green, which are encoded as a 2-bit-wide field.
 
 The encoding of these values is target-specific. It is, however, 
 expected that each target will define the appropriate constants: 
-{\color{red}
 \texttt{METER_COLOR_RED}, \texttt{METER_COLOR_YELLOW},
-and \texttt{METER_COLOR_GREEN}, } which are understood by the compiler
+and \texttt{METER_COLOR_GREEN}, which are understood by the compiler
 and hence can be used in a portable P4 program.
 
 P4 specification does not currently mandate any specific metering 
@@ -1509,9 +1507,9 @@ metadata for the packet and a subsequent table could check that the
 flow was marked as active.
 
 Register declarations are similar to those of meters and
-counters. {\color{red} Registers are declared with a width
+counters. Registers are declared with a width
 attribute that indicates the bit-width of each instance of
-the register.}
+the register.
 
 %%bnf
 register_declaration ::= 
@@ -1554,11 +1552,9 @@ register is not declared with the \texttt{direct} attribute.
 %If the register is declared with a layout, then the reference can be refined 
 %with a field name as indicated.
 
-{\color{red}
 A register can be accessed by \texttt{register_read} and 
 \texttt{register_write} primitives, which will be detailed in the 
 next section.
-}
 
 \SECTION{Match+Action Table Overview}{matchoverview}
 
@@ -1653,7 +1649,7 @@ action add_mTag(up1, up2, down1, down2) {
 
 \SUBSECTION{Primitive Actions}{primitiveactions}
 
-{\color{red} P4 exposes a standard set of primitive actions. Specific targets may support
+P4 exposes a standard set of primitive actions. Specific targets may support
 additional primitive actions. How these additional primitive actions are exposed
 to the front-end of a compiler for semantic checking is out of scope of this
 document.
@@ -1663,7 +1659,7 @@ have limits on when variables are bound and what combinations of parameter types
 are allowed.
 
 Here is a brief summary of standard primitive actions. More detailed
-documentation is below.}
+documentation is below.
 
 \begin{table}[H]
 \begin{center}
@@ -1682,19 +1678,19 @@ Set the value of a field in the packet's Parsed Representation. \\ \hline
 Add a value to a field. \\ \hline
 \texttt{add} &
 Add two values together and store in a field. \\ \hline
-\texttt{\color{red}subtract_from_field} &
+\texttt{subtract_from_field} &
 Subtract a value from a field. \\ \hline
-\texttt{\color{red}subtract} &
+\texttt{subtract} &
 Subtract a value from another value and store in a field. \\ \hline
-\texttt{\color{red}modify_field_with_hash_based_offset} &
+\texttt{modify_field_with_hash_based_offset} &
 Apply a field list calculation and use the result to generate an offset value. \\ \hline
-\texttt{\color{red}modify_field_rng_uniform} &
+\texttt{modify_field_rng_uniform} &
 Generate a random number from a given range and store in a field. \\ \hline
-\texttt{\color{red}bit_and} &
+\texttt{bit_and} &
 Perform bitwise AND operation on two values and store in a field  \\ \hline
-\texttt{\color{red}bit_or} &
+\texttt{bit_or} &
 Perform bitwise OR operation on two values and store in a field  \\ \hline
-\texttt{\color{red}bit_xor} &
+\texttt{bit_xor} &
 Perform bitwise XOR operation on two values and store in a field  \\ \hline
 \end{tabular}
 \end{center}
@@ -1705,9 +1701,9 @@ Perform bitwise XOR operation on two values and store in a field  \\ \hline
 \begin{tabular}{| l | p{.5\textwidth} |} \hline
 \textbf{API name} &
 \textbf{Summary} \\ \hline
-\texttt{\color{red}shift_left} &
+\texttt{shift_left} &
 Performs the operation dst = value1 $<<$ value2 \\ \hline
-\texttt{\color{red}shift_right} &
+\texttt{shift_right} &
 Performs the operation dst = value1 $>>$ value2 \\ \hline
 \texttt{truncate} &
 Truncate the packet on egress. \\ \hline
@@ -1721,12 +1717,12 @@ Push all header instances in an array down and add a new header at the top. \\ \
 Pop header instances from the top of an array, moving all subsequent array elements up. \\ \hline
 \texttt{count} &
 Update a counter. \\ \hline
-\texttt{\color{red}execute_meter} &
+\texttt{execute_meter} &
 Execute a meter operation. \\ \hline
-\texttt{\color{red}register_read} &
-{\color{red}Read from an indexed instance of a register and store the value into a field.} \\ \hline
-\texttt{\color{red}register_write} &
-{\color{red}Write a value into an indexed instance of a register. }\\ \hline
+\texttt{register_read} &
+{Read from an indexed instance of a register and store the value into a field.} \\ \hline
+\texttt{register_write} &
+{Write a value into an indexed instance of a register. }\\ \hline
 \texttt{generate_digest} &
 Generate a packet digest and send to a receiver. \\ \hline
 \texttt{resubmit} &
@@ -1848,8 +1844,8 @@ at higher indices are copied to the next lower index.
 Set the value of the given field in packet's Parsed Representation
 }
 { % Parameters
-\paramdoc{dest}{{\color{red}(FLD) The name of the field instance to modify (destination).}}
-\paramdoc{value}{{\color{red}(VAL or FLD) The value to use (source).}}
+\paramdoc{dest}{(FLD) The name of the field instance to modify (destination).}
+\paramdoc{value}{(VAL or FLD) The value to use (source).}
 \paramdoc{mask}{(VAL) An optional mask to use identifying the bits to change.}
 }
 { % Description
@@ -1890,12 +1886,12 @@ of a "set", modifying all bits of the destination.
 Add a value to a field.
 }
 { % Parameters
-\paramdoc{dest}{{\color{red}(FLD) The name of the field instance to be modified.}}
-\paramdoc{value}{{\color{red}(VAL or FLD) The value to use.}}
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value}{(VAL or FLD) The value to use.}
 }
 { % Description
 The \texttt{dest} field's value is updated by adding the value parameter. The \texttt{value} parameter 
-may be from a table parameter, an immediate value {\color{red}or a field reference}; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
+may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
 and its parent header is not valid, then no change is made to \texttt{dest}. A description 
 of the logical behavior follows in the Section~\ref{sec:fieldasgmt} below.
 If \texttt{value} is an immediate value, it may 
@@ -1916,7 +1912,7 @@ Add value1 and value2 and store in dest.
 { % Description
 The \texttt{dest} field's value is updated with the result of adding
 the two value parameters. Each \texttt{value} parameter may be from a
-table parameter, an immediate value {\color{red}or a field reference}; see \texttt{modify_field} above.  If either \texttt{value}
+table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
 is a field reference and its parent header is not valid, then no
 change is made to \texttt{dest}.  A description of the logical
 behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
@@ -1925,18 +1921,18 @@ behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}subtract_from_field(dest, value)}
+\primact{subtract_from_field(dest, value)}
 { % Summary
-\color{red}Subtract a value from a field.
+Subtract a value from a field.
 }
 { % Parameters
-\paramdoc{dest}{{\color{red}(FLD) The name of the field instance to be modified.}}
-\paramdoc{value}{{\color{red}(VAL or FLD) The value to use.}}
+\paramdoc{dest}{(FLD) The name of the field instance to be modified.}
+\paramdoc{value}{(VAL or FLD) The value to use.}
 }
 { % Description
-\color{red} 
 The \texttt{dest} field's value is updated by subtracting the value parameter. The \texttt{value} parameter 
-may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
+may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  
+If \texttt{value} is a field reference 
 and its parent header is not valid, then no change is made to \texttt{dest}. 
 If a \texttt{value} is an immediate value, it may be negative.
 
@@ -1944,9 +1940,9 @@ If a \texttt{value} is an immediate value, it may be negative.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}subtract(dest, value1, value2)}
+\primact{subtract(dest, value1, value2)}
 { % Summary
-\color{red}Subtract value2 from value1 and store in dest.
+Subtract value2 from value1 and store in dest.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified.}
@@ -1964,32 +1960,30 @@ change is made to \texttt{dest}. If a
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{{\color{red}modify_field_with_hash_based_offset(dest, base, field_list_calc, size)}}
+\primact{modify_field_with_hash_based_offset(dest, base, field_list_calc, size)}
 { % Summary
-{\color{red}Apply a field list calculation to compute a hash value.}
+{Apply a field list calculation to compute a hash value.}
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified (destination).}
 \paramdoc{base}{(VAL) The base value to add to the hash value.}
 \paramdoc{field_list_calc}{(FLC-REF) The field list calculation to use to generate the hash value.}
-\paramdoc{size}{(VAL)  \color{red} The size of the hash value range. Must be larger than 0.}
+\paramdoc{size}{(VAL) The size of the hash value range. Must be larger than 0.}
 }
 { % Description
 The field list calculation is executed to generate a hash value.  
 The hash value is used to generate a value between \texttt{base} and 
 \texttt{(base + size - 1)} by calculating \texttt{(base + (hash_value \% size))}. 
-{\color{red}
 The result can be used as a hash digest of a long key (such as 5-tuple) or as 
-an offset/index to reference a register array. }
-
-Normal value conversion takes place when setting \texttt{dest} to the result.
+an offset/index to reference a register array. Normal value conversion 
+takes place when setting \texttt{dest} to the result.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{{\color{red}modify_field_rng_uniform(dest, lower_bound, upper_bound)}}
+\primact{modify_field_rng_uniform(dest, lower_bound, upper_bound)}
 { % Summary
-{\color{red}Generate a random integer number from a given range.}
+Generate a random integer number from a given range.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified (destination).}
@@ -1997,7 +1991,6 @@ Normal value conversion takes place when setting \texttt{dest} to the result.
 \paramdoc{upper_bound}{(VAL or FLD) The upper bound (inclusive) of the range.}
 }
 { % Description
-\color{red}
 A random integer number is chosen in the inclusive range from \texttt{lower_bound} to \texttt{upper_bound}
 and stored in \texttt{dest}. 
 Targets may impose different restrictions to \texttt{lower_bound} to \texttt{upper_bound}: 
@@ -2007,9 +2000,9 @@ to be zero and \texttt{upper_bound} to be 2**n - 1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}bit_and(dest, value1, value2)}
+\primact{bit_and(dest, value1, value2)}
 { % Summary
-\color{red}Compute a bitwise AND of two values.
+Compute a bitwise AND of two values.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified.}
@@ -2017,7 +2010,6 @@ to be zero and \texttt{upper_bound} to be 2**n - 1.
 \paramdoc{value2}{(VAL or FLD) The second value to use.}
 }
 { % Description
-\color{red}
 The \texttt{dest} field's value is updated with the result of bitwise AND of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
@@ -2029,9 +2021,9 @@ be the same bit width.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}bit_or(dest, value1, value2)}
+\primact{bit_or(dest, value1, value2)}
 { % Summary
-\color{red}Compute a bitwise OR of two values.
+Compute a bitwise OR of two values.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified.}
@@ -2039,7 +2031,6 @@ be the same bit width.
 \paramdoc{value2}{(VAL or FLD) The second value to use.}
 }
 { % Description
-\color{red}
 The \texttt{dest} field's value is updated with the result of bitwise OR of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
@@ -2051,9 +2042,9 @@ be the same bit width.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}bit_xor(dest, value1, value2)}
+\primact{bit_xor(dest, value1, value2)}
 { % Summary
-\color{red}Compute a bitwise XOR of two values.
+Compute a bitwise XOR of two values.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified.}
@@ -2061,7 +2052,6 @@ be the same bit width.
 \paramdoc{value2}{(VAL or FLD) The second value to use.}
 }
 { % Description
-\color{red}
 The \texttt{dest} field's value is updated with the result of bitwise XOR of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
@@ -2073,9 +2063,9 @@ be the same bit width.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}shift_left(dest, value1, value2)}
+\primact{shift_left(dest, value1, value2)}
 { % Summary
-\color{red}Bitwise shift left of \texttt{value1} by \texttt{value2} number of bits.
+Bitwise shift left of \texttt{value1} by \texttt{value2} number of bits.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified.}
@@ -2083,7 +2073,6 @@ be the same bit width.
 \paramdoc{value2}{(VAL or FLD) The number of bits to shift. Must be positive.}
 }
 { % Description
-\color{red}
 The \texttt{dest} field's value is updated with the result of 
 \texttt{value1} $<<$ \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
@@ -2093,9 +2082,9 @@ change is made to \texttt{dest}. \texttt{value2} must be positive.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}shift_right(dest, value1, value2)}
+\primact{shift_right(dest, value1, value2)}
 { % Summary
-\color{red}Bitwise shift right of \texttt{value1} by \texttt{value2} number of bits.
+Bitwise shift right of \texttt{value1} by \texttt{value2} number of bits.
 }
 { % Parameters
 \paramdoc{dest}{(FLD) The name of the field instance to be modified.}
@@ -2103,7 +2092,6 @@ change is made to \texttt{dest}. \texttt{value2} must be positive.
 \paramdoc{value2}{(VAL or FLD) The number of bits to shift. Must be positive.}
 }
 { % Description
-\color{red}
 The \texttt{dest} field's value is updated with the result of 
 \texttt{value1} $>>$ \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
@@ -2165,43 +2153,41 @@ continues as per the current control function specification.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}push(array, count)}
+\primact{push(array, count)}
 { % Summary
 Push all header instances in an array down and add a new header at the top.
 }
 { % Parameters
 \paramdoc{array}{(ARR) The name of the instance array to be modified.}
-\paramdoc{count}{(VAL) \color{red}A value indicating the number of elements to push.}
+\paramdoc{count}{(VAL) A value indicating the number of elements to push.}
 }
 { % Description
 This primitive is used to make room for a new element in an array of header
 instances without knowing in advance how many elements are already valid. 
-{\color{red}Existing elements will be shifted by \texttt{count}: an
+Existing elements will be shifted by \texttt{count}: an
 element at index N will be moved to index N+\texttt{count}. 
 \texttt{count} number of new elements will be pushed at indices 0 to 
-\texttt{count}-1, zeroed out and set valid.}
-
+\texttt{count}-1, zeroed out and set valid.
 This primitive leaves the array's size constant; if an array is already full,
 elements pushed to indices beyond the static array size will be lost.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}pop(array, count)}
+\primact{pop(array, count)}
 { % Summary
 Pop header instances from the top of an array, moving all subsequent array elements up.
 }
 { % Parameters
 \paramdoc{array}{(ARR) The name of the instance array to be modified.}
-\paramdoc{count}{(VAL) \color{red}A value indicating the number of elements to pop.}
+\paramdoc{count}{(VAL) A value indicating the number of elements to pop.}
 }
 { % Description
 This primitive is used to remove elements from an array of header instances
-without knowing in advance how many elements are already valid. {\color{red}An element at
+without knowing in advance how many elements are already valid. An element at
 index N will be moved to index N-\texttt{count}, and the elements at indices 0 to 
-\texttt{count}-1 will be lost. The
-bottom-most elements that had nothing shifted into them are invalidated.}
-
+\texttt{count}-1 will be lost. The bottom-most elements that had nothing 
+shifted into them are invalidated.
 Popping from an empty array (or popping more elements than are in the array)
 results in an empty array.
 }
@@ -2226,7 +2212,7 @@ this action.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}execute_meter(meter_ref, index, field)}
+\primact{execute_meter(meter_ref, index, field)}
 { % Summary
 Execute a meter operation.
 }
@@ -2247,7 +2233,6 @@ state is updated, but the state of the meter is discarded.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{\color{red}
 \primact{register_read(dest, register_ref, index)}
 { % Summary
 Read from a register.
@@ -2261,11 +2246,9 @@ Read from a register.
 The given register, determined by \texttt{register_ref} and \texttt{index}, is accessed and its value is stored in \texttt{dest}. If the register is direct, then \texttt{index} is ignored as the table entry determines which 
 cell to reference.
 }
-}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{\color{red}
 \primact{register_write(register_ref, index, value)}
 { % Summary
 Write to a register.
@@ -2281,7 +2264,6 @@ The \texttt{value} parameter
 may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above. 
 If the register is direct, then \texttt{index} is ignored as the table entry determines which 
 cell to reference. 
-}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2307,13 +2289,13 @@ as address learning.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}resubmit(field_list)}
+\primact{resubmit(field_list)}
 {% textbf  
 Applied in the ingress pipeline, mark the packet to be resubmitted to the 
 parser.
 }
 { % Parameters
-\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.} 
+\paramdoc{field_list}{(FLDLIST) A list of metadata field references.} 
 }
 { % Description
 Only valid on the ingress pipeline.
@@ -2334,18 +2316,18 @@ See Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}recirculate(field_list)}
+\primact{recirculate(field_list)}
 { % Summary
 On egress, mark the packet to be resubmitted to the parser.
 }
 { % Parameters
-\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.} 
+\paramdoc{field_list}{(FLDLIST) A list of metadata field references.} 
 }
 { % Description
 Only valid on the egress pipeline.
 
-The packet is marked for  {\color{red}recirculation}. It will complete the egress pipeline 
-and be deparsed.  This version of the packet is then {\color{red}recirculated} to the parser 
+The packet is marked for recirculation. It will complete the egress pipeline 
+and be deparsed.  This version of the packet is then recirculated to the parser 
 with values of the fields in \texttt{field_list} from the processing on the packet. 
 These values replace the normal initial values of the metadata fields indicated 
 in the initializer of the instance declaration.
@@ -2356,13 +2338,13 @@ See Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}clone_ingress_pkt_to_ingress(clone_spec, field_list)}
+\primact{clone_ingress_pkt_to_ingress(clone_spec, field_list)}
 { % Summary
 Generate a copy of the original packet and submit it to the ingress parser.
 }
 { % Parameters
 \paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
-\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.}
+\paramdoc{field_list}{(FLDLIST) A list of metadata field references.}
 }
 { % Description
 This action indicates that the switch should generate a copy of the original 
@@ -2383,10 +2365,10 @@ of session is optional and the parameter may be ignored on some targets.
 The cloned instance will have \texttt{instance_type} set to indicate that it is an 
 ingress clone. 
 
-The {\color{red}metadata} fields indicated in \texttt{field_list} are copied to the Parsed Representation 
+The metadata fields indicated in \texttt{field_list} are copied to the Parsed Representation 
 of the clone instance. These values replace the normal initial values of the 
 metadata fields indicated in the initializer of the instance declaration (which 
-occurs before parsing). {\color{red} Only metadata (and not header) fields can be specified in the \texttt{field_list}.}
+occurs before parsing). Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 
 The function may also be referred to as \texttt{clone_i2i}.
 
@@ -2395,13 +2377,13 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}clone_egress_pkt_to_ingress(clone_spec, field_list)}
+\primact{clone_egress_pkt_to_ingress(clone_spec, field_list)}
 { % Summary
 Generate a duplicate of the egress packet and submit it to the parser.
 }
 { % Parameters
 \paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
-\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.}
+\paramdoc{field_list}{(FLDLIST) A list of metadata field references.}
 }
 { % Description
 The packet is marked for cloning at egress. Once the original packet completes 
@@ -2415,7 +2397,7 @@ characteristics of the clone operation as described in \texttt{clone_ingress_pkt
 
 The metadata fields indicated in \texttt{field_list} are copied to the clone instance. These 
 values replace the normal initial values of the metadata fields indicated 
-in the initializer of the instance declaration.  {\color{red} Only metadata (and not header) fields can be specified in the \texttt{field_list}.}
+in the initializer of the instance declaration. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 
 The cloned instance will have \texttt{instance_type} set to indicate that it is an 
 ingress clone. 
@@ -2428,7 +2410,7 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}clone_ingress_pkt_to_egress(clone_spec, field_list)}
+\primact{clone_ingress_pkt_to_egress(clone_spec, field_list)}
 { % Summary
 Generate a copy of the original packet and submit it to the Buffering Mechanism.
 }
@@ -2438,7 +2420,6 @@ Generate a copy of the original packet and submit it to the Buffering Mechanism.
 }
 { % Description
 {
-\color{red}
 This action indicates that the switch should generate a copy of the original packet. When egress control flow function starts to process the cloned copy, the metadata fields, specified in the \texttt{field_list} will be initialized to the same values as they would have at the moment the original packet reaches the end of the ingress control flow function. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 }
 
@@ -2466,21 +2447,21 @@ See the Section~\ref{sec:recirc} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\primact{\color{red}clone_egress_pkt_to_egress(clone_spec, field_list)}
+\primact{clone_egress_pkt_to_egress(clone_spec, field_list)}
 { % Summary
 Duplicate the egress version of the packet and submit it to the Buffering 
 Mechanism.
 }
 { % Parameters
 \paramdoc{clone_spec}{(VAL) An opaque identifier indicating additional run time characteristics of the clone operation.} 
-\paramdoc{field_list}{(FLDLIST) \color{red}A list of metadata field references.}
+\paramdoc{field_list}{(FLDLIST) A list of metadata field references.}
 }
 { % Description
 The packet is marked for cloning at egress. Once the original packet completes 
 the egress pipeline, the packet and its Parsed Representation of packet headers 
 (including all modifications due to \matchaction) along with the metadata 
 fields specified in \texttt{field_list} are submitted to the Buffering Mechanism as 
-a new packet instance.  {\color{red} Only metadata (and not header) fields can be specified in the \texttt{field_list}.
+a new packet instance. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 }
 
 The original packet is forwarded as normal.
@@ -3315,7 +3296,7 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.0-rc3 & 2014-12-30 & Fixed some missing tildes (negations). Drop in parser is now \texttt{parser_drop}. Added \texttt{add} primitive action. Added errata section. \\  \hline
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
-\color{red} 1.0.3 & \color{red} 2016-10-6 & \color{red} See \ref{sec:change-summary-1.0.3} for details. \\ \hline
+1.0.3 & 2016-11-3 & See \ref{sec:change-summary-1.0.3} for details. \\ \hline
 }
 \end{tabular}
 \end{center}
@@ -3323,7 +3304,7 @@ Control flow begins with the control function \texttt{ingress}.
 \label{tab:revhistory}
 \end{table}
 
-\SUBSUBSECTION{\color{red}Summary of changes introduced in 1.0.3}{change-summary-1.0.3}
+\SUBSUBSECTION{Summary of changes introduced in 1.0.3}{change-summary-1.0.3}
 
 \begin{itemize}
 
