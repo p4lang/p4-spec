@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: October 23, 2016
+Title Footer: November 9, 2016
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -793,7 +793,6 @@ The lexer recognizes the following kinds of terminals:
 
 - ```IDENTIFIER``` - start with a letter or underscore, and contain letters, digits and underscores
 - ```TYPE``` - identifier that denotes a type name
-- ```NAMESPACE``` - identifier that denotes a namespace
 - ```INTEGER``` - integer literals
 - ```DONTCARE``` - a single underscore
 - Keywords, e.g., ```RETURN```. Each keyword terminal corresponds to a language keyword with the same spelling but using lowercase. For example, the ```RETURN``` terminal corresponds to the ```return``` keyword.
@@ -814,7 +813,6 @@ nonTypeName
 name
     : nonTypeName
     | TYPE
-    | NAMESPACE
     ;
 ~ End P4Grammar
 
@@ -939,9 +937,13 @@ Considering the example in Section [#sec-vss-all], ```TopParser```, ```TopPipe``
 L-values are expressions that can appear on the left side of an assignment operation or as arguments corresponding to ```out``` and ```inout``` function parameters. An l-value represents a storage reference.
 The following expressions are legal l-values:
 ~ Begin P4Grammar
-lvalue
+prefixedNonTypeName
     : nonTypeName
-    | pathPrefix nonTypeName
+    | dotPrefix nonTypeName
+    ;
+
+lvalue
+    : prefixedNonTypeName
     | lvalue '.' member
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
@@ -1053,33 +1055,31 @@ direction
 ~ End P4Grammar
 
 
-##	Path prefixes { #sec-path-prefixes }
-Identifiers or type names can be preceded by optional path prefixes. A path prefix is a sequence of namespaces separated by dots and ending with a dot. A leading dot indicates an absolute path.
+## Name resolution
+
+###	Lookup in the top-level namespace
+Identifiers or type names can be preceded by a dot ```.``` prefix, which will cause the identifier to be looked-up in the top-level namespace.
 ~ Begin P4Grammar
-pathPrefix
-    : '.' relativePathPrefix
-    | nonEmptyRelativePathPrefix
-    ;
-
-relativePathPrefix
-    : /* empty */
-    | relativePathPrefix NAMESPACE '.'
-    ;
-
-nonEmptyRelativePathPrefix
-    : relativePathPrefix NAMESPACE '.'
+dotPrefix
+    : '.' 
     ;
 ~ End P4Grammar
-All paths that start with a dot are absolute paths, otherwise they are relative paths (interpreted relative to the current namespace in scope). For example, the following are legal paths:
+
 ~ Begin P4Example
-Sw.Pkg.Ingress    // relative path
-.Sw.Pkg.Ingress   // absolute path
+const bit<32> x = 2;
+control c() {
+   int<32> x = 0;
+   apply { 
+       x = x + (int<32>).x;  // x is the bit<32> local variable, 
+                             // .x is the top-level int<32> variable
+   }
+}
 ~ End P4Example
 
-###	Name resolution rules
+###	Name resolution order
 P4 objects that introduce namespaces are organized in a hierarchical fashion. There is a top-level unnamed namespace containing all top-level declarations.
 
-Absolute paths are always resolved in the top-level namespace.
+Identifiers prefixed with a dot are always resolved in the top-level namespace.
 
 References to resolve an identifier are attempted inside-out, starting with the current scope and proceeding to all lexically enclosing scopes. The compiler may provide a warning if multiple resolutions are possible for the same name (name shadowing).
 ~ Begin P4Example
@@ -1290,9 +1290,13 @@ typeRef
     | tupleType
     ;
 
-typeName
+prefixedType
     : TYPE
-    | pathPrefix TYPE
+    | dotPrefix TYPE
+    ;
+
+typeName
+    : prefixedType
     ;
 ~ End P4Grammar
 
@@ -1539,8 +1543,7 @@ Functions and methods are the only P4 constructs which support overloading: ther
 A generic type may be specialized by specifying arguments for its type variables. In cases where the compiler can infer type arguments type specialization is not necessary. When a type is specialized all its type variables must be bound.
 ~ Begin P4Grammar
 specializedType
-    : pathPrefix TYPE '<' typeArgumentList '>'
-    | TYPE '<' typeArgumentList '>'
+    : prefixedType '<' typeArgumentList '>'
     ;
 ~ End P4Grammar
 For example, the following extern declaration describes a generic block of registers, where the type of the elements stored in each register is an arbitrary ```T```.
@@ -1631,7 +1634,7 @@ expression
     | FALSE
     | STRING_LITERAL
     | nonTypeName
-    | pathPrefix nonTypeName
+    | '.' nonTypeName
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
@@ -1733,7 +1736,7 @@ if (errorFromParser != error.NoError) { ... }
 
 ##	Expressions on enum values { #sec-enum-exprs }
 
-Symbolic names declared by an ```enum``` do not belong to the global namespace, but to a newly introduced namespace.
+Symbolic names declared by an ```enum``` do not belong to the top-level namespace, but to a newly introduced namespace.
 ~ Begin P4Example
 enum X { v1, v2, v3 }
 X.v1  // reference to v1
@@ -3906,10 +3909,9 @@ header.ipv4.hdrChecksum = ck16.get();
 
 This is the grammar of P4~16~ written using the YACC/bison language. Absent from this grammar is the precedence of various operations.
 
-The grammar is actually ambiguous, so the lexer and the parser must collaborate for parsing the language. In particular, the lexer must be able to distinguish three kinds of identifiers:
+The grammar is actually ambiguous, so the lexer and the parser must collaborate for parsing the language. In particular, the lexer must be able to distinguish two kinds of identifiers:
 
 -	Type names previously introduced (```TYPE``` tokens)
--	Namespaces (```NAMESPACE``` token)
 -	Regular identifiers (```IDENTIFIER``` token)
 
 The P4 compiler parser has to use a symbol table to indicate to the lexer how to parse subsequent appearances of identifiers. For example, given the following program fragment:
