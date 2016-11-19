@@ -576,8 +576,8 @@ control TopPipe(inout Parsed_packet headers,
       * @param ivp4_dest ipv4 address of next hop
       * @param port output port
       */
-      action Set_nhop(out IPv4Address nextHop,
-                      IPv4Address ipv4_dest,
+      action Set_nhop(out IPv4Address nextHop)
+                     (IPv4Address ipv4_dest
                       PortId port) {
           nextHop = ipv4_dest;
           headers.ip.ttl = headers.ip.ttl - 1;
@@ -1039,6 +1039,10 @@ nonEmptyParameterList
     : parameter
     | nonEmptyParameterList ',' parameter
     ;
+
+optParameterList
+    : /* empty */
+    | '(' parameterList ')'
 
 parameter
     : optAnnotations direction typeRef name
@@ -3024,7 +3028,7 @@ Actions are code fragments that can read and write the data being processed. Act
 
 ~ Begin P4Grammar
 actionDeclaration
-    : optAnnotations ACTION name '(' parameterList ')'
+    : optAnnotations ACTION name '(' parameterList ')' optParameterList
       '{' statOrDeclList '}'
     ;
 ~ End P4Grammar
@@ -3033,12 +3037,20 @@ Syntactically actions resemble functions with no return values. Actions may be d
 
 The following example shows an action declaration:
 ~ Begin P4Example
-action Forward_a(out bit<9> outputPort, bit<9> port) {
+action Forward_a(out bit<9> outputPort)(bit<9> port) {
     outputPort = port;
 }
 ~ End P4Example
 
-Action parameters that have no direction (e.g., ```port``` in the previous example) indicate action data. All such parameters must be at the end of the parameter list. For actions that appear in a table actions list (described in Section [#sec-table-action-list]), these parameters are bound by the control plane. Action parameters cannot have ```extern``` types.
+Actions may declare two sets of parameters: the first indicate data-plane parameters (i.e., ```outputPort``` above) while the second (i.e., ```port``` above) indicate action data. Action parameters cannot have ```extern``` types. For actions that appear in a table actions list (described in Section [#sec-table-action-list]), the action data are set by the control plane. 
+
+As a syntactic convenience, P4 allows all parameters to be declared within a single set of parentheses. Any directionless parameters are interpreted as the action data parameters. For instance, the above action could be written as follows:
+~ Begin P4Example
+action Forward_a(out bit<9> outputPort, bit<9> port) {
+    outputPort = port;
+}
+~ End P4Example
+This is especially convenient for actions that do not have data-plane parameters.  
 
 The body of an action consists of a sequence of statements and declarations. No switch statements are allowed within an action (the grammar as written permits them, but a semantic check should reject them). Some targets may set additional constraints on the body of an action, e.g., allow only straight-line code, with no ```if``` statements or conditional expressions (```?:```).
 
@@ -3047,7 +3059,7 @@ The body of an action consists of a sequence of statements and declarations. No 
 Actions can be executed in two ways:
 
 - They can be invoked by tables automatically, during match-action processing
-- Actions can also be explicitly invoked using function call syntax, either from a ```control``` block or from another ```action```. In this case, values for all action parameters must be supplied explicitly, including values for the directionless parameters. The directionless parameters in this case behave like ```in``` parameters.
+- Actions can also be explicitly invoked using function call syntax, either from a ```control``` block or from another ```action```. In this case, values for all parameters must be supplied explicitly, including values for the action data parameters, which behave like ```in``` parameters in this case. As with action declarations, the programmer may either use two sets of parentheses or just a single set of parentheses.
 
 ##	Tables { #sec-tables }
  ~ Figure { #fig-maudataflow; caption: "Match-Action Unit Dataflow." }
@@ -3164,6 +3176,7 @@ actionList
 actionRef
     : optAnnotations name
     | optAnnotations name '(' argumentList ')'
+    | optAnnotations name '(' argumentList ')' '(' argumentList ')'
     ;
 ~ End P4Grammar
 Let us consider an example from the Very Simple Switch program in Section [#sec-vss-all]:
@@ -3196,17 +3209,17 @@ control c() {
 }
 ~ End P4Example
 
-All action parameters that have a direction (```in, inout``` or ```out```) must be bound in the ```actions``` list specification; no parameters that are directionless can be bound in the list specification.
+All data plane parameters to actions must be bound in the ```actions``` list specification but no action data parameters may be bound in the list specification.
 
 ~ Begin P4Example
 action a(in bit<32> x) { ...}
-action b(inout bit<32> x, bit<8> data) { ...}
+action b(inout bit<32> x)(bit<8> data) { ...}
 table t(inout bit<32> z) {
     actions = {
        // a; -- illegal, x parameter must be bound
        a(5);  // binding a's parameter x to 5
        b(z);  // binding b's parameter x to z
-       // b(z, 3);  // -- illegal, cannot bind directionless data parameter
+       // b(z)(3);  // -- illegal, cannot bind action data
        // b(); -- illegal, x parameter must be bound
     }
 }
@@ -3216,7 +3229,7 @@ table t(inout bit<32> z) {
 
 The default action of a table is an action that is invoked automatically by the match-action unit whenever the lookup table does not find a match for the supplied key.
 
-The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ always be one of the actions that appear in the actions list. The ```default_action``` table property _must_ appear after the actions property.
+The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The ```default_action``` table property _must_ appear after the actions property.
 
 For example, in the above ```table``` we could set the default action as follows (marking it also as constant --- i.e., not changeable by the control plane):
 
@@ -3229,11 +3242,11 @@ Note that the specified default action must define one constant value for each o
 Continuing the example in the previous section, here are various legal and illegal specifications for ```table t()``` above:
 
 ~ Begin P4Example
-  default_action = a(); // OK - no control-plane parameters
-  // default_action = a(z); -- illegal, a's x parameter is already bound
-  default_action = b(8w8); // OK - bind b's data parameter to 8w8
-  // default_action = b(); -- illegal, b's data parameter is not bound
-  // default_action = b(z, 3); -- illegal, b's x parameter is already bound
+  default_action = a(5); // OK - no control-plane parameters
+  // default_action = a(); -- illegal, must bind all parameters
+  default_action = b(z)(8w8); // OK - bind b's action data parameter to 8w8
+  // default_action = b(z, 8w8); -- OK - using one set of parentheses
+  // default_action = b(); -- illegal, b's action data parameter is not bound
 ~ End P4Example
 
 If the user does not specify a value for the default action, the runtime behavior of the program is undefined until the control-plane initializes the ```default_action``` to one of the legal values. The compiler should produce a warning in this case. This is a difference from P4~14~, which can set the default action to no-op. If the legacy behavior is desired, the user must explicitly use the core library ```action NoAction``` in the table, which must appear in the actions list.
