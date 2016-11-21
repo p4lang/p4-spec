@@ -28,7 +28,6 @@ nonTypeName
 name
     : nonTypeName
     | TYPE
-    | NAMESPACE
     | ERROR
     ;
 
@@ -83,18 +82,8 @@ optConstructorParameters
     | '(' parameterList ')'
     ;
 
-pathPrefix
-    : '.' relativePathPrefix
-    | nonEmptyRelativePathPrefix
-    ;
-
-relativePathPrefix
-    : /* empty */
-    | relativePathPrefix NAMESPACE '.'
-    ;
-
-nonEmptyRelativePathPrefix
-    : relativePathPrefix NAMESPACE '.'
+dotPrefix
+    : '.' 
     ;
 
 /**************************** PARSER ******************************/
@@ -247,9 +236,13 @@ typeRef
     | headerStackType
     ;
 
-typeName
+prefixedType
     : TYPE
-    | pathPrefix TYPE
+    | dotPrefix TYPE
+    ;
+
+typeName
+    : prefixedType
     ;
 
 tupleType
@@ -261,8 +254,7 @@ headerStackType
     ;
 
 specializedType
-    : pathPrefix TYPE '<' typeArgumentList '>'
-    | TYPE '<' typeArgumentList '>'
+    : prefixedTYpe '<' typeArgumentList '>'
     ;
 
 baseType
@@ -516,9 +508,13 @@ member
     : name
     ;
 
-lvalue
+prefixedNonTypeName
     : nonTypeName
-    | pathPrefix nonTypeName
+    | dotPrefix nonTypeName
+    ;
+
+lvalue
+    : prefixedNonTypeName
     | lvalue '.' member
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
@@ -549,7 +545,7 @@ expression
     | FALSE
     | STRING_LITERAL
     | nonTypeName
-    | pathPrefix nonTypeName
+    | '.' nonTypeName
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
