@@ -132,7 +132,7 @@ Throughout this specification, the following terms will be used. Terms, explicit
 ~ Figure { #fig-prgswitch; caption: "Traditional switches vs. programmable switches." }
 ![prgswitch]
 ~
-[prgswitch]: figs/prgswitch.png { width: 100%; page-align: forcehere }  
+[prgswitch]: figs/prgswitch.png { width: 100%; page-align: forcehere }
 
 P4 is a language for expressing how packets are processed by the data plane of a programmable network forwarding element such as a programmable hardware or software switch, network interface card, router or network function appliance. The name comes from the original paper that introduced the language, "Programming Protocol-independent Packet Processors," <https://arxiv.org/pdf/1312.1719.pdf>. While initially P4 was designed for programming network switches, its scope has been broadened to cover a large variety of packet processing systems. In the rest of this document we use the generic term _target_ for all such network processing system devices.
 
@@ -159,7 +159,7 @@ The core abstractions provided by the P4 language are:
 - **Header definitions** describe the format (the set of fields and their sizes) of each header within a packet.
 - **Parsers** describe the permitted header sequences within received packets, how to identify those header sequences, and the headers and fields to extract from packets.
 - **Tables** associate user-defined keys with actions. P4 tables generalize traditional switch tables; they can be used to implement routing tables, flow lookup tables, access-control lists, and other user-defined table types, including complex multivariable decisions.
-- **Actions** are code fragments that describe how packet header fields and metadata are manipulated. Actions can also include data, which can be supplied by the control-plane at run time. 
+- **Actions** are code fragments that describe how packet header fields and metadata are manipulated. Actions can also include data, which can be supplied by the control-plane at run time.
 - **Match-action units** perform the following sequence of operations:
   * Construct lookup keys from packet fields or computed metadata,
   * Perform table lookup using the constructed key, choosing an action (including the associated data) to execute
@@ -1061,7 +1061,7 @@ direction
 Identifiers or type names can be preceded by a dot ```.``` prefix, which will cause the identifier to be looked-up in the top-level namespace.
 ~ Begin P4Grammar
 dotPrefix
-    : '.' 
+    : '.'
     ;
 ~ End P4Grammar
 
@@ -1069,8 +1069,8 @@ dotPrefix
 const bit<32> x = 2;
 control c() {
    int<32> x = 0;
-   apply { 
-       x = x + (int<32>).x;  // x is the bit<32> local variable, 
+   apply {
+       x = x + (int<32>).x;  // x is the bit<32> local variable,
                              // .x is the top-level int<32> variable
    }
 }
@@ -3814,7 +3814,7 @@ The P4 compiler should provide:
 - Errors when annotations are used incorrectly (e.g., an annotation expecting a parameter but used without arguments, or with arguments of the wrong type
 - Warnings for unknown annotations.
 
-#	Appendix P4 reserved keywords { #sec-p4-keywords }
+#	Appendix: P4 reserved keywords { #sec-p4-keywords; @h1:"A" }
 The following table shows all P4 reserved keywords. Some identifiers are treated as keywords only in specific contexts (e.g., the keyword ```actions```).
 
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
@@ -3829,7 +3829,7 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 | ```varbit```  | ```verify``` | ```void```       |   |
 |------|------|------|------|
 
-#	Appendix P4 core library { #sec-p4-core-lib }
+#	Appendix: P4 core library { #sec-p4-core-lib }
 The P4 core library contains declarations that are useful to most programs.
 
 For example, the core library includes the declarations of the predefined ```packet_in```\
@@ -3867,7 +3867,7 @@ match_kind {
 }
 ~ End P4Example
 
-#	Appendix checksums { #sec-checksums }
+#	Appendix: checksums { #sec-checksums }
 
 There are no built-in constructs in P4~16~ for manipulating packet checksums. We expect that all checksum operations can be expressed as ```extern``` library objects that are provided in target-specific libraries. The standard architecture library should provide such checksum units.
 
@@ -3905,7 +3905,139 @@ ck16.update( { header.ipv4.ttl, header.ipv4.proto } );
 header.ipv4.hdrChecksum = ck16.get();
 ~ End P4Example
 
-#	Appendix P4 grammar  { #sec-grammar }
+# Appendix: Open Issues
+
+There are a number of open issues that are currently under discussion in the
+Working Group. A brief summary of these issues is highlighted in this section.
+
+## Portable Switch Architecture
+
+Portability and composability are critical to P4's long-term success. To that
+end, we have established a task group to define P4's _Portable Switch
+Architecture_ (PSA), an architecture definition that enables programmers to
+write composable P4 programs. For example:
+
+- Composability: implement different features, such as INT, Network
+  Virtualization, and Load Balancing in separate P4 programs written for the
+  PSA, should easily combine to work on a single pipeline.
+- Portability: a P4 implementation of a certain function, such as INT, against
+  PSA should work consistently across architectures that support the PSA.
+
+## Populate table entries at compile time
+
+It is desirable to have the capability to initialize table entries at compile
+time. The questions discussed are:
+
+- Should these entries be immutable and the tables read-only? Are immutability
+  and read-only attributes that the programmer can specify?
+- Should these entries be at all accessible from the control plane?
+- What should be the API: builtin compiler functions, table initializers?
+
+## Union types
+
+There seem to be three main motivations for adding unions to P4_16:
+
+- Ignoring practical use cases, it seems natural to want the ability to have a
+  union type. Such types are present in almost every other typed programming
+  language and data with "alternative" structure arises in many situations.
+- On some targets, having a union type may provide a valuable hint to the
+  compiler that only one alternative will be present in any run of the program,
+  allowing it to conserve space for metadata. Currently the programmer would
+  have to declare both headers even if only one is ever valid.
+- Having a union type may provide a way to build uniform representations of
+  formats like IP options. Unfortunately due to the existing constructs for
+  processing header stacks this is not possible in the current language, but a
+  proposal for structural iteration [#sec-structured-iteration], will make this
+  possible.
+
+We will be experimenting with different implementations in the compiler before
+we converge on the specification.
+
+## Generalized switch statement behavior
+
+P4~16~ includes both ```switch``` statements [#sec-switch-stmt] and ```select```
+expressions [#sec-select]. There are real differences in the current
+version of the language -- expression vs. statement, and the latter must
+evaluate to a state value.
+
+We propose generalizing ```switch``` statements to match the design used in
+most programming language: a multi-way conditional that executes the first
+branch that matches from a list of cases.
+
+~ Begin P4Example
+switch(e1,...,en) {
+  pat_1 : stmt1;
+  ...
+  pat_m : stmtm;
+}
+~ End P4Example
+
+Here, the value being scrutinized is given by a tuple ```(e1,...,en)```, and the
+patterns are given by expressions that denote sets of values. The value matches
+a branch if it is an element of the set denoted by the pattern. Unlike C and
+C++, there is no break statement so control does not "fall through" to the next
+case.
+
+This design is intended to capture the standard semantics of ```switch```
+statements as well as a common idiom in P4 parsers where they are used to
+control transitions to different parser states depending on the values of one
+or more previously-parsed values. Using ```switch``` statements, we can also
+generalize the design for parsers, eliminating select and lifting most
+restrictions on which kinds of statements may appear in a state. In particular,
+we allow conditional statements and ```select``` statements, which may be
+nested arbitrarily. This language can be translated into more restricted
+versions, where the body of each state comprised a sequence of variable
+declarations, assignments, and method invocations followed by a
+single```transition``` statement by introducing new states.
+
+We also generalize the design for processing of table hit/miss and actions in control blocks, by generating implicit types for actions and results.
+
+The counter-argument to this proposal is that the semantics of ```select``` in
+the parser is sufficiently distinct from the ```switch``` statement, and
+moreover these are constructs that network programmers are already faminliar
+with, and they are typically mapped very efficiently onto a variety of targets.
+
+
+## Undefined behaviors
+
+The presence of undefined behavior has caused numerous problems in languages
+like C and HTML, including bugs and serious security vulnerabilities. There are
+a few places where evaluating a P4 program can result in undefined behaviors:
+out parameters, uninitialized variables, accessing header fields of invalid
+headers, and accessing header stacks with an out of bounds index. We think we
+should make every attempt to avoid undefined behaviors in P4~16~, and therefore
+we propose to strengthen the wording in the specification, such that by
+default, we rule out programs that exhibit the behaviors mentioned above. Given
+the concern for performance, we propose to define compiler flags and/or pragmas
+that can override the safe behavior. However, our expectation is that
+programmers should be guided toward writing safe programs, and encouraged to
+think harder when excepting from the safe behavior.
+
+
+## Structured Iteration {#sec-structured-iteration}
+
+Introducing a ```foreach``` style iterator for operating over header stacks
+will alleviate the need of using C preprocessor directives to specify the size
+of header stacks.
+
+For example:
+~ Begin P4Example
+foreach hdr in hdrs {
+  ... operations over HDR ...
+}
+~ End P4Example
+
+Since the stacks are always known statically (at compile-time), the compiler
+could transform the ```foreach``` statement into the replicated code with
+explicit index references at compile-time. This has the advantage of allowing
+the code to be written without regard to a parameterized header stack length.
+
+Since the compiler can statically determine the number of operations that would
+result from the ```foreach``` it can also reject a program if the result
+requires more action resources than are available, or can split the action code
+up to fit available resources as needed.
+
+#	Appendix: P4 grammar  { #sec-grammar }
 
 This is the grammar of P4~16~ written using the YACC/bison language. Absent from this grammar is the precedence of various operations.
 
