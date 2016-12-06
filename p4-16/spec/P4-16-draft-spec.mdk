@@ -129,7 +129,7 @@ Throughout this specification, the following terms will be used. Terms, explicit
 ~ Figure { #fig-prgswitch; caption: "Traditional switches vs. programmable switches." }
 ![prgswitch]
 ~
-[prgswitch]: figs/prgswitch.png { width: 100%; page-align: forcehere }  
+[prgswitch]: figs/prgswitch.png { width: 100%; page-align: forcehere }
 
 P4 is a language for expressing how packets are processed by the data plane of a programmable network forwarding element such as a programmable hardware or software switch, network interface card, router or network function appliance. The name comes from the original paper that introduced the language, "Programming Protocol-independent Packet Processors," <https://arxiv.org/pdf/1312.1719.pdf>. While initially P4 was designed for programming network switches, its scope has been broadened to cover a large variety of packet processing systems. In the rest of this document we use the generic term _target_ for all such network processing system devices.
 
@@ -156,7 +156,7 @@ The core abstractions provided by the P4 language are:
 - **Header definitions** describe the format (the set of fields and their sizes) of each header within a packet.
 - **Parsers** describe the permitted header sequences within received packets, how to identify those header sequences, and the headers and fields to extract from packets.
 - **Tables** associate user-defined keys with actions. P4 tables generalize traditional switch tables; they can be used to implement routing tables, flow lookup tables, access-control lists, and other user-defined table types, including complex multivariable decisions.
-- **Actions** are code fragments that describe how packet header fields and metadata are manipulated. Actions can also include data, which can be supplied by the control-plane at run time. 
+- **Actions** are code fragments that describe how packet header fields and metadata are manipulated. Actions can also include data, which can be supplied by the control-plane at run time.
 - **Match-action units** perform the following sequence of operations:
   * Construct lookup keys from packet fields or computed metadata,
   * Perform table lookup using the constructed key, choosing an action (including the associated data) to execute
@@ -1019,7 +1019,7 @@ When used as arguments, ```extern``` objects can only be passed as directionless
 
 **Justification**
 
-The main reason for using copy-in/copy-out (instead of the more common call-by-reference convention) is for controlling the side-effects of ```extern``` functions and methods. While P4 programs are single-threaded, the environment in which they execute is not (e.g., the control-plane runs concurrently). ```extern``` functions and methods are the main mechanism by which a P4 program communicates with its environment. With copy-in/copy-out semantics ```extern``` functions cannot hold references to P4 program objects; this enables the compiler to limit on the side-effects that ```extern``` functions may have on the P4 program both in space (they can only affect out parameters) and in time (side-effects can only occur at function call time).
+The main reason for using copy-in/copy-out (instead of the more common call-by-reference convention) is for controlling the side-effects of ```extern``` functions and methods. ```extern``` functions and methods are the main mechanism by which a P4 program communicates with its environment. With copy-in/copy-out semantics ```extern``` functions cannot hold references to P4 program objects; this enables the compiler to limit on the side-effects that ```extern``` functions may have on the P4 program both in space (they can only affect out parameters) and in time (side-effects can only occur at function call time).
 
 ```extern``` functions can be arbitrarily powerful: they can store information in global storage, spawn separate threads, "collude" with each other to share information --- but they cannot access any variable in a P4 program. With copy-in/copy-out semantics the compiler can still reason about the P4 program that invokes ```extern``` functions.
 
@@ -1058,7 +1058,7 @@ direction
 Identifiers or type names can be preceded by a dot ```.``` prefix, which will cause the identifier to be looked-up in the top-level namespace.
 ~ Begin P4Grammar
 dotPrefix
-    : '.' 
+    : '.'
     ;
 ~ End P4Grammar
 
@@ -1066,8 +1066,8 @@ dotPrefix
 const bit<32> x = 2;
 control c() {
    int<32> x = 0;
-   apply { 
-       x = x + (int<32>).x;  // x is the bit<32> local variable, 
+   apply {
+       x = x + (int<32>).x;  // x is the bit<32> local variable,
                              // .x is the top-level int<32> variable
    }
 }
@@ -2114,20 +2114,25 @@ bottom. In the top figure the first 4 elements are valid (shown
 shaded). Note that all valid elements in a header stack are not
 necessarily contiguous.
 
-P4 provides a set of computations that can only be applied to header
-stacks. Given a value ```hs``` of type header stack, the following expressions are
-legal:
+P4 provides several computations that can only be applied to header
+stacks. Given an expression ```hs``` of type header stack, the
+following expressions are legal in any context:
 
 - ```hs.empty```: result is a Boolean value, which is ```true``` when all validity bits in the stack are false.
 - ```hs.full```: result is a Boolean value, which is ```true``` if all validity bits in the stack are true.
-- ```hs.next```: result is a reference to the lowest-index header in the stack which does not have a validity bit set. Can only be used in a ```parser```. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
-- ```hs.last```: result is a reference to the largest-index header in the stack which does have the validity bit set. Can only be used in a ```parser```. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
+
+In addition, the following expressions are legal in parsers,
+
+- ```hs.next```: result is a reference to the lowest-index header in the stack which does not have a validity bit set. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
+- ```hs.last```: result is a reference to the largest-index header in the stack which does have the validity bit set. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
+
+and the following expressions are legal in control blocks:
+
 - ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
+- ```hs.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is moved to index ```0```). The last ```count``` elements become invalid.
+- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
 
-In addition, header stacks offer the following two methods that return ```void``` (the ```count``` argument must  be a positive integer that is a compile-time known value):
-
-- ```stack.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is copied in stack at index ```0```). The last ```count``` elements become invalid.
-- ```stack.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
+The restrictions on which expressions can appear in parsers and control blocks are designed to ensure that stacks remain contiguous in the parser, but to allow random access in control blocks. 
 
 ##	Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
@@ -3037,16 +3042,16 @@ action Forward_a(out bit<9> outputPort, bit<9> port) {
 }
 ~ End P4Example
 
-Action parameters that have no direction (e.g., ```port``` in the previous example) indicate action data. All such parameters must be at the end of the parameter list. For actions that appear in a table actions list (described in Section [#sec-table-action-list]), these parameters are bound by the control plane. Action parameters cannot have ```extern``` types.
+Action parameters may not have ```extern``` types. Action parameters that have no direction (e.g., ```port``` in the previous example) indicate action data. All such parameters must be at the end of the parameter list. For actions that appear in a table actions list (described in Section [#sec-table-action-list]), these parameters are bound by the control plane. 
 
-The body of an action consists of a sequence of statements and declarations. No switch statements are allowed within an action (the grammar as written permits them, but a semantic check should reject them). Some targets may set additional constraints on the body of an action, e.g., allow only straight-line code, with no ```if``` statements or conditional expressions (```?:```).
+The body of an action consists of a sequence of statements and declarations. No switch statements are allowed within an action (the grammar as written permits them, but a semantic check should reject them). Some targets may impose additional restrictions on action bodies---e.g., only straight-line code, with no ```if``` statements or conditional expressions (```?:```).
 
 ###	Invoking actions { #sec-invoke-actions }
 
 Actions can be executed in two ways:
 
-- They can be invoked by tables automatically, during match-action processing
-- Actions can also be explicitly invoked using function call syntax, either from a ```control``` block or from another ```action```. In this case, values for all action parameters must be supplied explicitly, including values for the directionless parameters. The directionless parameters in this case behave like ```in``` parameters.
+- Actions can be implicitly invoked by tables during match-action processing.
+- Actions can be explicitly invoked, either from a ```control``` block or from another ```action```. In this case, values for all action parameters must be supplied explicitly, including values for the directionless parameters. The directionless parameters in this case behave like ```in``` parameters.
 
 ##	Tables { #sec-tables }
  ~ Figure { #fig-maudataflow; caption: "Match-Action Unit Dataflow." }
@@ -3063,10 +3068,7 @@ The P4 ```table``` construct describes a match-action unit. The structure of a m
 
 A ```table``` declaration introduces a table instance. If one desires to instantiate a table multiple times one needs to declare a table in a separate control block and instantiate that control block multiple times.
 
-Note that a P4 table contains internally a lookup-table. This is the origin of the "```table```" name, but this overloaded use of the term "table" can be sometimes confusing. That is why we use the term "match-action unit" whenever possible in this document instead of ```table```.
-
-The look-up table is a finite map whose contents is manipulated asynchronously (read/write) by the target control-plane, through a separate control-plane API (see Figure [#fig-maudataflow]).
-
+The look-up table is a finite map whose contents are manipulated asynchronously (read/write) by the target control-plane, through a separate control-plane API (see Figure [#fig-maudataflow]). Note that the term is "table" is overloaded: it can refer to the P4 ```table``` objects that appear in P4 programs, as well as the internal look-up tables used in targets. In this document, we use the term "match-action unit" whenever possible instead of "table".
 
 Syntactically a table is described by a set of key-value properties. Some of these properties are "standard" properties, but the set of properties can be extended by target-specific compilers as needed.
 
@@ -3089,7 +3091,7 @@ tableProperty
     | optAnnotations IDENTIFIER '=' initializer ';'
     ;
 ~ End P4Grammar
-Table parameters cannot be direction-less (they must be ```in```, ```out``` or ```inout```).
+Table parameters cannot be directionless (they must be ```in```, ```out``` or ```inout```).
 The standard table properties are the following:
 
 - ```key```: An expression that describes how the key used for look-up is computed.
@@ -3098,7 +3100,7 @@ The standard table properties are the following:
 
 We proceed discussing each of these.
 
-A property marked as ```const``` has a value that cannot be changed dynamically by the control-plane. The key and actions properties are always constant, so the ```const``` keyword is not needed for these.
+A property marked as ```const``` cannot be changed dynamically by the control-plane. The key and actions properties are always constant, so the ```const``` keyword is not needed for these.
 
 ###	Table properties { #sec-table-props }
 
@@ -3195,7 +3197,7 @@ control c() {
 }
 ~ End P4Example
 
-All action parameters that have a direction (```in, inout``` or ```out```) must be bound in the ```actions``` list specification; no parameters that are directionless can be bound in the list specification.
+Each action parameter that has a direction (```in, inout``` or ```out```) must be bound in the ```actions``` list specification; conversely, no directionless parameters may be bound in the list. The expressions supplied as arguments to an ```action``` are not evaluated until the action is invoked.
 
 ~ Begin P4Example
 action a(in bit<32> x) { ...}
@@ -3215,7 +3217,7 @@ table t(inout bit<32> z) {
 
 The default action of a table is an action that is invoked automatically by the match-action unit whenever the lookup table does not find a match for the supplied key.
 
-The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ always be one of the actions that appear in the actions list. The ```default_action``` table property _must_ appear after the actions property.
+The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action _must_ appear after the ```action``` property and may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list. 
 
 For example, in the above ```table``` we could set the default action as follows (marking it also as constant --- i.e., not changeable by the control plane):
 
@@ -3223,16 +3225,15 @@ For example, in the above ```table``` we could set the default action as follows
 const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
 ~ End P4Example
 
-Note that the specified default action must define one constant value for each of the control-plane bound parameters (i.e., the parameters without a direction), since this action is synthesized at compilation time. The default action cannot specify any ```in, out``` or ```inout``` parameters - these are always bound in the actions list.
+Note that the specified default action must supply arguments for the control-plane bound parameters (i.e., the directionless parameters), since the action is synthesized at compilation time. The expressions supplied as arguments for parameters with a direction (```in, inout``` or ```out```) are evaluated when the action is invoked while the expressions supplied as arguments for directionless parameters are evaluated at compile time.
 
 Continuing the example in the previous section, here are various legal and illegal specifications for ```table t()``` above:
 
 ~ Begin P4Example
-  default_action = a(); // OK - no control-plane parameters
-  // default_action = a(z); -- illegal, a's x parameter is already bound
-  default_action = b(8w8); // OK - bind b's data parameter to 8w8
-  // default_action = b(); -- illegal, b's data parameter is not bound
-  // default_action = b(z, 3); -- illegal, b's x parameter is already bound
+  default_action = a(5); // OK - no control-plane parameters
+  // default_action = a(z); -- illegal, a's x parameter is already bound to 5
+  default_action = b(z,8w8); // OK - bind b's data parameter to 8w8
+  // default_action = b(z); -- illegal, b's data parameter is not bound
 ~ End P4Example
 
 If the user does not specify a value for the default action, the runtime behavior of the program is undefined until the control-plane initializes the ```default_action``` to one of the legal values. The compiler should produce a warning in this case. This is a difference from P4~14~, which can set the default action to no-op. If the legacy behavior is desired, the user must explicitly use the core library ```action NoAction``` in the table, which must appear in the actions list.
@@ -3367,7 +3368,7 @@ From this grammar fragment we infer that a ```parser``` declaration can have two
 -	The runtime parser parameters
 -	Optional parser constructor parameters (```optConstructorParameters```)
 
-All constructor parameters must be direction-less (i.e., they cannot be ```in```, ```out``` or ```inout```). When instantiating a parser one has to supply expressions that can be fully evaluated at compilation time for all ```optConstructorParameters```.
+All constructor parameters must be directionless (i.e., they cannot be ```in```, ```out``` or ```inout```). When instantiating a parser one has to supply expressions that can be fully evaluated at compilation time for all ```optConstructorParameters```.
 
 Consider the following example:
 ~ Begin P4Example
@@ -3810,7 +3811,7 @@ The P4 compiler should provide:
 - Errors when annotations are used incorrectly (e.g., an annotation expecting a parameter but used without arguments, or with arguments of the wrong type
 - Warnings for unknown annotations.
 
-#	Appendix P4 reserved keywords { #sec-p4-keywords }
+#	Appendix: P4 reserved keywords { #sec-p4-keywords; @h1:"A" }
 The following table shows all P4 reserved keywords. Some identifiers are treated as keywords only in specific contexts (e.g., the keyword ```actions```).
 
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
@@ -3825,7 +3826,7 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 | ```varbit```  | ```verify``` | ```void```       |   |
 |------|------|------|------|
 
-#	Appendix P4 core library { #sec-p4-core-lib }
+#	Appendix: P4 core library { #sec-p4-core-lib }
 The P4 core library contains declarations that are useful to most programs.
 
 For example, the core library includes the declarations of the predefined ```packet_in```\
@@ -3863,7 +3864,7 @@ match_kind {
 }
 ~ End P4Example
 
-#	Appendix checksums { #sec-checksums }
+#	Appendix: checksums { #sec-checksums }
 
 There are no built-in constructs in P4~16~ for manipulating packet checksums. We expect that all checksum operations can be expressed as ```extern``` library objects that are provided in target-specific libraries. The standard architecture library should provide such checksum units.
 
@@ -3901,7 +3902,142 @@ ck16.update( { header.ipv4.ttl, header.ipv4.proto } );
 header.ipv4.hdrChecksum = ck16.get();
 ~ End P4Example
 
-#	Appendix P4 grammar  { #sec-grammar }
+# Appendix: Open Issues
+
+There are a number of open issues that are currently under discussion in the P4
+design working group. A brief summary of these issues is highlighted in this
+section. We seek input on these issues from the community, and encourage
+experimenting with different implementations in the compiler before converging
+on the specification.
+
+## Portable Switch Architecture
+
+Portability and composability are critical to P4's long-term success. To that
+end, the draft specification for an architecture definition that enables
+programmers to write composable P4 programs, called the [_Portable Switch
+Architecture_](http://p4.org/documents/psa.pdf) (PSA), is available for
+comments. For example:
+
+- Composability: implement different features, such as In-band Network
+  Telemetry (INT), Network Virtualization, and Load Balancing in separate P4
+  programs written for the PSA, should easily interoperate when invoked from a
+  toplevel program.
+- Portability: a P4 implementation of a certain function, such as INT, against
+  PSA should work consistently across architectures that support the PSA.
+
+## Populate table entries at compile time
+
+It is desirable to have the capability to initialize table entries at compile
+time. The questions discussed are:
+
+- Should these entries be immutable and the tables read-only? Are immutability
+  and read-only attributes that the programmer can specify?
+- Should these entries be at all accessible from the control plane?
+- What should be the API: builtin compiler functions, table initializers?
+
+## Union types
+
+There seem to be three main motivations for adding unions to P4_16:
+
+- Ignoring practical use cases, it seems natural to want the ability to have a
+  union type. Such types are present in almost every other typed programming
+  language and data with "alternative" structure arises in many situations.
+- On some targets, having a union type may provide a valuable hint to the
+  compiler that only one alternative will be present in any run of the program,
+  allowing it to conserve space for metadata. Currently the programmer would
+  have to declare headers for both alternatives, even if only one is ever valid.
+- Having a union type may provide a way to build uniform representations of
+  formats like IP options. Unfortunately due to the existing constructs for
+  processing header stacks this is not possible in the current language, but a
+  proposal for structural iteration [#sec-structured-iteration], will make this
+  possible.
+
+
+## Generalized switch statement behavior
+
+P4~16~ includes both ```switch``` statements [#sec-switch-stmt] and ```select```
+expressions [#sec-select]. There are real differences in the current
+version of the language -- expression vs. statement, and the latter must
+evaluate to a state value.
+
+We propose generalizing ```switch``` statements to match the design used in
+most programming language: a multi-way conditional that executes the first
+branch that matches from a list of cases.
+
+~ Begin P4Example
+switch(e1,...,en) {
+  pat_1 : stmt1;
+  ...
+  pat_m : stmtm;
+}
+~ End P4Example
+
+Here, the value being scrutinized is given by a tuple ```(e1,...,en)```, and the
+patterns are given by expressions that denote sets of values. The value matches
+a branch if it is an element of the set denoted by the pattern. Unlike C and
+C++, there is no break statement so control "falls through" to the next
+case only when there is no statement associated with the case label.
+
+This design is intended to capture the standard semantics of ```switch```
+statements as well as a common idiom in P4 parsers where they are used to
+control transitions to different parser states depending on the values of one
+or more previously-parsed values. Using ```switch``` statements, we can also
+generalize the design for parsers, eliminating select and lifting most
+restrictions on which kinds of statements may appear in a state. In particular,
+we allow conditional statements and ```select``` statements, which may be
+nested arbitrarily. This language can be translated into more restricted
+versions, where the body of each state comprised a sequence of variable
+declarations, assignments, and method invocations followed by a
+single```transition``` statement by introducing new states.
+
+We also generalize the design for processing of table hit/miss and actions in control blocks, by generating implicit types for actions and results.
+
+The counter-argument to this proposal is that the semantics of ```select``` in
+the parser is sufficiently distinct from the ```switch``` statement, and
+moreover these are constructs that network programmers are already faminliar
+with, and they are typically mapped very efficiently onto a variety of targets.
+
+
+## Undefined behaviors
+
+The presence of undefined behavior has caused numerous problems in languages
+like C and HTML, including bugs and serious security vulnerabilities. There are
+a few places where evaluating a P4 program can result in undefined behaviors:
+out parameters, uninitialized variables, accessing header fields of invalid
+headers, and accessing header stacks with an out of bounds index. We think we
+should make every attempt to avoid undefined behaviors in P4~16~, and therefore
+we propose to strengthen the wording in the specification, such that by
+default, we rule out programs that exhibit the behaviors mentioned above. Given
+the concern for performance, we propose to define compiler flags and/or pragmas
+that can override the safe behavior. However, our expectation is that
+programmers should be guided toward writing safe programs, and encouraged to
+think harder when excepting from the safe behavior.
+
+
+## Structured Iteration {#sec-structured-iteration}
+
+Introducing a ```foreach``` style iterator for operating over header stacks
+will alleviate the need of using C preprocessor directives to specify the size
+of header stacks.
+
+For example:
+~ Begin P4Example
+foreach hdr in hdrs {
+  ... operations over HDR ...
+}
+~ End P4Example
+
+Since the stacks are always known statically (at compile-time), the compiler
+could transform the ```foreach``` statement into the replicated code with
+explicit index references at compile-time. This has the advantage of allowing
+the code to be written without regard to a parameterized header stack length.
+
+Since the compiler can statically determine the number of operations that would
+result from the ```foreach``` it can also reject a program if the result
+requires more action resources than are available, or can split the action code
+up to fit available resources as needed.
+
+#	Appendix: P4 grammar  { #sec-grammar }
 
 This is the grammar of P4~16~ written using the YACC/bison language. Absent from this grammar is the precedence of various operations.
 
