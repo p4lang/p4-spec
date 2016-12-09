@@ -2120,19 +2120,18 @@ following expressions are legal in any context:
 
 - ```hs.empty```: result is a Boolean value, which is ```true``` when all validity bits in the stack are false.
 - ```hs.full```: result is a Boolean value, which is ```true``` if all validity bits in the stack are true.
+- ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
+- ```hs.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is moved to index ```0```). The last ```count``` elements become invalid.
+- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
 
-In addition, the following expressions are legal in parsers,
+In addition, the following expressions are legal only in parsers:
 
 - ```hs.next```: result is a reference to the lowest-index header in the stack which does not have a validity bit set. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
 - ```hs.last```: result is a reference to the largest-index header in the stack which does have the validity bit set. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
 
 and the following expressions are legal in control blocks:
 
-- ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
-- ```hs.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is moved to index ```0```). The last ```count``` elements become invalid.
-- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
-
-The restrictions on which expressions can appear in parsers and control blocks are designed to ensure that stacks remain contiguous in the parser, but to allow random access in control blocks. 
+Targets may impose additional constraints on the use of stacks: e.g., they may require that header stacks never contain "holes" during parsing (this could be enforced by forbidding some operations such as `push_front` and direct access by index within parsers).
 
 ##	Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
