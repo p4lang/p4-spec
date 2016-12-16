@@ -2755,9 +2755,9 @@ ParserModel.verify(bool condition, error err) {
 }
 ~ End P4Pseudo
 
-##	Data extraction from packets { #sec-packet-data-extraction }
+## Data extraction from packets { #sec-packet-data-extraction }
 
-The P4 core library contains the following declaration of a built-in ```extern``` type called ```packet_in``` that represents incoming network packets. The ```packet_in``` extern is special: it cannot be instantiated by the user explicitly, and there is one separate instance of each ```packet_in``` for each parser execution thread (see Section [#sec-concurrency]).
+The P4 core library contains the following declaration of a built-in ```extern``` type called ```packet_in``` that represents incoming network packets. The ```packet_in``` extern is special: it cannot be instantiated by the user explicitly. There is a separate instance for each ```packet_in``` parameter supplied by the architecture, and each parser execution thread (see Section [#sec-concurrency]).
 
 ~ Begin P4Example
 extern packet_in {
@@ -3772,13 +3772,13 @@ The compile-time evaluation of this program produces the structure in Figure [#f
 ~
 [evalmultiple]: figs/evalmultiple.png { width: 5cm; page-align: here }
 
-##	Dynamic evaluation { #sec-dynamic-eval }
+## Dynamic evaluation { #sec-dynamic-eval }
 
 The dynamic evaluation of a P4 program is orchestrated by the target model. Each target model needs to specify the order and the conditions under which the various P4 component programs are dynamically executed. For example, in the Simple Switch example from Section [#sec-vss-arch] the execution flow goes ```Parser->Pipe->Deparser```.
 
 Once a P4 execution block is invoked its execution proceeds until termination according to the semantics defined in this document (the various abstract machines).
 
-###	Concurrency model { #sec-concurrency }
+### Concurrency model { #sec-concurrency }
 
 A typical packet processing system needs to execute multiple simultaneous logical “threads:” at the very least there is a thread executing the control plane, which can modify the contents of the tables. Architecture specifications should describe in detail the interactions between the control-plane and the data-plane. The data plane can exchange information with the control plane through ```extern``` function and method calls. Moreover, high throughput packet processing systems may be processing multiple packets simultaneously, e.g., in a pipelined fashion, or concurrently parsing a first packet while performing match-action operations on a second packet. This section specifies the semantics of P4 programs with respect to such concurrent executions.
 
