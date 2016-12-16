@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: December 6, 2016
+Title Footer: December 15, 2016
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -34,7 +34,7 @@ p4pseudo {
   replace: "~ Begin P4PseudoBlock&nl;\
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4PseudoBlock";
-  padding: 5pt;
+  padding: 10pt;
   border: solid;
   background-color: #e9fce9;
   border-width: 0.5pt;
@@ -46,6 +46,8 @@ p4pseudo {
   replace: "~ Begin P4PseudoBlock&nl;\
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4PseudoBlock";
+  breakable : true;
+  padding: 10pt;
   background-color: #e9fce9;
   border: solid;
   border-width: 0.5pt;
@@ -58,6 +60,7 @@ p4grammar {
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4GrammarBlock";
   border: solid;
+  padding: 10pt;
   background-color: #e6ffff;
   border-width: 0.5pt;
 }
@@ -68,6 +71,8 @@ p4grammar {
   replace: "~ Begin P4GrammarBlock&nl;\
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4GrammarBlock";
+  breakable: true;
+  padding: 10pt;
   background-color: #e6ffff;
   border: solid;
   border-width: 0.5pt;
@@ -222,9 +227,9 @@ The P4~16~ language also introduces and repurposes some v1.1 language constructs
 
 One important goal of the P4~16~ language revision is to provide a *stable* programming language definition, that promotes backwards-compatibility. In other words, we strive for programs written in P4~16~ to remain syntactically correct and to behave identically when treated as programs later versions.
 
-#	Data Plane interfaces and the Architecture Model
+# Architecture Model 
 
-##	The architecture { #sec-arch }
+## The architecture { #sec-arch }
 
 ~ Figure { #fig-p4interface; caption: "P4 program interfaces." }
 ![p4interface]
@@ -290,7 +295,7 @@ extern Checksum16 {
 }
 ~ End P4Example
 
-#	Example: programming a very simple switch { #sec-vss-example }
+# Example: A very simple switch { #sec-vss-example }
 
 To make the discussion concrete we begin by presenting a complete example: we start by describing the architecture of a very simple switch. We then provide the P4 description of the architecture. We end by writing a complete P4 program for controlling the switch. While the example is relatively involved, it makes use all important features of the P4 programming language.
 
@@ -316,7 +321,7 @@ Packets may be received from one of three sources:
 
 The white blocks in the figure are programmable, and the user must provide a corresponding P4 program to control the behavior of each such block. The cyan blocks are fixed-function. The green arrows are data plane interfaces used to convey information between the fixed-function blocks and the programmable blocks --- exposed in the P4 program as intrinsic metadata. The red arrows show the flow of user-defined data. VSS has three programmable blocks: a parser, a match-action pipeline, and a deparser.
 
-##	Very Simple Switch architecture declaration { #sec-vss-arch }
+## Very Simple Switch Architecture { #sec-vss-arch }
 
 The following P4 program provides a declaration of VSS in P4, as it would be provided by the VSS manufacturer. The declaration contains several type declarations, constants, and finally declarations for the three programmable blocks; the code uses syntax highlighting. The programmable blocks are described by their types; the implementation of these blocks has to be provided by the switch programmer.
 
@@ -427,11 +432,11 @@ A type variable indicates a type yet unknown that must be provided by the user a
 - In this program the ```inCtrl``` and ```outCtrl``` structures represent control registers. The content of the headers structure is stored in general-purpose registers.
 - The ```extern Checksum16``` declaration describes an external block whose services can be invoked to compute checksums.
 
-##	Very Simple Switch data plane architecture description { #sec_vssarch }
+## Very Simple Switch Architecture Description { #sec_vssarch }
 
 In order to fully understand VSS's behavior and write meaningful P4 programs for it, and for implementing a control plane, we also need a full behavioral description of the fixed-function blocks. This section can be seen as a simple example illustrating all the details that have to be handled when writing an architecture description. The P4 language is not intended to cover the description of all such functional blocks --- the language can only describe the interfaces between programmable blocks and the target --- in the previous program this interface is given by the ```Parser```, ```Pipe```, and ```Deparser``` declarations. In practice we expect that the complete target description will be provided as an executable program and/or diagrams and text; in this document we provide a verbal description in English.
 
-###	The arbiter block
+### Arbiter block
 The input arbiter block performs the following functions:
 
 - It receives packets from one of the physical input Ethernet ports, from the control plane or from the input recirculation port.
@@ -440,11 +445,11 @@ The input arbiter block performs the following functions:
 - If the arbiter block is busy processing a previous packet and there is no queue space is available, input ports may drop arriving packets, without indicating the fact that the packets were dropped in any way.
 - After receiving a packet, the arbiter block sets the ```inCtrl.inputPort``` value that is an input to the parser with the identity of the input port where the packet originated. Physical Ethernet ports are numbered 0 to 7, while the input recirculation port has a number 13 and the CPU port has the number 14.
 
-###	The parser runtime block
+### Parser runtime block
 
 The parser runtime block works in concert with the parser. It provides an error code to the match-action pipeline, based on the parser actions, and it provides information about the packet payload (e.g., the size of the remaining payload data) to the demux block. As soon as a packet's processing is completed by the parser, the match-action pipeline is invoked with the associated metadata as inputs (packet headers and user-defined metadata).
 
-###	The demux block
+### Demux block
 
 The core functionality of the demux block is to receive the headers for the outgoing packet from the deparser and the packet payload from the parser, to assemble them into a new packet and to send the result to the correct output port. The output port is specified by the value of ```outCtrl.ouputPort```, which is set by the match-action pipeline.
 
@@ -459,7 +464,7 @@ Please note that some of the behaviors of the demux block may be unexpected --- 
 
 The arrow shown between the arbiter and demux blocks represents an additional information flow between arbiter and demux: the packet being processed as well as the offset within the packet where parsing ended (i.e., the start of the packet payload).
 
-###	Available extern blocks { #sec-vss-extern }
+### Available extern blocks { #sec-vss-extern }
 
 The VSS architecture provides an incremental checksum extern block, called
 ```Checksum16```. The checksum unit has four methods:
@@ -470,7 +475,7 @@ The VSS architecture provides an incremental checksum extern block, called
 - ```remove<T>(T data)``` --- under the assumption that ```data``` was used for computing the current checksum, ```data``` is removed from the checksum (“undo”).
 
 
-##	A complete program for the Very Simple Switch { #sec-vss-all }
+## A complete Very Simple Switch program { #sec-vss-all }
 
 Here we provide a complete P4 program performing L2/L3 forwarding for IPv4 packets for the VSS. This program does not take advantage of some features of the switch: e.g., recirculation. The details of many constructs will be explained throughout the document.
 
@@ -3606,7 +3611,7 @@ control _filter<H>(inout H headers, out bool accept);
 package Filter<H>(_parser<H> p, _filter<H> f);
 ~ End P4Example
 
-#	The P4 abstract machine: evaluating a P4 program { #sec-p4-abstract-mach }
+# P4 abstract machine: Evaluation { #sec-p4-abstract-mach }
 The evaluation of a P4 program is done in two stages:
 
 - **static evaluation**: at compilation time the P4 program is analyzed and all stateful blocks are instantiated.
