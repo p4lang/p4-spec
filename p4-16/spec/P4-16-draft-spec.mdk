@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: December 15, 2016
+Title Footer: December 16, 2016
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -2117,26 +2117,41 @@ header itself is valid.
 
 ##	Expressions on header stacks { #sec-expr-hs }
 
-[]{tex-cmd: "\indent"} A header stack is a fixed-size array of headers with the same type. Note that the valid elements in a header stack are not necessarily contiguous.
+A header stack is a fixed-size array of headers with the same
+type. The valid elements of a header stack need not be contiguous. P4
+provides a set of computations for manipulating header stacks, which
+can be understood in terms of the following pseudocode:
 
-P4 provides a set of computations for manipulating header stacks. Given a value ```hs``` of type header stack, the following expressions are legal:
+~ Begin P4Pseudo
+// type declaration
+struct hs_t {
+  int nextIndex;
+  h[n] data;  // Ordinary array
+}
+
+// instance declaration and initialization
+hs_t hs;
+hs.nextIndex = 0;
+~ End P4Pseudo
+
+Intuitively, a header stack can be thought of as a struct containing an ordinary array of headers ```hs``` and a counter ```nextIndex``` that can be used to simplify the construction of parsers for header stacks, as discussed below. The ```nextIndex``` counter is initialized to ```0```. Note that when a header stack is passed as an argument or assigned to a variable, the entire structure is copied, including its ```nextIndex``` counter. 
+
+Given a value ```hs``` of type header stack, the following expressions are legal:
 
 - ```hs.empty```: result is a Boolean value, which is ```true``` when all validity bits in the stack are false.
 - ```hs.full```: result is a Boolean value, which is ```true``` if all validity bits in the stack are true.
 - ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
 
-To help streamline parsers, P4 also offers computations that automatically advance through the stack as its elements are parsed:
+To help programmers write parsers for header stacks, P4 also offers computations that automatically advance through the stack as elements are parsed:
 
-- ```hs.next```: result is a reference to some header in the stack. Can only be used in a ```parser```. Initially, ```hs.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract(hs.next)``` (see [#sec-parse-header-stacks] for example). It is also modified by the ```hs.push_front``` and ```hs.pop_front``` operations, as described below. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
-- ```hs.last```: result is a reference to the element immediately preceding ```hs.next``` in the stack, if such an element exists. Can only be used in a ```parser```. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
+- ```hs.next```: result is a reference to the element with index ```hs.nextIndex``` in the stack. Can only be used in a ```parser```. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
+- ```hs.last```: result is a reference to the element with index ```hs.nextIndex - 1``` in the stack, if such an element exists. Can only be used in a ```parser```. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
 
 Finally, P4 offers the following computations that can be used to manipulate the elements at the front and back of the stack:
 
-- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded. The ```hs.next``` and ```hs.last``` expressions are advanced by ```count``` elements. The ```count``` argument must  be a positive integer that is a compile-time known value and the return type is ```void```.
+- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded. The ```hs.nextIndex```  is incremented by ```count```. The ```count``` argument must  be a positive integer that is a compile-time known value and the return type is ```void```.
 
-- ```hs.pop_front(int count)```: shift "left" by ```count``` (i.e., element with index ```count``` is copied in stack at index ```0```). The last ```count``` elements become invalid. The ```hs.next``` and ```hs.last``` expressions are decreased by ```count``` elements. The ```count``` argument must  be a positive integer that is a compile-time known value and the return type is ```void```.
-
-The ```hs.next``` and ```hs.last``` can be understood in terms of an extra piece of state that is maintained within the header stack. This state encodes a counter that is initialized to ```0```, incremented on each invocation of ```extract(hs.next)```, and incremented and decremented on each invocation of ```hs.push_front``` and ```hs.pop_front```. When a header stack is passed as an argument to a function, the state is carried with it.
+- ```hs.pop_front(int count)```: shift "left" by ```count``` (i.e., element with index ```count``` is copied in stack at index ```0```). The last ```count``` elements become invalid. The ```hs.nextIndex``` expression is decreased by ```count``` elements. The ```count``` argument must  be a positive integer that is a compile-time known value and the return type is ```void```.
 
 ## Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
@@ -2243,7 +2258,7 @@ optInitializer
     ;
 ~ End P4Grammar
 
-Variables without an initializer are uninitialized, except for header stacks, which are initialized by allocating space for each element and setting the ```next``` property to refer to the first element of the stack. The language places no restriction on the types of the variables: most P4 types that can be written explicitly can be used (e.g., base types, ```struct```, ```header```, header stack, ```tuple```). One cannot declare variables with types that are only synthesized by the compiler (e.g., ```set```), or with ```parser```, ```control```, ```package```, or ```extern``` types. Objects of the latter types must be declared using instantiations (see Section [#sec-instantiations]).
+Variables without an initializer are uninitialized (except for header stacks, which have their counter initialized ```nextIndex``` to ```0```, as discussed in [#sec-expr-hs]). The language places no restriction on the types of the variables: most P4 types that can be written explicitly can be used (e.g., base types, ```struct```, ```header```, header stack, ```tuple```). One cannot declare variables with types that are only synthesized by the compiler (e.g., ```set```), or with ```parser```, ```control```, ```package```, or ```extern``` types. Objects of the latter types must be declared using instantiations (see Section [#sec-instantiations]).
 
 Reading the value of a variable that has not been initialized provides an undefined result. The compiler should attempt to detect and flag such reads statically.
 
@@ -2755,7 +2770,7 @@ parser P(packet_in b, out Result r) {
 }
 ~ End P4Example
 
-**Semantics**: the semantics of extract is given in terms of the following pseudo-code method of the ```packet``` class shown above. We use the special ```valid$``` identifier to indicate the hidden valid bit of a header, ```isStack$``` to indicate that the header is a stack, ```isNext$``` to indicate that the l-value was obtained using ```next```, and ```next$``` and ```last$``` to indicate the corresponding stack properties.
+**Semantics**: the semantics of extract is given in terms of the following pseudo-code method of the ```packet``` class shown above. We use the special ```valid$``` identifier to indicate the hidden valid bit of a header, ```isNext$``` to indicate that the l-value was obtained using ```next```, and ```next$``` and ```last$``` to indicate the corresponding header stack properties.
 
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLValue) {
@@ -2765,7 +2780,7 @@ void packet_in.extract<T>(out T headerLValue) {
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
    headerLValue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLValue.valid$ = true;
-   if headerLValue.isStack$ and headerLValue.isNext$ {
+   if headerLValue.isNext$ {
      headerLValue.last$ = headerLValue.next$;
      headerLValue.next$ = headerLValue.next$ + 1;
    }
@@ -2796,7 +2811,7 @@ void packet_in.extract<T>(out T variableSizeHeader,
    headerLvalue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLvalue.varbitField.size = variableFieldSize;
    headerLvalue.valid$ = true;
-   if headerLValue.isStack$ and headerLValue.isNext$ {
+   if headerLValue.isNext$ {
      headerLValue.last$ = headerLValue.next$;
      headerLValue.next$ = headerLValue.next$ + 1;
    }
