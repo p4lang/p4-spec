@@ -2127,7 +2127,7 @@ P4 provides a set of computations for manipulating header stacks. Given a value 
 
 To help streamline parsers, P4 also offers computations that automatically advance through the stack as its elements are parsed:
 
-- ```hs.next```: result is a reference to some header in the stack. Can only be used in a ```parser```. Initially, ```hs.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract``` with the argument ```hs.next``` (see [#sec-parse-header-stacks] for example). It is also modified by the ```hs.push_front``` and ```hs.pop_front``` operations, which are described below. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
+- ```hs.next```: result is a reference to some header in the stack. Can only be used in a ```parser```. Initially, ```hs.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract(hs.next)``` (see [#sec-parse-header-stacks] for example). It is also modified by the ```hs.push_front``` and ```hs.pop_front``` operations, as described below. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
 - ```hs.last```: result is a reference to the element immediately preceding ```hs.next``` in the stack, if such an element exists. Can only be used in a ```parser```. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
 
 Finally, P4 offers the following computations that can be used to manipulate the elements at the front and back of the stack:
@@ -2136,7 +2136,7 @@ Finally, P4 offers the following computations that can be used to manipulate the
 
 - ```hs.pop_front(int count)```: shift "left" by ```count``` (i.e., element with index ```count``` is copied in stack at index ```0```). The last ```count``` elements become invalid. The ```hs.next``` and ```hs.last``` expressions are decreased by ```count``` elements. The ```count``` argument must  be a positive integer that is a compile-time known value and the return type is ```void```.
 
-The ```hs.next``` and ```hs.last``` can be understood in terms of an extra piece of state that is maintained within the header stack. This state encodes a counter that is initialized to ```0```, incremented on each invocation of ```extract``` with ```hs.next``` as an argument, and incremented and decremented on each invocation of ```hs.push_front``` and ```hs.pop_front```. When a header stack is passed as an argument to a function, the state is carried with it.
+The ```hs.next``` and ```hs.last``` can be understood in terms of an extra piece of state that is maintained within the header stack. This state encodes a counter that is initialized to ```0```, incremented on each invocation of ```extract(hs.next)```, and incremented and decremented on each invocation of ```hs.push_front``` and ```hs.pop_front```. When a header stack is passed as an argument to a function, the state is carried with it.
 
 ## Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
