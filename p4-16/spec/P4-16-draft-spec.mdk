@@ -2164,11 +2164,11 @@ are parsed:
 
 - ```hs.next```: result is a reference to the element with index
   ```hs.nextIndex``` in the stack. Can only be used in a
-  ```parser```. If the stack's ```nextIndex``` counter is greater than
-  or equal to ```size```, then evaluating this expression results in a
-  transition to the ```reject``` state and sets the error to
-  ```error.StackOutOfBounds```. If ```hs``` is an l-value, the result
-  is also an l-value.
+  ```parser```. If the stack's ```nextIndex``` counter is less than
+  ```0``` or greater than or equal to ```size```, then evaluating this
+  expression results in a transition to the ```reject``` state and
+  sets the error to ```error.StackOutOfBounds```. If ```hs``` is an
+  l-value, the result is also an l-value.
 
 - ```hs.last```: result is a reference to the element with index
   ```hs.nextIndex - 1``` in the stack, if such an element exists. Can
@@ -2178,7 +2178,7 @@ are parsed:
   ```hs.next```, the resulting referene is never an l-value.
 
 - ```hs.lastIndex```: result is the index ```hs.nextIndex - 1```. If
-  the stack is empty evaluation of this expression returns ```-1```.
+  the stack is empty, then evaluation of this expression returns ```-1```.
 
 Finally, P4 offers the following computations that can be used to
 manipulate the elements at the front and back of the stack:
@@ -2193,7 +2193,7 @@ manipulate the elements at the front and back of the stack:
 - ```hs.pop_front(int count)```: shift "left" by ```count``` (i.e.,
   element with index ```count``` is copied in stack at index
   ```0```). The last ```count``` elements become invalid. The
-  ```hs.nextIndex``` expression is decreased by ```count```
+  ```hs.nextIndex``` expression is decremented by ```count```
   elements. The ```count``` argument must be a positive integer that
   is a compile-time known value and the return type is ```void```.
 
