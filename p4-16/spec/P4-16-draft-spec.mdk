@@ -1407,7 +1407,7 @@ headerStackType
     : typeName '[' expression ']'
     ;
 ~ End P4Grammar
-where ```typeName``` is the name of a header type. For a header stack ```H[W]```, the term  ```W``` is the maximum defined size, and must be a positive integer that is a compile-time known value. Nested header stacks are not supported. At runtime a stack contains ```W``` values with type ```typeName```, only some of which may be valid. Expressions manipulating header-stacks are discussed in Section [#sec-expr-hs].
+where ```typeName``` is the name of a header type. For a header stack ```hs[n]```, the term  ```n``` is the maximum defined size, and must be a positive integer that is a compile-time known value. Nested header stacks are not supported. At runtime a stack contains ```n``` values with type ```typeName```, only some of which may be valid. Expressions on header stacks are discussed in Section [#sec-expr-hs].
 
 For example, the following declarations,
 ~ Begin P4Example
@@ -2121,7 +2121,7 @@ header itself is valid.
 A header stack is a fixed-size array of headers with the same
 type. The valid elements of a header stack need not be contiguous. P4
 provides a set of computations for manipulating header stacks. A
-header stack ``hs``` declared as ```h[n]``` can be understood in terms
+header stack ```hs``` declared as ```h[n]``` can be understood in terms
 of the following pseudocode:
 
 ~ Begin P4Pseudo
@@ -2147,24 +2147,24 @@ expressions are legal:
   specified position within the stack; if ```hs``` is an l-value, the
   result is also an l-value. The header may be invalid. Some targets
   may impose the constraint that the index expression evaluates to a
-  compile-time known value. Accessing a header stack with an index out
-  of bounds produces an undefined result.
+  compile-time known value. Accessing a header stack ``hs`` with an
+  index less than ```0``` or greater than ```hs.size``` results in an
+  undefined value.
 
 - ```hs.size```: result is a 32-bit unsigned integer that returns the
   size of the header stack.
 
-- ```hs_other = hs```: assignment from one header stack ```hs``` into
-  another (```hs_other```) requires the two stacks to have the same
-  types and sizes. All components of ```hs``` are copied into
-  ```hs_other```, including validity bits, ```size```, and
-  ```nextIndex```.
+- assignment from a header stack ```hs``` into another stack requires
+  the two stacks to have the same types and sizes. All components of
+  ```hs``` are copied, including its elements and their validity bits,
+  as well as ```size``` and ```nextIndex```.
 
 To help programmers write parsers for header stacks, P4 also offers
 computations that automatically advance through the stack as elements
 are parsed:
 
 - ```hs.next```: result is a reference to the element with index
-  ```hs.nextIndex``` in the stack. Can only be used in a
+  ```hs.nextIndex``` in the stack. May only be used in a
   ```parser```. If the stack's ```nextIndex``` counter is less than
   ```0``` or greater than or equal to ```size```, then evaluating this
   expression results in a transition to the ```reject``` state and
@@ -2172,16 +2172,18 @@ are parsed:
   l-value, then ```hs.next``` is also an l-value.
 
 - ```hs.last```: result is a reference to the element with index
-  ```hs.nextIndex - 1``` in the stack, if such an element exists. Can
+  ```hs.nextIndex - 1``` in the stack, if such an element exists. May
   only be used in a ```parser```. If the ```nextIndex``` counter is
-  equal to ```0```, then evaluating this expression produces an
-  undefined result. Unlike ```hs.next```, the resulting reference is
-  never an l-value.
+  less than ```1```, or greater than or equal to ```size```, then
+  evaluating this expression results in a transition to the
+  ```reject``` state and sets the error to
+  ```error.StackOutOfBounds```. Unlike ```hs.next```, the resulting
+  reference is never an l-value.
 
 - ```hs.lastIndex```: result is an `int<32>` that encodes the index
-  ```hs.nextIndex - 1```. If the ```nextIndex``` counter is to
-  ```0```, then evaluating this expression produces an undefined
-  result.
+  ```hs.nextIndex - 1```. May only be used in a ```parser```. If the
+  ```nextIndex``` counter is ```0```, then evaluating this
+  expression produces an undefined value.
 
 Finally, P4 offers the following computations that can be used to
 manipulate the elements at the front and back of the stack:
@@ -2307,7 +2309,7 @@ optInitializer
     ;
 ~ End P4Grammar
 
-Variables without an initializer are uninitialized (except for header stacks, which have their counter initialized ```nextIndex``` to ```0```, as discussed in [#sec-expr-hs]). The language places no restriction on the types of the variables: most P4 types that can be written explicitly can be used (e.g., base types, ```struct```, ```header```, header stack, ```tuple```). One cannot declare variables with types that are only synthesized by the compiler (e.g., ```set```), or with ```parser```, ```control```, ```package```, or ```extern``` types. Objects of the latter types must be declared using instantiations (see Section [#sec-instantiations]).
+Variables without an initializer are uninitialized (except for header stacks, which have their ```nextIndex``` counter initialized to ```0```, as discussed in [#sec-expr-hs]). The language places no restriction on the types of the variables: most P4 types that can be written explicitly can be used (e.g., base types, ```struct```, ```header```, header stack, ```tuple```). One cannot declare variables with types that are only synthesized by the compiler (e.g., ```set```), or with ```parser```, ```control```, ```package```, or ```extern``` types. Objects of the latter types must be declared using instantiations (see Section [#sec-instantiations]).
 
 Reading the value of a variable that has not been initialized provides an undefined result. The compiler should attempt to detect and flag such reads statically.
 
@@ -2835,7 +2837,8 @@ void packet_in.extract<T>(out T headerLValue) {
    headerLValue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLValue.valid$ = true;
    if headerLValue.isNext$ {
-     verify(headerLValue.nextIndex$ >= 0 && headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
+     verify(headerLValue.nextIndex$ >= 0, error.StackOutOfBounds);
+     verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
      headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
    }
    this.nextBitIndex += bitsToExtract;
@@ -2866,7 +2869,8 @@ void packet_in.extract<T>(out T variableSizeHeader,
    headerLvalue.varbitField.size = variableFieldSize;
    headerLvalue.valid$ = true;
    if headerLValue.isNext$ {
-     verify(headerLValue.nextIndex$ >= 0 && headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
+     verify(headerLValue.nextIndex$ >= 0, error.StackOutOfBounds);
+     verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
      headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
    }
    this.nextBitIndex += bitsToExtract;
@@ -2998,19 +3002,7 @@ header Mpls_h {
 Mpls_h[10] mpls;
 ~ End P4Example
 
-The expression ```mpls.next``` represents an l-value of type
-```Mpls_h``` that references an element in the ```mpls```
-stack. Initially, ```mpls.next``` refers to the first element of
-stack. It is automatically advanced on each successful call to
-```extract```. The ```mpls.last``` property refers to the element
-immediately preceding ```next``` if such an element exists. Attempting
-to access ```mpls.next``` element when the stack's ```nextIndex```
-counter is greater than or equal to ```size``` causes a transition to
-```reject``` and sets the error to
-```error.StackOutOfBounds```. Likewise, attempting to access
-```mpls.last``` when the ```nextIndex``` counter is equal to ```0```
-causes a transition to the ```reject``` state and sets the error to
-```error.StackOutOfBounds```.
+The expression ```mpls.next``` represents an l-value of type ```Mpls_h``` that references an element in the ```mpls``` stack. Initially, ```mpls.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract```. The ```mpls.last``` property refers to the element immediately preceding ```next``` if such an element exists. Attempting to access ```mpls.next``` element when the stack's ```nextIndex``` counter is greater than or equal to ```size``` causes a transition to ```reject``` and sets the erro  to ```error.StackOutOfBounds```. Likewise, attempting to access ```mpls.last``` when the ```nextIndex``` counter is equal to ```0``` causes a transition to the ```reject``` state and sets the error to ```error.StackOutOfBounds```.
 
 The following example shows a simplified parser for MPLS processing:
 ~ Begin P4Example
@@ -3019,7 +3011,7 @@ struct Pkthdr {
    Mpls_h[3] mpls;
    // other headers omitted
 }
-parser X(packet_in b, out Pkthdr p) {
+parser P(packet_in b, out Pkthdr p) {
     state start {
         b.extract(p.ethernet);
         transition select(p.ethernet.etherType) {
