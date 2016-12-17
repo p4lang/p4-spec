@@ -120,9 +120,6 @@ This specification does not specify:
 - The size or complexity of a program and its data that will exceed the capacity of any specific packet processing system or the capacity of a particular target
 - All minimal requirements of a packet processing system that is capable of supporting a conforming implementation
 
-# Normative References
-\[Here we need to put references to documents that describe basic terms and notation\]
-
 # Terms, definitions and symbols
 
 Throughout this specification, the following terms will be used. Terms, explicitly defined in this specification are not to be presumed to refer implicitly to the similar terms, defined elsewhere. Terms, not explicitly defined in this specification should be interpreted according to ISO/IEC 2382:2015 (Information Technology - Vocabulary) or the other generally recognizable sources, such as RFCs.
@@ -227,7 +224,7 @@ The P4~16~ language also introduces and repurposes some v1.1 language constructs
 
 One important goal of the P4~16~ language revision is to provide a *stable* programming language definition, that promotes backwards-compatibility. In other words, we strive for programs written in P4~16~ to remain syntactically correct and to behave identically when treated as programs later versions.
 
-# Architecture Model 
+# Architecture Model
 
 ## The architecture { #sec-arch }
 
@@ -1619,6 +1616,31 @@ packageTypeDeclaration
 ~ End P4Grammar
 All parameters of a package are evaluated at compilation-time, and in consequence they must all be directionless (they cannot be ```in```, ```out``` or ```inout```). Otherwise package types are very similar to parser type declarations. Packages can only be instantiated; they have no runtime behaviors associated.
 
+### Don't care types { #sec-dont-care-types }
+
+A don't care (underscore, "`_`") can be used in some circumstances as
+a type.  It should be only used in a position where one could write a
+bound type variable; it is similar to the Java `?` wildcard type.  The
+underscore can used to reduce code complexity --- when it is
+not important what the type variable binds to (during type unification
+the don't care type can unify with any other type).  For example:
+
+~ Begin P4Example
+control c<T>(...) {...}
+package p(c<_> ctrl);
+~ End P4Example
+
+This is equivalent to:
+
+~ Begin P4Example
+package p<T>(c<T> ctrl);
+~ End P4Example
+
+Since there are no constraints on the type ```T```, we can instead use
+a don't care.  This is mostly useful for writing packages with lots of
+generic parameters whose types are not tied to each other (see also an
+example in Section [#sec-arch-desc-example]).
+
 ##	typedef { #sec-typedef }
 ```typedef``` can be used to give an alternative name to a type.
 ~ Begin P4Grammar
@@ -2135,19 +2157,18 @@ following expressions are legal in any context:
 
 - ```hs.empty```: result is a Boolean value, which is ```true``` when all validity bits in the stack are false.
 - ```hs.full```: result is a Boolean value, which is ```true``` if all validity bits in the stack are true.
+- ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
+- ```hs.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is moved to index ```0```). The last ```count``` elements become invalid.
+- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
 
-In addition, the following expressions are legal in parsers,
+In addition, the following expressions are legal only in parsers:
 
 - ```hs.next```: result is a reference to the lowest-index header in the stack which does not have a validity bit set. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
 - ```hs.last```: result is a reference to the largest-index header in the stack which does have the validity bit set. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
 
 and the following expressions are legal in control blocks:
 
-- ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
-- ```hs.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is moved to index ```0```). The last ```count``` elements become invalid.
-- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
-
-The restrictions on which expressions can appear in parsers and control blocks are designed to ensure that stacks remain contiguous in the parser, but to allow random access in control blocks. 
+Targets may impose additional constraints on the use of stacks: e.g., they may require that header stacks never contain "holes" during parsing (this could be enforced by forbidding some operations such as `push_front` and direct access by index within parsers).
 
 ##	Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
@@ -3007,7 +3028,7 @@ A ```control``` block may start with declarations of ```action```s, ```table```s
 ~ Begin P4Grammar
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
-      '{' stateListDeclaration APPLY controlBody '}
+      '{' stateListDeclaration APPLY controlBody '}'
     ;
 
 controlLocalDeclarations
@@ -3044,8 +3065,7 @@ Actions are code fragments that can read and write the data being processed. Act
 
 ~ Begin P4Grammar
 actionDeclaration
-    : optAnnotations ACTION name '(' parameterList ')'
-      '{' statOrDeclList '}'
+    : optAnnotations ACTION name '(' parameterList ')' blockStatement
     ;
 ~ End P4Grammar
 
@@ -3058,7 +3078,7 @@ action Forward_a(out bit<9> outputPort, bit<9> port) {
 }
 ~ End P4Example
 
-Action parameters may not have ```extern``` types. Action parameters that have no direction (e.g., ```port``` in the previous example) indicate action data. All such parameters must be at the end of the parameter list. For actions that appear in a table actions list (described in Section [#sec-table-action-list]), these parameters are bound by the control plane. 
+Action parameters may not have ```extern``` types. Action parameters that have no direction (e.g., ```port``` in the previous example) indicate action data. All such parameters must be at the end of the parameter list. For actions that appear in a table actions list (described in Section [#sec-table-action-list]), these parameters are bound by the control plane.
 
 The body of an action consists of a sequence of statements and declarations. No switch statements are allowed within an action (the grammar as written permits them, but a semantic check should reject them). Some targets may impose additional restrictions on action bodies---e.g., only straight-line code, with no ```if``` statements or conditional expressions (```?:```).
 
@@ -3233,7 +3253,7 @@ table t(inout bit<32> z) {
 
 The default action of a table is an action that is invoked automatically by the match-action unit whenever the lookup table does not find a match for the supplied key.
 
-The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action _must_ appear after the ```action``` property and may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list. 
+The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action _must_ appear after the ```action``` property and may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list.
 
 For example, in the above ```table``` we could set the default action as follows (marking it also as constant --- i.e., not changeable by the control plane):
 
@@ -3776,7 +3796,7 @@ annotations
 
 annotation
     : '@' name
-    | '@' name '(' expression ')'
+    | '@' name '(' expressionList ')'
     ;
 ~ End P4Grammar
 
