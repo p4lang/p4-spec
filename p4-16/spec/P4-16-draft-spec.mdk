@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: December 15, 2016
+Title Footer: December 16, 2016
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -136,7 +136,7 @@ Throughout this specification, the following terms will be used. Terms, explicit
 - **Packet Processing System**: A data processing system oriented towards processing network packets. In general, packet processing systems implement two classes of algorithms, called control plane and data plane.
 - **Target**: A Packet Processing System that can execute a P4 program
 
-# Overview
+#	Overview
 
 ~ Figure { #fig-prgswitch; caption: "Traditional switches vs. programmable switches." }
 ![prgswitch]
@@ -226,7 +226,7 @@ One important goal of the P4~16~ language revision is to provide a *stable* prog
 
 # Architecture Model
 
-## The architecture { #sec-arch }
+##	The architecture { #sec-arch }
 
 ~ Figure { #fig-p4interface; caption: "P4 program interfaces." }
 ![p4interface]
@@ -292,7 +292,7 @@ extern Checksum16 {
 }
 ~ End P4Example
 
-# Example: A very simple switch { #sec-vss-example }
+#	Example: A very simple switch { #sec-vss-example }
 
 To make the discussion concrete we begin by presenting a complete example: we start by describing the architecture of a very simple switch. We then provide the P4 description of the architecture. We end by writing a complete P4 program for controlling the switch. While the example is relatively involved, it makes use all important features of the P4 programming language.
 
@@ -318,7 +318,7 @@ Packets may be received from one of three sources:
 
 The white blocks in the figure are programmable, and the user must provide a corresponding P4 program to control the behavior of each such block. The cyan blocks are fixed-function. The green arrows are data plane interfaces used to convey information between the fixed-function blocks and the programmable blocks --- exposed in the P4 program as intrinsic metadata. The red arrows show the flow of user-defined data. VSS has three programmable blocks: a parser, a match-action pipeline, and a deparser.
 
-## Very Simple Switch Architecture { #sec-vss-arch }
+##	Very Simple Switch Architecture { #sec-vss-arch }
 
 The following P4 program provides a declaration of VSS in P4, as it would be provided by the VSS manufacturer. The declaration contains several type declarations, constants, and finally declarations for the three programmable blocks; the code uses syntax highlighting. The programmable blocks are described by their types; the implementation of these blocks has to be provided by the switch programmer.
 
@@ -429,11 +429,12 @@ A type variable indicates a type yet unknown that must be provided by the user a
 - In this program the ```inCtrl``` and ```outCtrl``` structures represent control registers. The content of the headers structure is stored in general-purpose registers.
 - The ```extern Checksum16``` declaration describes an external block whose services can be invoked to compute checksums.
 
-## Very Simple Switch Architecture Description { #sec_vssarch }
+##	Very Simple Switch Architecture Description { #sec_vssarch }
 
 In order to fully understand VSS's behavior and write meaningful P4 programs for it, and for implementing a control plane, we also need a full behavioral description of the fixed-function blocks. This section can be seen as a simple example illustrating all the details that have to be handled when writing an architecture description. The P4 language is not intended to cover the description of all such functional blocks --- the language can only describe the interfaces between programmable blocks and the target --- in the previous program this interface is given by the ```Parser```, ```Pipe```, and ```Deparser``` declarations. In practice we expect that the complete target description will be provided as an executable program and/or diagrams and text; in this document we provide a verbal description in English.
 
-### Arbiter block
+###	Arbiter block
+
 The input arbiter block performs the following functions:
 
 - It receives packets from one of the physical input Ethernet ports, from the control plane or from the input recirculation port.
@@ -442,11 +443,11 @@ The input arbiter block performs the following functions:
 - If the arbiter block is busy processing a previous packet and there is no queue space is available, input ports may drop arriving packets, without indicating the fact that the packets were dropped in any way.
 - After receiving a packet, the arbiter block sets the ```inCtrl.inputPort``` value that is an input to the parser with the identity of the input port where the packet originated. Physical Ethernet ports are numbered 0 to 7, while the input recirculation port has a number 13 and the CPU port has the number 14.
 
-### Parser runtime block
+###	Parser runtime block
 
 The parser runtime block works in concert with the parser. It provides an error code to the match-action pipeline, based on the parser actions, and it provides information about the packet payload (e.g., the size of the remaining payload data) to the demux block. As soon as a packet's processing is completed by the parser, the match-action pipeline is invoked with the associated metadata as inputs (packet headers and user-defined metadata).
 
-### Demux block
+###	Demux block
 
 The core functionality of the demux block is to receive the headers for the outgoing packet from the deparser and the packet payload from the parser, to assemble them into a new packet and to send the result to the correct output port. The output port is specified by the value of ```outCtrl.ouputPort```, which is set by the match-action pipeline.
 
@@ -461,7 +462,7 @@ Please note that some of the behaviors of the demux block may be unexpected --- 
 
 The arrow shown between the arbiter and demux blocks represents an additional information flow between arbiter and demux: the packet being processed as well as the offset within the packet where parsing ended (i.e., the start of the packet payload).
 
-### Available extern blocks { #sec-vss-extern }
+###	Available extern blocks { #sec-vss-extern }
 
 The VSS architecture provides an incremental checksum extern block, called
 ```Checksum16```. The checksum unit has four methods:
@@ -472,7 +473,7 @@ The VSS architecture provides an incremental checksum extern block, called
 - ```remove<T>(T data)``` --- under the assumption that ```data``` was used for computing the current checksum, ```data``` is removed from the checksum (“undo”).
 
 
-## A complete Very Simple Switch program { #sec-vss-all }
+##	A complete Very Simple Switch program { #sec-vss-all }
 
 Here we provide a complete P4 program performing L2/L3 forwarding for IPv4 packets for the VSS. This program does not take advantage of some features of the switch: e.g., recirculation. The details of many constructs will be explained throughout the document.
 
@@ -709,7 +710,7 @@ VSS(TopParser(),
     TopDeparser()) main;
 ~ End P4Example
 
-# P4 Language definition { #sec-p4-lang-def }
+#	P4 Language definition { #sec-p4-lang-def }
 The P4 language can be viewed as having several distinct components, which we describe separately:
 
 - The core language, comprising of types, variables, scoping, declarations, statements, expressions, etc. We start by describing this part of the language.
@@ -806,7 +807,7 @@ The lexer recognizes the following kinds of terminals:
 - ```DONTCARE``` - a single underscore
 - Keywords, e.g., ```RETURN```. Each keyword terminal corresponds to a language keyword with the same spelling but using lowercase. For example, the ```RETURN``` terminal corresponds to the ```return``` keyword.
 
-###     Identifiers { #sec-identifiers }
+###	    Identifiers { #sec-identifiers }
 
 P4 identifiers may contain only letters, numbers and the underscore character ```_```, and must start with a letter or with underscore. The special identifier consisting of a single underscore ```_``` is reserved to indicate a "don't care" value in several contexts; its type may vary depending on the context. Some reserved keywords (e.g., ```apply``` can be used as identifiers if the context makes it unambiguous.
 
@@ -1064,7 +1065,7 @@ direction
 ~ End P4Grammar
 
 
-## Name resolution
+##	Name resolution
 
 ###	Lookup in the top-level namespace
 Identifiers or type names can be preceded by a dot ```.``` prefix, which will cause the identifier to be looked-up in the top-level namespace.
@@ -1106,7 +1107,7 @@ Identifiers defined in the top-level namespace are globally visible.
 
 Declarations within a ```parser``` or ```control``` are private and cannot be referred to from outside of the enclosing ```parser``` or ```control```.
 
-# P4 data types { #sec-p4-type }
+#	P4 data types { #sec-p4-type }
 P$4_{16}$ is a statically-typed language. Programs that do not pass the type checker are invalid and must be rejected by the compiler. Some values can be converted to a different type using casts. To make user intents clear, implicit casts are only allowed in a few circumstances and the range of casts available is intentionally restricted.
 
 P4 provides a number of base types as well as type operators that construct derived types.
@@ -1403,9 +1404,9 @@ headerStackType
     : typeName '[' expression ']'
     ;
 ~ End P4Grammar
-where ```typeName``` is the name of a header type. For a header stack ```H[W] W``` is the maximum defined size, and must be a positive integer that is a compile-time known value. Nested header stacks are not supported. At run-time a stack contains ```W``` values with type ```typeName```, only some of which may be valid. Expressions manipulating header-stacks are discussed in Section10.15.
+where ```typeName``` is the name of a header type. For a header stack ```hs[n]```, the term  ```n``` is the maximum defined size, and must be a positive integer that is a compile-time known value. Nested header stacks are not supported. At runtime a stack contains ```n``` values with type ```typeName```, only some of which may be valid. Expressions on header stacks are discussed in Section [#sec-expr-hs].
 
-For example, the declarations below:
+For example, the following declarations,
 ~ Begin P4Example
 header Mpls_h {
     bit<20> label;
@@ -1413,9 +1414,9 @@ header Mpls_h {
     bit     bos;
     bit<8>  ttl;
 }
-Mpls_h[10] mpls_vec;
+Mpls_h[10] mpls;
 ~ End P4Example
-introduce a header stack called ```mpls_vec``` containing 10 entries, each of type ```Mpls_h```.
+introduce a header stack called ```mpls``` containing 10 entries, each of type ```Mpls_h```.
 
 ###	Struct types { #sec-struct-types }
 P4 ```struct``` types are similar to C/C++ ```struct``` types.  They are defined with the following syntax:
@@ -2139,36 +2140,92 @@ header itself is valid.
 
 ##	Expressions on header stacks { #sec-expr-hs }
 
- ~ Figure { #fig-headerstack; caption: "Example header stacks with 6 elements." }
- ![headerstack]
- ~
- [headerstack]: figs/headerstack.png { width: 5cm; page-align: here }
+A header stack is a fixed-size array of headers with the same
+type. The valid elements of a header stack need not be contiguous. P4
+provides a set of computations for manipulating header stacks. A
+header stack ```hs``` declared as ```h[n]``` can be understood in terms
+of the following pseudocode:
 
-[]{tex-cmd: "\indent"} A header stack is a fixed-size array of headers
-with the same type. Figure [#fig-headerstack] shows two
-example header stacks with 6 elements, with the indices shown at the
-bottom. In the top figure the first 4 elements are valid (shown
-shaded). Note that all valid elements in a header stack are not
-necessarily contiguous.
+~ Begin P4Pseudo
+// type declaration
+struct hs_t {
+  bit<32> nextIndex;
+  bit<32> size;
+  h[n] data;  // Ordinary array
+}
 
-P4 provides several computations that can only be applied to header
-stacks. Given an expression ```hs``` of type header stack, the
-following expressions are legal in any context:
+// instance declaration and initialization
+hs_t hs;
+hs.nextIndex = 0;
+hs.size = n;
+~ End P4Pseudo
 
-- ```hs.empty```: result is a Boolean value, which is ```true``` when all validity bits in the stack are false.
-- ```hs.full```: result is a Boolean value, which is ```true``` if all validity bits in the stack are true.
-- ```hs[index]```: result is a reference to the header at the specified position within the stack; if ```hs``` is an l-value, the result is also an l-value. The header may be invalid. Some targets may impose the constraint that the index expression evaluates to a compile-time known value. Accessing a header stack with an index out of bounds produces an undefined result.
-- ```hs.pop_front(int count)```: shift "left" by ```count``` (e.g., element with index ```count``` is moved to index ```0```). The last ```count``` elements become invalid.
-- ```hs.push_front(int count)```: shift "right" by ```count```. The first ```count``` elements become invalid. The last ```count``` elements in the stack are discarded.
+Intuitively, a header stack can be thought of as a struct containing
+an ordinary array of headers ```hs``` and a counter ```nextIndex```
+that can be used to simplify the construction of parsers for header
+stacks, as discussed below. The ```nextIndex``` counter is initialized
+to ```0```.
 
-In addition, the following expressions are legal only in parsers:
+Given a header stack value ```hs``` of size ```n```, the following
+expressions are legal:
 
-- ```hs.next```: result is a reference to the lowest-index header in the stack which does not have a validity bit set. If the stack is full, evaluating this expression results in a transition to the ```reject``` state, setting the error to ```error.StackFull```. If ```hs``` is an l-value, the result is also an l-value.
-- ```hs.last```: result is a reference to the largest-index header in the stack which does have the validity bit set. If the stack is empty evaluation of this expression results in a transition to reject, setting the error to ```error.StackEmpty```. If ```hs``` is an l-value, the result is also an l-value.
+- ```hs[index]```: result is a reference to the header at the
+  specified position within the stack; if ```hs``` is an l-value, the
+  result is also an l-value. The header may be invalid. Some targets
+  may impose the constraint that the index expression evaluates to a
+  compile-time known value. Accessing a header stack ``hs`` with an
+  index less than ```0``` or greater than ```hs.size``` results in an
+  undefined value.
 
-and the following expressions are legal in control blocks:
+- ```hs.size```: result is a 32-bit unsigned integer that returns the
+  size of the header stack.
 
-Targets may impose additional constraints on the use of stacks: e.g., they may require that header stacks never contain "holes" during parsing (this could be enforced by forbidding some operations such as `push_front` and direct access by index within parsers).
+- assignment from a header stack ```hs``` into another stack requires
+  the two stacks to have the same types and sizes. All components of
+  ```hs``` are copied, including its elements and their validity bits,
+  as well as ```size``` and ```nextIndex```.
+
+To help programmers write parsers for header stacks, P4 also offers
+computations that automatically advance through the stack as elements
+are parsed:
+
+- ```hs.next```: result is a reference to the element with index
+  ```hs.nextIndex``` in the stack. May only be used in a
+  ```parser```. If the stack's ```nextIndex``` counter is greater than
+  or equal to ```size```, then evaluating this expression results in a
+  transition to the ```reject``` state and sets the error to
+  ```error.StackOutOfBounds```. If ```hs``` is an l-value, then
+  ```hs.next``` is also an l-value.
+
+- ```hs.last```: result is a reference to the element with index
+  ```hs.nextIndex - 1``` in the stack, if such an element exists. May
+  only be used in a ```parser```. If the ```nextIndex``` counter is
+  less than ```1```, or greater than ```size```, then evaluating this
+  expression results in a transition to the ```reject``` state and
+  sets the error to ```error.StackOutOfBounds```. Unlike
+  ```hs.next```, the resulting reference is never an l-value.
+
+- ```hs.lastIndex```: result is an `int<32>` that encodes the index
+  ```hs.nextIndex - 1```. May only be used in a ```parser```. If the
+  ```nextIndex``` counter is ```0```, then evaluating this
+  expression produces an undefined value.
+
+Finally, P4 offers the following computations that can be used to
+manipulate the elements at the front and back of the stack:
+
+- ```hs.push_front(int count)```: shift "right" by ```count```. The
+  first ```count``` elements become invalid. The last ```count```
+  elements in the stack are discarded. The ```hs.nextIndex``` counter
+  is incremented by ```count```. The ```count``` argument must be a
+  positive integer that is a compile-time known value. The return type
+  is ```void```.
+
+- ```hs.pop_front(int count)```: shift "left" by ```count``` (i.e.,
+  element with index ```count``` is copied in stack at index
+  ```0```). The last ```count``` elements become invalid. The
+  ```hs.nextIndex``` counter is decremented by ```count```. The
+  ```count``` argument must be a positive integer that is a
+  compile-time known value. The return type is ```void```.
 
 ##	Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
@@ -2275,7 +2332,7 @@ optInitializer
     ;
 ~ End P4Grammar
 
-Variables without an initializer are uninitialized. The language puts no restriction on the types of the variables: most P4 types that can be written explicitly can be used (e.g., base types, ```struct```, ```header```, header stack, ```tuple```). One cannot declare variables with types that are only synthesized by the compiler (e.g., ```set```), or with ```parser```, ```control```, ```package```, or ```extern``` types. Objects of the latter types must be declared using instantiations (see Section [#sec-instantiations]).
+Variables without an initializer are uninitialized (except for header stacks, which have their ```nextIndex``` counter initialized to ```0```, as discussed in [#sec-expr-hs]). The language places no restriction on the types of the variables: most P4 types that can be written explicitly can be used (e.g., base types, ```struct```, ```header```, header stack, ```tuple```). One cannot declare variables with types that are only synthesized by the compiler (e.g., ```set```), or with ```parser```, ```control```, ```package```, or ```extern``` types. Objects of the latter types must be declared using instantiations (see Section [#sec-instantiations]).
 
 Reading the value of a variable that has not been initialized provides an undefined result. The compiler should attempt to detect and flag such reads statically.
 
@@ -2735,8 +2792,7 @@ ParserModel.verify(bool condition, error err) {
 
 ##	Data extraction from packets { #sec-packet-data-extraction }
 
-The P4 core library contains the following declaration of a built-in ```extern``` type called ```packet_in``` that represents incoming network packets.
-The ```packet_in``` extern is special: it cannot be instantiated by the user explicitly, and there is one separate instance of each ```packet_in``` for each parser execution thread (see Section [#sec-concurrency]).
+The P4 core library contains the following declaration of a built-in ```extern``` type called ```packet_in``` that represents incoming network packets. The ```packet_in``` extern is special: it cannot be instantiated by the user explicitly. Instead, the architecture supplies a separate instance for each ```packet_in``` argument to a top-level ```parser``` or ```control``` block.
 
 ~ Begin P4Example
 extern packet_in {
@@ -2788,19 +2844,30 @@ parser P(packet_in b, out Result r) {
 }
 ~ End P4Example
 
-**Semantics**: the semantics of extract is given in terms of the following pseudo-code method of the ```packet``` class shown above (we use the illegal ```valid$``` identifier to indicate the hidden valid bit of a header):
+**Semantics**: the semantics of extract is given in terms of the
+  following pseudo-code method of the ```packet``` class shown
+  above. We use the special ```valid$``` identifier to indicate the
+  hidden valid bit of a header, ```isNext$``` to indicate that the
+  l-value was obtained using ```next```, and ```nextIndex$``` to
+  indicate the corresponding header stack properties.
 
 ~ Begin P4Pseudo
-void packet_in.extract<T>(out T headerLeftValue) {
-   ParserModel.verify(!headerLvalue.valid$, error.OverwritingHeader);
-   bitsToExtract = sizeofInBits(headerLvalue);
+void packet_in.extract<T>(out T headerLValue) {
+   ParserModel.verify(!headerLValue.valid$, error.OverwritingHeader);
+   bitsToExtract = sizeofInBits(headerLValue);
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
-   headerLvalue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
-   headerLvalue.valid$ = true;
+   headerLValue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
+   headerLValue.valid$ = true;
+   if headerLValue.isNext$ {
+     verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
+     headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
+   }
    this.nextBitIndex += bitsToExtract;
 }
 ~ End P4Pseudo
+
+In this pseducoe
 
 ###	extract --- two arguments { #sec-packet-extract-two }
 The two-argument extract method has the following declaration:
@@ -2823,6 +2890,10 @@ void packet_in.extract<T>(out T variableSizeHeader,
    headerLvalue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLvalue.varbitField.size = variableFieldSize;
    headerLvalue.valid$ = true;
+   if headerLValue.isNext$ {
+     verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
+     headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
+   }
    this.nextBitIndex += bitsToExtract;
 }
 ~ End P4Pseudo
@@ -2940,7 +3011,7 @@ void packet_in.advance(bit<32> bits) {
 
 ##	Parsing header stacks { #sec-parse-header-stacks }
 
-During parsing, a header stack provides two properties: ```next``` and ```last```. Let us consider this header stack declaration for representing the headers of a packet with at most 10 MPLS headers:
+During parsing, a header stack provides two properties: ```next``` and ```last```. Consider the following declaration, which defines a stack for representing the headers of a packet with at most 10 MPLS headers:
 
 ~ Begin P4Example
 header Mpls_h {
@@ -2949,21 +3020,19 @@ header Mpls_h {
     bit     bos;
     bit<8>  ttl;
 }
-Mpls_h[10] mpls_vec;
+Mpls_h[10] mpls;
 ~ End P4Example
 
-In this case the expressions ```mpls_vec.last``` and ```mpls_vec.next``` both represent l-values of type ```Mpls_h``` inside the ```mpls_vec``` stack. The ```last``` property returns the last value in the stack that has its validity bit set to ```true```. The ```next``` property returns the first value in the stack that has the validity bit set to ```false``` (which is may have a smaller index than the ```last``` value if the stack that contains "holes").
-
-Attempting to access a ```last``` element when none is available causes a transition to the ```reject``` state while setting the error to ```error.EmptyStack```. Attempting to access a ```next``` element when the stack is full causes a transition to ```reject``` while setting the error to ```error.FullStack```.
+The expression ```mpls.next``` represents an l-value of type ```Mpls_h``` that references an element in the ```mpls``` stack. Initially, ```mpls.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract```. The ```mpls.last``` property refers to the element immediately preceding ```next``` if such an element exists. Attempting to access ```mpls.next``` element when the stack's ```nextIndex``` counter is greater than or equal to ```size``` causes a transition to ```reject``` and sets the erro  to ```error.StackOutOfBounds```. Likewise, attempting to access ```mpls.last``` when the ```nextIndex``` counter is equal to ```0``` causes a transition to the ```reject``` state and sets the error to ```error.StackOutOfBounds```.
 
 The following example shows a simplified parser for MPLS processing:
 ~ Begin P4Example
 struct Pkthdr {
    Ethernet_h ethernet;
-   Mpls_h[3] mpls_vec;
+   Mpls_h[3] mpls;
    // other headers omitted
 }
-parser X(packet_in b, out Pkthdr p) {
+parser P(packet_in b, out Pkthdr p) {
     state start {
         b.extract(p.ethernet);
         transition select(p.ethernet.etherType) {
@@ -2972,8 +3041,8 @@ parser X(packet_in b, out Pkthdr p) {
         }
     }
     state parse_mpls {
-         b.extract(p.mpls_vec.next);
-         transition select(p.mpls_vec.last.bos) {
+         b.extract(p.mpls.next);
+         transition select(p.mpls.last.bos) {
             0: parse_mpls; // This creates a loop
             1: parse_ipv4;
          }
@@ -3509,7 +3578,7 @@ For derived type, ```emit``` recursively proceeds on fields:
 
 Appending a bit-string or integer value to a ```packet_out``` writes the value starting with the most-significant bit. This process is the inverse of data extraction.
 
-# Architecture description { #sec-arch-desc }
+#	Architecture description { #sec-arch-desc }
 
 The architecture description must be provided by the target manufacturer in the form of a library P4 source file that contains at least one declaration for a ```package```; this ```package``` must be instantiated by the user to construct a program for a target. For an example see the Very Simple Switch declaration from Section [#sec-vss-arch].
 
@@ -3631,7 +3700,8 @@ control _filter<H>(inout H headers, out bool accept);
 package Filter<H>(_parser<H> p, _filter<H> f);
 ~ End P4Example
 
-# P4 abstract machine: Evaluation { #sec-p4-abstract-mach }
+#	P4 abstract machine: Evaluation { #sec-p4-abstract-mach }
+
 The evaluation of a P4 program is done in two stages:
 
 - **static evaluation**: at compilation time the P4 program is analyzed and all stateful blocks are instantiated.
@@ -3848,6 +3918,7 @@ The P4 compiler should provide:
 - Warnings for unknown annotations.
 
 #	Appendix: P4 reserved keywords { #sec-p4-keywords; @h1:"A" }
+
 The following table shows all P4 reserved keywords. Some identifiers are treated as keywords only in specific contexts (e.g., the keyword ```actions```).
 
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
@@ -3863,6 +3934,7 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 |------|------|------|------|
 
 #	Appendix: P4 core library { #sec-p4-core-lib }
+
 The P4 core library contains declarations that are useful to most programs.
 
 For example, the core library includes the declarations of the predefined ```packet_in```\
@@ -3873,8 +3945,7 @@ error {
     NoError,
     PacketTooShort,    // not enough bits in packet for extract
     NoMatch,           // match statement has no matches
-    EmptyStack,        // reference to .last in an empty header stack
-    FullStack,         // reference to .next in a full header stack
+    StackOutOfBounds,  // reference to invalid element of a header stack
     OverwritingHeader, // extracting on top of a valid header
     HeaderTooShort,    // extracting too many bits into a varbit field
     ParserTimeout      // parser execution time limit exceeded
@@ -3900,7 +3971,7 @@ match_kind {
 }
 ~ End P4Example
 
-#	Appendix: checksums { #sec-checksums }
+#	Appendix: Checksums { #sec-checksums }
 
 There are no built-in constructs in P4~16~ for manipulating packet checksums. We expect that all checksum operations can be expressed as ```extern``` library objects that are provided in target-specific libraries. The standard architecture library should provide such checksum units.
 
@@ -3938,7 +4009,7 @@ ck16.update( { header.ipv4.ttl, header.ipv4.proto } );
 header.ipv4.hdrChecksum = ck16.get();
 ~ End P4Example
 
-# Appendix: Open Issues
+#	Appendix: Open Issues
 
 There are a number of open issues that are currently under discussion in the P4
 design working group. A brief summary of these issues is highlighted in this
@@ -3946,7 +4017,7 @@ section. We seek input on these issues from the community, and encourage
 experimenting with different implementations in the compiler before converging
 on the specification.
 
-## Portable Switch Architecture
+##	Portable Switch Architecture
 
 Portability and composability are critical to P4's long-term success. To that
 end, the draft specification for an architecture definition that enables
@@ -3961,7 +4032,7 @@ comments. For example:
 - Portability: a P4 implementation of a certain function, such as INT, against
   PSA should work consistently across architectures that support the PSA.
 
-## Populate table entries at compile time
+##	Populate table entries at compile time
 
 It is desirable to have the capability to initialize table entries at compile
 time. The questions discussed are:
@@ -3971,7 +4042,7 @@ time. The questions discussed are:
 - Should these entries be at all accessible from the control plane?
 - What should be the API: builtin compiler functions, table initializers?
 
-## Union types
+##	Union types
 
 There seem to be three main motivations for adding unions to P4_16:
 
@@ -3988,8 +4059,7 @@ There seem to be three main motivations for adding unions to P4_16:
   proposal for structural iteration [#sec-structured-iteration], will make this
   possible.
 
-
-## Generalized switch statement behavior
+##	Generalized switch statement behavior
 
 P4~16~ includes both ```switch``` statements [#sec-switch-stmt] and ```select```
 expressions [#sec-select]. There are real differences in the current
@@ -4033,8 +4103,7 @@ the parser is sufficiently distinct from the ```switch``` statement, and
 moreover these are constructs that network programmers are already faminliar
 with, and they are typically mapped very efficiently onto a variety of targets.
 
-
-## Undefined behaviors
+##	Undefined behaviors
 
 The presence of undefined behavior has caused numerous problems in languages
 like C and HTML, including bugs and serious security vulnerabilities. There are
@@ -4049,8 +4118,7 @@ that can override the safe behavior. However, our expectation is that
 programmers should be guided toward writing safe programs, and encouraged to
 think harder when excepting from the safe behavior.
 
-
-## Structured Iteration {#sec-structured-iteration}
+##	Structured Iteration {#sec-structured-iteration}
 
 Introducing a ```foreach``` style iterator for operating over header stacks
 will alleviate the need of using C preprocessor directives to specify the size
@@ -4082,7 +4150,7 @@ The grammar is actually ambiguous, so the lexer and the parser must collaborate 
 -	Type names previously introduced (```TYPE``` tokens)
 -	Regular identifiers (```IDENTIFIER``` token)
 
-The P4 compiler parser has to use a symbol table to indicate to the lexer how to parse subsequent appearances of identifiers. For example, given the following program fragment:
+The parser has to use a symbol table to indicate to the lexer how to parse subsequent appearances of identifiers. For example, given the following program fragment:
 
 ~ Begin P4Example
 typedef bit<4> t;
