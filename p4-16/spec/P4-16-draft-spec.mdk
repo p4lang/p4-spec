@@ -2149,8 +2149,8 @@ of the following pseudocode:
 ~ Begin P4Pseudo
 // type declaration
 struct hs_t {
-  int<32> nextIndex;
-  int<32> size;
+  bit<32> nextIndex;
+  bit<32> size;
   h[n] data;  // Ordinary array
 }
 
@@ -2160,7 +2160,11 @@ hs.nextIndex = 0;
 hs.size = n;
 ~ End P4Pseudo
 
-Intuitively, a header stack can be thought of as a struct containing an ordinary array of headers ```hs``` and a counter ```nextIndex``` that can be used to simplify the construction of parsers for header stacks, as discussed below. The ```nextIndex``` counter is initialized to ```0```. 
+Intuitively, a header stack can be thought of as a struct containing
+an ordinary array of headers ```hs``` and a counter ```nextIndex```
+that can be used to simplify the construction of parsers for header
+stacks, as discussed below. The ```nextIndex``` counter is initialized
+to ```0```.
 
 Given a header stack value ```hs``` of size ```n```, the following
 expressions are legal:
@@ -2187,20 +2191,19 @@ are parsed:
 
 - ```hs.next```: result is a reference to the element with index
   ```hs.nextIndex``` in the stack. May only be used in a
-  ```parser```. If the stack's ```nextIndex``` counter is less than
-  ```0``` or greater than or equal to ```size```, then evaluating this
-  expression results in a transition to the ```reject``` state and
-  sets the error to ```error.StackOutOfBounds```. If ```hs``` is an
-  l-value, then ```hs.next``` is also an l-value.
+  ```parser```. If the stack's ```nextIndex``` counter is greater than
+  or equal to ```size```, then evaluating this expression results in a
+  transition to the ```reject``` state and sets the error to
+  ```error.StackOutOfBounds```. If ```hs``` is an l-value, then
+  ```hs.next``` is also an l-value.
 
 - ```hs.last```: result is a reference to the element with index
   ```hs.nextIndex - 1``` in the stack, if such an element exists. May
   only be used in a ```parser```. If the ```nextIndex``` counter is
-  less than ```1```, or greater than or equal to ```size```, then
-  evaluating this expression results in a transition to the
-  ```reject``` state and sets the error to
-  ```error.StackOutOfBounds```. Unlike ```hs.next```, the resulting
-  reference is never an l-value.
+  less than ```1```, or greater than ```size```, then evaluating this
+  expression results in a transition to the ```reject``` state and
+  sets the error to ```error.StackOutOfBounds```. Unlike
+  ```hs.next```, the resulting reference is never an l-value.
 
 - ```hs.lastIndex```: result is an `int<32>` that encodes the index
   ```hs.nextIndex - 1```. May only be used in a ```parser```. If the
@@ -2220,11 +2223,9 @@ manipulate the elements at the front and back of the stack:
 - ```hs.pop_front(int count)```: shift "left" by ```count``` (i.e.,
   element with index ```count``` is copied in stack at index
   ```0```). The last ```count``` elements become invalid. The
-  ```hs.nextIndex``` counter is decremented by ```count```, unless
-  doing so would cause ```hs.nextIndex``` to become negative, in which
-  case it is set to ```0```. The ```count``` argument must be a
-  positive integer that is a compile-time known value. The return type
-  is ```void```.
+  ```hs.nextIndex``` counter is decremented by ```count```. The
+  ```count``` argument must be a positive integer that is a
+  compile-time known value. The return type is ```void```.
 
 ##	Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
@@ -2859,7 +2860,6 @@ void packet_in.extract<T>(out T headerLValue) {
    headerLValue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLValue.valid$ = true;
    if headerLValue.isNext$ {
-     verify(headerLValue.nextIndex$ >= 0, error.StackOutOfBounds);
      verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
      headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
    }
@@ -2891,7 +2891,6 @@ void packet_in.extract<T>(out T variableSizeHeader,
    headerLvalue.varbitField.size = variableFieldSize;
    headerLvalue.valid$ = true;
    if headerLValue.isNext$ {
-     verify(headerLValue.nextIndex$ >= 0, error.StackOutOfBounds);
      verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
      headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
    }
