@@ -2178,12 +2178,12 @@ expressions are legal:
   undefined value.
 
 - ```hs.size```: result is a 32-bit unsigned integer that returns the
-  size of the header stack.
+  size of the header stack (a compile-time constant).
 
 - assignment from a header stack ```hs``` into another stack requires
   the two stacks to have the same types and sizes. All components of
   ```hs``` are copied, including its elements and their validity bits,
-  as well as ```size``` and ```nextIndex```.
+  as well as ```nextIndex```.
 
 To help programmers write parsers for header stacks, P4 also offers
 computations that automatically advance through the stack as elements
@@ -3713,6 +3713,7 @@ The following are compile-time known values:
 - Integer literals, Boolean literals, and string literals.
 - Identifiers declared in an ```error```, ```enum``` or ```match_kind``` declaration.
 - The ```default``` identifier.
+- The `size` field of a value with type header stack.
 - The ```_``` identifier when used as a ```select``` expression label
 - Identifiers that represent declared types, actions, tables, parsers, controls or packages.
 - List expression where all components are compile-time known values.
