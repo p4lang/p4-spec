@@ -147,7 +147,7 @@ P4 is a language for expressing how packets are processed by the data plane of a
 
 Many target devices contain both a control plane and a data plane. P4 is designed to specify only the target data plane functionality. P4 programs also partially define the interface by which the control plane and the data-plane communicate, but P4 cannot be used to describe the target's control-plane functionality. In the rest of this document, when we talk about P4 as "programming a target", we mean "programming the target data plane".
 
-As a concrete example in the context or programming network switches, Figure [#fig-prgswitch] illustrates the difference between a traditional fixed-function switch and a P4-programmable switch. In a traditional switch the manufacturer defines the data-plane functionality. The control-plane controls the data plane by managing entries in tables (e.g.routing tables), configuring specialized objects (e.g.meters) and by processing control-packets (e.g.routing protocol packets) or asynchronous events, such as link state changes or learning notifications.
+As a concrete example in the context of programming network switches, Figure [#fig-prgswitch] illustrates the difference between a traditional fixed-function switch and a P4-programmable switch. In a traditional switch the manufacturer defines the data-plane functionality. The control-plane controls the data plane by managing entries in tables (e.g.routing tables), configuring specialized objects (e.g.meters) and by processing control-packets (e.g.routing protocol packets) or asynchronous events, such as link state changes or learning notifications.
 
 A P4-programmable switch differs from a traditional switch in two ways:
 
@@ -214,7 +214,7 @@ Compared to the state-of-the-art method of programming network processing system
 ~
 [p4transition]: figs/p4transition.png { width: 100%; page-align: forcehere }
 
-The P4 language went through some significant, backwards-incompatible changes to the language syntax and semantics. The language evolution between the previous version (P4~14~) the the current one (P4~16~) is illustrated in Figure [#fig-p4transition]. In particular, a significant number of language constructs have been eliminated from the language and will be migrated into libraries. Examples include: counters, checksum units, meters, etc.
+The P4 language went through some significant, backwards-incompatible changes to the language syntax and semantics. The language evolution between the previous version (P4~14~) and the current one (P4~16~) is illustrated in Figure [#fig-p4transition]. In particular, a significant number of language constructs have been eliminated from the language and will be migrated into libraries. Examples include: counters, checksum units, meters, etc.
 
 The original complex language (74 keywords) has been thus transformed into a relatively small core language (35 keywords, shown in Section [#sec-p4-keywords]) accompanied by a core library of fundamental constructs which are necessary for writing almost all P4 programs. This core language is the subject of this specification.
 
@@ -453,7 +453,7 @@ The core functionality of the demux block is to receive the headers for the outg
 
 - Sending the packet to the drop port causes the packet to disappear forever.
 - Sending the packet to an output Ethernet port numbered between 0 and 7 causes it to be emitted on the corresponding physical switch interface. The packet may be placed in a queue if the output interface is busy emitting a previous packet. When the packet is emitted, the physical interface computes a correct Ethernet checksum trailer and appends it to the packet.
-- Sending a packet to the output CPU port causes the packet to be materialized in the control plane. In this case, **the packet that is sent to the CPU is the original input packet**, and not the packet received from the deparser. The latter packet is discarded.
+- Sending a packet to the output CPU port causes the packet to be transferred to the control plane. In this case, **the packet that is sent to the CPU is the original input packet**, and not the packet received from the deparser. The latter packet is discarded.
 - Sending the packet to the output recirculation port causes it to appear at the input recirculation port. Recirculation is useful when packet processing cannot be done in a single pass.
 - If the ```outputPort``` has an illegal value (e.g., 9), the packet is sent to the drop port.
 - If the demux unit is busy processing a previous packet and there is no capacity to queue the packet coming from the deparser, **the demux unit may drop the packet by its own choice**, irrespective of the output port indicated.
@@ -986,7 +986,7 @@ Each parameter is labeled with a direction:
 -	No direction indicates that value of parameter is either:
 	- a compile-time known value
 	- an action parameter that can only be set by the control plane
-	- an action parameter that can be set directly by another calling action; in this case it behaves like and ```in``` parameter
+	- an action parameter that can be set directly by another calling action; in this case it behaves like an ```in``` parameter
 
 Arguments are evaluated from left to right, prior to the called function being invoked. The order of evaluation is important when the expression supplied for an argument can have side-effects. Consider the following example:
 ~ Begin P4Example
