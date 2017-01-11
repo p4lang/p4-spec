@@ -2875,7 +2875,7 @@ The two-argument extract method has the following declaration:
 void extract<T>(out T headerLvalue, in bit<32> variableFieldSize);
 ~ End P4Example
 
-```variableSizeHeader``` must be a l-value representing a header that contains *exactly one* ```varbit``` field. ```variableFieldSize``` is an expression evaluating to a ```bit<32>``` value which indicates the number of bits to be extracted into the unique ```varbit``` field of the header (this size is not the size of the complete header, just the size of the ```varbit``` field).
+```headerLvalue``` must be a l-value representing a header that contains *exactly one* ```varbit``` field. ```variableFieldSize``` is an expression evaluating to a ```bit<32>``` value which indicates the number of bits to be extracted into the unique ```varbit``` field of the header (this size is not the size of the complete header, just the size of the ```varbit``` field).
 
 **Semantics**: the semantics of a two-argument extract invocation is given in terms of the following pseudo-code:
 
@@ -2886,7 +2886,7 @@ void packet_in.extract<T>(out T headerLvalue,
    bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
-   ParserModel.verify(bitsToExtract < headerLvalue.maxSize, error.HeaderTooShort);
+   ParserModel.verify(bitsToExtract <= headerLvalue.maxSize, error.HeaderTooShort);
    headerLvalue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLvalue.varbitField.size = variableFieldSize;
    headerLvalue.valid$ = true;
