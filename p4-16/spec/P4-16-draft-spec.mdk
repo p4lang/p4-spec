@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: December 16, 2016
+Title Footer: January 11, 2016
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -2089,7 +2089,7 @@ a &&& b = { c of type bit<W> where a & b = c & b }
 ~ Begin P4Example
 8w0x0A &&& 8w0x0F
 ~ End P4Example
-denotes a set that contains 16 different 8-bit values, whose bit-pattern is ```XXXX1010```, where the value of an ```X``` can be any bit. Note that there may be multiple ways to express a keyset using a mask operator; for example, ```8w0xFA &&& 0w0x0F``` denotes the same keyset as in the example above.
+denotes a set that contains 16 different 8-bit values, whose bit-pattern is ```XXXX1010```, where the value of an ```X``` can be any bit. Note that there may be multiple ways to express a keyset using a mask operator; for example, ```8w0xFA &&& 8w0x0F``` denotes the same keyset as in the example above.
 
 P4 targets may impose additional restrictions on the expressions on the left and right-hand side of a mask operator: for example, they may require that either or both positions be compile-time known values.
 
@@ -2872,21 +2872,21 @@ In this pseducoe
 ###	extract --- two arguments { #sec-packet-extract-two }
 The two-argument extract method has the following declaration:
 ~ Begin P4Example
-void extract<T>(out T variableSizeHeader, in bit<32> variableFieldSize);
+void extract<T>(out T headerLvalue, in bit<32> variableFieldSize);
 ~ End P4Example
 
-```variableSizeHeader``` must be a l-value representing a header that contains *exactly one* ```varbit``` field. ```variableFieldSize``` is an expression evaluating to a ```bit<32>``` value which indicates the number of bits to be extracted into the unique ```varbit``` field of the header (this size is not the size of the complete header, just the size of the ```varbit``` field).
+```headerLvalue``` must be a l-value representing a header that contains *exactly one* ```varbit``` field. ```variableFieldSize``` is an expression evaluating to a ```bit<32>``` value which indicates the number of bits to be extracted into the unique ```varbit``` field of the header (this size is not the size of the complete header, just the size of the ```varbit``` field).
 
 **Semantics**: the semantics of a two-argument extract invocation is given in terms of the following pseudo-code:
 
 ~ Begin P4Pseudo
-void packet_in.extract<T>(out T variableSizeHeader,
+void packet_in.extract<T>(out T headerLvalue,
                           in bit<32> variableFieldSize) {
    ParserModel.verify(!headerLvalue.valid$,OverwritingHeader);
    bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
-   ParserModel.verify(bitsToExtract < headerLvalue.maxSize, error.HeaderTooShort);
+   ParserModel.verify(bitsToExtract <= headerLvalue.maxSize, error.HeaderTooShort);
    headerLvalue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    headerLvalue.varbitField.size = variableFieldSize;
    headerLvalue.valid$ = true;
@@ -3023,7 +3023,7 @@ header Mpls_h {
 Mpls_h[10] mpls;
 ~ End P4Example
 
-The expression ```mpls.next``` represents an l-value of type ```Mpls_h``` that references an element in the ```mpls``` stack. Initially, ```mpls.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract```. The ```mpls.last``` property refers to the element immediately preceding ```next``` if such an element exists. Attempting to access ```mpls.next``` element when the stack's ```nextIndex``` counter is greater than or equal to ```size``` causes a transition to ```reject``` and sets the erro  to ```error.StackOutOfBounds```. Likewise, attempting to access ```mpls.last``` when the ```nextIndex``` counter is equal to ```0``` causes a transition to the ```reject``` state and sets the error to ```error.StackOutOfBounds```.
+The expression ```mpls.next``` represents an l-value of type ```Mpls_h``` that references an element in the ```mpls``` stack. Initially, ```mpls.next``` refers to the first element of stack. It is automatically advanced on each successful call to ```extract```. The ```mpls.last``` property refers to the element immediately preceding ```next``` if such an element exists. Attempting to access ```mpls.next``` element when the stack's ```nextIndex``` counter is greater than or equal to ```size``` causes a transition to ```reject``` and sets the error to ```error.StackOutOfBounds```. Likewise, attempting to access ```mpls.last``` when the ```nextIndex``` counter is equal to ```0``` causes a transition to the ```reject``` state and sets the error to ```error.StackOutOfBounds```.
 
 The following example shows a simplified parser for MPLS processing:
 ~ Begin P4Example
@@ -3090,7 +3090,7 @@ P4 parsers are responsible for extracting bits from a packet into headers. The h
 
 There is no exceptional control-flow in a ```control``` block: no equivalent of the ```verify``` parser statement or of the ```reject``` state. Error handling has to be performed explicitly by users.
 
-The architecture forbids the instantiation of ```parser``` instances within a ```control``` block.
+P4 forbids the instantiation of ```parser``` instances within a ```control``` block.
 
 A ```control``` block may start with declarations of ```action```s, ```table```s, constants, variables and instantiations.
 
@@ -3173,7 +3173,7 @@ The P4 ```table``` construct describes a match-action unit. The structure of a m
 
 A ```table``` declaration introduces a table instance. If one desires to instantiate a table multiple times one needs to declare a table in a separate control block and instantiate that control block multiple times.
 
-The look-up table is a finite map whose contents are manipulated asynchronously (read/write) by the target control-plane, through a separate control-plane API (see Figure [#fig-maudataflow]). Note that the term is "table" is overloaded: it can refer to the P4 ```table``` objects that appear in P4 programs, as well as the internal look-up tables used in targets. In this document, we use the term "match-action unit" whenever possible instead of "table".
+The look-up table is a finite map whose contents are manipulated asynchronously (read/write) by the target control-plane, through a separate control-plane API (see Figure [#fig-maudataflow]). Note that the term "table" is overloaded: it can refer to the P4 ```table``` objects that appear in P4 programs, as well as the internal look-up tables used in targets. In this document, we use the term "match-action unit" whenever possible instead of "table".
 
 Syntactically a table is described by a set of key-value properties. Some of these properties are "standard" properties, but the set of properties can be extended by target-specific compilers as needed.
 
@@ -4020,18 +4020,16 @@ on the specification.
 
 ##	Portable Switch Architecture
 
-Portability and composability are critical to P4's long-term success. To that
-end, the draft specification for an architecture definition that enables
-programmers to write composable P4 programs, called the [_Portable Switch
-Architecture_](http://p4.org/documents/psa.pdf) (PSA), is available for
-comments. For example:
-
+Portability and composability are critical to P4's long-term success:
 - Composability: implement different features, such as In-band Network
   Telemetry (INT), Network Virtualization, and Load Balancing in separate P4
   programs written for the PSA, should easily interoperate when invoked from a
   toplevel program.
 - Portability: a P4 implementation of a certain function, such as INT, against
   PSA should work consistently across architectures that support the PSA.
+To that end, a specification for an architecture definition that enables 
+programmers to write composable P4 programs, called the _Portable Switch 
+Architecture_, is being developed by the Architecture Working Group.
 
 ##	Populate table entries at compile time
 
