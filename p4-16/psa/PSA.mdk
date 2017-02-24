@@ -1,6 +1,6 @@
 Title : P4~16~ Portable[^titleoptions]  Switch Architecture
 Title Note : (draft)
-Title Footer: October 27, 2016
+Title Footer: Feb 24, 2017
 Author : The P4.org language consortium
 Heading depth: 4
 
@@ -598,6 +598,32 @@ No bridged metadata exposed
 ~ End Tbd
 # Standard externs
 
+Externs are functional blocks that have pre-defined behavior, typically
+standardized by a body such as IETF, as well as several other constructs that
+support the P4~16~ language implementation. Examples include: counters (),
+meters (IETF RFC2722), registers (), digests().
+
+The architecture defines both the data plane and the control plane APIs. The
+data plane APIs are used in P4 programs to exercise the ```extern```
+functionality. The control plane APIs are used by control programs to configure
+```extern```s for use by the data plane. Control plane APIs are denoted by
+blocks tagged with the ```@ControlPlaneAPI``` annotation.
+
+~ Begin Tbd
+
+## PRE
+
+Treating the PRE as an externs will allow us to define an interface that
+encapsulates operations that are currently expressed as metadata setting --
+which is a bit too specific to the way things were expressed in P4~14~. By
+providing an interface, we allow architecture implementers to decide the means
+by which the functionality is implemented. The APIs can be called anywhere in
+the ingress pipeline, with the understanding that the action is taken in the
+PRE. This should simplify the above exposition of standard operations.
+
+~ End Tbd
+
+
 ## Counter
 
 Counters are a simple mechanism for keeping statistics about the packets that
@@ -624,26 +650,62 @@ itself, rather than a parameter for each method?
 extern counter {
 	counter<T>(int n_counters, T size_in_bits, count_t type);
 	void count<T>(in int index, in T increment);
-	T read<T>(in int index);
+
+    @ControlPlaneAPI
+    {
+	  T    read<T>      (in int index);
+      T    sync_read<T> (in int index);
+      void set          (in int index, in int seed);
+      void reset        (in int index);
+      void start        (in int index);
+      void stop         (in int index);
+    }
 }
 extern direct_counter {
-	direct_counter(count_t type);
-	T read<T>();
+	direct_counter(in entry_key key, in count_t type);
+
+    @ControlPlaneAPI
+    {
+	  T    read<T>      (in entry_key key);
+      T    sync_read<T> (in entry_key key);
+      void set          (in int seed);
+      void reset        (in entry_key key);
+      void start        (in entry_key key);
+      void stop         (in entry_key key);
+    }
 }
 ```
 
 ## Meter
-Meters are a more complex mechanism for keeping statistics about the packets that trigger a table.
+Meters are a more complex mechanism for keeping statistics about the packets that trigger a table. The meters specified in the PSA are 3-color meters.
 
 ```
+enum Color_t { RED, GREEN, YELLOW };
 extern meter {
 	meter(int n_meters, count_t type);
-	void execute_meter(in int index);
-	T read<T>(in int index);
+	Color_t execute(in int index, in Color_t color);
+
+    @ControlPlaneAPI
+    {
+        reset(in Color_t color);
+        setParams(in int committedRate, out int committedBurstSize
+                  in int peakRate, in int peakBurstSize);
+        getParams(out int committedRate, out int committedBurstSize
+                  out int peakRate, out int peakBurstSize);
+    }
 }
 extern direct_meter {
 	direct_meter(count_t type);
-	T read<T>();
+	Color_t execute(in Color_t color);
+
+    @ControlPlaneAPI
+    {
+        reset(in Color_t color);
+        setParams(in int committedRate, out int committedBurstSize
+                  in int peakRate, in int peakBurstSize);
+        getParams(out int committedRate, out int committedBurstSize
+                  out int peakRate, out int peakBurstSize);
+    }
 }
 ```
 
@@ -690,6 +752,17 @@ enum HashAlgorithm {
 
 extern void hash<O, T, D, M>(out O result, in HashAlgorithm algo,
                              in T base, in D data, in M max);
+```
+
+## ActionProfile
+
+```
+extern action_profile {
+    @ControlPlaneAPI
+    {
+        entry_handle_t entry(in bit<T> key, in actionRef action, in action_data);
+    }
+}
 ```
 
 ## ActionSelector
