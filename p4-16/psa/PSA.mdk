@@ -231,9 +231,6 @@ control Ingress_t<H, M, C>(inout H hdr, inout M user_meta,
                            out C clone_meta = user_meta);
 ```
 
-~ Begin Tbd
-why only user md? and not any of user_meta, istd, ostd
-~ End Tbd
 
 ```
 control Egress_t<H, M, C>(inout H hdr, inout M user_meta,
@@ -495,9 +492,9 @@ conjunction with the egress specification. See Section [#sec-multicast].
 | Name           |  Operation    |  Source       | Insertion Point |
 |----------------|----------------|---------------|-------------------|
 | i2i                 | clone ingress packet to ingress | original ingress packet | Ingress parser |
-| i2e                | clone ingress packet to egress | original ingress packet | Buffering mechanism |
+| i2e                | clone ingress packet to egress | original ingress packet (after parse) | Buffering mechanism |
 | e2i                | clone egress packet to ingress | post deparsed packet | Ingress parser |
-| e2e               | clone egress packet to egress | post deparsed packet | Buffering mechanism |
+| e2e               | clone egress packet to egress | packet as inout to deparser | Buffering mechanism |
 | resubmit       | resubmit packet to ingress (no clone) | original ingress packet | Ingress parser |
 | recirculate    | resubmit packet to ingress (no clone) | post deparsed packet | Ingress parser |
 |----------------|----------------|---------------|-------------------|
@@ -788,10 +785,10 @@ value would be stored in metadata for the packet and a subsequent table could
 check that the flow was marked as active.
 
 ```
-extern register<T> {
-    register(bit<32> size);
-    void read(out T result, in bit<32> index);
-    void write(in bit<32> index, in T value);
+extern register<T, S> {
+    register(S size);
+    T read(in S index);
+    void write(in S index, in T value);
 }
 ```
 
@@ -802,7 +799,16 @@ be copied into metadata and be available for matching in subsquent tables.
 ## Random
 
 ```
-extern void random(in bit<5> logRange, out bit<32> result);
+extern random<T> {
+    random(in T min, in T max);
+    T read();
+
+    @ControlPlaneAPI
+    {
+        void reset();
+        void setSeed(in T seed);
+    }
+}
 ```
 
 ## Digest
