@@ -121,94 +121,11 @@ behavior of the components that are not specified.
 ~ Begin Tbd
 do we force the definition of a deparser or should it be generated from the parser?
 ~ End Tbd
-## Alternative: Overload
-Overload the package declaration and define a whole set of switches.
-
-   - relies on the signature of functions to be distinct and identifiable as
-     ingress/egress, etc.
-
-```
-// Example: no deparser
-package switch<H, M>(Parser_t<H, M> parser,
-                     VerifyChecksum_t<H, M> verify,
-                     Ingress_t<H, M> ingress,
-                     Egress_t<H, M> egress,
-                     ComputeChecksum_t<H, M> checksum);
-
-// Example: no deparser and no checksum verify
-package switch<H, M>(Parser_t<H, M> parser,
-                     Ingress_t<H, M> ingress,
-                     Egress_t<H, M> egress,
-                     ComputeChecksum_t<H, M> checksum);
-
-// And all the way to no arguments
-package switch<H, M>();
-```
-
 ~ Begin Tbd
 What is the default behavior of a switch with no arguments?
-
   - default NULL behavior: compiler instantiates a control that calls drop immediately
   - default forward behavior: forwards the packet on port 0
 ~ End Tbd
-
-## Alternative: Named arguments (preferred)
-Named arguments for each of the programmable blocks in the switch constructor
-and pass only the ones that the programmer wants instantiated to something
-other than the default
-
-Default behaviours:
-
-- empty parser: no parser
-- empty ingress: no processing and initializes egress_spec to 0
-- empty egress: no processing in egress
-- empty deparser: deparser is inferred from the parser
-- empty checksum: no verify or recompute of checksums
-
-```
-// Example of code that the programmer will write:
-parser p1(packet_in buffer, out user_header h, inout user_metadata meta) {
-    // ...
-}
-
-control ingress1(inout user_header h, inout user_metadata user_meta,
-                 in std_ingress_input_metadata_t istd,
-                 out std_ingress_output_metadata_t ostd) {
-    // ...
-}
-
-control egress1(inout user_header h, inout user_metadata user_meta,
-                in std_egress_input_metadata_t istd,
-                out std_egress_output_metadata_t ostd) {
-    // ...
-}
-
-control dep(packet_out buffer, in user_header hdr);
-```
-
-~ Begin Tbd
-type inference for H and M based on the definitions of all arguments
-check for compatibility
-~ End Tbd
-```
-switch main { parser = p1, ingress = ingress1, egress = egress1, deparser = dep };
-// Example: no deparser (deparser is inferred from parser)
-switch main { parser = p1, ingress = ingress1, egress = egress1};
-```
-
-### Support for multiple parsers or controls
-
- - can we pass a list of parsers? For example, for the case where the  architecture supports multiple different parsers (or pipelines, etc.)
-
-```
-parser p2(packet_in buffer, out user_header h, inout user_metadata meta) {
-    // ...
-}
-
-switch main { parser = { p1, p2}, ingress = ingress1, egress = egress1, deparser = dep };
-```
-
-## Alternative: cloning support
 
 Support for cloning requires a new template parameter (C for clone metadata)
 
@@ -617,6 +534,11 @@ providing an interface, we allow architecture implementers to decide the means
 by which the functionality is implemented. The APIs can be called anywhere in
 the ingress pipeline, with the understanding that the action is taken in the
 PRE. This should simplify the above exposition of standard operations.
+
+~Begin Tbd
+- ```mark_to_drop``` becomes one of the methods in PRE
+- Need to spec out what other methods are to be standardized
+~End Tbd
 
 ~ End Tbd
 
