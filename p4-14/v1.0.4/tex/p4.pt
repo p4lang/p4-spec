@@ -25,7 +25,7 @@
 \ifpdf
     \pdfinfo {
         /Author   (The P4 Language Consortium)
-        /Title    (The P4 Language Specification, v 1.0.3)
+        /Title    (The P4 Language Specification, v 1.0.4)
         /Keywords (P4)
         /Subject  ()
         /Creator  (TeX)
@@ -36,16 +36,16 @@
 \begin{document}
 \vspace{2cm}
 
-%\title{\sffamily\bfseries\huge The P4 Language Specification\\ \vspace{3mm} \Large Version 1.0.3}
+%\title{\sffamily\bfseries\huge The P4 Language Specification\\ \vspace{3mm} \Large Version 1.0.4}
 \centerline{\sffamily\bfseries\huge The P4 Language Specification}
 \vspace{3mm}
-\centerline{\sffamily\Large Version 1.0.3}
+\centerline{\sffamily\Large Version 1.0.4}
 \vspace{3mm}
-\centerline{\sffamily\large November 2, 2016}
+\centerline{\sffamily\large March XX, 2017}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{September 13, 2016}
+\date{March XX, 2017}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
@@ -646,11 +646,11 @@ valid bit for a metadata field, defining a separate metadata flag to
 represent that field's validity is a reasonable work around.
 \end{adjustwidth}
 
-Only valid packet header fields may result in a match (when a value is
-specified for exact or ternary matches against the field), although a
-match operation may explicitly check if a header instance (or field)
-is valid. Only valid packet headers are considered for deparsing (see
-Section~\ref{sec:deparsing}).  
+When an invalid packet header is matched in a table (i.e., when a value is
+specified for exact or ternary matches against the field), its value is
+undefined. A match operation may explicitly check if a header
+instance (or field) is valid. Only valid packet headers are considered
+for deparsing (see Section~\ref{sec:deparsing}).
 
 \SUBSUBSECTION{Header Stacks}{headerstacks}
 
@@ -2595,7 +2595,7 @@ action route_ipv4(dst_mac, src_mac, vid) {
 }
 %%endcode
 
-\SUBSUBSECTION{Parallel and Serial Semantics}{actionsemantics}
+\SUBSUBSECTION{Parallel and Sequential Semantics}{actionsemantics}
 
 In any instruction execution model, identifying whether a set of instructions 
 is executed in parallel or in sequence must be identified in order to determine 
@@ -2616,10 +2616,10 @@ same time, so the evaluation of \texttt{hdr.fieldA} in the second instruction re
 to 0 (since it has not yet changed), and so \texttt{hdr.fieldB} receives the value 
 0.
 
-P4 assumes \textbf{parallel} semantics for the application of all the primitive actions 
+P4 assumes \textbf{sequential} semantics for the application of all the primitive actions 
 executing as a result of a match in a given table. The execution of actions 
-across different tables assumes \textbf{sequential} semantics where the sequence is 
-determined by the control flow, described in Section~\ref{sec:controlflow}.
+across different tables also assumes \textbf{sequential} semantics where the sequence is 
+determined by the control flow, as described in Section~\ref{sec:controlflow}.
 
 \SECTION{Action profile declarations}{actprofdecs}
 
@@ -2826,9 +2826,7 @@ mask which may differ from entry to entry).
 The match type \texttt{valid} indicates that the field's parent header (or, in the 
 case of metadata, the field itself) should be tested for validity.  The value 
 of \texttt{1} will match when the header is valid; \texttt{0} will match when the header is 
-not valid. As a reminder, the table does not have to explicitly include a 
-match on a field's validity to safely match on its value - invalid fields 
-will never match on a table entry that includes it. Note that metadata fields 
+not valid. Note that metadata fields 
 are \textit{always} valid.
 \item
 The \texttt{min_size} attribute indicates the minimum number of entries required 
@@ -3297,12 +3295,26 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
 1.0.3 & 2016-11-3 & See \ref{sec:change-summary-1.0.3} for details. \\ \hline
+1.0.4 & 2017-MM-DD & See \ref{sec:change-summary-1.0.4} for details. \\ \hline
 }
 \end{tabular}
 \end{center}
 \caption{Revision History}
 \label{tab:revhistory}
 \end{table}
+
+\SUBSUBSECTION{Summary of changes introduced in 1.0.4}{change-summary-1.0.4}
+
+\begin{itemize}
+\item Parallel and sequntial semantics (Section \ref{sec:actionsemantics})
+\begin{itemize}
+\item Change action semantics from parallel to sequential, to match current implementations (e.g., \texttt{bmv2}).
+\end{itemize}
+\item Testing validity (Section \ref{sec:testing})
+\begin{itemize}
+\item The value of an invalid header is undefined when used for matching in a table.
+\end{itemize}
+\end{itemize}
 
 \SUBSUBSECTION{Summary of changes introduced in 1.0.3}{change-summary-1.0.3}
 
