@@ -2687,14 +2687,19 @@ possibly other attributes. The action specification (or action profile
 specification) in a table indicates which action functions are available to this
 table's entries.
 
-Note that masks may be specified for fields in the table declaration. This 
-should not be confused with masks for ternary matches. The masks specified 
-in table declarations are statically applied to fields before the start of 
-the match process. This allows arbitrary subfields to be used in exact match 
-tables. This is intended for exact match tables; it is allowed for ternary 
-matches in the syntax, though it is functionally redundant.
+The table declaration specifies a list of field matches that are used
+for matching packets. A field match is either a reference to a header,
+the validity bit for a header, a reference to a field, or a masked
+reference to a field. Note that masked field references should not be
+confused with masks for ternary matches. The masks specified in table
+declarations are statically applied to fields before the start of the
+match process. This allows arbitrary subfields to be used in exact
+match tables. This is intended for exact match tables; it is allowed
+for ternary matches in the syntax, though it is functionally
+redundant.
 
-Match semantics are always the conjunction (AND) of all field match specifications.
+Match semantics are always the conjunction (AND) of all field match
+specifications.
 
 Here is the BNF for a table declaration:
 
@@ -2712,7 +2717,7 @@ table_declaration ::=
 
 field_match ::= field_or_masked_ref : field_match_type ;
 field_or_masked_ref ::= 
-    header_ref | field_ref | field_ref mask const_value
+    header_ref | header_ref "." valid | field_ref | field_ref mask const_value
 
 field_match_type ::= exact | ternary | lpm | range | valid
 
