@@ -44,6 +44,7 @@ annotations
 annotation
     : '@' name
     | '@' name '(' expressionList ')'
+    | '@' priority '(' expression ')'
     ;
 
 parameterList
@@ -434,6 +435,7 @@ tablePropertyList
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
+    | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     | optAnnotations CONST IDENTIFIER '=' initializer ';'
     | optAnnotations IDENTIFIER '=' initializer ';'
     ;
@@ -451,6 +453,13 @@ actionList
     : actionRef ';'
     | actionList actionRef ';'
     ;
+
+entriesList
+    : entry
+    | entryList entry
+
+entry
+    : optAnnotations keysetExpression ':' actionRef ';'
 
 actionRef
     : optAnnotations name

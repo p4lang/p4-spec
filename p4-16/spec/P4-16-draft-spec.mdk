@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: January 11, 2016
+Title Footer: March 14, 2017
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -216,7 +216,11 @@ Compared to the state-of-the-art method of programming network processing system
 
 The P4 language went through some significant, backwards-incompatible changes to the language syntax and semantics. The language evolution between the previous version (P4~14~) and the current one (P4~16~) is illustrated in Figure [#fig-p4transition]. In particular, a significant number of language constructs have been eliminated from the language and will be migrated into libraries. Examples include: counters, checksum units, meters, etc.
 
-The original complex language (74 keywords) has been thus transformed into a relatively small core language (35 keywords, shown in Section [#sec-p4-keywords]) accompanied by a core library of fundamental constructs which are necessary for writing almost all P4 programs. This core language is the subject of this specification.
+The original complex language (74 keywords) has been thus transformed into a
+relatively small core language (36 keywords, shown in Section
+[#sec-p4-keywords]) accompanied by a core library of fundamental constructs
+which are necessary for writing almost all P4 programs. This core language is
+the subject of this specification.
 
 The v1.1 version of P4 introduced a language construct called ```extern``` which can be used to describe library elements. Many constructs that are defined in the v1.1 language specification will thus be transformed into such library elements (including equivalents to v1.1 constructs that have been eliminated from the language, such as counters and meters). Some of these ```extern``` objects are expected to be standardized, and they will be in the scope of a separate document, describing a standard library of P4 elements. In this document we provide several examples of ```extern``` constructs.
 
@@ -3342,6 +3346,124 @@ Continuing the example in the previous section, here are various legal and illeg
 
 If the user does not specify a value for the default action, the runtime behavior of the program is undefined until the control-plane initializes the ```default_action``` to one of the legal values. The compiler should produce a warning in this case. This is a difference from P4~14~, which can set the default action to no-op. If the legacy behavior is desired, the user must explicitly use the core library ```action NoAction``` in the table, which must appear in the actions list.
 
+#### Table entries
+
+A table may declare a set of pre-defined entries. While it is typical that
+entries are installed in tables by the contol plane program, there are
+situations in which tables are used to implement fixed algorithms. In such
+cases, defining the entries that enable the execution of the algorithm in the
+P4 source, allows the compiler to infer how the table is actually used and
+potentially make better placement decisions for tagets with constraint
+resources. In the current specification, entries defined in P4 are immutable --
+that is, they can only be read, not be changed or removed, through control
+plane APIs. Entries declared in the P4 source are installed in the table at
+program load time. Tables that define entries in the P4 source are immutable,
+no additional entries can be inserted in such tables. This design choice is
+important for the P4 runtime since it does not have to keep track of different
+types of entries in one table (mutable and immutable).
+
+~ Begin P4Grammar
+tableProperty
+   : const ENTRIES '=' '{' entriesList '}' /* immutable entries */
+
+entriesList
+ : entry
+ | entryList entry
+
+entry
+ : optAnnotations keysetExpression ':' actionRef ';'
+
+~ End P4Grammar
+
+Since the tables with defined entries are immutable, the compiler is
+responsible to assign priorities to entries in lexicographical order, that is
+the entries declared first have higher priority than subsequently declared
+entries. Optionally, the programmer may specify a ```@priority(priority_value)```
+annotation to force enforce ```priority_value``` (which must evaluate
+as a compile-time know value) as the priority for the entry. Lower values for
+the priority correspond to higher priorities for matching the entries.
+
+Depending on the ```match_kind``` of the keys, key set expressions may define
+one or multiple entries. The compiler will synthesize the correct number of
+entries to be installed in the table. If the number of synthesized entries
+exceeds the table size, the compiler implementation may choose to issue a
+warning or an error, depending on target capabilities.
+
+Consider the following example:
+~ Begin P4Example
+action set_malformed_packet(drop_reason) { ... }
+action set_unicast(ipv6_link_is_local) { ... }
+action set_multicast(ipv6_link_is_local) { ... }
+
+action set_broadcast() { ... }
+
+
+table validate_packet {
+  key = {
+    hdr.ip_type:      ternary;
+    hdr.mac_sa:       ternary;
+    hdr.mac_da:       ternary;
+    hdr.ip_ttl:       ternary;
+    hdr.ip_version:   ternary;
+    ipv4_metadata.ipv4_sa &&& 0xFF000000: ternary
+    ipv6_metadata.ipv6_sa &&& 0xFFFF0000000000000000000000000000: ternary
+  }
+
+  actions = {
+    nop;
+    set_unicast;
+    set_multicast;
+    set_broadcast;
+    set_malformed_packet;
+  }
+
+  default_action = nop;
+
+  const entries = { 
+    (_        , 0           , _, _, _, _             , _                 ) :
+        set_malformed_packet(DROP_SRC_MAC_ZERO);
+    (_        , 0x1 &&& 0x1 , _, _, _, _             , _                 ) :
+        set_malformed_packet(DROP_SRC_MAC_MULTICAST);
+    (_        , _           , 0, _, _, _             , _                 ) :
+        set_malformed_packet(DROP_DST_MAC_ZERO):
+    (IPV4_TYPE, _           , _, 0, _, _             , _                 ) :
+        set_malformed_packet(DROP_IP_TTL_ZERO);
+    (IPV6_TYPE, _           , _, 0, _, _             , _                 ) :
+        set_malformed_packet(DROP_IP_TTL_ZERO);
+    (IPV4_TYPE, _           , _, _, _, 0x7f &&& 0xff , _                 ) :
+        set_malformed_packet(DROP_IP_SRC_LOOPBACK);
+    (IPV4_TYPE, _           , _, _, _, 0xe0 &&& 0xf0 , _                 ) :
+        set_malformed_packet(DROP_IP_SRC_MULTICAST);
+    (IPV6_TYPE, _           , _, _, _, _             , 0xff00 &&& 0xff00 ) :
+        set_malformed_packet(DROP_IP_SRC_MULTICAST);
+    (_        , _                 , 0xFFFFFFFF &&& 0xFFFFFFFF, _, _, _, _) :
+        set_broadcast;
+    @priority(11)
+    (_        , _                 , 0x01 &&& 0x01            , _, _, _, _) :
+        set_multicast(false);
+    @priority(10)
+    (IPV6_TYPE, 0xfe80 &&& 0xFFFF, 0x01 &&& 0x01            , _, _, _,  _) :
+        set_multicast(true);
+    (IPV6_TYPE, 0xfe80 &&& 0xFE80, _                         , _, _, _, _) :
+        set_unicast(true);
+    }
+  }
+
+~ End P4Example
+
+In this example we define a set of 12 entries that populate test various fields
+in the header and decide if the packet is valid for the protocol it has
+defined. If the packet is invalid, the matching entries will invoke the
+action ```set_malformed_packet``` with the reason why the packet is invalid.
+Examples of invalid packets are packets with source or destination MAC
+addresses set to 0, invalid multicast addresses, etc. The validation can be
+directly inferred from combinations of bits in the table keys. Once the program
+is loaded, these entries are installed in the table in the order they are
+enumerated in the program, with decreasing priority levels.
+Entries demonstrate the use of the ```@priority``` annotation, which inverts
+their priority order, that is entry 10 in lexicographical order is set to have
+priority 11, and entry 11 is set to prioirty 10.
+
 ####	Additional table properties
 
 Tables can have additional properties. The P4 spec does not mandate any additional properties, or prescribe their semantics. Various architectures can require attributes that are specific to these architectures.
@@ -3926,13 +4048,13 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
 | ```action```   |  ```apply ``` | ```bit```        | ```bool``` |
 | ```const```    |  ```control``` | ```default``` | ```else``` |
-| ```enum```   | ```error```     | ```extern```  | ```exit```  |
-| ```false```   |  ```header```   |  ```if```         |   ```in```   |
-|  ```inout``` | ```int```         | ```match_kind``` | ```package``` |
-| ```parser``` | ```out```         | ```return```  | ```select``` |
-| ```state``` | ```struct```   |  ```switch``` | ```table```    |
-| ```transition``` |  ```true``` |  ```tuple``` | ```typedef``` |
-| ```varbit```  | ```verify``` | ```void```       |   |
+| ```enum```   | ```error```     |  ```entries``` | ```extern```  |
+| ```exit```  | ```false```   |  ```header```   |  ```if```         |
+|   ```in```   |  ```inout``` | ```int```         | ```match_kind``` |
+| ```package``` | ```parser``` | ```out```         | ```return```  |
+| ```select``` | ```state``` | ```struct```   |  ```switch``` |
+| ```table```    | ```transition``` |  ```true``` |  ```tuple``` |
+| ```typedef``` | ```varbit```  | ```verify``` | ```void```       |   |
 |------|------|------|------|
 
 #	Appendix: P4 core library { #sec-p4-core-lib }
@@ -4032,15 +4154,6 @@ To that end, a specification for an architecture definition that enables
 programmers to write composable P4 programs, called the _Portable Switch
 Architecture_, is being developed by the Architecture Working Group.
 
-##	Populate table entries at compile time
-
-It is desirable to have the capability to initialize table entries at compile
-time. The questions discussed are:
-
-- Should these entries be immutable and the tables read-only? Are immutability
-  and read-only attributes that the programmer can specify?
-- Should these entries be at all accessible from the control plane?
-- What should be the API: builtin compiler functions, table initializers?
 
 ##	Union types
 
