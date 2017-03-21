@@ -217,7 +217,7 @@ Compared to the state-of-the-art method of programming network processing system
 The P4 language went through some significant, backwards-incompatible changes to the language syntax and semantics. The language evolution between the previous version (P4~14~) and the current one (P4~16~) is illustrated in Figure [#fig-p4transition]. In particular, a significant number of language constructs have been eliminated from the language and will be migrated into libraries. Examples include: counters, checksum units, meters, etc.
 
 The original complex language (74 keywords) has been thus transformed into a
-relatively small core language (36 keywords, shown in Section
+relatively small core language (35 keywords, shown in Section
 [#sec-p4-keywords]) accompanied by a core library of fundamental constructs
 which are necessary for writing almost all P4 programs. This core language is
 the subject of this specification.
@@ -3348,19 +3348,14 @@ If the user does not specify a value for the default action, the runtime behavio
 
 #### Table entries
 
-A table may declare a set of pre-defined entries. While it is typical that
-entries are installed in tables by the contol plane program, there are
-situations in which tables are used to implement fixed algorithms. In such
+A table may be initialized at compile-time with a set of entries. While it is
+typical that entries are installed in tables by the contol plane program, there
+are situations in which tables are used to implement fixed algorithms. In such
 cases, defining the entries that enable the execution of the algorithm in the
 P4 source, allows the compiler to infer how the table is actually used and
 potentially make better placement decisions for tagets with constraint
-resources. In the current specification, entries defined in P4 are immutable --
-that is, they can only be read, not be changed or removed, through control
-plane APIs. Entries declared in the P4 source are installed in the table at
-program load time. Tables that define entries in the P4 source are immutable,
-no additional entries can be inserted in such tables. This design choice is
-important for the P4 runtime since it does not have to keep track of different
-types of entries in one table (mutable and immutable).
+resources. Entries declared in the P4 source are installed in the table at
+program load time.
 
 ~ Begin P4Grammar
 tableProperty
@@ -3375,7 +3370,25 @@ entry
 
 ~ End P4Grammar
 
-Since the tables with defined entries are immutable, the compiler is
+In the current specification, we define entries as immutable (const) -- they
+can only be read, not changed or removed through control plane APIs. It follows
+that tables that define entries in the P4 source are immutable, thus no
+additional entries may be inserted in tables that define a set of immutable
+entries.
+This design choice is important for the P4 runtime since it does not have to
+keep track of different types of entries in one table (mutable and immutable).
+Future versions of the specification may add mutable entries and shall preserve
+compatibility with the current specification by declaring additional ```entries```
+properties without the ```const``` keyword.
+
+```keysetExpression``` is a tuple that must provide a field for each key in the
+table keys (see Sec. [#sec-table-props]). The value of each field must be
+compatible with the ```match_kind``` of the key element in the table keys. ```actionRef```
+must be an action which appears in the table actions list, with
+all its arguments bound.
+
+Entries are matched in program order. For the case when multiple entries match,
+entries may carry a priority. For immutable tables, the compiler is
 responsible to assign priorities to entries in lexicographical order, that is
 the entries declared first have higher priority than subsequently declared
 entries. Optionally, the programmer may specify a ```@priority(priority_value)```
@@ -3385,9 +3398,10 @@ the priority correspond to higher priorities for matching the entries.
 
 Depending on the ```match_kind``` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
-entries to be installed in the table. If the number of synthesized entries
-exceeds the table size, the compiler implementation may choose to issue a
-warning or an error, depending on target capabilities.
+entries to be installed in the table. Target constraints may further restrict
+the ability of synthesizing entries. For example, if the number of synthesized
+entries exceeds the table size, the compiler implementation may choose to issue
+a warning or an error, depending on target capabilities.
 
 Consider the following example:
 ~ Begin P4Example
@@ -3405,8 +3419,8 @@ table validate_packet {
     hdr.mac_da:       ternary;
     hdr.ip_ttl:       ternary;
     hdr.ip_version:   ternary;
-    ipv4_metadata.ipv4_sa &&& 0xFF000000: ternary
-    ipv6_metadata.ipv6_sa &&& 0xFFFF0000000000000000000000000000: ternary
+    ipv4_metadata.ipv4_sa: ternary
+    ipv6_metadata.ipv6_sa: ternary
   }
 
   actions = {
@@ -4003,7 +4017,7 @@ We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., company X would use annotations named
 like ```@X_annotation```
 
-###	Annotations on the table action list:
+###	Annotations on the table action list
 
 The following two annotations can be used to give additional information to the compiler and control-plane about actions in a table. They have no arguments.
 
@@ -4019,6 +4033,13 @@ table t() {
     ...
 }
 ~ End P4Example
+
+### Annotations on table entries
+
+Table entries declared in P4 may be annotated using a ```@priority <priority_value>```
+annotation. The annotation sets the priority for matching the entry in case
+there are multiple key matches. Lower values for the priority represent higher
+priorities.
 
 ###	Control-plane API annotations
 
@@ -4048,13 +4069,13 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
 | ```action```   |  ```apply ``` | ```bit```        | ```bool``` |
 | ```const```    |  ```control``` | ```default``` | ```else``` |
-| ```enum```   | ```error```     |  ```entries``` | ```extern```  |
-| ```exit```  | ```false```   |  ```header```   |  ```if```         |
-|   ```in```   |  ```inout``` | ```int```         | ```match_kind``` |
-| ```package``` | ```parser``` | ```out```         | ```return```  |
-| ```select``` | ```state``` | ```struct```   |  ```switch``` |
-| ```table```    | ```transition``` |  ```true``` |  ```tuple``` |
-| ```typedef``` | ```varbit```  | ```verify``` | ```void```       |   |
+| ```enum```   | ```error```     |   ```extern```  |  ```exit```  |
+| ```false```   |  ```header```   |  ```if```         |  ```in```   |
+| ```inout``` | ```int```         | ```match_kind``` | ```package``` |
+| ```parser``` | ```out```         | ```return```  | ```select``` |
+| ```state``` | ```struct```   |  ```switch``` | ```table```    |
+| ```transition``` |  ```true``` |  ```tuple``` | ```typedef``` |
+| ```varbit```  | ```verify``` | ```void```       |   |
 |------|------|------|------|
 
 #	Appendix: P4 core library { #sec-p4-core-lib }
