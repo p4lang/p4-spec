@@ -3382,19 +3382,17 @@ compatibility with the current specification by declaring additional ```entries`
 properties without the ```const``` keyword.
 
 ```keysetExpression``` is a tuple that must provide a field for each key in the
-table keys (see Sec. [#sec-table-props]). The value of each field must be
-compatible with the ```match_kind``` of the key element in the table keys. ```actionRef```
-must be an action which appears in the table actions list, with
-all its arguments bound.
+table keys (see Sec. [#sec-table-props]). The table key type must match the
+type of the element of the set. ```actionRef``` must be an action which appears
+in the table actions list, with all its arguments bound.
 
-Entries are matched in program order. For the case when multiple entries match,
-entries may carry a priority. For immutable tables, the compiler is
-responsible to assign priorities to entries in lexicographical order, that is
-the entries declared first have higher priority than subsequently declared
-entries. Optionally, the programmer may specify a ```@priority(priority_value)```
-annotation to force enforce ```priority_value``` (which must evaluate
-as a compile-time know value) as the priority for the entry. Lower values for
-the priority correspond to higher priorities for matching the entries.
+Entries in a table are matched in a fixed order given by a lexicographic sort on:
+
+- priority (if specified), where lower number means higher priority
+- program order, where earlier in program means match first.
+
+Optionally, the programmer may specify a ```@priority(priority_value)```
+annotation to set the priority for the entry. ```priority_value``` must evaluate to a compile-time know value.
 
 Depending on the ```match_kind``` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
