@@ -285,6 +285,7 @@ P4 programs can also interact with fixed-function objects by invoking their serv
 
 ~ Begin P4Example
 extern Checksum16 {
+    Checksum16();
     void clear();           // prepare unit for computation
     void update<T>(T data); // add data to checksum
     void remove<T>(T data); // remove data from existing checksum
@@ -388,6 +389,7 @@ package VSS<H>(Parser<H> p,
 // Architecture-specific objects that can be instantiated
 // Checksum unit
 extern Checksum16 {
+    Checksum16();
     void clear();           // prepare unit for computation
     void update<T>(T data); // add data to checksum
     void remove<T>(T data); // remove data from existing checksum
@@ -546,7 +548,7 @@ struct Parsed_packet {
 }
 
 parser TopParser(packet_in b, out Parsed_packet p) {
-    Checksum16 ck;  // instantiate checksum unit
+    Checksum16() ck;  // instantiate checksum unit
 
     state start {
         b.extract(p.ethernet);
@@ -580,15 +582,15 @@ control TopPipe(inout Parsed_packet headers,
       action Drop_action()
       { outCtrl.outputPort = DROP_PORT; }
 
+      IPv4Address nextHop;
+
      /**
       * Set the next hop and the output port.
       * Decrements ipv4 ttl field.
       * @param ivp4_dest ipv4 address of next hop
       * @param port output port
       */
-      action Set_nhop(out IPv4Address nextHop,
-                      IPv4Address ipv4_dest,
-                      PortId port) {
+      action Set_nhop(IPv4Address ipv4_dest, PortId port) {
           nextHop = ipv4_dest;
           headers.ip.ttl = headers.ip.ttl - 1;
           outCtrl.outputPort = port;
@@ -598,13 +600,12 @@ control TopPipe(inout Parsed_packet headers,
       * Computes address of next IPv4 hop and output port
       * based on the IPv4 destination of the current packet.
       * Decrements packet IPv4 TTL.
-      * @param nextHop IPv4 address of next hop
       */
-     table ipv4_match(out IPv4Address nextHop) {
+     table ipv4_match {
          key = { headers.ip.dstAddr: lpm; }  // longest-prefix match
          actions = {
               Drop_action;
-              Set_nhop(nextHop);
+              Set_nhop;
          }
 
          size = 1024;
@@ -620,7 +621,7 @@ control TopPipe(inout Parsed_packet headers,
      /**
       * Check packet TTL and send to CPU if expired.
       */
-     table check_ttl() {
+     table check_ttl {
          key = { headers.ip.ttl: exact; }
          actions = { Send_to_cpu; NoAction; }
          const default_action = NoAction; // defined in core.p4
@@ -635,9 +636,8 @@ control TopPipe(inout Parsed_packet headers,
      /**
       * Set the destination Ethernet address of the packet
       * based on the next hop IP address.
-      * @param nextHop IPv4 address of next hop.
       */
-      table dmac(in IPv4Address nextHop) {
+      table dmac {
           key = { nextHop: exact; }
           actions = {
                Drop_action;
@@ -657,7 +657,7 @@ control TopPipe(inout Parsed_packet headers,
       /**
        * Set the source mac address based on the output port.
        */
-      table smac() {
+      table smac {
            key = { outCtrl.outputPort: exact; }
            actions = {
                 Drop_action;
@@ -668,20 +668,18 @@ control TopPipe(inout Parsed_packet headers,
       }
 
       apply {
-          IPv4Address nextHop; // temporary variable
-
           if (parseError != error.NoError) {
               Drop_action();  // invoke drop directly
               return;
           }
 
-          ipv4_match.apply(nextHop); // Match result will go into nextHop
+          ipv4_match.apply(); // Match result will go into nextHop
           if (outCtrl.outputPort == DROP_PORT) return;
 
           check_ttl.apply();
           if (outCtrl.outputPort == CPU_OUT_PORT) return;
 
-          dmac.apply(nextHop);
+          dmac.apply();
           if (outCtrl.outputPort == DROP_PORT) return;
 
           smac.apply();
@@ -690,7 +688,7 @@ control TopPipe(inout Parsed_packet headers,
 
 // deparser section
 control TopDeparser(inout Parsed_packet p, packet_out b) {
-    Checksum16 ck;
+    Checksum16() ck;
     apply {
         b.emit(p.ethernet);
         if (p.ip.isValid()) {
@@ -3979,6 +3977,7 @@ There are no built-in constructs in P4~16~ for manipulating packet checksums. We
 For example, one could provide an incremental checksum unit ```Checksum16``` (also described in the VSS example in Section [#sec-vss-extern]) for computing 16-bit one's complement using an ```extern``` object with a signature such as:
 ~ Begin P4Example
 extern Checksum16 {
+    Checksum16();
     void clear();           // prepare unit for computation
     void update<T>(T data); // add data to checksum
     void remove<T>(T data); // remove data from existing checksum
