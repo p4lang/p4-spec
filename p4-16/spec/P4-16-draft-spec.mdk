@@ -3386,13 +3386,14 @@ table keys (see Sec. [#sec-table-props]). The table key type must match the
 type of the element of the set. ```actionRef``` must be an action which appears
 in the table actions list, with all its arguments bound.
 
-Entries in a table are matched in a fixed order given by a lexicographic sort on:
+Entries in a table are matched in a priority order, where lower numbers
+correspond to higher priorities. The priority is either specified with an
+annotation or inferred by the compiler based on the order of the entries. The
+programmer may specify the optional ```@priority(value)``` annotation to set
+the priority for the entry. ```value``` must evaluate to a positive integer
+compile-time know value. The entries without a priority annotation are matched
+in program order (entries occuring first have higher priority).
 
-- priority (if specified), where lower number means higher priority
-- program order, where earlier in program means match first.
-
-Optionally, the programmer may specify a ```@priority(priority_value)```
-annotation to set the priority for the entry. ```priority_value``` must evaluate to a compile-time know value.
 
 Depending on the ```match_kind``` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
@@ -4034,10 +4035,10 @@ table t() {
 
 ### Annotations on table entries
 
-Table entries declared in P4 may be annotated using a ```@priority <priority_value>```
-annotation. The annotation sets the priority for matching the entry in case
-there are multiple key matches. Lower values for the priority represent higher
-priorities.
+Table entries declared in P4 may be annotated using a ```@priority <value>```,
+annotation, where value is a positive integer. The annotation sets the priority
+for matching the entry in case there are multiple key matches. Lower values for
+the priority represent higher priorities.
 
 ###	Control-plane API annotations
 
