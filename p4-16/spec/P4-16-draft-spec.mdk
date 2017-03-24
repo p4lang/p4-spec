@@ -103,12 +103,12 @@ interested in understanding the language syntax and semantics at a deeper level.
 This specification establishes the form and interpretation of programs, written
 in the P4~16~ programming language. It specifies:
 
-- The representation of P4 program
-- The syntax and constraints of P4 language
+- The representation of P4 programs
+- The syntax and constraints of the P4 language
 - The semantic rules for interpreting P4 programs
 - The representation of input data to be processed by P4 programs
 - The representation of output data produced by P4 programs
-- The restrictions and limitations of the conformant P4 implementations
+- The restrictions and limitations of conformant P4 implementations
 
 This specification does not specify:
 
@@ -116,25 +116,25 @@ This specification does not specify:
 - The mechanism by which P4 programs are loaded and executed on the packet processing systems
 - The mechanism by which input data are delivered to the P4 program
 - The mechanism by which output data, produced by P4 program is delivered to the next consumer
-- The mechanism by which control-plane can manage stateful objects defined by a P4 program
+- The mechanism by which the control plane can manage stateful objects defined by a P4 program
 - The size or complexity of a program and its data that will exceed the capacity of any specific packet processing system or the capacity of a particular target
 - All minimal requirements of a packet processing system that is capable of supporting a conforming implementation
 
 # Terms, definitions and symbols
 
-Throughout this specification, the following terms will be used. Terms, explicitly defined in this specification are not to be presumed to refer implicitly to the similar terms, defined elsewhere. Terms, not explicitly defined in this specification should be interpreted according to ISO/IEC 2382:2015 (Information Technology - Vocabulary) or the other generally recognizable sources, such as RFCs.
+Throughout this specification, the following terms will be used. Terms explicitly defined in this specification are not to be presumed to refer implicitly to similar terms defined elsewhere. Terms not explicitly defined in this specification should be interpreted according to ISO/IEC 2382:2015 (Information Technology - Vocabulary) or the other generally recognizable sources, such as RFCs.
 
-- **Architecture**: A set of P4-programmable components on the target and their external data plane interfaces
+- **Architecture**: A set of P4-programmable components on the target and their external data plane interfaces.
 - **Control Plane**: A class of algorithms and the corresponding input and output data that are concerned with the configuration and the provisioning of the data plane.
 - **Data Plane**: A class of algorithms, describing handling of individual packets as they pass through a packet processing system.
-- **Deparser**: A P4 program that assembles the outgoing packet headers.
-- **Intrinsic Metadata**: A set of data that a P4-programmable component can use to interface with the other components in the system
+- **Deparser**: A part of a P4 program that assembles the outgoing packet headers.
+- **Intrinsic Metadata**: A set of data that a P4-programmable component can use to interface with the other components in the system.
 - **Metadata**: Intermediate data, generated during execution of a P4 program.
 - **Packet**: A network packet is a formatted unit of data carried by a packet-switched network.
 - **Packet Header**: Packet header refers to supplemental, formally defined data placed at the beginning of a packet. Packet headers are often referred to as packet metadata. A given packet can contain a sequence of packet headers representing different protocols.
 - **Packet Payload**: Packet data that follows the Packet Headers.
 - **Packet Processing System**: A data processing system oriented towards processing network packets. In general, packet processing systems implement two classes of algorithms, called control plane and data plane.
-- **Target**: A Packet Processing System that can execute a P4 program
+- **Target**: A Packet Processing System that can execute a P4 program.
 
 #	Overview
 
@@ -147,7 +147,7 @@ P4 is a language for expressing how packets are processed by the data plane of a
 
 Many target devices contain both a control plane and a data plane. P4 is designed to specify only the target data plane functionality. P4 programs also partially define the interface by which the control plane and the data-plane communicate, but P4 cannot be used to describe the target's control-plane functionality. In the rest of this document, when we talk about P4 as "programming a target", we mean "programming the target data plane".
 
-As a concrete example in the context of programming network switches, Figure [#fig-prgswitch] illustrates the difference between a traditional fixed-function switch and a P4-programmable switch. In a traditional switch the manufacturer defines the data-plane functionality. The control-plane controls the data plane by managing entries in tables (e.g.routing tables), configuring specialized objects (e.g.meters) and by processing control-packets (e.g.routing protocol packets) or asynchronous events, such as link state changes or learning notifications.
+As a concrete example in the context of programming network switches, Figure [#fig-prgswitch] illustrates the difference between a traditional fixed-function switch and a P4-programmable switch. In a traditional switch the manufacturer defines the data-plane functionality. The control-plane controls the data plane by managing entries in tables (e.g. routing tables), configuring specialized objects (e.g. meters) and by processing control-packets (e.g. routing protocol packets) or asynchronous events, such as link state changes or learning notifications.
 
 A P4-programmable switch differs from a traditional switch in two ways:
 
@@ -174,7 +174,7 @@ The core abstractions provided by the P4 language are:
   * Perform table lookup using the constructed key, choosing an action (including the associated data) to execute
   * Finally, execute the selected action
 - **Control flow** expresses an imperative program describing the data-dependent packet processing within a target pipeline, including the data-dependent sequence of match-action unit invocations. Deparsing (packet reassembly) can be performed using a control flow.
-- **Extern objects** are library constructs that can be manipulated by P4 program through well-defined APIs, but whose internal behavior is hardwired (e.g., checksum units) and hence not programmable using P4.
+- **Extern objects** are library constructs that can be manipulated by P4 programs through well-defined APIs, but whose internal behavior is hardwired (e.g., checksum units) and hence not programmable using P4.
 - **User-defined metadata**: user-defined data structures associated with each packet.
 - **Intrinsic metadata**: metadata provided by the architecture associated with each packet (e.g., the input port where a packet has been received).
 
@@ -222,7 +222,7 @@ The v1.1 version of P4 introduced a language construct called ```extern``` which
 
 The P4~16~ language also introduces and repurposes some v1.1 language constructs for describing the programmable parts of an architecture. These language constructs are: ```parser```, ```state```, ```control```, and ```package```.
 
-One important goal of the P4~16~ language revision is to provide a *stable* programming language definition, that promotes backwards-compatibility. In other words, we strive for programs written in P4~16~ to remain syntactically correct and to behave identically when treated as programs later versions.
+One important goal of the P4~16~ language revision is to provide a *stable* programming language definition, that promotes backwards-compatibility. In other words, we strive for programs written in P4~16~ to remain syntactically correct and to behave identically when treated as programs for later versions of the P4 language.
 
 # Architecture Model
 
@@ -259,7 +259,7 @@ We expect that the P4 community will evolve a standard architecture model (or a 
 
 ##	P4 program data plane interfaces { #sec-dp-interfaces }
 
-(In the following examples P4 keywords are highlighted in fixed-size fonts, e.g., ```parser```.) To describe a functional block that can be programmed in P4 the target manufacturer provides a target type declaration. Target declarations are discussed in in Section [#sec-arch-desc], but we give a brief introduction here to make things concrete. For example, the target manufacturer could write a declaration as follows:
+(In the following examples P4 keywords are highlighted in fixed-size fonts, e.g., ```parser```.) To describe a functional block that can be programmed in P4 the target manufacturer provides a target type declaration. Target declarations are discussed in Section [#sec-arch-desc], but we give a brief introduction here to make things concrete. For example, the target manufacturer could write a declaration as follows:
 
 ~ Begin P4Example
 control matchActionPipe<H>(in bit<4> inputPort,
@@ -271,10 +271,10 @@ This declaration describes a programmable block named ```matchActionPipe``` that
 
 - ```bit<4>``` is a type indicating a 4-bit value,
 - The ```in```, ```inout```, and ```out``` keywords indicate the direction of parameters
-- The first Input is a 4-bit value named ```inputPort```, received as an input (```in```) (an instance of intrinsic metadata).
+- The first input is a 4-bit value named ```inputPort```, received as an input (```in```) (an instance of intrinsic metadata).
 - The second input is an object of type ```H```, named ```parsedHeaders```. It is both an input and an output, shown by ```inout```.
 - The type ```H``` is given by a type variable ```<H>```  in the declaration (the syntax is similar to Java). The type ```H``` indicates a type that will be defined later by the programmer.
-- The first output is the same ```parsedHeaders``` is an output, also stored in general-purpose registers. The user mutates this value in-place in the pipeline implementation, and the value of the ```parsedHeaders``` at the completion of pipe is the result of the computation.
+- The first output is the same ```parsedHeaders``` as an output, also stored in general-purpose registers. The user mutates this value in-place in the pipeline implementation, and the value of the ```parsedHeaders``` at the completion of pipe is the result of the computation.
 - The second output is a four-bit value named ```outputPort```. This value is written into a control register.
 
 ##	External units with predefined functionality { #sec-external-units }
@@ -420,7 +420,7 @@ The pipeline receives 3 inputs: the headers ```headers```, a parser error ```par
 
 - The top-level package is called ```VSS```; in order to program a VSS, the user will have to instantiate a package of this type (shown in the next section). The top-level package declaration also depends on a type variable H:
 ~ Begin P4Example
-package Simple<H>
+package VSS<H>
 ~ End P4Example
 
 A type variable indicates a type yet unknown that must be provided by the user at a later time. In this case ```H``` is the type of the set of headers that the user program will be processing; the parser will produce the parsed representation of these headers, and the match-action pipeline will update the input headers in place to produce the output headers.
@@ -440,7 +440,7 @@ The input arbiter block performs the following functions:
 - It receives packets from one of the physical input Ethernet ports, from the control plane or from the input recirculation port.
 - For packets received from Ethernet ports, the block computes the Ethernet trailer checksum and verifies it. If the checksum does not match, the packet is discarded. If the checksum does match, it is removed from the packet payload.
 - Receiving a packet involves running an arbitration algorithm if multiple packets are available.
-- If the arbiter block is busy processing a previous packet and there is no queue space is available, input ports may drop arriving packets, without indicating the fact that the packets were dropped in any way.
+- If the arbiter block is busy processing a previous packet and no queue space is available, input ports may drop arriving packets, without indicating the fact that the packets were dropped in any way.
 - After receiving a packet, the arbiter block sets the ```inCtrl.inputPort``` value that is an input to the parser with the identity of the input port where the packet originated. Physical Ethernet ports are numbered 0 to 7, while the input recirculation port has a number 13 and the CPU port has the number 14.
 
 ###	Parser runtime block
@@ -464,8 +464,8 @@ The arrow shown between the arbiter and demux blocks represents an additional in
 
 ###	Available extern blocks { #sec-vss-extern }
 
-The VSS architecture provides an incremental checksum extern block, called
-```Checksum16```. The checksum unit has four methods:
+The VSS architecture provides an incremental checksum extern block,
+called ```Checksum16```. The checksum unit has four methods:
 
 - ```clear()``` --- prepares the unit for a new computation
 - ```update<T>(in T data)``` --- add some data to be checksummed. The data must be either a bit-string, a header-typed value, or a ```struct``` containing such values. The fields in the header/struct are concatenated in the order they appear in the type declaration.
@@ -546,7 +546,7 @@ struct Parsed_packet {
 }
 
 parser TopParser(packet_in b, out Parsed_packet p) {
-    Checksum16() ck;  // instantiate checksum unit
+    Checksum16 ck;  // instantiate checksum unit
 
     state start {
         b.extract(p.ethernet);
@@ -578,7 +578,7 @@ control TopPipe(inout Parsed_packet headers,
       * output port to the DROP_PORT
       */
       action Drop_action()
-      { outCtrl.port = DROP_PORT; }
+      { outCtrl.outputPort = DROP_PORT; }
 
      /**
       * Set the next hop and the output port.
@@ -660,7 +660,7 @@ control TopPipe(inout Parsed_packet headers,
       table smac() {
            key = { outCtrl.outputPort: exact; }
            actions = {
-                Drop_action
+                Drop_action;
                 Set_smac;
           }
           size = 16;
@@ -690,7 +690,7 @@ control TopPipe(inout Parsed_packet headers,
 
 // deparser section
 control TopDeparser(inout Parsed_packet p, packet_out b) {
-    Checksum16() ck;
+    Checksum16 ck;
     apply {
         b.emit(p.ethernet);
         if (p.ip.isValid()) {
@@ -785,7 +785,7 @@ This functionality allows P4 programs to be built from multiple source files, po
 
 ###	P4 core library
 
-Similar to the C standard library, the P4 language specification defines a core library that declares useful P4 constructs. A description of the P4 core library is provided in the Appendix [#sec-p4-core-lib]. Most P4 programs will include the core library. Including the core library is done with
+Similar to the C standard library, the P4 language specification defines a core library that declares useful P4 constructs. A description of the P4 core library is provided in Appendix [#sec-p4-core-lib]. Most P4 programs will include the core library. Including the core library is done with
 
 ~ Begin P4Example
 #include <core.p4>
@@ -797,7 +797,7 @@ All P4 keywords use only ASCII characters. All P4 identifiers must use only ASCI
 
 P4 is case-sensitive.
 
-Whitespace characters, including newlines are treated as token separators. Indentation is free-form; however, P4 has C-like block constructs, and all our examples use C-like indentation. Tab characters are treated as a spaces.
+Whitespace characters, including newlines are treated as token separators. Indentation is free-form; however, P4 has C-like block constructs, and all our examples use C-like indentation. Tab characters are treated as spaces.
 
 The lexer recognizes the following kinds of terminals:
 
@@ -809,7 +809,7 @@ The lexer recognizes the following kinds of terminals:
 
 ###	    Identifiers { #sec-identifiers }
 
-P4 identifiers may contain only letters, numbers and the underscore character ```_```, and must start with a letter or with underscore. The special identifier consisting of a single underscore ```_``` is reserved to indicate a "don't care" value in several contexts; its type may vary depending on the context. Some reserved keywords (e.g., ```apply``` can be used as identifiers if the context makes it unambiguous.
+P4 identifiers may contain only letters, numbers and the underscore character ```_```, and must start with a letter or with underscore. The special identifier consisting of a single underscore ```_``` is reserved to indicate a "don't care" value in several contexts; its type may vary depending on the context. Some reserved keywords (e.g., ```apply```) can be used as identifiers if the context makes it unambiguous.
 
 ~ Begin P4Grammar
 nonTypeName
@@ -834,7 +834,7 @@ Comments are Java style:
 - Nested multi-line comments are not supported.
 - JavaDoc comments, starting with ```/**``` and ending with ```*/```
 
-JavaDoc comments are strongly encouraged for the language P4 elements that are used to synthesize the interface with the control-plane: tables and actions.
+JavaDoc comments are strongly encouraged for the P4 language elements that are used to synthesize the interface with the control-plane: tables and actions.
 
 Comments are token separators: no comments are allowed within a token, e.g. ```bi/**/t``` is parsed as two tokens, ```bi``` and ```t```, and not as a single ```bit``` token.
 
@@ -891,7 +891,7 @@ In this document we adopt the Java-like naming guidelines:
 
 - The P4 built-in types all start with lowercase characters and are shown in bold, e.g., ```int<20>```
 - In all our examples we write user-defined types with an uppercase character, e.g., ```IPv4Address```
-- Type variables (e.g.,used in templates) are always uppercase, e.g., ```parser P<H, IH>(...)```
+- Type variables (e.g., used in templates) are always uppercase, e.g., ```parser P<H, IH>(...)```
 - All variables are named with lowercase names, e.g., ```ipv4header```
 - Constants are all uppercase, e.g., ```CPU_PORT```
 - Errors and enumerations have camel-case names, e.g. ```PacketTooShort```
@@ -1032,7 +1032,7 @@ When used as arguments, ```extern``` objects can only be passed as directionless
 
 **Justification**
 
-The main reason for using copy-in/copy-out (instead of the more common call-by-reference convention) is for controlling the side-effects of ```extern``` functions and methods. ```extern``` functions and methods are the main mechanism by which a P4 program communicates with its environment. With copy-in/copy-out semantics ```extern``` functions cannot hold references to P4 program objects; this enables the compiler to limit on the side-effects that ```extern``` functions may have on the P4 program both in space (they can only affect out parameters) and in time (side-effects can only occur at function call time).
+The main reason for using copy-in/copy-out (instead of the more common call-by-reference convention) is for controlling the side-effects of ```extern``` functions and methods. ```extern``` functions and methods are the main mechanism by which a P4 program communicates with its environment. With copy-in/copy-out semantics ```extern``` functions cannot hold references to P4 program objects; this enables the compiler to limit the side-effects that ```extern``` functions may have on the P4 program both in space (they can only affect out parameters) and in time (side-effects can only occur at function call time).
 
 ```extern``` functions can be arbitrarily powerful: they can store information in global storage, spawn separate threads, "collude" with each other to share information --- but they cannot access any variable in a P4 program. With copy-in/copy-out semantics the compiler can still reason about the P4 program that invokes ```extern``` functions.
 
@@ -1184,7 +1184,7 @@ P4 offers no support for string processing. The only strings that can appear in 
 P4 supports arbitrary-size integer values. The typing rules for the integer types are chosen according to the following principles:
 
 - **Inspired from C**: Typing of integers is modeled after the well-defined parts of C, expanded to cope with arbitrary fixed-width integers. In particular, the type of the result of an expression only depends on the expression operands, and not on how the result of the expression is consumed.
-- **No undefined behaviors**: P4 attempts to remedy the undefined C behaviors. Unfortunately, C has many undefined behaviors, including specifying the size of an integer (int), what results produced are on overflow, and the results produced for some input combinations (e.g., shifts with negative amounts, overflows on signed numbers, etc.). In contrast, P4 computations on integer types have no undefined behaviors.
+- **No undefined behaviors**: P4 attempts to remedy the undefined C behaviors. Unfortunately, C has many undefined behaviors, including specifying the size of an integer (int), what results are produced on overflow, and the results produced for some input combinations (e.g., shifts with negative amounts, overflows on signed numbers, etc.). In contrast, P4 computations on integer types have no undefined behaviors.
 - **Least surprise**: The P4 typing rules are chosen to behave as closely as possible to traditional well-behaved C programs.
 - **Forbid rather than surprise**: Rather than provide surprising or undefined results (e.g., in C comparisons between signed and unsigned integers), we have chosen to forbid expressions with ambiguous interpretations. For example, P4 does not allow binary operations that combine signed and unsigned integers.
 
@@ -1230,7 +1230,7 @@ Some network protocols use fields whose size is only known at runtime (e.g., IPv
 
 P4 architectures may impose additional constraints on varbit types: for example, they may limit the maximum size, or they may require ```varbit``` values to always contain an integer number of bytes at runtime.
 
-All operations that can be performed on varbits are described in Section [#sec-varint-ops].
+All operations that can be performed on varbits are described in Section [#sec-varbit-string].
 
 ####	Infinite-precision integers
 
@@ -1909,7 +1909,7 @@ All computations on ```int``` values are carried without information loss. For e
 Note: bitwise-operations (```|```,```&```,```^```,```~```) are not defined for ```int``` values. Division and modulo are illegal for negative values.
 
 ##	Variable bit-string operations { #sec-varbit-string }
-A variable-size bit-string ```varbit``` has a maximum size static declared width, and also a dynamic width, which must be smaller or equal than the static width. Prior to initialization a variable-size bit-string has an unknown dynamic width.
+A variable-size bit-string ```varbit``` has a maximum size static declared width, and also a dynamic width, which must be at most the static width. Prior to initialization a variable-size bit-string has an unknown dynamic width.
 
 Variable-length bit-strings support a limited set of operations:
 
