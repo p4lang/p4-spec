@@ -3342,9 +3342,11 @@ The inverse of parsing is deparsing, or packet construction. P4 does not provide
 For example, the following sequence from the Simple Switch example writes first an Ethernet header and then an IPv4 header into a ```packet_out```:
 
 ~ Begin P4Example
-control TopDeparser(packet_out b, in Parsed_packet p) {
-    b.emit(p.ethernet);
-    b.emit(p.ip);
+control TopDeparser(inout Parsed_packet p, packet_out b) {
+    apply {
+        b.emit(p.ethernet);
+        b.emit(p.ip);
+    }
 }
 ~ End P4Example
 
