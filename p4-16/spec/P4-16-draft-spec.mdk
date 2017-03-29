@@ -1265,8 +1265,9 @@ Additional types can be created in P4 from base types. Some derived types can be
 
 - ```enum```
 - ```header```
-- ```struct```
 - header stacks
+- ```struct```
+- ```tuple```
 - type specialization
 - ```extern```
 - ```parser```
@@ -1437,6 +1438,29 @@ struct Parsed_headers {
     Udp_h      udp;
 }
 ~ End P4Example
+
+The table below lists all types that may appear as members of headers,
+structs, and tuples.  Note that ```int``` means an infinite-precision
+integer, without a width specified.
+
+|-----|-----|-----|
+|                  | Container type             ||
+| Element type     | header    | struct or tuple |
++:-----------------+:----------+:----------------+
+| ```bit<W>```     | allowed   |  allowed        |
+| ```int<W>```     | allowed   |  allowed        |
+| ```varbit<W>```  | allowed   |  allowed        |
+| ```int```        | error     |  error          |
+| ```void```       | error     |  error          |
+| ```error```      | error     |  allowed        |
+| ```match_kind``` | error     |  error          |
+| ```bool```       | error     |  allowed        |
+| ```enum```       | error     |  allowed        |
+| ```header```     | error     |  allowed        |
+| header stack     | error     |  allowed        |
+| ```struct```     | error     |  allowed        |
+| ```tuple```      | error     |  allowed        |
+|-----|-----|-----|
 
 ###	Tuple types { #sec-tuple-types }
 A tuple is similar to a ```struct```, in that it holds multiple values. Unlike a ```struct``` type, tuples have no named fields. The type of tuples with n component types ```T1```,...,```Tn``` is written as
