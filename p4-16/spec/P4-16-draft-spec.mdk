@@ -659,7 +659,7 @@ control TopPipe(inout Parsed_packet headers,
       /**
        * Set the source mac address based on the output port.
        */
-      table smac() {
+      table smac {
            key = { outCtrl.outputPort: exact; }
            actions = {
                 Drop_action;
@@ -2381,7 +2381,7 @@ extern Counter {
 // user program
 control c(...) {
     Counter(32w1024, CounterType.Both) ctr;  // instantiation
-    apply { ...}
+    apply { ... }
 }
 ~ End P4Example
 
@@ -3387,7 +3387,7 @@ if (ipv4_match.apply().hit) {
 The ```action_run``` field indicates which kind of action was executed (irrespective of whether it was a hit or a miss). It can be used in a switch statement:
 
 ~ Begin P4Example
-switch (dmac.apply(nextHop).action_run) {
+switch (dmac.apply().action_run) {
     Drop_action: { return; }
 }
 ~ End P4Example
