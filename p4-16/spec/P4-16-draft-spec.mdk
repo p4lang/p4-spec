@@ -1622,7 +1622,7 @@ All parameters of a package are evaluated at compilation-time, and in consequenc
 A don't care (underscore, "`_`") can be used in some circumstances as
 a type.  It should be only used in a position where one could write a
 bound type variable; it is similar to the Java `?` wildcard type.  The
-underscore can used to reduce code complexity --- when it is
+underscore can be used to reduce code complexity --- when it is
 not important what the type variable binds to (during type unification
 the don't care type can unify with any other type).  For example:
 
@@ -1743,7 +1743,7 @@ typeArgumentList
 ~ End P4Grammar
 See also the complete P4 grammar in Appendix [#sec-grammar].
 
-An additional semantic check is required for the right shift to check that there is no space between the two consecutive greater-than signs ```>>```.This rule is required to allow parsing for both the right shift operators and specialized types, such as in ```function<bit<32>>```.
+An additional semantic check is required for the right shift to check that there is no space between the two consecutive greater-than signs ```>>```. This rule is required to allow parsing for both the right shift operators and specialized types, such as in ```function<bit<32>>```.
 
 This grammar does not indicate the precedence of the various operators. The precedence follows exactly the C precedence rules. Concatenation (```++```) has the same precedence as infix addition. Bit-slicing ```a[m:l]``` has the same precedence as array indexing (```a[i]```).
 
@@ -1757,7 +1757,7 @@ Given a complex expression, the order in which sub-expressions are evaluated can
 - All other expressions are evaluated left-to-right as they appear in the source program.
 - Function and method calls are evaluated as described in Section [#sec-calling-convention].
 
-##	Expression on error values { #sec-error-exprs }
+##	Expressions on error values { #sec-error-exprs }
 
 Symbolic names declared by an ```error``` declaration belong to the ```error``` namespace.
 The ```error``` type only supports comparisons for equality and difference.  The result of a comparison is a Boolean value.
@@ -1847,7 +1847,7 @@ This statement sets bits ```m``` to ```l``` of ```e``` to the bit-pattern repres
 ##	Operations on fixed-width signed integers { #sec-int-ops }
 This section discusses all operations that can be performed on ```int<W>``` types. An ```int<W>``` type is a signed integer with ```W``` bits represented using 2's complement.
 
-"Underflow" or "overflow" produced by arithmetic cannot be detected: operations "wraparound", similar to C operations on unsigned values (i.e., representing a large value on W bits will only keep the least-significant W bits of the value)
+"Underflow" or "overflow" produced by arithmetic cannot be detected: operations "wrap around", similar to C operations on unsigned values (i.e., representing a large value on W bits will only keep the least-significant W bits of the value)
 
 There are no arithmetic exceptions; the runtime result of an arithmetic operation is defined for all combinations of input arguments (note that C does not specify the result of overflows on signed integers).
 
@@ -2741,7 +2741,7 @@ for (int i=0; i < n; i++) {
     keyset = eval(ks[i]);
     if (keyset.contains(key)) return s[i];
 }
-verify(false, NoMatch);
+verify(false, error.NoMatch);
 ~ End P4Pseudo
 
 Some targets may require that all keyset expressions in a select expression must be compile-time known values. Keysets are evaluated in order, from top to bottom as implied by the pseudo-code above; the first keyset that includes the value in the ```select``` argument provides the result state. If no label matches, the execution triggers a runtime error with the standard error code ```error.NoMatch```.
@@ -2880,7 +2880,7 @@ void extract<T>(out T headerLvalue, in bit<32> variableFieldSize);
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLvalue,
                           in bit<32> variableFieldSize) {
-   ParserModel.verify(!headerLvalue.valid$,OverwritingHeader);
+   ParserModel.verify(!headerLvalue.valid$, error.OverwritingHeader);
    bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
@@ -2960,9 +2960,9 @@ where ```T``` must be a type with fixed width. In case of success the result of 
 ~ Begin P4Pseudo
 T packet_in.lookahead<T>() {
    bitsToExtract = sizeof(T);
-   lastBitNeeded = nextBitIndex + bitsToExtract;
-   ParserModel.verify(lengthInBits >= lastBitNeeded, error.PacketTooShort);
-   T tmp = data.extractBits(nextBitIndex, bitsToExtract);
+   lastBitNeeded = this.nextBitIndex + bitsToExtract;
+   ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
+   T tmp = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    return tmp;
 }
 ~ End P4Pseudo
@@ -3095,7 +3095,7 @@ A ```control``` block may start with declarations of ```action```s, ```table```s
 ~ Begin P4Grammar
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
-      '{' stateListDeclaration APPLY controlBody '}'
+      '{' controlLocalDeclarations APPLY controlBody '}'
     ;
 
 controlLocalDeclarations
@@ -3846,7 +3846,7 @@ control Ingress() {
 }}}
 ~ End P4Example
 
-This program accesses an extern object ```r``` of type ```Register``` in actions invoked from tables ```flowlet_id``` (reading) and ```flowlet``` (writing). Without the ```@atomic``` annotation these two operations would not execute atomically: a second packet may read the state of ```r``` before the first packet had a chance to update it.
+This program accesses an extern object ```r``` of type ```Register``` in actions invoked from tables ```flowlet``` (reading) and ```new_flowlet``` (writing). Without the ```@atomic``` annotation these two operations would not execute atomically: a second packet may read the state of ```r``` before the first packet had a chance to update it.
 
 A compiler backend must reject a program containing ```@atomic``` blocks if it cannot implement the atomic execution of the instruction sequence. In such cases, the compiler should provide reasonable diagnostics.
 
@@ -3945,7 +3945,7 @@ and ```packet_out``` extern objects, used in parsers and deparsers to access pac
 error {
     NoError,
     PacketTooShort,    // not enough bits in packet for extract
-    NoMatch,           // match statement has no matches
+    NoMatch,           // select expression has no matches
     StackOutOfBounds,  // reference to invalid element of a header stack
     OverwritingHeader, // extracting on top of a valid header
     HeaderTooShort,    // extracting too many bits into a varbit field
