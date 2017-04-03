@@ -925,9 +925,9 @@ Various constructs act as namespaces that create local scopes for names:
 - Derived type declarations (```struct```, ```header```, ```enum```) introduce local scopes for the field names
 - Block statements introduce local lexically-enclosed scopes
 - ```parser```, ```table```, ```action```, and ```control``` blocks introduce local scopes
-- A declaration with type variables introduces a new scope for that variable. For example, in the following ```control``` declaration, the scope of the type variable ```H``` extends to the end of the declaration:
+- A declaration with type variables introduces a new scope for that variable. For example, in the following ```extern``` declaration, the scope of the type variable ```H``` extends to the end of the declaration:
 ~ Begin P4Example
-control c<H>( ...) { ...} // scope of H ends here.
+extern E<H>(...) { ... } // scope of H ends here.
 ~ End P4Example
 The order of declarations is important; with the exception of parser states, all uses of a symbol must follow the symbol's declaration. (This is a change from the P4~14~ specification, which allows declarations in any order. This requirement is similar to the C language, and it significantly simplifies the implementation of compilers for P4, allowing compilers to use additional information about declared identifiers to resolve ambiguities.)
 
@@ -1624,23 +1624,11 @@ a type.  It should be only used in a position where one could write a
 bound type variable; it is similar to the Java `?` wildcard type.  The
 underscore can be used to reduce code complexity --- when it is
 not important what the type variable binds to (during type unification
-the don't care type can unify with any other type).  For example:
+the don't care type can unify with any other type).
 
-~ Begin P4Example
-control c<T>(...) {...}
-package p(c<_> ctrl);
-~ End P4Example
-
-This is equivalent to:
-
-~ Begin P4Example
-package p<T>(c<T> ctrl);
-~ End P4Example
-
-Since there are no constraints on the type ```T```, we can instead use
-a don't care.  This is mostly useful for writing packages with lots of
-generic parameters whose types are not tied to each other (see also an
-example in Section [#sec-arch-desc-example]).
+This is mostly useful for writing packages with lots of
+generic parameters whose types are not tied to each other.  See an
+example in Section [#sec-arch-desc-example].
 
 ##	typedef { #sec-typedef }
 ```typedef``` can be used to give an alternative name to a type.
@@ -2576,6 +2564,12 @@ parserStates
     ;
 ~ End P4Grammar
 
+Parsers cannot have type parameters (unlike parser type declarations).  I.e., the following parser declaration is illegal (although accepted by the given grammar):
+
+```
+parser P<H>(out H data) { ... }
+```
+
 At least one state, named ```start```, must be present in any ```parser```.
 A parser cannot contain two states with the same name. A parser cannot define
 the ```accept``` and ```reject``` states; these are logically outside of the parser.
@@ -3095,6 +3089,7 @@ A ```control``` block may start with declarations of ```action```s, ```table```s
 ~ Begin P4Grammar
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
+      /* no type parameters allowed in the controlTypeDeclaration */
       '{' controlLocalDeclarations APPLY controlBody '}'
     ;
 
@@ -3115,6 +3110,12 @@ controlBody
     : blockStatement
     ;
 ~ End P4Grammar
+
+Controls cannot have type parameters (unlike control type declarations).  I.e., the following control declaration is illegal (although accepted by the given grammar):
+
+```
+control C<H>(in H data) { ... }
+```
 
 For a description of the ```optConstructorParameters```, which can be used to build parameterized control blocks, see Section [#sec-parametrization].
 
@@ -3457,6 +3458,7 @@ Consider again the parser declaration syntax:
 ~ Begin P4Grammar
 parserDeclaration
     : parserTypeDeclaration optConstructorParameters
+      /* no type parameters allowed in the parserTypeDeclaration */
       '{' parserLocalElements parserStates '}'
     ;
 
