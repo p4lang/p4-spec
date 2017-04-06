@@ -3366,7 +3366,7 @@ entriesList
  | entryList entry
 
 entry
- : optAnnotations keysetExpression ':' actionRef ';'
+ : keysetExpression ':' actionRef optAnnotations ';'
 
 ~ End P4Grammar
 
@@ -3404,78 +3404,60 @@ a warning or an error, depending on target capabilities.
 
 Consider the following example:
 ~ Begin P4Example
-action set_malformed_packet(drop_reason) { ... }
-action set_unicast(ipv6_link_is_local) { ... }
-action set_multicast(ipv6_link_is_local) { ... }
+header hdr {
+    bit<8>  e;
+    bit<16> t;
+    bit<8>  l;
+    bit<8> r;
+    bit<1>  v;
+}
 
-action set_broadcast() { ... }
+struct Header_t {
+    hdr h;
+}
+struct Meta_t {}
 
+control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t standard_meta) {
 
-table validate_packet {
-  key = {
-    hdr.ip_type:      ternary;
-    hdr.mac_sa:       ternary;
-    hdr.mac_da:       ternary;
-    hdr.ip_ttl:       ternary;
-    hdr.ip_version:   ternary;
-    ipv4_metadata.ipv4_sa: ternary
-    ipv6_metadata.ipv6_sa: ternary
-  }
+    action a() { standard_meta.egress_spec = 0; }
+    action a_with_control_params(bit<9> x) { standard_meta.egress_spec = x; }
 
-  actions = {
-    nop;
-    set_unicast;
-    set_multicast;
-    set_broadcast;
-    set_malformed_packet;
-  }
+    table t_exact_ternary {
 
-  default_action = nop;
+  	key = {
+            h.h.e : exact;
+            h.h.t : ternary;
+        }
 
-  const entries = { 
-    (_        , 0           , _, _, _, _             , _                 ) :
-        set_malformed_packet(DROP_SRC_MAC_ZERO);
-    (_        , 0x1 &&& 0x1 , _, _, _, _             , _                 ) :
-        set_malformed_packet(DROP_SRC_MAC_MULTICAST);
-    (_        , _           , 0, _, _, _             , _                 ) :
-        set_malformed_packet(DROP_DST_MAC_ZERO):
-    (IPV4_TYPE, _           , _, 0, _, _             , _                 ) :
-        set_malformed_packet(DROP_IP_TTL_ZERO);
-    (IPV6_TYPE, _           , _, 0, _, _             , _                 ) :
-        set_malformed_packet(DROP_IP_TTL_ZERO);
-    (IPV4_TYPE, _           , _, _, _, 0x7f &&& 0xff , _                 ) :
-        set_malformed_packet(DROP_IP_SRC_LOOPBACK);
-    (IPV4_TYPE, _           , _, _, _, 0xe0 &&& 0xf0 , _                 ) :
-        set_malformed_packet(DROP_IP_SRC_MULTICAST);
-    (IPV6_TYPE, _           , _, _, _, _             , 0xff00 &&& 0xff00 ) :
-        set_malformed_packet(DROP_IP_SRC_MULTICAST);
-    (_        , _                 , 0xFFFFFFFF &&& 0xFFFFFFFF, _, _, _, _) :
-        set_broadcast;
-    @priority(11)
-    (_        , _                 , 0x01 &&& 0x01            , _, _, _, _) :
-        set_multicast(false);
-    @priority(10)
-    (IPV6_TYPE, 0xfe80 &&& 0xFFFF, 0x01 &&& 0x01            , _, _, _,  _) :
-        set_multicast(true);
-    (IPV6_TYPE, 0xfe80 &&& 0xFE80, _                         , _, _, _, _) :
-        set_unicast(true);
+	actions = {
+            a;
+            a_with_control_params;
+        }
+
+	default_action = a;
+
+        const entries = {
+            (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
+            (0x02, 0x1181           ) : a_with_control_params(2);
+            (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
+            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4) @priority(5);
+            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5) @priority(4);
+            (0x06, _                ) : a_with_control_params(6);
+        }
     }
-  }
 
+}
 ~ End P4Example
 
-In this example we define a set of 12 entries that populate test various fields
-in the header and decide if the packet is valid for the protocol it has
-defined. If the packet is invalid, the matching entries will invoke the
-action ```set_malformed_packet``` with the reason why the packet is invalid.
-Examples of invalid packets are packets with source or destination MAC
-addresses set to 0, invalid multicast addresses, etc. The validation can be
-directly inferred from combinations of bits in the table keys. Once the program
-is loaded, these entries are installed in the table in the order they are
-enumerated in the program, with decreasing priority levels.
-Entries demonstrate the use of the ```@priority``` annotation, which inverts
-their priority order, that is entry 10 in lexicographical order is set to have
-priority 11, and entry 11 is set to prioirty 10.
+In this example we define a set of 6 entries that populate various fields in
+the header and send the invoke one action ```a_with_control_params``` to send
+the packet to a particular output port. Once the program is loaded, these
+entries are installed in the table in the order they are enumerated in the
+program, with decreasing priority levels. Entries demonstrate the use of the
+```@priority``` annotation, which inverts their priority order, that is entry 4
+in lexicographical order is set to have priority 5, and entry 5 is set to
+prioirty 4. A packet with the ternary field set to 0x1211 should be directed to
+port 5 rather than port 4, since the entry ```(0x04, 01311 &&& 0x02F0)``` will have priority over the entry ```(0x04, 01211 &&& 0x02F0)```
 
 ####	Additional table properties
 
