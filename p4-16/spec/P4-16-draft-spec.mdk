@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: January 11, 2016
+Title Footer: March 14, 2017
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -216,7 +216,11 @@ Compared to the state-of-the-art method of programming network processing system
 
 The P4 language went through some significant, backwards-incompatible changes to the language syntax and semantics. The language evolution between the previous version (P4~14~) and the current one (P4~16~) is illustrated in Figure [#fig-p4transition]. In particular, a significant number of language constructs have been eliminated from the language and will be migrated into libraries. Examples include: counters, checksum units, meters, etc.
 
-The original complex language (74 keywords) has been thus transformed into a relatively small core language (35 keywords, shown in Section [#sec-p4-keywords]) accompanied by a core library of fundamental constructs which are necessary for writing almost all P4 programs. This core language is the subject of this specification.
+The original complex language (74 keywords) has been thus transformed into a
+relatively small core language (35 keywords, shown in Section
+[#sec-p4-keywords]) accompanied by a core library of fundamental constructs
+which are necessary for writing almost all P4 programs. This core language is
+the subject of this specification.
 
 The v1.1 version of P4 introduced a language construct called ```extern``` which can be used to describe library elements. Many constructs that are defined in the v1.1 language specification will thus be transformed into such library elements (including equivalents to v1.1 constructs that have been eliminated from the language, such as counters and meters). Some of these ```extern``` objects are expected to be standardized, and they will be in the scope of a separate document, describing a standard library of P4 elements. In this document we provide several examples of ```extern``` constructs.
 
@@ -3342,6 +3346,119 @@ Continuing the example in the previous section, here are various legal and illeg
 
 If the user does not specify a value for the default action, the runtime behavior of the program is undefined until the control-plane initializes the ```default_action``` to one of the legal values. The compiler should produce a warning in this case. This is a difference from P4~14~, which can set the default action to no-op. If the legacy behavior is desired, the user must explicitly use the core library ```action NoAction``` in the table, which must appear in the actions list.
 
+#### Table entries
+
+A table may be initialized at compile-time with a set of entries. While it is
+typical that entries are installed in tables by the contol plane program, there
+are situations in which tables are used to implement fixed algorithms. In such
+cases, defining the entries that enable the execution of the algorithm in the
+P4 source, allows the compiler to infer how the table is actually used and
+potentially make better placement decisions for tagets with constraint
+resources. Entries declared in the P4 source are installed in the table at
+program load time.
+
+~ Begin P4Grammar
+tableProperty
+   : const ENTRIES '=' '{' entriesList '}' /* immutable entries */
+
+entriesList
+ : entry
+ | entryList entry
+
+entry
+ : keysetExpression ':' actionRef optAnnotations ';'
+
+~ End P4Grammar
+
+In the current specification, we define entries as immutable (const) -- they
+can only be read, not changed or removed through control plane APIs. It follows
+that tables that define entries in the P4 source are immutable, thus no
+additional entries may be inserted in tables that define a set of immutable
+entries.
+This design choice is important for the P4 runtime since it does not have to
+keep track of different types of entries in one table (mutable and immutable).
+Future versions of the specification may add mutable entries and shall preserve
+compatibility with the current specification by declaring additional ```entries```
+properties without the ```const``` keyword.
+
+```keysetExpression``` is a tuple that must provide a field for each key in the
+table keys (see Sec. [#sec-table-props]). The table key type must match the
+type of the element of the set. ```actionRef``` must be an action which appears
+in the table actions list, with all its arguments bound.
+
+Entries in a table are matched in a priority order, where lower numbers
+correspond to higher priorities. Priority may be specified or computed in one
+of the following ways:
+- specified with an annotation, ``@priority(value)```, where ```value``` must
+  evaluate to a positive integer compile-time know value; or
+- computed based the program order of the entries -- entries occuring first have higher priority.
+Priority annotations take precedence over computed priorities.
+
+Depending on the ```match_kind``` of the keys, key set expressions may define
+one or multiple entries. The compiler will synthesize the correct number of
+entries to be installed in the table. Target constraints may further restrict
+the ability of synthesizing entries. For example, if the number of synthesized
+entries exceeds the table size, the compiler implementation may choose to issue
+a warning or an error, depending on target capabilities.
+
+Consider the following example:
+~ Begin P4Example
+header hdr {
+    bit<8>  e;
+    bit<16> t;
+    bit<8>  l;
+    bit<8> r;
+    bit<1>  v;
+}
+
+struct Header_t {
+    hdr h;
+}
+struct Meta_t {}
+
+control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t standard_meta) {
+
+    action a() { standard_meta.egress_spec = 0; }
+    action a_with_control_params(bit<9> x) { standard_meta.egress_spec = x; }
+
+    table t_exact_ternary {
+
+  	key = {
+            h.h.e : exact;
+            h.h.t : ternary;
+        }
+
+	actions = {
+            a;
+            a_with_control_params;
+        }
+
+	default_action = a;
+
+        const entries = {
+            (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
+            (0x02, 0x1181           ) : a_with_control_params(2);
+            (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
+            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4) @priority(5);
+            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5) @priority(4);
+            (0x06, _                ) : a_with_control_params(6);
+        }
+    }
+
+}
+~ End P4Example
+
+In this example we define a set of 6 entries that populate various fields in
+the header and send the invoke one action ```a_with_control_params``` to send
+the packet to a particular output port. Once the program is loaded, these
+entries are installed in the table in the order they are enumerated in the
+program, with decreasing priority levels. Entries demonstrate the use of
+the ```@priority``` annotation, which inverts their priority order, that is
+entry 4 in lexicographical order is set to have priority 5, and entry 5 is set
+to prioirty 4. A packet with the ternary field set to 0x1211 should be directed
+to port 5 rather than port 4, since the entry ```(0x04, 01311 &&& 0x02F0)```
+will have priority over the entry ```(0x04, 01211 &&& 0x02F0)```.
+
 ####	Additional table properties
 
 Tables can have additional properties. The P4 spec does not mandate any additional properties, or prescribe their semantics. Various architectures can require attributes that are specific to these architectures.
@@ -3881,7 +3998,7 @@ We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., company X would use annotations named
 like ```@X_annotation```
 
-###	Annotations on the table action list:
+###	Annotations on the table action list
 
 The following two annotations can be used to give additional information to the compiler and control-plane about actions in a table. They have no arguments.
 
@@ -3897,6 +4014,13 @@ table t() {
     ...
 }
 ~ End P4Example
+
+### Annotations on table entries
+
+Table entries declared in P4 may be annotated using a ```@priority <value>```,
+annotation, where value is a positive integer. The annotation sets the priority
+for matching the entry in case there are multiple key matches. Lower values for
+the priority represent higher priorities.
 
 ###	Control-plane API annotations
 
@@ -3926,9 +4050,9 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
 | ```action```   |  ```apply ``` | ```bit```        | ```bool``` |
 | ```const```    |  ```control``` | ```default``` | ```else``` |
-| ```enum```   | ```error```     | ```extern```  | ```exit```  |
-| ```false```   |  ```header```   |  ```if```         |   ```in```   |
-|  ```inout``` | ```int```         | ```match_kind``` | ```package``` |
+| ```enum```   | ```error```     |   ```extern```  |  ```exit```  |
+| ```false```   |  ```header```   |  ```if```         |  ```in```   |
+| ```inout``` | ```int```         | ```match_kind``` | ```package``` |
 | ```parser``` | ```out```         | ```return```  | ```select``` |
 | ```state``` | ```struct```   |  ```switch``` | ```table```    |
 | ```transition``` |  ```true``` |  ```tuple``` | ```typedef``` |
@@ -4032,15 +4156,6 @@ To that end, a specification for an architecture definition that enables
 programmers to write composable P4 programs, called the _Portable Switch
 Architecture_, is being developed by the Architecture Working Group.
 
-##	Populate table entries at compile time
-
-It is desirable to have the capability to initialize table entries at compile
-time. The questions discussed are:
-
-- Should these entries be immutable and the tables read-only? Are immutability
-  and read-only attributes that the programmer can specify?
-- Should these entries be at all accessible from the control plane?
-- What should be the API: builtin compiler functions, table initializers?
 
 ##	Union types
 
