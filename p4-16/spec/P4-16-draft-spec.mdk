@@ -2309,7 +2309,7 @@ operations to manipulate the union value:
 - `u.hi.setInvalid()`: if the valid bit for `hi` is true then sets it to
   false (which implies that reading u.hi will return an unspecified
   value); if the valid bit for `hi` is already false, then this
-  expression has no effect.
+  expression has no effect. In particular, if `u.hj` was valid for some `hj` other than `hi` before `u.hi.setInvalid()` was invoked, then `u.hj` remains valid and its fields continue to have the same values as before.
 
 We can understand an assignment to a union
 ~Begin P4Example
@@ -2326,8 +2326,7 @@ if `e` is valid and
 ~End P4Example
 otherwise.
 
-Supplying an expression with a union type to `emit` simply emits teh
-single header that is valid, if any.
+Supplying an expression with a union type to `emit` simply emits the single header that is valid, if any.
 
 The following example shows how we can use header unions to represent IPv4 and IPv6 headers uniformly:
 
@@ -2422,7 +2421,7 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
          transition start;
     }
     state parse_tcp_option_sack {
-         bit<32> n = b.lookahead<Tcp_option_sack_top<>().length;
+         bit<32> n = b.lookahead<Tcp_option_sack_top>().length;
          b.extract(vec.next.sack, n);
          transition start;
     }
