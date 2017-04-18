@@ -889,7 +889,7 @@ embedded line terminator"
 
 ##	Naming conventions { #sec-naming-conventions }
 
-P4 provides a rich assortment of types. There are built-in types to represent constructs such as parsers, pipelines, actions, and tables. Base types include bit-strings, numbers, and errors. Users can construct new types based on these: structures, headers, enumerations, header stacks, etc.
+P4 provides a rich assortment of types. There are built-in types to represent constructs such as parsers, pipelines, actions, and tables. Base types include bit-strings, numbers, and errors. Users can construct new types based on these: structures, enumerations, headers, header stacks, header unions, etc.
 
 In this document we adopt the Java-like naming guidelines:
 
@@ -1271,6 +1271,7 @@ Additional types can be created in P4 from base types. Some derived types can be
 - ```header```
 - ```struct```
 - header stacks
+- header unions
 - type specialization
 - ```extern```
 - ```parser```
@@ -1421,6 +1422,27 @@ header Mpls_h {
 Mpls_h[10] mpls;
 ~ End P4Example
 introduce a header stack called ```mpls``` containing 10 entries, each of type ```Mpls_h```.
+
+### Header Unions {#sec-header-unions}
+
+A header union represents an alternative between different headers. Header unions can be used to obtain uniform representations of optional headers in protocols such as TCP and IP. They also provide hints to P4 compilers that only one alternative will be present, allowing it to conserve resources. 
+
+A header union is defined as:
+~ Begin P4Grammar
+headerUnionType
+  : optAnnotations UNION name '{' StructFieldList '}'
+  ; 
+~ End P4Grammar
+
+This declaration introduces a new type with the specified name in the local scope. Each element of the list of fields used to declare a header union must be a header type. However, the empty list of fields is legal. 
+
+As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6 headers:
+~ Begin P4Example
+union IP_h {
+  IPv4_h v4;
+  IPv6_h v6;
+}
+~ End P4Example
 
 ###	Struct types { #sec-struct-types }
 P4 ```struct``` types are similar to C/C++ ```struct``` types.  They are defined with the following syntax:
@@ -2142,7 +2164,7 @@ The result of reading or writing a field in an invalid header is undefined. The
 result of reading an uninitialized header field is undefined --- even if the
 header itself is valid.
 
-##	Expressions on header stacks { #sec-expr-hs }
+## Operations on header stacks { #sec-expr-hs }
 
 A header stack is a fixed-size array of headers with the same
 type. The valid elements of a header stack need not be contiguous. P4
@@ -2230,6 +2252,182 @@ manipulate the elements at the front and back of the stack:
   ```hs.nextIndex``` counter is decremented by ```count```. The
   ```count``` argument must be a positive integer that is a
   compile-time known value. The return type is ```void```.
+
+## Operations on Header Unions { #sec-expr-hu }
+
+A variable declared with a union type is initially invalid:
+
+~Begin P4Example
+header H1 {
+  bit<8> f;
+}  
+
+header H2 {
+  bit<16> g;
+}  
+
+union U {
+  H1 h1;
+  H2 h2;
+}
+
+U u; // u invalid
+~End P4Example
+
+This also implies that each of the headers `h1` through `hn` contained
+in it is also invalid. Unlike headers, a union cannot be initialized.
+
+However, we can change the validity of a header union by assigning a
+valid header to one of its elements:
+~Begin P4Example
+header H1
+U u; 
+H1 my_h1 = { 8w0 }; // my_h1 is valid
+u.h1 = my_h1;       // u and u.h1 are both valid
+~End P4Example
+We can also assign a list to an element of a header union,
+~Begin P4Example
+U u; 
+u.h2 = { 16w1 };     // u and u.h1 are valid
+~End P4Example
+or set their validity bits directly.
+~Begin P4Example
+U u; 
+u.h1.setValid();     // u and u.h1 are valid
+H1 my_h1 = u.h1;         // my_h1 contains an undefined value
+~End P4Exampl
+Note that reading an uninitialized header produces an undefined value, even if the header is itself valid.
+
+More formally, if `u` is an expression whose type is a header union
+`U` with fields ranged over by `hi`, then we can use the following
+operations to manipulate the union value:
+
+- `u.hi.setValid():` sets the valid bit for header `hi` to true and sets
+  the valid bit for all other headers to false (which implies that
+  reading these headers will return an unspecified value).
+
+- `u.hi.setInvalid()`: if the valid bit for `hi` is true then sets it to
+  false (which implies that reading u.hi will return an unspecified
+  value); if the valid bit for `hi` is already false, then this
+  expression has no effect.
+
+We can understand an assignment to a union
+~Begin P4Example
+u.hi = e
+~End P4Example
+as equivalent to
+~Begin P4Example
+  u.hi.setValid();
+  u.hi = e;
+~End P4Example
+if `e` is valid and 
+~Begin P4Example
+  u.hi.setInvalid();
+~End P4Example
+otherwise.
+
+Supplying an expression with a union type to `emit` simply emits teh
+single header that is valid, if any.
+
+The following example shows how we can use header unions to represent IPv4 and IPv6 headers uniformly:
+
+~Begin P4Example
+header_union IP {
+    IPv4 ipv4;
+    IPv6 ipv6;
+}
+struct Parsed_packet {
+   Ethernet ethernet;
+   IP ip;
+}
+parser top(packet_in b, out Parsed_packet p) {
+    state start {
+       b.extract(p.ethernet);
+       transition select(p.ethernet.etherType) {
+           16w0x0800 : parse_ipv4;
+           16w0x86DD : parse_ipv6;
+       }
+   }
+   state parse_ipv4 {
+       b.extract(p.ip.ipv4);
+       transition accept;
+   }
+   state parse_ipv6 {
+       b.extract(p.ip.ipv6);
+       transition accept;
+   }
+}
+~End P4Example
+
+As another example, we can also use unions to parse (selected) TCP options:
+~Begin P4Example
+header Tcp_option_end_h {
+    bit<8> kind;
+}
+header Tcp_option_nop_h {
+    bit<8> kind;
+}
+header Tcp_option_ss_h {
+    bit<8>  kind;
+    bit<32> maxSegmentSize;
+}
+header Tcp_option_s_h {
+    bit<8>  kind;
+    bit<24> scale;
+}
+header Tcp_option_sack_h {
+    bit<8>         kind;
+    bit<8>         length;
+    varbit<256>    sack;
+}
+header_union Tcp_option_h {
+    Tcp_option_end_h  end;
+    Tcp_option_nop_h  nop;
+    Tcp_option_ss_h   ss;
+    Tcp_option_s_h    s;
+    Tcp_option_sack_h sack;
+}
+
+typedef Tcp_option_h[10] Tcp_option_stack;
+
+struct Tcp_option_sack_top {
+    bit<8> kind;
+    bit<8> length;
+}
+
+parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
+    state start {
+        transition select(b.lookahead<bit<8>>()) {
+            8w0x0 : parse_tcp_option_end;
+            8w0x1 : parse_tcp_option_nop;
+            8w0x2 : parse_tcp_option_ss;
+            8w0x3 : parse_tcp_option_s;
+            8w0x5 : parse_tcp_option_sack;
+        }
+    }
+    state parse_tcp_option_end {
+        b.extract(vec.next.end);
+        transition accept;
+    }
+    state parse_tcp_option_nop {
+         b.extract(vec.next.nop);
+         transition start;
+    }
+    state parse_tcp_option_ss {
+         b.extract(vec.next.ss);
+         transition start;
+    }
+    state parse_tcp_option_s {
+         b.extract(vec.next.s);
+         transition start;
+    }
+    state parse_tcp_option_sack {
+         bit<32> n = b.lookahead<Tcp_option_sack_top<>().length;
+         b.extract(vec.next.sack, n);
+         transition start;
+    }
+}
+~End P4Example
 
 ##	Function calls, method invocations { #sec-functions }
 Functions can be invoked using the function call syntax.
@@ -4157,24 +4355,6 @@ Portability and composability are critical to P4's long-term success:
 To that end, a specification for an architecture definition that enables
 programmers to write composable P4 programs, called the _Portable Switch
 Architecture_, is being developed by the Architecture Working Group.
-
-
-##	Union types
-
-There seem to be three main motivations for adding unions to P4_16:
-
-- Ignoring practical use cases, it seems natural to want the ability to have a
-  union type. Such types are present in almost every other typed programming
-  language and data with "alternative" structure arises in many situations.
-- On some targets, having a union type may provide a valuable hint to the
-  compiler that only one alternative will be present in any run of the program,
-  allowing it to conserve space for metadata. Currently the programmer would
-  have to declare headers for both alternatives, even if only one is ever valid.
-- Having a union type may provide a way to build uniform representations of
-  formats like IP options. Unfortunately due to the existing constructs for
-  processing header stacks this is not possible in the current language, but a
-  proposal for structural iteration [#sec-structured-iteration], will make this
-  possible.
 
 ##	Generalized switch statement behavior
 
