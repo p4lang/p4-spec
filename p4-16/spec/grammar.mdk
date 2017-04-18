@@ -305,12 +305,18 @@ typeDeclaration
 
 derivedTypeDeclaration
     : headerTypeDeclaration
+    | headerUnionDeclaration
     | structTypeDeclaration
     | enumDeclaration
     ;
 
 headerTypeDeclaration
     : optAnnotations HEADER name '{' structFieldList '}'
+    ;
+
+headerUnionDeclaration
+    : optAnnotations HEADER_UNION name { structure.declareType(*$3); }
+      '{' structFieldList '}'          { $$ = new IR::Type_Union(@3, *$3, $1, *$6); }
     ;
 
 structTypeDeclaration
