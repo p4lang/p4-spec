@@ -289,9 +289,10 @@ P4 programs can also interact with fixed-function objects by invoking their serv
 
 ~ Begin P4Example
 extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
+    Checksum16();              // constructor
+    void clear();              // prepare unit for computation
+    void update<T>(in T data); // add data to checksum
+    void remove<T>(in T data); // remove data from existing checksum
     bit<16> get(); // get the checksum for the data added since last clear
 }
 ~ End P4Example
@@ -392,9 +393,10 @@ package VSS<H>(Parser<H> p,
 // Architecture-specific objects that can be instantiated
 // Checksum unit
 extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
+    Checksum16();              // constructor
+    void clear();              // prepare unit for computation
+    void update<T>(in T data); // add data to checksum
+    void remove<T>(in T data); // remove data from existing checksum
     bit<16> get(); // get the checksum for the data added since last clear
 }
 ~ End P4Example
@@ -469,12 +471,13 @@ The arrow shown from the parser runtime to the demux block represents an additio
 ###	Available extern blocks { #sec-vss-extern }
 
 The VSS architecture provides an incremental checksum extern block,
-called ```Checksum16```. The checksum unit has four methods:
+called ```Checksum16```. The checksum unit has a constructor and four
+methods:
 
 - ```clear()``` --- prepares the unit for a new computation
 - ```update<T>(in T data)``` --- add some data to be checksummed. The data must be either a bit-string, a header-typed value, or a ```struct``` containing such values. The fields in the header/struct are concatenated in the order they appear in the type declaration.
 - ```get()``` --- returns the 16-bit one's complement checksum. When this function is invoked the checksum must have received an integral number of bytes of data.
-- ```remove<T>(T data)``` --- under the assumption that ```data``` was used for computing the current checksum, ```data``` is removed from the checksum (“undo”).
+- ```remove<T>(in T data)``` --- under the assumption that ```data``` was used for computing the current checksum, ```data``` is removed from the checksum (“undo”).
 
 
 ##	A complete Very Simple Switch program { #sec-vss-all }
@@ -586,14 +589,15 @@ control TopPipe(inout Parsed_packet headers,
       action Drop_action()
       { outCtrl.outputPort = DROP_PORT; }
 
+      IPv4Address nextHop;
+
      /**
       * Set the next hop and the output port.
       * Decrements ipv4 ttl field.
       * @param ivp4_dest ipv4 address of next hop
       * @param port output port
       */
-      action Set_nhop(out IPv4Address nextHop,
-                      IPv4Address ipv4_dest,
+      action Set_nhop(IPv4Address ipv4_dest,
                       PortId port) {
           nextHop = ipv4_dest;
           headers.ip.ttl = headers.ip.ttl - 1;
@@ -610,7 +614,7 @@ control TopPipe(inout Parsed_packet headers,
          key = { headers.ip.dstAddr: lpm; }  // longest-prefix match
          actions = {
               Drop_action;
-              Set_nhop(nextHop);
+              Set_nhop;
          }
 
          size = 1024;
@@ -4133,9 +4137,10 @@ There are no built-in constructs in P4~16~ for manipulating packet checksums. We
 For example, one could provide an incremental checksum unit ```Checksum16``` (also described in the VSS example in Section [#sec-vss-extern]) for computing 16-bit one's complement using an ```extern``` object with a signature such as:
 ~ Begin P4Example
 extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
+    Checksum16();              // constructor
+    void clear();              // prepare unit for computation
+    void update<T>(in T data); // add data to checksum
+    void remove<T>(in T data); // remove data from existing checksum
     bit<16> get(); // get the checksum for the data added since last clear
 }
 ~ End P4Example
