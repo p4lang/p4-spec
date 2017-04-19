@@ -1,25 +1,9 @@
-# Travis CI integration for p4-spec using a standard Linux image
+# Travis CI integration for p4-spec using Docker.
 
-dist: trusty
-sudo: false
-
-addons:
-  apt:
-    packages:
-      - dvipng
-      - make
-      - nodejs
-      - texlive-base
-      - texlive-fonts-recommended
-      - texlive-generic-extra
-      - texlive-latex-base
-      - texlive-latex-recommended
-      - texlive-latex-extra
-      - texlive-science
-      - texlive-xetex
+services:
+  - docker
 
 before_install:
-  - npm install madoko -g
   - git config user.name "Travis CI"
   - git config user.email "p4c@barefootnetworks.com"
 
@@ -27,22 +11,11 @@ script:
   - git remote add public git@github.com:p4lang/p4-spec.git
   - git fetch public gh-pages
   - git checkout gh-pages
-  - git rebase origin/master
-  - make -C p4-16/spec
+  - git pull --ff public gh-pages
+  - git rebase master
+  - docker run -v `pwd`/p4-16/spec:/usr/src/p4-spec p4lang/madoko-debian make
 
 after_success:
   - cp p4-16/spec/build/P4-16-draft-spec.{html,pdf} docs/
   - git commit -m "docs for $TRAVIS_COMMIT" docs/P4-16-draft-spec.{html,pdf}
   - git push public gh-pages
-
-# Travis CI integration for p4-spec using Docker.
-
-# services:
-#   - docker
-
-# install:
-#   - docker build -t p4c --build-arg IMAGE_TYPE=test .
-
-# script:
-#   - docker run -w /p4c/build p4c make check VERBOSE=1
-#   - docker run -w /p4c/build p4c make cpplint
