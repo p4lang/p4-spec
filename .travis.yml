@@ -11,11 +11,10 @@ script:
   - git remote add public git@github.com:p4lang/p4-spec.git
   - git fetch public gh-pages
   - git checkout gh-pages
-  - git pull --ff public gh-pages
   - git rebase master
-  - docker run -v `pwd`/p4-16/spec:/usr/src/p4-spec p4lang/madoko-debian make
+  - docker run -v `pwd`/p4-16/spec:/usr/src/p4-spec p4lang/madoko-debian:sid make
 
 after_success:
   - cp p4-16/spec/build/P4-16-draft-spec.{html,pdf} docs/
   - git commit -m "docs for $TRAVIS_COMMIT" docs/P4-16-draft-spec.{html,pdf}
-  - git push public gh-pages
+  - git push public +gh-pages
