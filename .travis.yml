@@ -1,6 +1,8 @@
 # Travis CI integration for p4-spec using a standard Linux image
 
-dist: xenial
+dist: trusty
+sudo: false
+
 addons:
   apt:
     packages:
@@ -19,19 +21,20 @@ addons:
 
 before_install:
   - npm install madoko -g
-  - cd p4lang/p4-spec
-  - git checkout gh-pages
-  - git rebase master
+  - git config user.name "Travis CI"
+  - git config user.email "p4c@barefootnetworks.com"
 
 script:
+  - git remote add public git@github.com:p4lang/p4-spec.git
+  - git fetch public gh-pages
+  - git checkout gh-pages
+  - git rebase origin/master
   - make -C p4-16/spec
 
 after_success:
   - cp p4-16/spec/build/P4-16-draft-spec.{html,pdf} docs/
-  - git config user.name "Travis CI"
-  - git config user.email "p4c@barefootnetworks.com"
   - git commit -m "docs for $TRAVIS_COMMIT" docs/P4-16-draft-spec.{html,pdf}
-  - git push origin gh-pages
+  - git push public gh-pages
 
 # Travis CI integration for p4-spec using Docker.
 
