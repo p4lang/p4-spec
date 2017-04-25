@@ -556,7 +556,7 @@ with the \texttt{metadata} keyword) differ only in their validity. Packet header
 maintain a separate valid indication which may be tested explicitly. Metadata 
 is always considered to be valid. This is further explained in 
 Section~\ref{sec:testing}.  Metadata instances are 
-initialized to 0 by default.
+initialized to 0 by default.  (TBD: Is this true?  Or are metadata instances uninitialized and contain undefined values initially?)
 %%, but initial values may be specified in their declaration.
 
 The BNF for header and metadata instances is:
@@ -658,7 +658,7 @@ represent that field's validity is a reasonable work around.
 Only valid packet header fields may result in a match (when a value is
 specified for exact or ternary matches against the field), although a
 match operation may explicitly check if a header instance (or field)
-is valid. Only valid packet headers are considered for deparsing (see
+is valid (TBD: Should this be updated as asked elsewhere?). Only valid packet headers are considered for deparsing (see
 Section~\ref{sec:deparsing}).  
 
 \SUBSUBSECTION{Header Stacks}{headerstacks}
@@ -798,7 +798,7 @@ The \texttt{output_width} value is in bits.
 
 A field instance is excluded from the calculation (i.e., it is treated as 
 if the instance is not listed in the input list) if the field's header 
-is not valid.
+is not valid.  (TBD: Is this true, or should the result of the calculation be undefined, since it will be fed an undefined value for that header field?)
 
 The algorithm is specified as a string.  The following algorithms are
 defined with the given names, and targets may support others.
@@ -886,7 +886,7 @@ The \texttt{verify} option indicates that the parser should calculate the expect
 value and check if that value is stored in the indicated field. If the value 
 is not equal, then a \texttt{p4_pe_checksum} exception is generated; see 6.6.1. 
 Standard Parser Exceptions. This check occurs at the end of parsing and is 
-performed only if \texttt{field_ref} is valid.
+performed only if \texttt{field_ref} is valid.  (TBD: True, or should this be changed to say that a verify operation on a field in an invalid header has undefined behavior?)
 
 The \texttt{update} option indicates that the system should update the value of the 
 field if changes are made to any fields on which it depends. The update to 
@@ -1832,7 +1832,7 @@ Add a header to the packet's Parsed Representation
 { % Description
 If the \texttt{header_instance} is not an element in a header stack, the indicated 
 header instance is set valid. If the header instance was invalid, all its 
-fields are initialized to 0. If the header instance is already valid, it is 
+fields are initialized to 0 (TBD: Should this be updated to 'all its fields contain unspecified values'?). If the header instance is already valid, it is 
 not changed.
 
 If \texttt{header_instance} is an element in a header stack, the effect is to push 
@@ -1913,8 +1913,7 @@ is less than that of the destination, it will be coerced to the larger field
 size according to its signedness.
 
 If the parent header instance of \texttt{dest} is not valid, the action has no effect. 
-If \texttt{value} is a field reference and its parent header is not valid, the operation 
-has no effect.
+If \texttt{value} is a field reference and its parent header is not valid, the operation leaves \texttt{dest} with an undefined value.
 
 If \texttt{mask} is specified, then the field becomes \texttt{(current_value \& $\sim$ mask) | 
 (value \& mask)}.  If \texttt{mask} is not specified, the operation has the effect 
@@ -1935,7 +1934,7 @@ Add a value to a field.
 { % Description
 The \texttt{dest} field's value is updated by adding the value parameter. The \texttt{value} parameter 
 may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
-and its parent header is not valid, then no change is made to \texttt{dest}. A description 
+and its parent header is not valid, then the operation leaves \texttt{dest} with an undefined value. A description 
 of the logical behavior follows in the Section~\ref{sec:fieldasgmt} below.
 If \texttt{value} is an immediate value, it may 
 be negative.
@@ -1956,8 +1955,8 @@ Add value1 and value2 and store in dest.
 The \texttt{dest} field's value is updated with the result of adding
 the two value parameters. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}.  A description of the logical
+is a field reference and its parent header is not valid, then
+the operation leaves \texttt{dest} with an undefined value.  A description of the logical
 behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
 \texttt{value} is an immediate value, it may be negative.
 }
@@ -1976,7 +1975,7 @@ Subtract a value from a field.
 The \texttt{dest} field's value is updated by subtracting the value parameter. The \texttt{value} parameter 
 may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  
 If \texttt{value} is a field reference 
-and its parent header is not valid, then no change is made to \texttt{dest}. 
+and its parent header is not valid, then the operation leaves \texttt{dest} with an undefined value. 
 If a \texttt{value} is an immediate value, it may be negative.
 
 }
@@ -1996,8 +1995,8 @@ Subtract value2 from value1 and store in dest.
 The \texttt{dest} field's value is updated with the result of subtracting
 \texttt{value2} from \texttt{value1}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. If a
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. If a
 \texttt{value} is an immediate value, it may be negative.
 }
 
@@ -2020,6 +2019,10 @@ The hash value is used to generate a value between \texttt{base} and
 The result can be used as a hash digest of a long key (such as 5-tuple) or as 
 an offset/index to reference a register array. Normal value conversion 
 takes place when setting \texttt{dest} to the result.
+
+If any of the fields in the \texttt{field_list_calc} have a parent
+header that is not valid, then the operation leaves \texttt{dest} with
+an undefined value.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2039,6 +2042,10 @@ and stored in \texttt{dest}.
 Targets may impose different restrictions to \texttt{lower_bound} to \texttt{upper_bound}: 
 for example, a target may require \texttt{lower_bound} 
 to be zero and \texttt{upper_bound} to be 2**n - 1.
+
+If either of \texttt{lower_bound} or \texttt{upper_bound} is a field reference
+and its parent header is not valid, then the operation leaves
+\texttt{dest} with an undefined value.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2056,8 +2063,8 @@ Compute a bitwise AND of two values.
 The \texttt{dest} field's value is updated with the result of bitwise AND of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}.
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value.
 Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
 be the same bit width.
 }
@@ -2077,8 +2084,8 @@ Compute a bitwise OR of two values.
 The \texttt{dest} field's value is updated with the result of bitwise OR of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. 
 Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
 be the same bit width.
 }\\
@@ -2098,8 +2105,8 @@ Compute a bitwise XOR of two values.
 The \texttt{dest} field's value is updated with the result of bitwise XOR of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. 
 Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
 be the same bit width.
 }\\
@@ -2119,8 +2126,8 @@ Bitwise shift left of \texttt{value1} by \texttt{value2} number of bits.
 The \texttt{dest} field's value is updated with the result of 
 \texttt{value1} $<<$ \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. \texttt{value2} must be positive. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. \texttt{value2} must be positive. 
 }\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2138,8 +2145,8 @@ Bitwise shift right of \texttt{value1} by \texttt{value2} number of bits.
 The \texttt{dest} field's value is updated with the result of 
 \texttt{value1} $>>$ \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. \texttt{value2} must be positive. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. \texttt{value2} must be positive. 
 }\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2885,7 +2892,7 @@ case of metadata, the field itself) should be tested for validity.  The value
 of \texttt{1} will match when the header is valid; \texttt{0} will match when the header is 
 not valid. As a reminder, the table does not have to explicitly include a 
 match on a field's validity to safely match on its value - invalid fields 
-will never match on a table entry that includes it. Note that metadata fields 
+will never match on a table entry that includes it (TBD: Is this true?  Or is it more accurate to say something like ``invalid fields cause the search key to contain an undefined value in those bit positions, and whether they match a table entry or not is thus unspecified''?). Note that metadata fields 
 are \textit{always} valid.
 \item
 The \texttt{min_size} attribute indicates the minimum number of entries required 
