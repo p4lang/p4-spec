@@ -4249,13 +4249,56 @@ the priority represent higher priorities.
 
 ###	Control-plane API annotations { #sec-control-plane-api-annotations }
 
-The ```@name``` annotation can be applied to language element to direct the compiler to use a specific local name when generating the external APIs used to manipulate the element from the control-plane. It always has a string literal argument, which shall not contain the "```.```" character.
+The ```@name``` annotation directs the compiler to use a different local name when generating the external APIs used to manipulate a language element from the control plane. It must have a string literal argument, which shall not contain the "```.```" character.  In the following example, the fully-qualified name of the table is ```c_inst.t1```.
 
 ~ Begin P4Example
-@name("t1") table t { ... }
+control c( ... )() {
+    @name("t1") table t { ... }
+    apply { ... }
+}
+c() c_inst;
 ~ End P4Example
 
-The ```@hidden``` annotation hides a controllable entity, eg. a table, key, action, or extern, from the control plane.  This effectively removes its fully-qualified name (Section [#sec-cp-names]).  No element may be annotated with both ```@name``` and ```@hidden``` annotations.
+The ```@globalname``` annotation acts like the ```@name``` annotation, except
+it overrides the fully-qualified name (not just the local name) for the
+annotated element, and its argument may contain the "```.```" character.  In
+the following example, the fully-qualified name of the table is ```foo.bar```.
+
+~ Begin P4Example
+control c( ... )() {
+    @globalname("foo.bar") table t { ... }
+    apply { ... }
+}
+c() c_inst;
+~ End P4Example
+
+The ```@hidden``` annotation hides a controllable entity, eg. a table, key,
+action, or extern, from the control plane.  This effectively removes its
+fully-qualified name (Section [#sec-cp-names]).  It does not take any arguments.
+
+#### Restrictions
+
+Each element may be annotated with at most one ```@name```, ```@globalname```, or ```@hidden``` annotation,
+and each control plane name must refer to at most one
+controllable entity.  This is of special concern when using the ```@globalname``` annotation:
+If a type containing a ```@globalname``` annotation
+is instantiated more than once, it will result in the same global
+name referring to two controllable entities.
+
+~ Begin P4Example
+control c( ... )() {
+    @globalname("foo.bar") table t { ... }
+    apply { ... }
+}
+c() c1;
+c() c2;
+~ End P4Example
+
+Without the ```@globalname``` annotation, this program would produce two
+controllable entities with fully-qualified names ```c1.t``` and ```c2.t```.
+However, the ```@globalname("foo.bar")``` annotation renames table ```t``` in
+both instances to ```foo.bar```, resulting in one name that refers to two
+controllable entities, which is illegal.
 
 ###	Concurrency control annotations
 The ```@atomic``` annotation, described in Section [#sec-concurrency] can be used to enforce the atomic execution of a code block.
