@@ -552,7 +552,7 @@ struct Parsed_packet {
     IPv4_h     ip;
 }
 
-parser TopParser(packet_in b, out Parsed_packet p)() {
+parser TopParser(packet_in b, out Parsed_packet p) {
     Checksum16() ck;  // instantiate checksum unit
 
     state start {
@@ -579,7 +579,7 @@ parser TopParser(packet_in b, out Parsed_packet p)() {
 control TopPipe(inout Parsed_packet headers,
                 in error parseError,// parser error
                 in InControl inCtrl,// input port
-                out OutControl outCtrl)() {
+                out OutControl outCtrl) {
      IPv4Address nextHop;  // local variable
 
      /**
@@ -697,7 +697,7 @@ control TopPipe(inout Parsed_packet headers,
 }
 
 // deparser section
-control TopDeparser(inout Parsed_packet p, packet_out b)() {
+control TopDeparser(inout Parsed_packet p, packet_out b) {
     Checksum16() ck;
     apply {
         b.emit(p.ethernet);
@@ -961,23 +961,20 @@ prefixedNonTypeName
     ;
 
 lvalue
-    : typeName
-    | prefixedNonTypeName
+    : prefixedNonTypeName
     | lvalue '.' member
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
     ;
 ~ End P4Grammar
 
-- Identifiers of ```parser``` or ```control``` types (see Section [#sec-opt-cparens]).
 - Identifiers of a base or derived type.
 - Structure/header field member access operations (using the dot notation).
 - References to elements within header stacks (see Section [#sec-expr-hs]): indexing, and references to ```last``` and ```next```.
 - The result of a bit-slice operator ```[m:l]```.
 
-The following is a legal l-value:  ```headers.stack[4].field```.
-
-Method or function calls cannot return l-values.
+The following is a legal l-value:  ```headers.stack[4].field```.  Note that
+method or function calls cannot return l-values.
 
 ##	Calling convention: call by copy in/copy out { #sec-calling-convention }
 P4 provides multiple constructs for writing modular programs: extern methods, parsers, controls, actions. All these constructs behave similarly to procedures in traditional programming languages:
@@ -3664,17 +3661,20 @@ When instantiating the ```GenericParser``` one must supply a value for the ```ud
 GenericParser(false) TopParser;
 ~ End P4Example
 
-## Optional constructor parentheses { #sec-opt-cparens }
+## Optional constructor parentheses
+
+For the sake of readability, type definitions with no constructor arguments may
+omit the second set of parentheses.  That is, ```control c(...)();``` and ```control c(...);``` are equivalent.
+
+## Direct type invocation
 
 Controls and parsers are often instantiated exactly once.  As a light syntactic
-sugar, control and parser declarations with no constructor parameters may
-exclude the second set of parentheses in their declaration, in which case they
-are treated as both a type declaration and an object literal of that type with
-the same name.  Consider the following example.
+sugar, control and parser declarations with no constructor parameters may be
+applied directly, as if they were an instance.  This has the effect of creating
+and applying a local instance of that type.
 
 ~ Begin P4Example
-control callee( ... ) // constructor parentheses excluded
-{ ... }
+control callee( ... ) { ... }
 
 control caller( ... )( ... ) {
     apply {
@@ -3683,17 +3683,16 @@ control caller( ... )( ... ) {
 }
 ~ End P4Example
 
-The definition of ```callee``` is equivalent to the following.
+The definition of ```caller``` is equivalent to the following.
 
 ~ Begin P4Example
-control callee( ... )() { ... }
-callee() callee; // shadows the type `callee` with an instance of the same name
+control caller( ... )( ... ) {
+    @name("callee") callee() callee_inst; // local instance of callee
+    apply {
+        callee_inst.apply( ... );         // callee_inst is applied
+    }
+}
 ~ End P4Example
-
-Note that if the constructor parameters are omitted, the ```control``` or ```parser```
-so defined may *only* be used as an object literal of that type; it
-may not be instantiated.  Furthermore, some targets may reject programs in
-which such instances are used more than once.
 
 #	Packet construction (deparsing) { #sec-deparse }
 
