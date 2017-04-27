@@ -1073,7 +1073,7 @@ direction
 ~ End P4Grammar
 
 
-##	Name resolution
+##	Name resolution { #sec-name-resolution }
 
 ###	Lookup in the top-level namespace
 Identifiers or type names can be preceded by a dot ```.``` prefix, which will cause the identifier to be looked-up in the top-level namespace.
@@ -3934,7 +3934,153 @@ Figure [#fig-compileeval] shows the result of the evaluation in a graphical form
 
 ##	Control plane names { #sec-cp-names }
 
-The evaluation process may create multiple instances from one type. Consider the following example:
+Every controllable entity exposed in a P4 program must be assigned a unique,
+fully-qualified name, which the control plane may use to interact with that
+entity.  The following entities are controllable.
+
+ - tables
+ - keys
+ - actions
+ - extern instances
+
+A fully qualified name consists of the local name of a controllable entity
+prepended with the fully qualified name of its enclosing namespace.  Hence, the
+following program constructs, which enclose controllable entites, must
+themselves have unique, fully-qualified names.
+
+ - control instances
+ - parser instances
+
+The evaluation process may create multiple instances from one type, each of
+which must have a unique, fully-qualified name.
+
+### Computing control names
+
+The fully-qualified name of a construct is derived by concatenating the
+fully-qualified name of its enclosing construct with its local name.
+Constructs with no enclosing namespace, i.e. those defined at the global scope,
+have the same local and fully-qualified names.  The local names of controllable
+entities and enclosing constructs are derived from the syntax of a P4 program
+as follows.
+
+#### Tables
+
+For each ```table``` construct, its syntactic name becomes the local name of the table.  For example:
+
+~ Begin P4Example
+control c(...)() {
+    table t { ... }
+}
+~ End P4Example
+
+This table's local name is ```t```.
+
+#### Keys
+
+Syntactically, table keys are expressions.  For simple expressions, the local
+key name can be generated from the expression itself.  In the following
+example, the table ```t``` has keys with names ```data.f1``` and ```hdrs[3].f2```.
+
+~ Begin P4Example
+table t {
+    keys = {
+        data.f1 : exact;
+        hdrs[3].f2 : exact;
+    }
+    actions = { ... }
+}
+~ End P4Example
+
+The following kinds of expressions have local names derived from their syntactic names:
+
+| Kind | Example | Name |
+| ---- | ------- | ---- |
+| The ```isValid()``` method. | ```h.isValid()``` | ```"h.isValid()"``` |
+| Array accesses. | ```header_stack[1]``` | ```"header_stack[1]"``` |
+| Constants. | ```1``` | ```"1"``` |
+| Field projections. | ```data.f1``` | ```"data.f1"``` |
+| Slices. | ```f1[0:3]``` | ```"f1[3:0]"``` |
+
+All other kinds of expressions **must** be annotated with a ```@name```
+annotation (Section [#sec-control-plane-api-annotations]), as in the following example.
+
+~ Begin P4Example
+table t {
+    keys = {
+        data.f1 + 1 : exact @name("f1_inc");
+    }
+    actions = { ... }
+}
+~ End P4Example
+
+Here, the ```@name("f1_mask")``` annotation assigns the local name ```"f1_mask"``` to this
+key.
+
+
+#### Actions
+
+For each ```action``` construct, its syntactic name is the local name of the action.  For example:
+
+~ Begin P4Example
+control c(...)() {
+    action a(...) { ... }
+}
+~ End P4Example
+
+This action's local name is ```a```.
+
+#### Instances
+
+The local names of ```extern```, ```parser```, and ```control``` instances are
+derived based on how the instance is used.  If the instance is bound to a name,
+that name becomes its local control plane name.  In the following example, the
+local name of the instance is ```c_inst```.
+
+~ Begin P4Example
+control c(...)() { ... }
+c() c_inst;
+~ End P4Example
+
+Otherwise, if the instance is created as an actual argument, then its local
+name is the name of the formal parameter to which it will be bound.  In the
+following example, the local name of the extern instance is ```e_in```.
+
+~ Begin P4Example
+extern e( ... ) { ... }
+control c ( ... )(e e_in) { ... }
+c(e()) c_inst;
+~ End P4Example
+
+If the construct being instantiated is passed as an argument to a package, the
+instance name is derived from the user-supplied type definition when possible.
+In the following example, the local name of the instance of ```MyC``` is ```c```,
+and the local name of the extern is ```e2```, not ```e1```.
+
+~ Begin P4Example
+extern ExternX { ... }
+control ArchC(ExternX e1);
+package Arch(ArchC c);
+
+control MyC(ExternX e2)() { ... }
+Arch(MyC()) main;
+~ End P4Example
+
+Note that in this example, the architecture will supply an instance of the
+extern when it applies the instance of ```MyC``` passed to the ```Arch```
+package.  The fully-qualified name of that instance is ```main.c.e2```.
+
+A programmer can always assign a control plane name to an instance by binding
+it to a name in the program, rather than relying on the parameter name supplied
+by the type definition or architecture.
+
+~ Begin P4Example
+MyC() d;
+Arch(d) main;
+~ End P4Example
+
+In the example above, the name of the ```MyC``` instance is ```d```.  Next,
+consider a larger example that demonstrates name generation when there are
+multiple instances.
 
 ~ Begin P4Example
 control Callee() {
@@ -3954,12 +4100,68 @@ package Top(simple s);
 Top(Caller()) main;
 ~ End P4Example
 
-The compile-time evaluation of this program produces the structure in Figure [#fig-evalmultiple]. Notice that there are two instances of the ```table t```. These instances must both be exposed to the control-plane. To name an object in this hierarchy one uses a path composed of the containing instance names. In this case the two tables have names: ```s.c1.t``` and ```s.c2.t```. Package argument names are derived from the parameter names (```s``` is the name of the top package parameter that is instantiated with a ```caller``` object). If the name of an object is not ambiguous external tools may expose shortcuts; e.g., ```c1``` may be used as an unambiguous name for the ```s.c1``` object.
+The compile-time evaluation of this program produces the structure in Figure
+[#fig-evalmultiple]. Notice that there are two instances of the ```table t```.
+These instances must both be exposed to the control plane. To name an object in
+this hierarchy, one uses a path composed of the names of containing instances.
+In this case, the two tables have names ```s.c1.t``` and ```s.c2.t```, where ```s``` is
+the name of the argument to the package instantiation, which is
+derived from the name of its corresponding formal parameter.
 
 ~ Figure { #fig-evalmultiple; caption: "Evaluating a program that has several instantiations of the same component." }
 ![evalmultiple]
 ~
 [evalmultiple]: figs/evalmultiple.png { width: 5cm; page-align: here }
+
+
+### Annotations controlling naming
+
+Control plane-related annotations (Section
+[#sec-control-plane-api-annotations]) can alter the names exposed to the
+control plane in the following ways.
+
+- The ```@hidden``` annotation hides a controllable entity from the control
+  plane.  This is the only case in which a controllable entity is not required
+  to have a unique, fully-qualified name.
+
+- The ```@name``` annotation may be used to change the local name of a
+  controllable entity.
+
+- The ```@globalname``` annotation my be used to change the global name of a
+  controllable entity.
+
+Programs that yield the same fully-qualified name for two different
+controllable entities are invalid.  Care must be taken with ```@globalname```
+in particular: If a type contains a ```@globalname``` annotation and is
+instantiated twice, the two instances will have the same fully-qualified name.
+
+### Recommendations
+
+The control plane may refer to a controllable entity by a postfix of its fully
+qualified name when it is unambiguous in the context in which it is used.
+Consider the following example.
+
+~ Begin P4Example
+control c( ... )() {
+    action a ( ... ) { ... }
+    table t {
+        keys = { ... }
+        actions = { a; } }
+}
+c() c_inst;
+~ End P4Example
+
+Control plane software may refer to action ```c_inst.a``` as ```a``` when
+inserting rules into table ```c_inst.t```, because it is clear from the
+definition of the table which action ```a``` refers to.
+
+Not all unambiguous postfix shortcuts are recommended.  Consider the first
+example in Section [#sec-cp-names].  One might be tempted to refer to ```s.c1``` simply as ```c1```,
+as no other instance named ```c1``` appears in
+the program.  However, this leads to a brittle program: Future modifications
+can never introduce an instance named ```c1``` or include libraries of P4 code
+that contain instances with that name.
+
 
 ##	Dynamic evaluation { #sec-dynamic-eval }
 
@@ -4055,13 +4257,58 @@ annotation, where value is a positive integer. The annotation sets the priority
 for matching the entry in case there are multiple key matches. Lower values for
 the priority represent higher priorities.
 
-###	Control-plane API annotations
+###	Control-plane API annotations { #sec-control-plane-api-annotations }
 
-The ```@name``` annotation can be applied to language element to direct the compiler to use a specific name when generating the external APIs used to manipulate the element from the control-plane. It always has a string literal argument.
+The ```@name``` annotation directs the compiler to use a different local name when generating the external APIs used to manipulate a language element from the control plane. It must have a string literal argument, which shall not contain the "```.```" character.  In the following example, the fully-qualified name of the table is ```c_inst.t1```.
 
 ~ Begin P4Example
-@name("t1") table t { ... }
+control c( ... )() {
+    @name("t1") table t { ... }
+    apply { ... }
+}
+c() c_inst;
 ~ End P4Example
+
+The ```@globalname``` annotation acts like the ```@name``` annotation, except
+it overrides the fully-qualified name (not just the local name) for the
+annotated element, and its argument may contain the "```.```" character.  In
+the following example, the fully-qualified name of the table is ```foo.bar```.
+
+~ Begin P4Example
+control c( ... )() {
+    @globalname("foo.bar") table t { ... }
+    apply { ... }
+}
+c() c_inst;
+~ End P4Example
+
+The ```@hidden``` annotation hides a controllable entity, eg. a table, key,
+action, or extern, from the control plane.  This effectively removes its
+fully-qualified name (Section [#sec-cp-names]).  It does not take any arguments.
+
+#### Restrictions
+
+Each element may be annotated with at most one ```@name```, ```@globalname```, or ```@hidden``` annotation,
+and each control plane name must refer to at most one
+controllable entity.  This is of special concern when using the ```@globalname``` annotation:
+If a type containing a ```@globalname``` annotation
+is instantiated more than once, it will result in the same global
+name referring to two controllable entities.
+
+~ Begin P4Example
+control c( ... )() {
+    @globalname("foo.bar") table t { ... }
+    apply { ... }
+}
+c() c1;
+c() c2;
+~ End P4Example
+
+Without the ```@globalname``` annotation, this program would produce two
+controllable entities with fully-qualified names ```c1.t``` and ```c2.t```.
+However, the ```@globalname("foo.bar")``` annotation renames table ```t``` in
+both instances to ```foo.bar```, resulting in one name that refers to two
+controllable entities, which is illegal.
 
 ###	Concurrency control annotations
 The ```@atomic``` annotation, described in Section [#sec-concurrency] can be used to enforce the atomic execution of a code block.
