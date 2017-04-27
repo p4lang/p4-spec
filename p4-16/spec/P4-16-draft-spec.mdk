@@ -933,7 +933,7 @@ Various constructs act as namespaces that create local scopes for names:
 - Derived type declarations (```struct```, ```header```, ```enum```) introduce local scopes for the field names
 - Block statements introduce local lexically-enclosed scopes
 - ```parser```, ```table```, ```action```, and ```control``` blocks introduce local scopes
-- A declaration with type variables introduces a new scope for that variable. For example, in the following ```control``` declaration, the scope of the type variable ```H``` extends to the end of the declaration:
+- A declaration with type variables introduces a new scope for that variable. For example, in the following ```extern``` declaration, the scope of the type variable ```H``` extends to the end of the declaration:
 ~ Begin P4Example
 extern E<H>(...) { ... } // scope of H ends here.
 ~ End P4Example
@@ -968,21 +968,20 @@ lvalue
     ;
 ~ End P4Grammar
 
-- Identifiers of a base or derived type
-- Structure/header field member access operations (using the dot notation)
+- Identifiers of a base or derived type.
+- Structure/header field member access operations (using the dot notation).
 - References to elements within header stacks (see Section [#sec-expr-hs]): indexing, and references to ```last``` and ```next```.
-- The result of a bit-slice operator ```[m:l]```
+- The result of a bit-slice operator ```[m:l]```.
 
-The following is a legal l-value:  ```headers.stack[4].field```.
-
-Method or function calls cannot return l-values.
+The following is a legal l-value:  ```headers.stack[4].field```.  Note that
+method or function calls cannot return l-values.
 
 ##	Calling convention: call by copy in/copy out { #sec-calling-convention }
 P4 provides multiple constructs for writing modular programs: extern methods, parsers, controls, actions. All these constructs behave similarly to procedures in traditional programming languages:
 
-- They have named and typed parameters
+- They have named and typed parameters.
 - They introduce a new local scope for parameters and local variables.
-- They allow arguments to be passed by binding them to their parameters
+- They allow arguments to be passed by binding them to their parameters.
 
 Invocations are executed using a copy-in/copy-out semantics.
 
@@ -3660,6 +3659,39 @@ When instantiating the ```GenericParser``` one must supply a value for the ```ud
 ~ Begin P4Example
 // TopParser is a GenericParser where udpSupport = false
 GenericParser(false) TopParser;
+~ End P4Example
+
+## Optional constructor parentheses
+
+For the sake of readability, type definitions with no constructor arguments may
+omit the second set of parentheses.  That is, ```control c(...)();``` and ```control c(...);``` are equivalent.
+
+## Direct type invocation
+
+Controls and parsers are often instantiated exactly once.  As a light syntactic
+sugar, control and parser declarations with no constructor parameters may be
+applied directly, as if they were an instance.  This has the effect of creating
+and applying a local instance of that type.
+
+~ Begin P4Example
+control callee( ... ) { ... }
+
+control caller( ... )( ... ) {
+    apply {
+        callee.apply( ... ); // callee is treated as an instance
+    }
+}
+~ End P4Example
+
+The definition of ```caller``` is equivalent to the following.
+
+~ Begin P4Example
+control caller( ... )( ... ) {
+    @name("callee") callee() callee_inst; // local instance of callee
+    apply {
+        callee_inst.apply( ... );         // callee_inst is applied
+    }
+}
 ~ End P4Example
 
 #	Packet construction (deparsing) { #sec-deparse }

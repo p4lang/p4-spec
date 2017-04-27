@@ -125,6 +125,7 @@ parserStatements
 
 parserStatement
     : assignmentOrMethodCallStatement
+    | directApplication
     | parserBlockStatement
     | constantDeclaration
     | variableDeclaration
@@ -375,8 +376,13 @@ conditionalStatement
     | IF '(' expression ')' statement ELSE statement
     ;
 
+// To support direct invocation of a control or parser without instantiation
+directApplication
+    : typeName '.' APPLY '(' argumentList ')' ';' 
+
 statement
     : assignmentOrMethodCallStatement
+    | directApplication
     | conditionalStatement
     | emptyStatement
     | blockStatement
