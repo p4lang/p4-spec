@@ -1,6 +1,6 @@
 Title : P4~16~ Language Specification
 Title Note : (draft)
-Title Footer: January 11, 2016
+Title Footer: March 14, 2017
 Author : The P4.org language consortium
 Heading depth: 5
 
@@ -216,7 +216,11 @@ Compared to the state-of-the-art method of programming network processing system
 
 The P4 language went through some significant, backwards-incompatible changes to the language syntax and semantics. The language evolution between the previous version (P4~14~) and the current one (P4~16~) is illustrated in Figure [#fig-p4transition]. In particular, a significant number of language constructs have been eliminated from the language and will be migrated into libraries. Examples include: counters, checksum units, meters, etc.
 
-The original complex language (74 keywords) has been thus transformed into a relatively small core language (35 keywords, shown in Section [#sec-p4-keywords]) accompanied by a core library of fundamental constructs which are necessary for writing almost all P4 programs. This core language is the subject of this specification.
+The original complex language (74 keywords) has been thus transformed into a
+relatively small core language (35 keywords, shown in Section
+[#sec-p4-keywords]) accompanied by a core library of fundamental constructs
+which are necessary for writing almost all P4 programs. This core language is
+the subject of this specification.
 
 The v1.1 version of P4 introduced a language construct called ```extern``` which can be used to describe library elements. Many constructs that are defined in the v1.1 language specification will thus be transformed into such library elements (including equivalents to v1.1 constructs that have been eliminated from the language, such as counters and meters). Some of these ```extern``` objects are expected to be standardized, and they will be in the scope of a separate document, describing a standard library of P4 elements. In this document we provide several examples of ```extern``` constructs.
 
@@ -285,9 +289,10 @@ P4 programs can also interact with fixed-function objects by invoking their serv
 
 ~ Begin P4Example
 extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
+    Checksum16();              // constructor
+    void clear();              // prepare unit for computation
+    void update<T>(in T data); // add data to checksum
+    void remove<T>(in T data); // remove data from existing checksum
     bit<16> get(); // get the checksum for the data added since last clear
 }
 ~ End P4Example
@@ -388,9 +393,10 @@ package VSS<H>(Parser<H> p,
 // Architecture-specific objects that can be instantiated
 // Checksum unit
 extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
+    Checksum16();              // constructor
+    void clear();              // prepare unit for computation
+    void update<T>(in T data); // add data to checksum
+    void remove<T>(in T data); // remove data from existing checksum
     bit<16> get(); // get the checksum for the data added since last clear
 }
 ~ End P4Example
@@ -465,12 +471,13 @@ The arrow shown from the parser runtime to the demux block represents an additio
 ###	Available extern blocks { #sec-vss-extern }
 
 The VSS architecture provides an incremental checksum extern block,
-called ```Checksum16```. The checksum unit has four methods:
+called ```Checksum16```. The checksum unit has a constructor and four
+methods:
 
 - ```clear()``` --- prepares the unit for a new computation
 - ```update<T>(in T data)``` --- add some data to be checksummed. The data must be either a bit-string, a header-typed value, or a ```struct``` containing such values. The fields in the header/struct are concatenated in the order they appear in the type declaration.
 - ```get()``` --- returns the 16-bit one's complement checksum. When this function is invoked the checksum must have received an integral number of bytes of data.
-- ```remove<T>(T data)``` --- under the assumption that ```data``` was used for computing the current checksum, ```data``` is removed from the checksum (“undo”).
+- ```remove<T>(in T data)``` --- under the assumption that ```data``` was used for computing the current checksum, ```data``` is removed from the checksum (“undo”).
 
 
 ##	A complete Very Simple Switch program { #sec-vss-all }
@@ -573,6 +580,8 @@ control TopPipe(inout Parsed_packet headers,
                 in error parseError,// parser error
                 in InControl inCtrl,// input port
                 out OutControl outCtrl) {
+     IPv4Address nextHop;  // local variable
+
      /**
       * Indicates that a packet is dropped by setting the
       * output port to the DROP_PORT
@@ -580,14 +589,15 @@ control TopPipe(inout Parsed_packet headers,
       action Drop_action()
       { outCtrl.outputPort = DROP_PORT; }
 
+      IPv4Address nextHop;
+
      /**
       * Set the next hop and the output port.
       * Decrements ipv4 ttl field.
       * @param ivp4_dest ipv4 address of next hop
       * @param port output port
       */
-      action Set_nhop(out IPv4Address nextHop,
-                      IPv4Address ipv4_dest,
+      action Set_nhop(IPv4Address ipv4_dest,
                       PortId port) {
           nextHop = ipv4_dest;
           headers.ip.ttl = headers.ip.ttl - 1;
@@ -600,11 +610,11 @@ control TopPipe(inout Parsed_packet headers,
       * Decrements packet IPv4 TTL.
       * @param nextHop IPv4 address of next hop
       */
-     table ipv4_match(out IPv4Address nextHop) {
+     table ipv4_match {
          key = { headers.ip.dstAddr: lpm; }  // longest-prefix match
          actions = {
               Drop_action;
-              Set_nhop(nextHop);
+              Set_nhop;
          }
 
          size = 1024;
@@ -620,7 +630,7 @@ control TopPipe(inout Parsed_packet headers,
      /**
       * Check packet TTL and send to CPU if expired.
       */
-     table check_ttl() {
+     table check_ttl {
          key = { headers.ip.ttl: exact; }
          actions = { Send_to_cpu; NoAction; }
          const default_action = NoAction; // defined in core.p4
@@ -637,7 +647,7 @@ control TopPipe(inout Parsed_packet headers,
       * based on the next hop IP address.
       * @param nextHop IPv4 address of next hop.
       */
-      table dmac(in IPv4Address nextHop) {
+      table dmac {
           key = { nextHop: exact; }
           actions = {
                Drop_action;
@@ -657,7 +667,7 @@ control TopPipe(inout Parsed_packet headers,
       /**
        * Set the source mac address based on the output port.
        */
-      table smac() {
+      table smac {
            key = { outCtrl.outputPort: exact; }
            actions = {
                 Drop_action;
@@ -668,20 +678,18 @@ control TopPipe(inout Parsed_packet headers,
       }
 
       apply {
-          IPv4Address nextHop; // temporary variable
-
           if (parseError != error.NoError) {
               Drop_action();  // invoke drop directly
               return;
           }
 
-          ipv4_match.apply(nextHop); // Match result will go into nextHop
+          ipv4_match.apply(); // Match result will go into nextHop
           if (outCtrl.outputPort == DROP_PORT) return;
 
           check_ttl.apply();
           if (outCtrl.outputPort == CPU_OUT_PORT) return;
 
-          dmac.apply(nextHop);
+          dmac.apply();
           if (outCtrl.outputPort == DROP_PORT) return;
 
           smac.apply();
@@ -925,9 +933,9 @@ Various constructs act as namespaces that create local scopes for names:
 - Derived type declarations (```struct```, ```header```, ```enum```) introduce local scopes for the field names
 - Block statements introduce local lexically-enclosed scopes
 - ```parser```, ```table```, ```action```, and ```control``` blocks introduce local scopes
-- A declaration with type variables introduces a new scope for that variable. For example, in the following ```control``` declaration, the scope of the type variable ```H``` extends to the end of the declaration:
+- A declaration with type variables introduces a new scope for that variable. For example, in the following ```extern``` declaration, the scope of the type variable ```H``` extends to the end of the declaration:
 ~ Begin P4Example
-control c<H>( ...) { ...} // scope of H ends here.
+extern E<H>(...) { ... } // scope of H ends here.
 ~ End P4Example
 The order of declarations is important; with the exception of parser states, all uses of a symbol must follow the symbol's declaration. (This is a change from the P4~14~ specification, which allows declarations in any order. This requirement is similar to the C language, and it significantly simplifies the implementation of compilers for P4, allowing compilers to use additional information about declared identifiers to resolve ambiguities.)
 
@@ -960,21 +968,20 @@ lvalue
     ;
 ~ End P4Grammar
 
-- Identifiers of a base or derived type
-- Structure/header field member access operations (using the dot notation)
+- Identifiers of a base or derived type.
+- Structure/header field member access operations (using the dot notation).
 - References to elements within header stacks (see Section [#sec-expr-hs]): indexing, and references to ```last``` and ```next```.
-- The result of a bit-slice operator ```[m:l]```
+- The result of a bit-slice operator ```[m:l]```.
 
-The following is a legal l-value:  ```headers.stack[4].field```.
-
-Method or function calls cannot return l-values.
+The following is a legal l-value:  ```headers.stack[4].field```.  Note that
+method or function calls cannot return l-values.
 
 ##	Calling convention: call by copy in/copy out { #sec-calling-convention }
-P4 provides multiple constructs for writing modular programs: extern methods, parsers, controls, actions, tables. All these constructs behave similarly to procedures in traditional programming languages:
+P4 provides multiple constructs for writing modular programs: extern methods, parsers, controls, actions. All these constructs behave similarly to procedures in traditional programming languages:
 
-- They have named and typed parameters
+- They have named and typed parameters.
 - They introduce a new local scope for parameters and local variables.
-- They allow arguments to be passed by binding them to their parameters
+- They allow arguments to be passed by binding them to their parameters.
 
 Invocations are executed using a copy-in/copy-out semantics.
 
@@ -1072,7 +1079,7 @@ Here is a summary of the constraints imposed by the parameter directions:
 * For actions all directionless parameters must be at the end of the parameter list.  When an action appears in a `table`'s `actions` list, only the parameters with a direction must be bound.
 * Actions can also be explicitly invoked using function call syntax, either from a control block or from another action. In this case, values for all action parameters must be supplied explicitly, including values for the directionless parameters. The directionless parameters in this case behave like `in` parameters.
 
-##	Name resolution
+##	Name resolution { #sec-name-resolution }
 
 ###	Lookup in the top-level namespace
 Identifiers or type names can be preceded by a dot ```.``` prefix, which will cause the identifier to be looked-up in the top-level namespace.
@@ -1184,7 +1191,7 @@ The Boolean type contains two values, ```false``` and ```true```. The type is wr
 ###	Strings { #sec-strings }
 P4 offers no support for string processing. The only strings that can appear in a P4 program are constant string literals, described in Section [#sec-string-literals]. String literals can only be used in annotations (described in Section [#sec-annotations]). For example, the following annotation indicates that a specific name should be used for a table when generating the control-plane API:
 ~ Begin P4Example
-@name("acl") table t1() { ...}
+@name("acl") table t1 { ...}
 ~ End P4Example
 
 ###	Integers (signed and unsigned) { #sec-integers }
@@ -1272,8 +1279,9 @@ Additional types can be created in P4 from base types. Some derived types can be
 
 - ```enum```
 - ```header```
-- ```struct```
 - header stacks
+- ```struct```
+- ```tuple```
 - type specialization
 - ```extern```
 - ```parser```
@@ -1445,6 +1453,31 @@ struct Parsed_headers {
 }
 ~ End P4Example
 
+The table below lists all types that may appear as members of headers,
+structs, and tuples.  Note that ```int``` means an infinite-precision
+integer, without a width specified.
+
+|-----|-----|-----|
+|                  | Container type             ||
+| Element type     | header    | struct or tuple |
++:-----------------+:----------+:----------------+
+| ```bit<W>```     | allowed   |  allowed        |
+| ```int<W>```     | allowed   |  allowed        |
+| ```varbit<W>```  | allowed   |  allowed        |
+| ```int```        | error     |  error          |
+| ```void```       | error     |  error          |
+| ```error```      | error     |  allowed        |
+| ```match_kind``` | error     |  error          |
+| ```bool```       | error     |  allowed        |
+| ```enum```       | error     |  allowed        |
+| ```header```     | error     |  allowed        |
+| header stack     | error     |  allowed        |
+| ```struct```     | error     |  allowed        |
+| ```tuple```      | error     |  allowed        |
+|-----|-----|-----|
+
+The two-argument ```extract``` method on packets only supports a single ```varbit``` field in a header.
+
 ###	Tuple types { #sec-tuple-types }
 A tuple is similar to a ```struct```, in that it holds multiple values. Unlike a ```struct``` type, tuples have no named fields. The type of tuples with n component types ```T1```,...,```Tn``` is written as
 ~ Begin P4Example
@@ -1515,7 +1548,7 @@ For an example of an ```extern``` function declaration, see Section [#sec-functi
 ####	Extern objects
 
 []{tex-cmd: "\indent"}
-An extern object declaration declares an object and *all methods* that can be invoked to perform computations and to alter the state of the object. Extern object declarations can also optionally declare constructor methods; these must have the same name as the enclosing ```extern``` type, no type parameters, and no return type. Extern declarations can only appear in architecture model libraries specific to a target.
+An extern object declaration declares an object and *all methods* that can be invoked to perform computations and to alter the state of the object. Extern object declarations can also optionally declare constructor methods; these must have the same name as the enclosing ```extern``` type, no type parameters, and no return type.  Extern declarations can only appear as allowed by the architecture model and may be specific to a target.
 ~ Begin P4Grammar
 methodPrototypes
     : /* empty */
@@ -1631,23 +1664,8 @@ a type.  It should be only used in a position where one could write a
 bound type variable; it is similar to the Java `?` wildcard type.  The
 underscore can be used to reduce code complexity --- when it is
 not important what the type variable binds to (during type unification
-the don't care type can unify with any other type).  For example:
-
-~ Begin P4Example
-control c<T>(...) {...}
-package p(c<_> ctrl);
-~ End P4Example
-
-This is equivalent to:
-
-~ Begin P4Example
-package p<T>(c<T> ctrl);
-~ End P4Example
-
-Since there are no constraints on the type ```T```, we can instead use
-a don't care.  This is mostly useful for writing packages with lots of
-generic parameters whose types are not tied to each other (see also an
-example in Section [#sec-arch-desc-example]).
+the don't care type can unify with any other type).  An
+example in given Section [#sec-arch-desc-example]).
 
 ##	typedef { #sec-typedef }
 ```typedef``` can be used to give an alternative name to a type.
@@ -1947,10 +1965,7 @@ Here are all legal casts:
 ###	Implicit casts { sec-implicit-casts }
 Unlike C, P4 allows a very limited number of implicit casts. The reason is that often the implicit casts have a non-trivial semantics, which is invisible for the programmer.
 
-Implicit casts are allowed in P4 only when their meaning is completely unambiguous:
-
-- To convert an ```int``` value to a fixed-width type.
-- In assignments when the right-hand side has a different type from left-hand side.
+Implicit casts are allowed in P4 only to convert an ```int`` value to a fixed-width type.
 
 Most binary operations that take an ```int``` and a fixed-width operand will insert an implicit cast to convert the ```int``` operand to the type of the fixed-width operand.
 
@@ -2294,7 +2309,7 @@ target-dependent implementation attribute of a table:
 extern ActionProfile {
     ActionProfile(bit<32> size);  // constructor
 }
-table tbl() {
+table tbl {
     actions = { ... }
     implementation = ActionProfile(1024);  // constructor invocation
 }
@@ -2388,7 +2403,7 @@ extern Counter {
 // user program
 control c(...) {
     Counter(32w1024, CounterType.Both) ctr;  // instantiation
-    apply { ...}
+    apply { ... }
 }
 ~ End P4Example
 
@@ -2583,6 +2598,16 @@ parserStates
     ;
 ~ End P4Grammar
 
+Parsers cannot be generic (unlike parser type declarations); thus
+when used in the context of a `parserDeclaration` the
+`parserTypeDeclaration` cannot contain any type parameters.  I.e.,
+the following declaration is illegal:
+
+```
+parser P<H>(inout H data) { ... }
+```
+
+
 At least one state, named ```start```, must be present in any ```parser```.
 A parser cannot contain two states with the same name. A parser cannot define
 the ```accept``` and ```reject``` states; these are logically outside of the parser.
@@ -2652,6 +2677,7 @@ parserStatements
 parserStatement
     : assignmentOrMethodCallStatement
     | variableDeclaration
+    | constantDeclaration
     | parserBlockStatement
     ;
 
@@ -3102,6 +3128,7 @@ A ```control``` block may start with declarations of ```action```s, ```table```s
 ~ Begin P4Grammar
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
+      /* controlTypeDeclaration cannot contain type parameters */
       '{' controlLocalDeclarations APPLY controlBody '}'
     ;
 
@@ -3122,6 +3149,15 @@ controlBody
     : blockStatement
     ;
 ~ End P4Grammar
+
+Controls cannot be generic (unlike control type declarations); thus
+when used in the context of a `controlDeclaration` the
+`controlTypeDeclaration` cannot contain any type parameters.  I.e.,
+the following declaration is illegal:
+
+```
+control C<H>(inout H data) { ... }
+```
 
 For a description of the ```optConstructorParameters```, which can be used to build parameterized control blocks, see Section [#sec-parametrization].
 
@@ -3184,9 +3220,7 @@ Syntactically a table is described by a set of key-value properties. Some of the
 
 ~ Begin P4Grammar
 tableDeclaration
-    : optAnnotations TABLE name '(' parameterList ')'
-     '{' tablePropertyList '}'
-    | optAnnotations TABLE name '{' tablePropertyList '}'
+    : optAnnotations TABLE name '{' tablePropertyList '}'
     ;
 
 tablePropertyList
@@ -3201,7 +3235,6 @@ tableProperty
     | optAnnotations IDENTIFIER '=' initializer ';'
     ;
 ~ End P4Grammar
-Table parameters cannot be directionless (they must be ```in```, ```out``` or ```inout```).
 The standard table properties are the following:
 
 - ```key```: An expression that describes how the key used for look-up is computed.
@@ -3233,7 +3266,7 @@ Each name in a ```keyElement``` must be a constant of type ```match_kind``` (see
 
 For example, let us consider the following ```table``` declaration fragment:
 ~ Begin P4Example
-table Fwd(in ipv4_h ipv4header) {
+table Fwd {
     key = {
        ipv4header.dstAddress : ternary;
        ipv4header.version    : exact;
@@ -3285,7 +3318,7 @@ action Drop_action()
 action Rewrite_smac(EthernetAddress sourceMac)
 { headers.ethernet.srcAddr = sourceMac; }
 
-table smac() {
+table smac {
     key = { outCtrl.outputPort : exact; }
     actions = {
         Drop_action;
@@ -3303,7 +3336,7 @@ action a() {}
 control c() {
     action a() {}
     // Illegal table: two actions with the same name
-    table t() { actions = { a; .a; } }
+    table t { actions = { a; .a; } }
 }
 ~ End P4Example
 
@@ -3311,8 +3344,9 @@ Each action parameter that has a direction (```in, inout``` or ```out```) must b
 
 ~ Begin P4Example
 action a(in bit<32> x) { ...}
+bit<32> z;
 action b(inout bit<32> x, bit<8> data) { ...}
-table t(inout bit<32> z) {
+table t {
     actions = {
        // a; -- illegal, x parameter must be bound
        a(5);  // binding a's parameter x to 5
@@ -3337,7 +3371,7 @@ const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
 
 Note that the specified default action must supply arguments for the control-plane bound parameters (i.e., the directionless parameters), since the action is synthesized at compilation time. The expressions supplied as arguments for parameters with a direction (```in, inout``` or ```out```) are evaluated when the action is invoked while the expressions supplied as arguments for directionless parameters are evaluated at compile time.
 
-Continuing the example in the previous section, here are various legal and illegal specifications for ```table t()``` above:
+Continuing the example in the previous section, here are various legal and illegal specifications for ```table t``` above:
 
 ~ Begin P4Example
   default_action = a(5); // OK - no control-plane parameters
@@ -3347,6 +3381,121 @@ Continuing the example in the previous section, here are various legal and illeg
 ~ End P4Example
 
 If the user does not specify a value for the default action, the runtime behavior of the program is undefined until the control-plane initializes the ```default_action``` to one of the legal values. The compiler should produce a warning in this case. This is a difference from P4~14~, which can set the default action to no-op. If the legacy behavior is desired, the user must explicitly use the core library ```action NoAction``` in the table, which must appear in the actions list.
+
+#### Table entries
+
+A table may be initialized at compile-time with a set of entries. While it is
+typical that entries are installed in tables by the contol plane program, there
+are situations in which tables are used to implement fixed algorithms. In such
+cases, defining the entries that enable the execution of the algorithm in the
+P4 source, allows the compiler to infer how the table is actually used and
+potentially make better placement decisions for tagets with constraint
+resources. Entries declared in the P4 source are installed in the table at
+program load time.
+
+~ Begin P4Grammar
+tableProperty
+   : const ENTRIES '=' '{' entriesList '}' /* immutable entries */
+
+entriesList
+ : entry
+ | entryList entry
+
+entry
+ : keysetExpression ':' actionRef optAnnotations ';'
+
+~ End P4Grammar
+
+In the current specification, we define entries as immutable (const) -- they
+can only be read, not changed or removed through control plane APIs. It follows
+that tables that define entries in the P4 source are immutable, thus no
+additional entries may be inserted in tables that define a set of immutable
+entries.
+This design choice is important for the P4 runtime since it does not have to
+keep track of different types of entries in one table (mutable and immutable).
+Future versions of the specification may add mutable entries and shall preserve
+compatibility with the current specification by declaring additional ```entries```
+properties without the ```const``` keyword.
+
+```keysetExpression``` is a tuple that must provide a field for each key in the
+table keys (see Sec. [#sec-table-props]). The table key type must match the
+type of the element of the set. ```actionRef``` must be an action which appears
+in the table actions list, with all its arguments bound.
+
+Entries in a table are matched in a priority order, where lower numbers
+correspond to higher priorities. Priority may be specified or computed in one
+of the following ways:
+
+- specified with an annotation, ```@priority(value)```, where ```value``` must
+  evaluate to a positive integer compile-time known value; or
+- computed based on the program order of the entries -- entries occuring first have higher priority.
+
+Priority annotations take precedence over computed priorities.
+
+Depending on the ```match_kind``` of the keys, key set expressions may define
+one or multiple entries. The compiler will synthesize the correct number of
+entries to be installed in the table. Target constraints may further restrict
+the ability of synthesizing entries. For example, if the number of synthesized
+entries exceeds the table size, the compiler implementation may choose to issue
+a warning or an error, depending on target capabilities.
+
+Consider the following example:
+~ Begin P4Example
+header hdr {
+    bit<8>  e;
+    bit<16> t;
+    bit<8>  l;
+    bit<8> r;
+    bit<1>  v;
+}
+
+struct Header_t {
+    hdr h;
+}
+struct Meta_t {}
+
+control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t standard_meta) {
+
+    action a() { standard_meta.egress_spec = 0; }
+    action a_with_control_params(bit<9> x) { standard_meta.egress_spec = x; }
+
+    table t_exact_ternary {
+
+  	key = {
+            h.h.e : exact;
+            h.h.t : ternary;
+        }
+
+	actions = {
+            a;
+            a_with_control_params;
+        }
+
+	default_action = a;
+
+        const entries = {
+            (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
+            (0x02, 0x1181           ) : a_with_control_params(2);
+            (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
+            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4) @priority(5);
+            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5) @priority(4);
+            (0x06, _                ) : a_with_control_params(6);
+        }
+    }
+
+}
+~ End P4Example
+
+In this example we define a set of 6 entries that populate various fields in
+the header and send the invoke one action ```a_with_control_params``` to send
+the packet to a particular output port. Once the program is loaded, these
+entries are installed in the table in the order they are enumerated in the
+program, with decreasing priority levels. Entries demonstrate the use of
+the ```@priority``` annotation, which inverts their priority order, that is
+entry 4 in lexicographical order is set to have priority 5, and entry 5 is set
+to prioirty 4. A packet with the ternary field set to 0x1211 should be directed
+to port 5 rather than port 4, since the entry ```(0x04, 0x1311 &&& 0x02F0)```
+will have priority over the entry ```(0x04, 0x1211 &&& 0x02F0)```.
 
 ####	Additional table properties
 
@@ -3386,7 +3535,7 @@ struct apply_result(T) {
 The evaluation of the ```apply``` method sets the ```hit``` field to ```true``` if a match is found in the lookup-table. This bit can be used to drive the execution of the control-flow in the control block that invoked the table:
 
 ~ Begin P4Example
-if (ipv4_match.apply(nextHop).hit) {
+if (ipv4_match.apply().hit) {
     // there was a hit
 } else {
     // there was a miss
@@ -3396,7 +3545,7 @@ if (ipv4_match.apply(nextHop).hit) {
 The ```action_run``` field indicates which kind of action was executed (irrespective of whether it was a hit or a miss). It can be used in a switch statement:
 
 ~ Begin P4Example
-switch (dmac.apply(nextHop).action_run) {
+switch (dmac.apply().action_run) {
     Drop_action: { return; }
 }
 ~ End P4Example
@@ -3404,17 +3553,16 @@ switch (dmac.apply(nextHop).action_run) {
 ###	Match-action unit execution semantics { #sec-mau-semantics }
 The semantics of a table invocation statement:
 ~ Begin P4Example
-m.apply( args );
+m.apply();
 ~ End P4Example
 
 is given by the following pseudo-code (see also Figure [#fig-maudataflow]):
 
 ~ Begin P4Pseudo
-apply_result(m) m.apply(args) {
-    evaluate_and_copy_in_table_args(args);
+apply_result(m) m.apply() {
     apply_result(m) result;
 
-    var lookupKey = m.buildKey(m.key, args); // using key block
+    var lookupKey = m.buildKey(m.key); // using key block
     action RA = m.table.lookup(lookupKey);
     if (RA == null) {      // miss in lookup table
        result.hit = false;
@@ -3427,7 +3575,6 @@ apply_result(m) m.apply(args) {
     evaluate_and_copy_in_RA_args(RA);
     execute(RA);
     copy_out_RA_args(RA);
-    copy_out_table_args(args);
     return result;
 }
 ~ End P4Pseudo
@@ -3495,8 +3642,8 @@ parser GenericParser(packet_in b,          // parser API
     state ipv4 {
         b.extract(p.ipv4);
         transition select(p.ipv4.protocol) {
-           6 : tryudp;
-           17: tcp;
+           6: tcp;
+           17: tryudp;
         }
     }
     state tryudp {
@@ -3516,6 +3663,39 @@ When instantiating the ```GenericParser``` one must supply a value for the ```ud
 ~ Begin P4Example
 // TopParser is a GenericParser where udpSupport = false
 GenericParser(false) TopParser;
+~ End P4Example
+
+## Optional constructor parentheses
+
+For the sake of readability, type definitions with no constructor arguments may
+omit the second set of parentheses.  That is, ```control c(...)();``` and ```control c(...);``` are equivalent.
+
+## Direct type invocation
+
+Controls and parsers are often instantiated exactly once.  As a light syntactic
+sugar, control and parser declarations with no constructor parameters may be
+applied directly, as if they were an instance.  This has the effect of creating
+and applying a local instance of that type.
+
+~ Begin P4Example
+control callee( ... ) { ... }
+
+control caller( ... )( ... ) {
+    apply {
+        callee.apply( ... ); // callee is treated as an instance
+    }
+}
+~ End P4Example
+
+The definition of ```caller``` is equivalent to the following.
+
+~ Begin P4Example
+control caller( ... )( ... ) {
+    @name("callee") callee() callee_inst; // local instance of callee
+    apply {
+        callee_inst.apply( ... );         // callee_inst is applied
+    }
+}
 ~ End P4Example
 
 #	Packet construction (deparsing) { #sec-deparse }
@@ -3790,11 +3970,157 @@ Figure [#fig-compileeval] shows the result of the evaluation in a graphical form
 
 ##	Control plane names { #sec-cp-names }
 
-The evaluation process may create multiple instances from one type. Consider the following example:
+Every controllable entity exposed in a P4 program must be assigned a unique,
+fully-qualified name, which the control plane may use to interact with that
+entity.  The following entities are controllable.
+
+ - tables
+ - keys
+ - actions
+ - extern instances
+
+A fully qualified name consists of the local name of a controllable entity
+prepended with the fully qualified name of its enclosing namespace.  Hence, the
+following program constructs, which enclose controllable entites, must
+themselves have unique, fully-qualified names.
+
+ - control instances
+ - parser instances
+
+The evaluation process may create multiple instances from one type, each of
+which must have a unique, fully-qualified name.
+
+### Computing control names
+
+The fully-qualified name of a construct is derived by concatenating the
+fully-qualified name of its enclosing construct with its local name.
+Constructs with no enclosing namespace, i.e. those defined at the global scope,
+have the same local and fully-qualified names.  The local names of controllable
+entities and enclosing constructs are derived from the syntax of a P4 program
+as follows.
+
+#### Tables
+
+For each ```table``` construct, its syntactic name becomes the local name of the table.  For example:
+
+~ Begin P4Example
+control c(...)() {
+    table t { ... }
+}
+~ End P4Example
+
+This table's local name is ```t```.
+
+#### Keys
+
+Syntactically, table keys are expressions.  For simple expressions, the local
+key name can be generated from the expression itself.  In the following
+example, the table ```t``` has keys with names ```data.f1``` and ```hdrs[3].f2```.
+
+~ Begin P4Example
+table t {
+    keys = {
+        data.f1 : exact;
+        hdrs[3].f2 : exact;
+    }
+    actions = { ... }
+}
+~ End P4Example
+
+The following kinds of expressions have local names derived from their syntactic names:
+
+| Kind | Example | Name |
+| ---- | ------- | ---- |
+| The ```isValid()``` method. | ```h.isValid()``` | ```"h.isValid()"``` |
+| Array accesses. | ```header_stack[1]``` | ```"header_stack[1]"``` |
+| Constants. | ```1``` | ```"1"``` |
+| Field projections. | ```data.f1``` | ```"data.f1"``` |
+| Slices. | ```f1[3:0]``` | ```"f1[3:0]"``` |
+
+All other kinds of expressions **must** be annotated with a ```@name```
+annotation (Section [#sec-control-plane-api-annotations]), as in the following example.
+
+~ Begin P4Example
+table t {
+    keys = {
+        data.f1 + 1 : exact @name("f1_inc");
+    }
+    actions = { ... }
+}
+~ End P4Example
+
+Here, the ```@name("f1_mask")``` annotation assigns the local name ```"f1_mask"``` to this
+key.
+
+
+#### Actions
+
+For each ```action``` construct, its syntactic name is the local name of the action.  For example:
+
+~ Begin P4Example
+control c(...)() {
+    action a(...) { ... }
+}
+~ End P4Example
+
+This action's local name is ```a```.
+
+#### Instances
+
+The local names of ```extern```, ```parser```, and ```control``` instances are
+derived based on how the instance is used.  If the instance is bound to a name,
+that name becomes its local control plane name.  In the following example, the
+local name of the instance is ```c_inst```.
+
+~ Begin P4Example
+control c(...)() { ... }
+c() c_inst;
+~ End P4Example
+
+Otherwise, if the instance is created as an actual argument, then its local
+name is the name of the formal parameter to which it will be bound.  In the
+following example, the local name of the extern instance is ```e_in```.
+
+~ Begin P4Example
+extern e( ... ) { ... }
+control c ( ... )(e e_in) { ... }
+c(e()) c_inst;
+~ End P4Example
+
+If the construct being instantiated is passed as an argument to a package, the
+instance name is derived from the user-supplied type definition when possible.
+In the following example, the local name of the instance of ```MyC``` is ```c```,
+and the local name of the extern is ```e2```, not ```e1```.
+
+~ Begin P4Example
+extern ExternX { ... }
+control ArchC(ExternX e1);
+package Arch(ArchC c);
+
+control MyC(ExternX e2)() { ... }
+Arch(MyC()) main;
+~ End P4Example
+
+Note that in this example, the architecture will supply an instance of the
+extern when it applies the instance of ```MyC``` passed to the ```Arch```
+package.  The fully-qualified name of that instance is ```main.c.e2```.
+
+A programmer can always assign a control plane name to an instance by binding
+it to a name in the program, rather than relying on the parameter name supplied
+by the type definition or architecture.
+
+~ Begin P4Example
+MyC() d;
+Arch(d) main;
+~ End P4Example
+
+In the example above, the name of the ```MyC``` instance is ```d```.  Next,
+consider a larger example that demonstrates name generation when there are
+multiple instances.
 
 ~ Begin P4Example
 control Callee() {
-    table t() { ... }
+    table t { ... }
     apply { t.apply(); }
 }
 control Caller() {
@@ -3810,12 +4136,68 @@ package Top(simple s);
 Top(Caller()) main;
 ~ End P4Example
 
-The compile-time evaluation of this program produces the structure in Figure [#fig-evalmultiple]. Notice that there are two instances of the ```table t```. These instances must both be exposed to the control-plane. To name an object in this hierarchy one uses a path composed of the containing instance names. In this case the two tables have names: ```s.c1.t``` and ```s.c2.t```. Package argument names are derived from the parameter names (```s``` is the name of the top package parameter that is instantiated with a ```caller``` object). If the name of an object is not ambiguous external tools may expose shortcuts; e.g., ```c1``` may be used as an unambiguous name for the ```s.c1``` object.
+The compile-time evaluation of this program produces the structure in Figure
+[#fig-evalmultiple]. Notice that there are two instances of the ```table t```.
+These instances must both be exposed to the control plane. To name an object in
+this hierarchy, one uses a path composed of the names of containing instances.
+In this case, the two tables have names ```s.c1.t``` and ```s.c2.t```, where ```s``` is
+the name of the argument to the package instantiation, which is
+derived from the name of its corresponding formal parameter.
 
 ~ Figure { #fig-evalmultiple; caption: "Evaluating a program that has several instantiations of the same component." }
 ![evalmultiple]
 ~
 [evalmultiple]: figs/evalmultiple.png { width: 5cm; page-align: here }
+
+
+### Annotations controlling naming
+
+Control plane-related annotations (Section
+[#sec-control-plane-api-annotations]) can alter the names exposed to the
+control plane in the following ways.
+
+- The ```@hidden``` annotation hides a controllable entity from the control
+  plane.  This is the only case in which a controllable entity is not required
+  to have a unique, fully-qualified name.
+
+- The ```@name``` annotation may be used to change the local name of a
+  controllable entity.
+
+- The ```@globalname``` annotation my be used to change the global name of a
+  controllable entity.
+
+Programs that yield the same fully-qualified name for two different
+controllable entities are invalid.  Care must be taken with ```@globalname```
+in particular: If a type contains a ```@globalname``` annotation and is
+instantiated twice, the two instances will have the same fully-qualified name.
+
+### Recommendations
+
+The control plane may refer to a controllable entity by a postfix of its fully
+qualified name when it is unambiguous in the context in which it is used.
+Consider the following example.
+
+~ Begin P4Example
+control c( ... )() {
+    action a ( ... ) { ... }
+    table t {
+        keys = { ... }
+        actions = { a; } }
+}
+c() c_inst;
+~ End P4Example
+
+Control plane software may refer to action ```c_inst.a``` as ```a``` when
+inserting rules into table ```c_inst.t```, because it is clear from the
+definition of the table which action ```a``` refers to.
+
+Not all unambiguous postfix shortcuts are recommended.  Consider the first
+example in Section [#sec-cp-names].  One might be tempted to refer to ```s.c1``` simply as ```c1```,
+as no other instance named ```c1``` appears in
+the program.  However, this leads to a brittle program: Future modifications
+can never introduce an instance named ```c1``` or include libraries of P4 code
+that contain instances with that name.
+
 
 ##	Dynamic evaluation { #sec-dynamic-eval }
 
@@ -3843,8 +4225,8 @@ Consider the following example:
 extern Register { ... }
 control Ingress() {
   Register() r;
-  table flowlet() { /* read state of r in an action */ }
-  table new_flowlet() { /* write state of r in an action */ }
+  table flowlet { /* read state of r in an action */ }
+  table new_flowlet { /* write state of r in an action */ }
   apply {
     @atomic {
        flowlet.apply();
@@ -3887,14 +4269,14 @@ We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., company X would use annotations named
 like ```@X_annotation```
 
-###	Annotations on the table action list:
+###	Annotations on the table action list
 
 The following two annotations can be used to give additional information to the compiler and control-plane about actions in a table. They have no arguments.
 
 - ```@tableonly```: actions with this annotation can only appear within the table, and never as default action.
 - ```@defaultonly```: actions with this annotation can only appear in the default action, and never in the table.
 ~ Begin P4Example
-table t() {
+table t {
     actions = {
        a,              // can appear anywhere
        @tableonly b,   // can only appear in the table
@@ -3904,13 +4286,65 @@ table t() {
 }
 ~ End P4Example
 
-###	Control-plane API annotations
+### Annotations on table entries
 
-The ```@name``` annotation can be applied to language element to direct the compiler to use a specific name when generating the external APIs used to manipulate the element from the control-plane. It always has a string literal argument.
+Table entries declared in P4 may be annotated using a ```@priority <value>```,
+annotation, where value is a positive integer. The annotation sets the priority
+for matching the entry in case there are multiple key matches. Lower values for
+the priority represent higher priorities.
+
+###	Control-plane API annotations { #sec-control-plane-api-annotations }
+
+The ```@name``` annotation directs the compiler to use a different local name when generating the external APIs used to manipulate a language element from the control plane. It must have a string literal argument, which shall not contain the "```.```" character.  In the following example, the fully-qualified name of the table is ```c_inst.t1```.
 
 ~ Begin P4Example
-@name("t1") table t() { ... }
+control c( ... )() {
+    @name("t1") table t { ... }
+    apply { ... }
+}
+c() c_inst;
 ~ End P4Example
+
+The ```@globalname``` annotation acts like the ```@name``` annotation, except
+it overrides the fully-qualified name (not just the local name) for the
+annotated element, and its argument may contain the "```.```" character.  In
+the following example, the fully-qualified name of the table is ```foo.bar```.
+
+~ Begin P4Example
+control c( ... )() {
+    @globalname("foo.bar") table t { ... }
+    apply { ... }
+}
+c() c_inst;
+~ End P4Example
+
+The ```@hidden``` annotation hides a controllable entity, eg. a table, key,
+action, or extern, from the control plane.  This effectively removes its
+fully-qualified name (Section [#sec-cp-names]).  It does not take any arguments.
+
+#### Restrictions
+
+Each element may be annotated with at most one ```@name```, ```@globalname```, or ```@hidden``` annotation,
+and each control plane name must refer to at most one
+controllable entity.  This is of special concern when using the ```@globalname``` annotation:
+If a type containing a ```@globalname``` annotation
+is instantiated more than once, it will result in the same global
+name referring to two controllable entities.
+
+~ Begin P4Example
+control c( ... )() {
+    @globalname("foo.bar") table t { ... }
+    apply { ... }
+}
+c() c1;
+c() c2;
+~ End P4Example
+
+Without the ```@globalname``` annotation, this program would produce two
+controllable entities with fully-qualified names ```c1.t``` and ```c2.t```.
+However, the ```@globalname("foo.bar")``` annotation renames table ```t``` in
+both instances to ```foo.bar```, resulting in one name that refers to two
+controllable entities, which is illegal.
 
 ###	Concurrency control annotations
 The ```@atomic``` annotation, described in Section [#sec-concurrency] can be used to enforce the atomic execution of a code block.
@@ -3932,9 +4366,9 @@ The following table shows all P4 reserved keywords. Some identifiers are treated
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
 | ```action```   |  ```apply ``` | ```bit```        | ```bool``` |
 | ```const```    |  ```control``` | ```default``` | ```else``` |
-| ```enum```   | ```error```     | ```extern```  | ```exit```  |
-| ```false```   |  ```header```   |  ```if```         |   ```in```   |
-|  ```inout``` | ```int```         | ```match_kind``` | ```package``` |
+| ```enum```   | ```error```     |   ```extern```  |  ```exit```  |
+| ```false```   |  ```header```   |  ```if```         |  ```in```   |
+| ```inout``` | ```int```         | ```match_kind``` | ```package``` |
 | ```parser``` | ```out```         | ```return```  | ```select``` |
 | ```state``` | ```struct```   |  ```switch``` | ```table```    |
 | ```transition``` |  ```true``` |  ```tuple``` | ```typedef``` |
@@ -3986,9 +4420,10 @@ There are no built-in constructs in P4~16~ for manipulating packet checksums. We
 For example, one could provide an incremental checksum unit ```Checksum16``` (also described in the VSS example in Section [#sec-vss-extern]) for computing 16-bit one's complement using an ```extern``` object with a signature such as:
 ~ Begin P4Example
 extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
+    Checksum16();              // constructor
+    void clear();              // prepare unit for computation
+    void update<T>(in T data); // add data to checksum
+    void remove<T>(in T data); // remove data from existing checksum
     bit<16> get(); // get the checksum for the data added since last clear
 }
 ~ End P4Example
@@ -4038,15 +4473,6 @@ To that end, a specification for an architecture definition that enables
 programmers to write composable P4 programs, called the _Portable Switch
 Architecture_, is being developed by the Architecture Working Group.
 
-##	Populate table entries at compile time
-
-It is desirable to have the capability to initialize table entries at compile
-time. The questions discussed are:
-
-- Should these entries be immutable and the tables read-only? Are immutability
-  and read-only attributes that the programmer can specify?
-- Should these entries be at all accessible from the control plane?
-- What should be the API: builtin compiler functions, table initializers?
 
 ##	Union types
 

@@ -90,6 +90,7 @@ dotPrefix
 
 parserDeclaration
     : parserTypeDeclaration optConstructorParameters
+      /* no type parameters allowed in the parserTypeDeclaration */
       '{' parserLocalElements parserStates '}'
     ;
 
@@ -124,7 +125,9 @@ parserStatements
 
 parserStatement
     : assignmentOrMethodCallStatement
+    | directApplication
     | parserBlockStatement
+    | constantDeclaration
     | variableDeclaration
     ;
 
@@ -181,6 +184,7 @@ simpleKeysetExpression
 
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
+      /* no type parameters allowed in controlTypeDeclaration */
       '{' controlLocalDeclarations APPLY controlBody '}'
     ;
 
@@ -372,8 +376,13 @@ conditionalStatement
     | IF '(' expression ')' statement ELSE statement
     ;
 
+// To support direct invocation of a control or parser without instantiation
+directApplication
+    : typeName '.' APPLY '(' argumentList ')' ';' 
+
 statement
     : assignmentOrMethodCallStatement
+    | directApplication
     | conditionalStatement
     | emptyStatement
     | blockStatement
@@ -419,20 +428,18 @@ statementOrDeclaration
 
 /************ TABLES *************/
 tableDeclaration
-    : optAnnotations TABLE name '(' parameterList ')'
-     '{' tablePropertyList '}'
-    | optAnnotations TABLE name '{' tablePropertyList '}'
+    : optAnnotations TABLE name '{' tablePropertyList '}'
     ;
 
 tablePropertyList
     : tableProperty
-
     | tablePropertyList tableProperty
     ;
 
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
+    | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     | optAnnotations CONST IDENTIFIER '=' initializer ';'
     | optAnnotations IDENTIFIER '=' initializer ';'
     ;
@@ -450,6 +457,13 @@ actionList
     : actionRef ';'
     | actionList actionRef ';'
     ;
+
+entriesList
+    : entry
+    | entryList entry
+
+entry
+    : optAnnotations keysetExpression ':' actionRef ';'
 
 actionRef
     : optAnnotations name
