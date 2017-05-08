@@ -2879,7 +2879,6 @@ parser P(packet_in b, out Result r) {
 
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLValue) {
-   ParserModel.verify(!headerLValue.valid$, error.OverwritingHeader);
    bitsToExtract = sizeofInBits(headerLValue);
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
@@ -2906,7 +2905,6 @@ void extract<T>(out T headerLvalue, in bit<32> variableFieldSize);
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLvalue,
                           in bit<32> variableFieldSize) {
-   ParserModel.verify(!headerLvalue.valid$, error.OverwritingHeader);
    bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
@@ -4381,7 +4379,6 @@ error {
     PacketTooShort,    // not enough bits in packet for extract
     NoMatch,           // select expression has no matches
     StackOutOfBounds,  // reference to invalid element of a header stack
-    OverwritingHeader, // extracting on top of a valid header
     HeaderTooShort,    // extracting too many bits into a varbit field
     ParserTimeout      // parser execution time limit exceeded
 }
