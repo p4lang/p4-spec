@@ -3415,15 +3415,9 @@ table keys (see Sec. [#sec-table-props]). The table key type must match the
 type of the element of the set. ```actionRef``` must be an action which appears
 in the table actions list, with all its arguments bound.
 
-Entries in a table are matched in a priority order, where lower numbers
-correspond to higher priorities. Priority may be specified or computed in one
-of the following ways:
-
-- specified with an annotation, ```@priority(value)```, where ```value``` must
-  evaluate to a positive integer compile-time known value; or
-- computed based on the program order of the entries -- entries occuring first have higher priority.
-
-Priority annotations take precedence over computed priorities.
+Entries in a table are matched in priority order, with the priority
+computed based on the program order of the entries -- entries occuring
+first have higher priority.
 
 Depending on the ```match_kind``` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
@@ -3470,8 +3464,8 @@ control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t stan
             (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
             (0x02, 0x1181           ) : a_with_control_params(2);
             (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
-            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4) @priority(5);
-            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5) @priority(4);
+            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4);
+            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5);
             (0x06, _                ) : a_with_control_params(6);
         }
     }
@@ -3483,12 +3477,7 @@ In this example we define a set of 6 entries that populate various fields in
 the header and send the invoke one action ```a_with_control_params``` to send
 the packet to a particular output port. Once the program is loaded, these
 entries are installed in the table in the order they are enumerated in the
-program, with decreasing priority levels. Entries demonstrate the use of
-the ```@priority``` annotation, which inverts their priority order, that is
-entry 4 in lexicographical order is set to have priority 5, and entry 5 is set
-to prioirty 4. A packet with the ternary field set to 0x1211 should be directed
-to port 5 rather than port 4, since the entry ```(0x04, 0x1311 &&& 0x02F0)```
-will have priority over the entry ```(0x04, 0x1211 &&& 0x02F0)```.
+program, with decreasing priority levels.
 
 ####	Additional table properties
 
@@ -4278,13 +4267,6 @@ table t {
     ...
 }
 ~ End P4Example
-
-### Annotations on table entries
-
-Table entries declared in P4 may be annotated using a ```@priority <value>```,
-annotation, where value is a positive integer. The annotation sets the priority
-for matching the entry in case there are multiple key matches. Lower values for
-the priority represent higher priorities.
 
 ###	Control-plane API annotations { #sec-control-plane-api-annotations }
 
