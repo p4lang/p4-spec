@@ -1859,7 +1859,7 @@ There are also the following operations:
 ```
 e[m:l] = x
 ```
-This statement sets bits ```m``` to ```l``` of ```e``` to the bit-pattern represented by ```x```, and leaves all other bits of ```e``` unchanged.(```x``` is implicitly cast to an ```m - l + 1``` bit-string value).
+This statement sets bits ```m``` to ```l``` of ```e``` to the bit-pattern represented by ```x```, and leaves all other bits of ```e``` unchanged.
 
 - Logical shift left and right with a runtime known unsigned integer value (left operand is unsigned, right operand must be either an unsigned number of type ```bit<S>``` or a non-negative constant integer), designated by ```<<``` and ```>>```. The result has the same type as the left operand. Shifts with an amount greater than the width of the input produce a result with all bits zero.
 
@@ -1937,7 +1937,7 @@ Variable-length bit-strings support a limited set of operations:
 - The ```emit``` method of a ```packet_out``` interface to insert a dynamically-sized bit-string with known dynamic width into a packet (see Section [#sec-deparse]).
 
 ##	Casts { #sec-casts }
-P4 supports a very limited range of casts. Most casts must be explicit. Most binary operations require both operands to have the exact same type. Some type conversions may require multiple chained casts. While more onerous for the user, this approach has several benefits:
+P4 supports a very limited range of casts, and casts are only allowed between base types. Most binary operations require both operands to have the exact same type. Some type conversions may require multiple chained casts. While more onerous for the user, this approach has several benefits:
 
 - It makes user intent unambiguous.
 - It makes the conversion cost explicit. Some casts involve sign-extensions, and thus require significant computational resources.
@@ -1953,8 +1953,7 @@ Here are all legal casts:
 - ```int<W> -> int<X>```: if ```W > X``` this causes truncation, if ```W < X``` this causes extension with the sign bit
 - ```int -> bit<W>```: Represents the integer value using two's complement on a large enough number of bits and keeps the least-significant ```W``` bits; overflow should lead to a warning, as will conversion of a negative number
 - ```int -> int<W>```: Represents the integer value using two's complement on a large enough number of bits and keeps the least-significant ```W``` bits; overflow should lead to a warning
-- A ```struct```/```header``` can be cast to another ```struct```/```header``` if and only if they have the same number of fields and all the fields in the source can be recursively cast to the corresponding fields in the destination.
-- Given a type declaration introduced by ```typedef S T```, values of types ```T``` and ```S``` can be cast back and forth.
+- Given a type declaration introduced by ```typedef S T```, values of types ```T``` and ```S``` can be cast back and forth if they represent base types.
 
 ###	Implicit casts { sec-implicit-casts }
 Unlike C, P4 allows a very limited number of implicit casts. The reason is that often the implicit casts have a non-trivial semantics, which is invisible for the programmer.
