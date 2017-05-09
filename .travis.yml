@@ -4,6 +4,9 @@ branches:
   only:
   - master
 
+env:
+  - secure: "JfFtatML3NdpnJtgUa/F82oMxpWjkDzG8yZwrbWP1FTNpMzSLlz8Cs5Lp9UqpHiOKBjF1WznqjqBUH5pfUZ3AsfxcM04/10G+trZ33x8R6e9+dxfPLKITEsWp0+vTME94SABjLbHjkxjQCma1+SDZJ0p5czbxygjy1+wgNIK0qwSa4ku2gGl8g23/kdCj7D+O5Q5YGdHAFRQ6fSbHw2BAXiceaYkyokkpbYJK0dpNYVWr3Jt11KnrqH3ZN09pK4p6Z526yu9JBCIoAuAsoEXw89WH1Yj0CLEMNe9te5oEgklB2g0iAYelJt0feNCdxxhxf2qsl/k4/fi1O/EjLZMO3AZh1aoayKKqVAT5QqAaW8pWmM4Gii3sre7N40lLfYUqEVSQ1DOZpvCrvOw5nO71FgRTFaWJYLbuTPrayoud1zozEURIpcnocugaPG84Pa3jbXC6WeZmQrE3rXN743jsoVm3wDiRSqomgv2y8c09M5thig79PtNqFP74jFMUhFAjpWZP/y6Jl7K5niK83ERir0ZNcWNoL6VABUx1puLSk9Fd7JIWWnUWvg6x7KZW1ZbaW1g5VLJ+OJ7ypATzWu2iLKRsoucN46ZkUgascmrAZ+M/NUmqtVn6STDEyaNtL4DDMHtRYVoJjllFt8Dv41BIFXmV09d0slbMZ5+Rxqt/0A="
+
 services:
   - docker
 
@@ -12,7 +15,7 @@ before_install:
   - git config user.email "p4c@barefootnetworks.com"
 
 script:
-  - git remote add public https://github.com/p4lang/p4-spec.git
+  - git remote add public https://${GH_TOKEN}@github.com/p4lang/p4-spec.git
   - git fetch public +gh-pages:gh-pages
   - git checkout gh-pages
   - git rebase master
