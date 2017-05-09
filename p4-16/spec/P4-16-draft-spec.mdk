@@ -3880,9 +3880,20 @@ control caller( ... )( ... ) {
 }
 ~ End P4Example
 
-Direct type invocation in different scopes will result in different local
-instances with different fully-qualified control names.  It is illegal to
-directly apply the same type more than once within the same scope.
+This feature is intended to ease the case where a type is instantiated exactly
+once.  For completeness, the behavior of directly invoking the same type more than once
+is defined as follows.
+
+- Direct type invocation in different scopes will result in different local
+  instances with different fully-qualified control names.
+- In the same scope, direct type invocation will result in a different local
+  instance per invocation---however, instances of the same type
+  will share the same global name, via the ```@name``` annotation.  If the type
+  contains controllable entities, then invoking it directly more than once in
+  the same scope is illegal, because it will produce multiple controllable
+  entities with the same fully-qualified control name.
+
+See Section [#sec-name-annotations] for details of ```@name``` annotations.
 
 #	Packet construction (deparsing) { #sec-deparse }
 
@@ -4336,7 +4347,7 @@ derived from the name of its corresponding formal parameter.
 [evalmultiple]: figs/evalmultiple.png { width: 5cm; page-align: here }
 
 
-### Annotations controlling naming
+### Annotations controlling naming { #sec-name-annotations }
 
 Control plane-related annotations (Section
 [#sec-control-plane-api-annotations]) can alter the names exposed to the
