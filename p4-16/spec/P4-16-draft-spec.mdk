@@ -2297,7 +2297,7 @@ consequence, all constructor arguments must also be expressions that can be
 evaluated at compilation time.
 
 The following example shows a constructor invocation for setting the
-target-dependent implementation attribute of a table:
+target-dependent implementation property of a table:
 ~ Begin P4Example
 extern ActionProfile {
     ActionProfile(bit<32> size);  // constructor
@@ -3236,7 +3236,7 @@ The standard table properties are the following:
 
 We proceed discussing each of these.
 
-A property marked as ```const``` cannot be changed dynamically by the control-plane. The key and actions properties are always constant, so the ```const``` keyword is not needed for these.
+A property marked as ```const``` cannot be changed dynamically by the control-plane. The ```key``` and ```actions``` properties are always constant, so the ```const``` keyword is not needed for these.
 
 ###	Table properties { #sec-table-props }
 
@@ -3284,13 +3284,13 @@ match_kind {
 
 These identifiers correspond to the P4~14~ match kinds with the same names. The semantics of these annotations is actually irrelevant for describing the behavior of the P4 abstract machine; how they are used influences only the control-plane API and the actual implementation of the look-up table. From the point of view of the P4 program, a look-up table is an abstract finite map that is given a key and produces as a result either an action or a "miss" indication, as described in Section [#sec-mau-semantics].
 
-If a table has no key property, then it contains no look-up table, just a default action, which is always executed (i.e., the associated lookup table is always the empty map).
+If a table has no ```key``` property, then it contains no look-up table, just a default action, which is always executed (i.e., the associated lookup table is always the empty map).
 
 Each key element can have an optional ```@name``` annotation which is used to synthesize the control-plane visible name for the key field.
 
 ####	The list of actions { #sec-table-action-list }
 
-A table must declare all possible actions that may appear within the associated lookup table or in the default action. This is done with the ```action```s attribute; the value of this attribute is always an ```actionList```:
+A table must declare all possible actions that may appear within the associated lookup table or in the default action. This is done with the ```actions``` property; the value of this property is always an ```actionList```:
 
 ~ Begin P4Grammar
 actionList
@@ -3354,7 +3354,7 @@ table t {
 
 The default action of a table is an action that is invoked automatically by the match-action unit whenever the lookup table does not find a match for the supplied key.
 
-The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action _must_ appear after the ```action``` property and may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list.
+The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action _must_ appear after the ```actions``` property and may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list.
 
 For example, in the above ```table``` we could set the default action as follows (marking it also as constant --- i.e., not changeable by the control plane):
 
@@ -3481,11 +3481,13 @@ program, with decreasing priority levels.
 
 ####	Additional table properties
 
-Tables can have additional properties. The P4 spec does not mandate any additional properties, or prescribe their semantics. Various architectures can require attributes that are specific to these architectures.
+Tables can have additional properties. This specification does not mandate any additional properties, or prescribe their semantics. Various architectures can require properties that are specific to these architectures.
 
-For example, architectures where lookup-table resources are statically allocated may mandate a ```size``` table attribute, which can be used to indicate to the compiler back-end how many storage resources should be allocated.
+For example, architectures where lookup-table resources are statically allocated may mandate a ```size``` table property, which can be used to indicate to the compiler back-end how many storage resources should be allocated.
 
-A ```table``` declaration indicates the interfaces expected from a ```table```: keys and actions. However, the best way to implement a table is actually dependent on the nature of the entries that will populate the table at runtime (for example, tables could be dense or sparse, could be implemented as hash-tables, associative memories, tries, etc.) An implementation attribute could also be used to pass additional information to the compiler back-end. The value of this attribute could be an instance of an ```extern``` block chosen from a suitable library of components. For example, the core functionality of the P4~14~ table ```action_profile``` constructs could be implemented on architectures that support this feature using a construct such as the following:
+Additional properties are permitted to change the semantics of a table lookup. For example, an architecture could define a property ```default_action_undefined``` that, when given the value ```true```, causes the behavior of the data plane to be undefined for any packet that found no match when searching the table.
+
+A ```table``` declaration indicates the interfaces expected from a ```table```: keys and actions. However, the best way to implement a table is actually dependent on the nature of the entries that will populate the table at runtime (for example, tables could be dense or sparse, could be implemented as hash-tables, associative memories, tries, etc.) An implementation property could also be used to pass additional information to the compiler back-end. The value of this property could be an instance of an ```extern``` block chosen from a suitable library of components. For example, the core functionality of the P4~14~ table ```action_profile``` constructs could be implemented on architectures that support this feature using a construct such as the following:
 
 ~ Begin P4Example
 extern ActionProfile {
