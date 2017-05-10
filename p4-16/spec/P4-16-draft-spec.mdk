@@ -2600,6 +2600,40 @@ control c(...) {
 }
 ~ End P4Example
 
+A P4 program may only instantiate the ```parser```s and ```control```s mandated by the architecture, as well as a single top-level package. This restriction is designed to ensure that any state either resides in the architecture itself, or is local to a ```parser``` or ```control```. For example, the following declarations would not be legal,
+
+~ Begin P4Example
+// Architecture
+extern register { 
+  register();
+  void write(bit<8> b);
+  bit<8> read();
+}
+control c1(...);
+control c2(...);
+
+// Program
+register() r;
+control c1(...) {
+  apply { 
+    r.write(1); 
+  }
+}
+control c2(...) {
+  apply { 
+    bit<8> x = r.read(); 
+  }
+}
+~ End P4Example
+
+because ```c1``` and ```c2``` communicate through ```r```, which is a global instance. If the architecture had such a register, it could supply it to ```c1``` as a parameter,
+
+~ Begin P4Example
+control c1(register r) { ... }
+~ End P4Example
+
+and similarly for ```c2```. 
+
 #	Statements { #sec-stmts }
 Statements (except the block statement) must end with a semicolon, C-style.
 
