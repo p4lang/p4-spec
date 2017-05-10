@@ -2168,6 +2168,9 @@ operation, indicated using the dot (".") operator (e.g., ```s.field```). Field
 extraction from an l-value produces an l-value. Structs can also be copied
 using assignment; this is only possible between structs that have the same type.
 
+A struct object can be initialized with a list expression, as
+described in Section [#sec-list-exprs].
+
 ##	Operations on headers { #sec-ops-on-hdrs }
 
 Headers provide the same operations as structs. Assignment between headers also
@@ -2185,7 +2188,18 @@ The result of reading or writing a field in an invalid header is undefined. The
 result of reading an uninitialized header field is undefined --- even if the
 header itself is valid.
 
-## Operations on header stacks { #sec-expr-hs }
+A header object can be initialized with a list expression, similar to
+a struct --- the list fields are assigned to the header fields in the
+order they appear.  In this case the header automatically becomes
+valid:
+
+```
+header H { bit<32> x; bit<32> y; }
+H h;
+h = { 10, 12 };  // This also makes the header h valid
+```
+
+##	Operations on header stacks { #sec-expr-hs }
 
 A header stack is a fixed-size array of headers with the same
 type. The valid elements of a header stack need not be contiguous. P4
