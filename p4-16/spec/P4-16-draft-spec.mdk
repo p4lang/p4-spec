@@ -2621,6 +2621,33 @@ control c(...) {
 }
 ~ End P4Example
 
+A P4 program may only instantiate a single top-level package, as well as the ```parser```s and ```control```s used to instantiate the package, as specified by the architecture. This restriction is designed to ensure that most state resides in the architecture itself, or is local to a ```parser``` or ```control```. For example, the following program is not valid,
+
+~ Begin P4Example
+// Architecture
+control c(...);
+control d(...);
+package switch(c x, d y);
+
+// Program
+control c(...) { ... }
+c() c1;
+c() c2;
+
+control d(...) {
+  apply { 
+    ...
+    c2.apply();
+    ...
+  }
+}
+d() d1;
+
+switch(c1, d1);
+~ End P4Example
+
+because control `c2` is instantiated at the top-level, but is not specified by the architecture. Note that top-level declarations of constants and instantiations of extern objects are permitted.
+
 #	Statements { #sec-stmts }
 Statements (except the block statement) must end with a semicolon, C-style.
 
