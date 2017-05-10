@@ -2600,39 +2600,32 @@ control c(...) {
 }
 ~ End P4Example
 
-A P4 program may only instantiate a single top-level package, as well as the ```parser```s and ```control```s needed to construct that package, as mandated by the architecture. This restriction is designed to ensure that any state either resides in the architecture itself, or is local to a ```parser``` or ```control```. For example, the following declarations are not legal,
+A P4 program may only instantiate a single top-level package, as well as the ```parser```s and ```control```s used to instantiate the package, as specified by the architecture. This restriction is designed to ensure that most state resides in the architecture itself, or is local to a ```parser``` or ```control```. For example, the following program is not valid,
 
 ~ Begin P4Example
 // Architecture
-extern register { 
-  register();
-  void write(bit<8> b);
-  bit<8> read();
-}
-control c1(...);
-control c2(...);
+control c(...);
+control d(...);
+package switch(c x, d y);
 
 // Program
-register() r;
-control c1(...) {
+control c(...) { ... }
+c() c1;
+c() c2;
+
+control d(...) {
   apply { 
-    r.write(1); 
+    ...
+    c2.apply();
+    ...
   }
 }
-control c2(...) {
-  apply { 
-    bit<8> x = r.read(); 
-  }
-}
+d() d1;
+
+switch(c1, d1);
 ~ End P4Example
 
-because ```c1``` and ```c2``` communicate through a global instance ```r```. If the architecture had such a register, it could supply it to ```c1``` as a data plane parameter,
-
-~ Begin P4Example
-control c1(register r) { ... }
-~ End P4Example
-
-and similarly for ```c2```. 
+because control `c2` is instantiated at the top-level, but is not specified by the architecture. Note that top-level declarations of constants and instantiations of extern objects are permitted.
 
 #	Statements { #sec-stmts }
 Statements (except the block statement) must end with a semicolon, C-style.
