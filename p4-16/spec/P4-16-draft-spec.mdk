@@ -2600,7 +2600,7 @@ control c(...) {
 }
 ~ End P4Example
 
-A P4 program may only instantiate the ```parser```s and ```control```s mandated by the architecture, as well as a single top-level package. This restriction is designed to ensure that any state either resides in the architecture itself, or is local to a ```parser``` or ```control```. For example, the following declarations would not be legal,
+A P4 program may only instantiate a single top-level package, as well as the ```parser```s and ```control```s needed to construct that package, as mandated by the architecture. This restriction is designed to ensure that any state either resides in the architecture itself, or is local to a ```parser``` or ```control```. For example, the following declarations are not legal,
 
 ~ Begin P4Example
 // Architecture
@@ -2626,7 +2626,7 @@ control c2(...) {
 }
 ~ End P4Example
 
-because ```c1``` and ```c2``` communicate through ```r```, which is a global instance. If the architecture had such a register, it could supply it to ```c1``` as a parameter,
+because ```c1``` and ```c2``` communicate through a global instance ```r```. If the architecture had such a register, it could supply it to ```c1``` as a data plane parameter,
 
 ~ Begin P4Example
 control c1(register r) { ... }
