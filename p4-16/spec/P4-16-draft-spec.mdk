@@ -1427,17 +1427,17 @@ introduce a header stack called ```mpls``` containing 10 entries, each of type `
 
 ### Header Unions {#sec-header-unions}
 
-A header union represents an alternative between different headers. Header unions can be used to represent "options" in protocols like TCP and IP. They also provide hints to P4 compilers that only one alternative will be present, allowing it to conserve resources. 
+A header union represents an alternative between different headers. Header unions can be used to represent "options" in protocols like TCP and IP. They also provide hints to P4 compilers that only one alternative will be present, allowing it to conserve resources.
 
 A header union is defined as:
 ~ Begin P4Grammar
 headerUnionDeclaration
     : optAnnotations HEADER_UNION name
-      '{' structFieldList '}'         
+      '{' structFieldList '}'
     ;
 ~ End P4Grammar
 
-This declaration introduces a new type with the specified name in the local scope. Each element of the list of fields used to declare a header union must be a header type. However, the empty list of fields is legal. 
+This declaration introduces a new type with the specified name in the local scope. Each element of the list of fields used to declare a header union must be a header type. However, the empty list of fields is legal.
 
 As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6 headers:
 ~ Begin P4Example
@@ -2274,11 +2274,11 @@ A variable declared with a union type is initially invalid:
 ~Begin P4Example
 header H1 {
   bit<8> f;
-}  
+}
 
 header H2 {
   bit<16> g;
-}  
+}
 
 header_union U {
   H1 h1;
@@ -2295,18 +2295,18 @@ However, we can change the validity of a header union by assigning a
 valid header to one of its elements:
 ~Begin P4Example
 header H1
-U u; 
+U u;
 H1 my_h1 = { 8w0 }; // my_h1 is valid
 u.h1 = my_h1;       // u and u.h1 are both valid
 ~End P4Example
 We can also assign a list to an element of a header union,
 ~Begin P4Example
-U u; 
+U u;
 u.h2 = { 16w1 };     // u and u.h1 are valid
 ~End P4Example
 or set their validity bits directly.
 ~Begin P4Example
-U u; 
+U u;
 u.h1.setValid();     // u and u.h1 are valid
 H1 my_h1 = u.h1;         // my_h1 contains an undefined value
 ~End P4Exampl
@@ -2334,7 +2334,7 @@ as equivalent to
   u.hi.setValid();
   u.hi = e;
 ~End P4Example
-if `e` is valid and 
+if `e` is valid and
 ~Begin P4Example
   u.hi.setInvalid();
 ~End P4Example
@@ -2748,8 +2748,8 @@ switch (t.apply().action_run) {
 
 Please note that the ```default``` label of the ```switch``` statement is used
 to match on the kind of action executed, no matter whether there was a table
-hit or miss. The ```default``` label does not represent the fact that the table
-missed, and that the ```default_action``` of the table was executed.
+hit or miss. The ```default``` label does not indicate that the table
+missed and the ```default_action``` was executed.
 
 #	Packet parsing in P4 { #sec-packet-parsing }
 This section describes the P4 constructs specific to parsing network packets.
@@ -3426,13 +3426,18 @@ tableProperty
     | optAnnotations IDENTIFIER '=' initializer ';'
     ;
 ~ End P4Grammar
-The standard table properties are the following:
+The standard table properties include:
 
 - ```key```: An expression that describes how the key used for look-up is computed.
 - ```actions```: A list of all actions that may be found in the table.
+
+In addition, the tables may optionally define the following property,
+
 - ```default_action```: an action to execute when the lookup in the lookup table fails to find a match for the key used.
 
-We proceed discussing each of these.
+as well as architecture-specific properties (see Sec. [#sec-additional-table-properties]).
+
+We discuss each of these properties in detail.
 
 A property marked as ```const``` cannot be changed dynamically by the control-plane. The ```key``` and ```actions``` properties are always constant, so the ```const``` keyword is not needed for these.
 
@@ -3552,7 +3557,7 @@ table t {
 
 The default action of a table is an action that is invoked automatically by the match-action unit whenever the lookup table does not find a match for the supplied key.
 
-The initial value for the default action is supplied as a value for the ```default_action``` property; this property must be present for all tables. The default action _must_ appear after the ```actions``` property and may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list.
+If present, the ```default``` action property _must_ appear after the ```action``` property. It may be declared as ```const```, indicating that it cannot be changed dynamically by the control-plane. The default action _must_ be one of the actions that appear in the actions list. In particular, the expressions passed as ```in, out``` or ```inout``` parameters must be syntactically identical to the expressions used in one of the elements of the ```actions``` list.
 
 For example, in the above ```table``` we could set the default action as follows (marking it also as constant --- i.e., not changeable by the control plane):
 
@@ -3571,7 +3576,7 @@ Continuing the example in the previous section, here are various legal and illeg
   // default_action = b(z); -- illegal, b's data parameter is not bound
 ~ End P4Example
 
-If the user does not specify a value for the default action, the runtime behavior of the program is undefined until the control-plane initializes the ```default_action``` to one of the legal values. The compiler should produce a warning in this case. This is a difference from P4~14~, which can set the default action to no-op. If the legacy behavior is desired, the user must explicitly use the core library ```action NoAction``` in the table, which must appear in the actions list.
+If a table does not specify the ```default_action``` property and no entry matches a given packet, then the table does not affect the packet and processing continues according to the imperative control flow of the program.
 
 #### Table entries
 
@@ -3658,7 +3663,7 @@ control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t stan
 
 	default_action = a;
 
-        const entries = {
+    const entries = {
             (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
             (0x02, 0x1181           ) : a_with_control_params(2);
             (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
@@ -3677,7 +3682,7 @@ the packet to a particular output port. Once the program is loaded, these
 entries are installed in the table in the order they are enumerated in the
 program, with decreasing priority levels.
 
-####	Additional table properties
+####	Additional table properties {#sec-additional-table-properties}
 
 Tables can have additional properties. This specification does not mandate any additional properties, or prescribe their semantics. Various architectures can require properties that are specific to these architectures.
 
