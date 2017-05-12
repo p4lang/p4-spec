@@ -91,78 +91,64 @@ p4grammar {
 P4 is a language for programming the data plane of network
 devices. This document provides a precise definition of the P4~16~
 language, which is the 2016 revision of the P4 language
-<http://p4.org>.  The primary target audience for this document
-includes developers who want to write
-compilers/simulators/IDEs/debuggers for P4 programs. This document may
-also be useful for P4 programmers who are interested in understanding
-the language syntax and semantics at a deeper level.
+<http://p4.org>.  The target audience for this document includes
+developers who want to write compilers, simulators, IDEs, and
+debuggers for P4 programs. This document may also be of interest to P4
+programmers who are interested in understanding the syntax and
+semantics of the language at a deeper level.
 ~ End Abstract
 
 [TOC]
 
 # Scope { #sec-scope }
 
-This specification establishes the form and interpretation of
-programs, written in the P4~16~ programming language. It specifies:
+This specification document defines the structure and interpretation
+of programs in the P4~16~ language. It defines the syntax, semantic
+rules, and requirements for conformant implementations of the
+language.
 
-- The representation of P4 programs
-- The syntax and constraints of the P4 language
-- The semantic rules for interpreting P4 programs
-- The restrictions and limitations of conformant P4 implementations
+It does not define:
 
-This specification does not specify:
-
-- The mechanism by which P4 programs are transformed for use on packet
-  processing systems
-- The mechanism by which P4 programs are loaded and executed on the
-  packet processing systems
-- The mechanism by which input data are delivered to the P4 program
-- The mechanism by which output data, produced by P4 program is
-  delivered to the next consumer
-- The mechanism by which the control plane can manage stateful objects
-  defined by a P4 program
-- The size or complexity of a program and its data that will exceed
-  the capacity of any specific packet processing system or the
-  capacity of a particular target
-- All minimal requirements of a packet processing system that is
-  capable of supporting a conforming implementation
+- Mechanisms by which P4 programs are compiled, loaded, and executed
+  on packet-processing systems,
+- Mechanisms by which data are received by one packet-processing
+  system and delivered to another system,
+- Mechanisms by which the control plane manages the match-action
+  tables and other stateful objects defined by P4 programs,
+- The size or complexity of P4 programs,
+- The minimal requirements of packet-processing systems that are
+  capable of providing a conformant implementation.
 
 # Terms, definitions, and symbols
 
-Throughout this specification, the following terms will be used. Terms
-explicitly defined in this specification are not to be presumed to
-refer implicitly to similar terms defined elsewhere. Terms not
-explicitly defined in this specification should be interpreted
-according to ISO/IEC 2382:2015 (Information Technology - Vocabulary)
-or the other generally recognizable sources, such as RFCs.
+Throughout this document, the following terms will be used:
 
-- **Architecture**: A set of P4-programmable components on the target
-  and their external data plane interfaces.
-- **Control Plane**: A class of algorithms and the corresponding input
-  and output data that are concerned with the configuration and the
-  provisioning of the data plane.
-- **Data Plane**: A class of algorithms, describing handling of
-  individual packets as they pass through a packet processing system.
-- **Deparser**: A part of a P4 program that assembles the outgoing
-  packet headers.
-- **Intrinsic Metadata**: A set of data that a P4-programmable
-  component can use to interface with the other components in the
-  system.
-- **Metadata**: Intermediate data, generated during execution of a P4
+- **Architecture**: A set of P4-programmable components and the data
+  plane interfaces between them.
+- **Control plane**: A class of algorithms and the corresponding input
+  and output data that are concerned with the provisioning and
+  configuration of the data plane.
+- **Data plane**: A class of algorithms that describe transformations
+  on packets by packet-processing systems.
+- **Metadata**: Intermediate data generated during execution of a P4
   program.
 - **Packet**: A network packet is a formatted unit of data carried by
   a packet-switched network.
-- **Packet Header**: Packet header refers to supplemental, formally
-  defined data placed at the beginning of a packet. Packet headers are
-  often referred to as packet metadata. A given packet can contain a
-  sequence of packet headers representing different protocols.
-- **Packet Payload**: Packet data that follows the Packet Headers.
-- **Packet Processing System**: A data processing system oriented
-  towards processing network packets. In general, packet processing
-  systems implement two classes of algorithms, called control plane
-  and data plane.
-- **Target**: A Packet Processing System that can execute a P4
+- **Packet header**: Formatted data at the beginning of a packet. A
+  given packet may contain a sequence of packet headers representing
+  different network protocols.
+- **Packet payload**: Packet data that follows the packet headers.
+- **Packet-processing system**: A data-processing system oriented
+  towards processing network packets. In general, packet-processing
+  systems implement control plane and data plane algorithms.
+- **Target**: A packet-processing system capable of executing a P4
   program.
+
+All terms defined explicitly in this document should not be understood
+to refer implicitly to similar terms defined elsewhere. Terms not
+defined explicitly in this document should be interpreted according to
+ISO/IEC 2382:2015 (Information Technology - Vocabulary) or the other
+generally recognizable sources, such as IETF RFCs.
 
 # Overview
 
@@ -172,51 +158,49 @@ or the other generally recognizable sources, such as RFCs.
 [prgswitch]: figs/prgswitch.png { width: 100%; page-align: forcehere }
 
 P4 is a language for expressing how packets are processed by the data
-plane of a programmable network forwarding element such as a
-programmable hardware or software switch, network interface card,
-router, or network function appliance. The name comes from the original
-paper that introduced the language, "Programming Protocol-independent
-Packet Processors," <https://arxiv.org/pdf/1312.1719.pdf>. While
-initially P4 was designed for programming network switches, its scope
-has been broadened to cover a large variety of packet processing
-systems. In the rest of this document we use the generic term _target_
-for all such network processing system devices.
+plane of a programmable forwarding element such as a hardware or
+software switch, network interface card, router, or network
+appliance. The name P4 comes from the original paper that introduced
+the language, "Programming Protocol-independent Packet Processors,"
+<https://arxiv.org/pdf/1312.1719.pdf>. While P4 was initially designed
+for programming switches, its scope has been broadened to cover a
+large variety of devices. In the rest of this document we use the
+generic term _target_ for all such devices.
 
-Many target devices contain both a control plane and a data plane. P4
-is designed to specify only the target data plane functionality. P4
-programs also partially define the interface by which the control
-plane and the data-plane communicate, but P4 cannot be used to
-describe the target's control-plane functionality. In the rest of this
-document, when we talk about P4 as "programming a target", we mean
-"programming the target data plane".
+Many targets implement both a control plane and a data plane. P4 is
+designed to specify only the data plane functionality of the
+target. P4 programs also partially define the interface by which the
+control plane and the data-plane communicate, but P4 cannot be used to
+describe the control-plane functionality of the target. In the rest of
+this document, when we talk about P4 as "programming a target", we
+mean "programming the data plane of a target".
 
-As a concrete example in the context of programming network switches,
-Figure [#fig-prgswitch] illustrates the difference between a
-traditional fixed-function switch and a P4-programmable switch. In a
-traditional switch the manufacturer defines the data-plane
-functionality. The control-plane controls the data plane by managing
-entries in tables (e.g. routing tables), configuring specialized
-objects (e.g. meters), and by processing control-packets (e.g. routing
-protocol packets) or asynchronous events, such as link state changes
-or learning notifications.
+As a concrete example of a target, Figure [#fig-prgswitch] illustrates
+the difference between a traditional fixed-function switch and a
+P4-programmable switch. In a traditional switch the manufacturer
+defines the data-plane functionality. The control-plane controls the
+data plane by managing entries in tables (e.g. routing tables),
+configuring specialized objects (e.g. meters), and by processing
+control-packets (e.g. routing protocol packets) or asynchronous
+events, such as link state changes or learning notifications.
 
 A P4-programmable switch differs from a traditional switch in two
-ways:
+essential ways:
 
-- The switch data plane is no longer fixed; P4 programs describe the
-  data plane functionality. The data plane is configured at switch
-  initialization time based on the P4 functionality (shown by the long
-  red arrow). The data plane has no built-in knowledge of existing
-  protocols.
-- The control plane continues to interact with the data plane using
-  the same channels; however, the set of tables and other objects
-  driving the behavior of the data plane is no longer fixed, since the
-  P4 programmer specifies it after the switch has been
-  manufactured. The P4 compiler generates the API that the control
-  plane uses to communicate with the data plane from the P4 program.
+- The data plane functionality is not fixed in advance but is defined
+  by the a P4 program. The data plane is configured at initialization
+  time to implement the functionality described by the P4 program
+  (shown by the long red arrow) and has no built-in knowledge of
+  existing network protocols.
+- The control plane communicates with the data plane using the same
+  channels as in a fixed-function device, but the set of tables and
+  other objects in the data plane are no longer fixed, since they are
+  defined by a P4 program. The P4 compiler generates the API that the
+  control plane uses to communicate with the data plane.
 
-Hence, P4 itself is protocol independent but allows programmers to
-express a rich set of data plane behaviors and protocols.
+Hence, P4 can be said to be protocol independent, but it enables
+programmers to express a rich set of protocols and other data plane
+behaviors.
 
 ~ Figure { #fig-p4prg; caption: "Programming a target with P4." }
 ![p4prg]
@@ -226,109 +210,105 @@ express a rich set of data plane behaviors and protocols.
 []{tex-cmd: "\indent"}
 The core abstractions provided by the P4 language are:
 
-- **Header definitions** describe the format (the set of fields and
+- **Header types** describe the format (the set of fields and
   their sizes) of each header within a packet.
-- **Parsers** describe the permitted header sequences within received
-  packets, how to identify those header sequences, and the headers and
-  fields to extract from packets.
+- **Parsers** describe the permitted sequences of headers within
+  received packets, how to identify those header sequences, and the
+  headers and fields to extract from packets.
 - **Tables** associate user-defined keys with actions. P4 tables
   generalize traditional switch tables; they can be used to implement
   routing tables, flow lookup tables, access-control lists, and other
   user-defined table types, including complex multivariable decisions.
 - **Actions** are code fragments that describe how packet header
-  fields and metadata are manipulated. Actions can also include data,
-  which can be supplied by the control-plane at runtime.
+  fields and metadata are manipulated. Actions can include data, which
+  is supplied by the control-plane at runtime.
 - **Match-action units** perform the following sequence of operations:
   * Construct lookup keys from packet fields or computed metadata,
   * Perform table lookup using the constructed key, choosing an action
-    (including the associated data) to execute
-  * Finally, execute the selected action
-- **Control flow** expresses an imperative program describing the
-  data-dependent packet processing within a target pipeline, including
-  the data-dependent sequence of match-action unit
-  invocations. Deparsing (packet reassembly) can be performed using a
-  control flow.
-- **Extern objects** are library constructs that can be manipulated by
-  P4 programs through well-defined APIs, but whose internal behavior
-  is hardwired (e.g., checksum units) and hence not programmable using
-  P4.
+    (including the associated data) to execute, and
+  * Finally, execute the selected action.
+- **Control flow** expresses an imperative program that describes
+  packet-processing on a target, including the data-dependent sequence
+  of match-action unit invocations. Deparsing (packet reassembly) can
+  also be performed using a control flow.
+- **Extern objects** are architecture-specific constructs that can be
+  manipulated by P4 programs through well-defined APIs, but whose
+  internal behavior is hard-wired (e.g., checksum units) and hence not
+  programmable using P4.
 - **User-defined metadata**: user-defined data structures associated
   with each packet.
 - **Intrinsic metadata**: metadata provided by the architecture
-  associated with each packet (e.g., the input port where a packet has
-  been received).
+  associated with each packet---e.g., the input port where a packet
+  has been received.
 
-Figure [#fig-p4prg] shows a typical tool workflow when programming a target using P4.
+Figure [#fig-p4prg] shows a typical tool workflow when programming a
+target using P4.
 
 Target manufacturers provide the hardware or software implementation
 framework, an architecture definition, and a P4 compiler for that
-target. P4 programmers write programs in P4 for a specific
-architecture. The *architecture* defines a set of P4-programmable
-components on the target as well as their external data plane
-interfaces.
+target. P4 programmers write programs for a specific architecture,
+which defines a set of P4-programmable components on the target as
+well as their external data plane interfaces.
 
 Compiling a set of P4 programs produces two artifacts:
 
 - a data plane configuration that implements the forwarding logic
-  described in the input P4 program and
-- an API for managing the behavior of the data plane objects from the
+  described in the input program and
+- an API for managing the state of the data plane objects from the
   control plane
 
-P4 is a domain-specific language. It is designed to be implementable
-on a large variety of target platforms such as programmable network
-cards, FPGA switches, software switches, and programmable ASICs. As
-such the language is restricted to constructs that are efficiently
-implementable on all these platforms.
+P4 is a domain-specific language that is designed to be implementable
+on a large variety of targets including programmable network interface
+cards, FPGAs, software switches, and hardware ASICs. As such, the
+language is restricted to constructs that can be efficiently
+implemented on all of these platforms.
 
 P4 is not a Turing-complete language. In fact, assuming a fixed cost
-for a table lookup operation, all P4 program blocks (i.e., parser or
-control) should provably execute a constant O(1) number of operations
-for each byte of an input packet received (i.e., each header byte
-analyzed). In other words, the computational complexity of a P4
-program depends linearly only on the header sizes, and never depends
-on the size of the state accumulated while processing data (e.g., the
-number of flows, or the total number of packets processed). These
-guarantees are necessary (but not sufficient) for enabling fast packet
-processing across a variety of targets.
+for a table lookup operations and interactions with extern objects,
+all P4 programs (i.e., parsers and controls) execute a constant number
+of operations for each byte of an input packet received and
+analyzed. In other words, the computational complexity of a P4 program
+is linear in the total size of all headers, and never depends on the
+size of the state accumulated while processing data (e.g., the number
+of flows, or the total number of packets processed). These guarantees
+are necessary (but not sufficient) for enabling fast packet processing
+across a variety of targets.
 
 _P4 conformance_ of a target is defined as follows: if a specific
-target T supports only a subset of the P4 programming language (let's
-call it P4^T^), the programs written in P4^T^ executed on the target
-should provide the exact same behavior as P4 programs executed on the
-P4 abstract machine in this document.
-
-Note that P4 conformant targets can provide arbitrary P4 language
-extensions and ```extern``` elements.
+target T supports only a subset of the P4 programming language, say
+P4^T^, programs written in P4^T^ executed on the target should provide
+the exact same behavior as is described in this document. Note that P4
+conformant targets can provide arbitrary P4 language extensions and
+```extern``` elements.
 
 ## Benefits of P4
 
-Compared to the state-of-the-art method of programming network
-processing systems (e.g., writing microcode on top of custom
-hardware), P4 provides significant advantages:
+Compared to state-of-the-art packet-processing systems (e.g., based on
+writing microcode on top of custom hardware), P4 provides a number of
+significant advantages:
 
 - **Flexibility**: P4 makes many packet-forwarding policies
-  expressible as programs; contrast this to traditional switches,
-  which expose fixed-function forwarding engines to their users
+  expressible as programs, in contrast to traditional switches, which
+  expose fixed-function forwarding engines to their users.
 - **Expressiveness**: P4 programs may express sophisticated
   hardware-independent packet processing algorithms using solely
   general-purpose operations and table look-ups. Such programs will be
-  portable between hardware targets that implement similar
-  architectures (assuming enough resources are available).
-- **Resource mapping and management**: P4 programs express resource
-  usage in symbolic terms (e.g., IPv4 source address); compilers map
-  such user-defined fields to available hardware resources and manage
-  resource allocation and scheduling.
+  portable across hardware targets that implement the same
+  architectures (assuming sufficient resources are available).
+- **Resource mapping and management**: P4 programs describe storage
+  resources abstractly (e.g., IPv4 source address); compilers map such
+  user-defined fields to available hardware resources and manage
+  low-level details such as allocation and scheduling.
 - **Software engineering**: P4 programs provide important benefits
   such as type checking, information hiding, and software reuse.
 - **Component libraries**: Manufacturer-supplied component libraries
-  may be used to wrap hardware-specific functions into portable
+  can be used to wrap hardware-specific functions into portable
   high-level P4 constructs.
 - **Decoupling hardware and software evolution**: Target manufacturers
   may use abstract architectures to further decouple the evolution of
   low-level architectural details from high-level processing.
-- **Debugging**: Manufacturers can provide their customers software
-  models of an architecture to aid in the development and debugging of
-  P4 programs.
+- **Debugging**: Manufacturers can provide software models of an
+  architecture to aid in the development and debugging of P4 programs.
 
 ## P4 language evolution: comparison to previous versions (P4 v1.0/v1.1)
 
@@ -337,40 +317,38 @@ hardware), P4 provides significant advantages:
 ~
 [p4transition]: figs/p4transition.png { width: 100%; page-align: forcehere }
 
-The P4 language went through some significant, backwards-incompatible
-changes to the language syntax and semantics. The language evolution
-between the previous version (P4~14~) and the current one (P4~16~) is
-illustrated in Figure [#fig-p4transition]. In particular, a
-significant number of language constructs have been eliminated from
-the language and will be migrated into libraries. Examples include:
-counters, checksum units, meters, etc.
+Compared to P4~14~, the previous version of the language, P4~16~ makes
+a number of significant, backwards-incompatible changes to the syntax
+and semantics of the language. The evolution from the previous version
+(P4~14~) to the current one (P4~16~) is depicted in Figure
+[#fig-p4transition]. In particular, a large number of language
+features have been eliminated from the language and moved into
+libraries including counters, checksum units, meters, etc.
 
-The original complex language (74 keywords) has been thus transformed
-into a relatively small core language (35 keywords, shown in Section
-[#sec-p4-keywords]) accompanied by a core library of fundamental
-constructs which are necessary for writing almost all P4
-programs. This core language is the subject of this specification.
+Hence, the language has been transformed from a complex language (74
+keywords) into a relatively small core language (35 keywords, shown in
+Section [#sec-p4-keywords]) accompanied by a library of fundamental
+constructs that are needed for writing most P4.
 
-The v1.1 version of P4 introduced a language construct called ```extern```
-which can be used to describe library elements. Many
-constructs that are defined in the v1.1 language specification will
-thus be transformed into such library elements (including equivalents
-to v1.1 constructs that have been eliminated from the language, such
-as counters and meters). Some of these ```extern``` objects are
-expected to be standardized, and they will be in the scope of a
-separate document, describing a standard library of P4 elements. In
+The v1.1 version of P4 introduced a language construct called ```extern``` that
+can be used to describe library elements. Many constructs defined in the
+v1.1 language specification will thus be transformed into such
+library elements (including constructs that have been eliminated
+from the language, such as counters and meters). Some of these ```extern``` objects
+are expected to be standardized, and they will be in the scope of a
+future document describing a standard library of P4 elements. In
 this document we provide several examples of ```extern``` constructs.
-
-The P4~16~ language also introduces and repurposes some v1.1 language
+P4~16~ also introduces and repurposes some v1.1 language
 constructs for describing the programmable parts of an
 architecture. These language constructs are: ```parser```, ```state```, ```control```, and ```package```.
 
 One important goal of the P4~16~ language revision is to provide a
-*stable* programming language definition, that promotes
-backwards-compatibility. In other words, we strive for programs
-written in P4~16~ to remain syntactically correct and to behave
-identically when treated as programs for later versions of the P4
-language.
+*stable* language definition. In other words, we strive to ensure that
+all programs written in P4~16~ will remain syntactically correct and
+behave identically when treated as programs for future versions of the
+language. Moreover, if some future version of the language requires
+breaking backwards compatibility, we will seek to provide an easy path
+for migrating P4~16~ programs to the new version.
 
 # Architecture Model
 
