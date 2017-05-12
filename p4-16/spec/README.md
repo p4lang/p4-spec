@@ -1,10 +1,11 @@
+This folder contains the sources for generating the official P4-16 specification document.
+
 # Markup version
 
 The markup version uses Madoko (https://www.madoko.net) to produce
 HTML and PDF versions of the documentation. Pre-built versions of the
 documentation are available on the
 [wiki](https://github.com/p4lang/p4-spec/wiki).
-
 
 Files:
 - ```P4-16-draft-spec.mdk``` is the main file. It's markup, with three custom
