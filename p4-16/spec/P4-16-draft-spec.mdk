@@ -496,8 +496,8 @@ object construct, which only describes the interfaces that such an
 object exposes to the data-plane; a complete description of ```extern```
 is given in Section [#sec_extern], but we provide an overview here.
 
-An ```extern``` object is similar to a pure abstract classes from
-object-oriented programming (or interfaces in Java and C#). It
+An ```extern``` object is similar to a pure abstract class from
+object-oriented programming (or an interface in Java and C#). It
 describes a set of methods that are implemented by an object, but not
 the implementation of these methods. For example, the following
 construct could be used to describe the operations offered by an
@@ -518,9 +518,9 @@ extern Checksum16 {
 To make the discussion concrete we begin by presenting a complete
 example: we start by describing the architecture of a very simple
 switch. We then provide the P4 description of the architecture. We end
-by writing a complete P4 program for controlling the switch. While the
-example is relatively involved, it makes use all important features of
-the P4 programming language.
+by writing a complete P4 program for controlling the switch. The
+example demonstrates many important features of the P4 programming
+language.
 
 ~ Figure { #fig-vssarch; caption: "The Very Simple Switch (VSS) architecture." }
 ![vssarch]
@@ -552,20 +552,13 @@ or one of 3 "special" ports:
 - Packets sent to the "Recirculate port" are re-injected in the switch
   through a special input port
 
-Packets may be received from one of three sources:
-
-- One of 8 input ports
-- Through recirculation
-- From the control plane CPU
-
 The white blocks in the figure are programmable, and the user must
 provide a corresponding P4 program to control the behavior of each
-such block. The cyan blocks are fixed-function. The green arrows are
-data plane interfaces used to convey information between the
-fixed-function blocks and the programmable blocks --- exposed in the
-P4 program as intrinsic metadata. The red arrows show the flow of
-user-defined data. VSS has three programmable blocks: a parser, a
-match-action pipeline, and a deparser.
+such block. The red arrows show the flow of user-defined data.  The
+cyan blocks are fixed-function. The green arrows are data plane
+interfaces used to convey information between the fixed-function
+blocks and the programmable blocks --- exposed in the P4 program as
+intrinsic metadata.
 
 ## Very Simple Switch Architecture { #sec-vss-arch }
 
@@ -944,8 +937,6 @@ control TopPipe(inout Parsed_packet headers,
       */
       action Drop_action()
       { outCtrl.outputPort = DROP_PORT; }
-
-      IPv4Address nextHop;
 
      /**
       * Set the next hop and the output port.
@@ -3450,8 +3441,8 @@ or set their validity bits directly.
 ~Begin P4Example
 U u;
 u.h1.setValid();     // u and u.h1 are valid
-H1 my_h1 = u.h1;         // my_h1 contains an undefined value
-~End P4Exampl
+H1 my_h1 = u.h1;     // my_h1 contains an undefined value
+~End P4Example
 Note that reading an uninitialized header produces an undefined value,
 even if the header is itself valid.
 
