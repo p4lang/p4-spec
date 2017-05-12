@@ -127,7 +127,7 @@ This specification does not specify:
 - All minimal requirements of a packet processing system that is
   capable of supporting a conforming implementation
 
-# Terms, definitions and symbols
+# Terms, definitions, and symbols
 
 Throughout this specification, the following terms will be used. Terms
 explicitly defined in this specification are not to be presumed to
@@ -174,7 +174,7 @@ or the other generally recognizable sources, such as RFCs.
 P4 is a language for expressing how packets are processed by the data
 plane of a programmable network forwarding element such as a
 programmable hardware or software switch, network interface card,
-router or network function appliance. The name comes from the original
+router, or network function appliance. The name comes from the original
 paper that introduced the language, "Programming Protocol-independent
 Packet Processors," <https://arxiv.org/pdf/1312.1719.pdf>. While
 initially P4 was designed for programming network switches, its scope
@@ -196,7 +196,7 @@ traditional fixed-function switch and a P4-programmable switch. In a
 traditional switch the manufacturer defines the data-plane
 functionality. The control-plane controls the data plane by managing
 entries in tables (e.g. routing tables), configuring specialized
-objects (e.g. meters) and by processing control-packets (e.g. routing
+objects (e.g. meters), and by processing control-packets (e.g. routing
 protocol packets) or asynchronous events, such as link state changes
 or learning notifications.
 
@@ -237,7 +237,7 @@ The core abstractions provided by the P4 language are:
   user-defined table types, including complex multivariable decisions.
 - **Actions** are code fragments that describe how packet header
   fields and metadata are manipulated. Actions can also include data,
-  which can be supplied by the control-plane at run time.
+  which can be supplied by the control-plane at runtime.
 - **Match-action units** perform the following sequence of operations:
   * Construct lookup keys from packet fields or computed metadata,
   * Perform table lookup using the constructed key, choosing an action
@@ -276,7 +276,7 @@ Compiling a set of P4 programs produces two artifacts:
 
 P4 is a domain-specific language. It is designed to be implementable
 on a large variety of target platforms such as programmable network
-cards, FPGA switches, software switches and programmable ASICs. As
+cards, FPGA switches, software switches, and programmable ASICs. As
 such the language is restricted to constructs that are efficiently
 implementable on all these platforms.
 
@@ -319,7 +319,7 @@ hardware), P4 provides significant advantages:
   such user-defined fields to available hardware resources and manage
   resource allocation and scheduling.
 - **Software engineering**: P4 programs provide important benefits
-  such as type checking, information hiding and software reuse.
+  such as type checking, information hiding, and software reuse.
 - **Component libraries**: Manufacturer-supplied component libraries
   may be used to wrap hardware-specific functions into portable
   high-level P4 constructs.
@@ -704,7 +704,7 @@ match-action pipeline will update the input headers in place to
 produce the output headers.
 
 - The ```package VSS``` declaration has 3 complex parameters, of
-  types ```Parser```, ```Pipe``` and ```Deparser``` respectively; which are
+  types ```Parser```, ```Pipe```, and ```Deparser``` respectively; which are
   exactly the declarations we have just described. In order to program
   the target one has to supply values for these parameters.
 - In this program the ```inCtrl``` and ```outCtrl``` structures
@@ -733,7 +733,7 @@ this document we provide a verbal description in English.
 The input arbiter block performs the following functions:
 
 - It receives packets from one of the physical input Ethernet ports,
-  from the control plane or from the input recirculation port.
+  from the control plane, or from the input recirculation port.
 - For packets received from Ethernet ports, the block computes the
   Ethernet trailer checksum and verifies it. If the checksum does not
   match, the packet is discarded. If the checksum does match, it is
@@ -792,7 +792,7 @@ of ```outCtrl.ouputPort```, which is set by the match-action pipeline.
 
 Please note that some of the behaviors of the demux block may be
 unexpected --- we have highlighted them in bold. We are not specifying
-here several important behaviors related to queue size, arbitration
+here several important behaviors related to queue size, arbitration,
 and timing, which also influence the packet processing.
 
 The arrow shown from the parser runtime to the demux block represents
@@ -1127,7 +1127,7 @@ ParserModel.verify(bool condition, error err) {
 
 The P4 semantics is described in terms of abstract machines executing
 traditional imperative code. There is an abstract machine for each P4
-sub-language (parser, control).The abstract machines are described in
+sub-language (parser, control). The abstract machines are described in
 this text in pseudo-code and English.
 
 P4 compilers can reorganize the generated code in any way as long as
@@ -1166,7 +1166,7 @@ The difference between the two forms is the order in which the
 preprocessor searches for header files when the path is incompletely
 specified.
 
-In addition, P4 compilers should correctly handle #line directives
+In addition, P4 compilers should correctly handle ```#line``` directives
 that may be generated during preprocessing.  This functionality allows
 P4 programs to be built from multiple source files, potentially
 produced by different programmers at different times:
@@ -1219,7 +1219,7 @@ The lexer recognizes the following kinds of terminals:
 
 ### Identifiers { #sec-identifiers }
 
-P4 identifiers may contain only letters, numbers and the underscore
+P4 identifiers may contain only letters, numbers, and the underscore
 character ```_```, and must start with a letter or with
 underscore. The special identifier consisting of a single underscore ```_```
 is reserved to indicate a "don't care" value in several contexts; its
@@ -1260,7 +1260,7 @@ not as a single ```bit``` token.
 
 ### Literal constants { #sec-literals }
 
-#### Boolean Literals { #sec-boolean-literals } There are two Boolean
+#### Boolean literals { #sec-boolean-literals } There are two boolean
 literal constants: ```true``` and ```false```.
 
 #### Integer literals { #sec-integer-literals }
@@ -1413,17 +1413,17 @@ retain information across packets (we call them "stateful"):
 In P4 all stateful elements must be explicitly allocated at
 compilation-time through the process called "instantiation".
 
-In addition, ```parser```s, ```control``` blocks and ```package```s
+In addition, ```parser```s, ```control``` blocks, and ```package```s
 may contain stateful element instantiations; thus they are also
 treated as stateful elements (even if they happen to contain no actual
 state). All stateful elements (```extern``` objects, ```parser```s, ```control```s, ```package```s,
 but not ```table```s) are represented in P4 by types. In order to use
 such an object, it must be first instantiated.
 
-Considering the example in Section [#sec-vss-all], ```TopParser```, ```TopPipe```, ```TopDeparser```, ```Checksum16```
+Considering the example in Section [#sec-vss-all], ```TopParser```, ```TopPipe```, ```TopDeparser```, ```Checksum16```,
 and ```Switch``` are types. These are instantiated in the program to
 be used: there are two instances of ```Checksum16```, one in ```TopParser``` and
-one in ```TopDeparser```, both called ```ck```. The ```TopParser```, ```TopDeparser```, ```TopPipe```
+one in ```TopDeparser```, both called ```ck```. The ```TopParser```, ```TopDeparser```, ```TopPipe```,
 and ```Switch``` are instantiated at the end of the program, in the
 declaration of the ```main``` instance object, which is an instance of
 the ```Switch``` type (a ```package```).
@@ -1622,7 +1622,7 @@ directions:
   directionless parameters.
 * All constructor parameters are evaluated at compilation-time, and in
   consequence they must all be directionless (they cannot be `in`,
-  `out` or `inout`); this applies to `package`, `control`, `parser`
+  `out`, or `inout`); this applies to `package`, `control`, `parser`,
   and `extern` objects. Values for these parameters must be specified
   at compile-time, and must evaluate to compile-time known values.
 * For actions all directionless parameters must be at the end of the
@@ -1710,7 +1710,7 @@ P4 supports the following built-in base types:
   machine-independent, compiler-managed way
 - The ```match_kind``` type, used for describing the implementation of
   table lookups
-- ```bool```, representing Boolean values
+- ```bool```, representing boolean values
 - Bit-strings of fixed width, denoted by ```bit<>```
 - Fixed-width signed integers represented using two's complement ```int<>```
 - Bit-strings of dynamically-computed width with a fixed maximum width ```varbit<>```
@@ -1789,9 +1789,9 @@ Architectures may support additional ```match_kind```s. The
 declaration of new ```match_kind```s can only occur within model
 description files; P4 programmers cannot declare new match kinds.
 
-### The Boolean type { #sec-bool-type }
+### The boolean type { #sec-bool-type }
 
-The Boolean type contains two values, ```false``` and ```true```. The
+The boolean type contains two values, ```false``` and ```true```. The
 type is written as ```bool```. Booleans are not integers or
 bit-strings.
 
@@ -1877,7 +1877,7 @@ The type ```bit``` is a shorthand for ```bit<1>```.
 
 P4 architectures may impose additional constraints on bit types: for
 example, they may limit the maximum size, or they may only support
-some arithmetic operations on certain sizes (e.g., 16-, 32- and 64-
+some arithmetic operations on certain sizes (e.g., 16-, 32-, and 64-
 bit values).
 
 All operations that can be performed on unsigned integers are
@@ -1898,7 +1898,7 @@ where bit 63 is the most significant (sign) bit.
 
 P4 architectures may impose additional constraints on signed types:
 for example, they may limit the maximum size, or they may only support
-some arithmetic operations on certain sizes (e.g., 16-, 32- and 64-
+some arithmetic operations on certain sizes (e.g., 16-, 32-, and 64-
 bit values).
 
 All operations that can be performed on signed integers are described
@@ -1931,7 +1931,7 @@ The infinite-precision data type describes integers with an unlimited
 precision. This type is written as ```int```.
 
 This type is reserved for integer literals and expressions that
-involve only literals. No P4 run-time value can have an ```int```
+involve only literals. No P4 runtime value can have an ```int```
 type; at compile time the compiler will convert all int values that
 have a runtime component to fixed-width types, according to the rules
 described below.
@@ -2085,7 +2085,7 @@ variable) or an integer type. This declaration introduces a new
 identifier in the current scope; the type can be referred to using
 this identifier. A header is similar to a ```struct``` in C,
 containing all the specified fields. In addition, a header also
-contains a hidden Boolean "validity" field. When the "validity" bit is ```true```
+contains a hidden boolean "validity" field. When the "validity" bit is ```true```
 we say that the "header is valid". When a header is created
 its "validity" bit is automatically set to ```false```. The "validity"
 bit can be manipulated by using the header methods ```isValid()```, ```setValid()```,
@@ -2189,7 +2189,7 @@ Mpls_h[10] mpls;
 introduce a header stack called ```mpls``` containing 10 entries, each
 of type ```Mpls_h```.
 
-### Header Unions {#sec-header-unions}
+### Header unions {#sec-header-unions}
 
 A header union represents an alternative between different
 headers. Header unions can be used to represent "options" in protocols
@@ -2324,7 +2324,7 @@ types.
 The type ```set<T>``` describes _sets_ of values of type ```T```. Set
 types can only appear in restricted contexts in P4 programs. For
 example, the range expression ```8w5 .. 8w8``` describes a set
-containing the 8-bit numbers 5, 6, 7 and 8, so its type is ```set<bit<8>>;```.
+containing the 8-bit numbers 5, 6, 7, and 8, so its type is ```set<bit<8>>;```.
 This expression can be used as a label in a ```select``` expression
 (see Section [#sec-select]), matching any value in this range. Set
 types cannot be named or declared by P4 programmers, they are only
@@ -2547,7 +2547,7 @@ packageTypeDeclaration
 ~ End P4Grammar
 
 All parameters of a package are evaluated at compilation-time, and in
-consequence they must all be directionless (they cannot be ```in```, ```out```
+consequence they must all be directionless (they cannot be ```in```, ```out```,
 or ```inout```). Otherwise package types are very similar to
 parser type declarations. Packages can only be instantiated; they have
 no runtime behaviors associated.
@@ -2705,7 +2705,7 @@ side-effects. P4 expressions are evaluated as follows:
 
 Symbolic names declared by an ```error``` declaration belong to the ```error```
 namespace.  The ```error``` type only supports comparisons
-for equality and difference.  The result of a comparison is a Boolean
+for equality and difference.  The result of a comparison is a boolean
 value.
 
 For example, the following operation tests for the occurrence of an
@@ -2734,9 +2734,9 @@ When ```enum``` values appear in the control-plane API the compiler
 back-end has to choose a suitable serialization data type and
 representation.
 
-## Expressions on Boolean values { #sec-bool-exprs }
+## Expressions on boolean values { #sec-bool-exprs }
 
-The following operations are provided on Boolean values:
+The following operations are provided on boolean values:
 - And, designated by ```&&```
 - Or designated by ```||```
 - Negation, designated by ```!```
@@ -2745,7 +2745,7 @@ The following operations are provided on Boolean values:
 Operator precedence is similar to C. Operator evaluation is
 short-circuit.
 
-There are no implicit casts from bit-strings to Booleans or
+There are no implicit casts from bit-strings to booleans or
 vice-versa. As a consequence, a C program fragment such as:
 
 ~ Begin P4Example
@@ -2770,7 +2770,7 @@ The ```?:``` expression behaves as in C, e.g.:
 (x == 0) ? e0 : e1;
 ~ End P4Example
 
-The first argument is Boolean, and the second and third arguments must
+The first argument is boolean, and the second and third arguments must
 have the same type. The second and third arguments cannot be both
 infinite precision integers unless the condition itself can be
 evaluated at compilation time (this restriction exists in order to
@@ -2798,11 +2798,11 @@ operations that combine signed and unsigned values (except shifts).
 The following operations are provided on Bit-string values:
 
 - Test for equality between bit-strings of the same width, designated
-  by ```==```. The result is a Boolean value.
+  by ```==```. The result is a boolean value.
 - Test for difference between bit-strings of the same width,
-  designated by ```!=```. The result is a Boolean value.
+  designated by ```!=```. The result is a boolean value.
 - Unsigned comparisons ```<,>,<=,>=```. Both operands must have the
-  same width; the result is a Boolean value.
+  same width; the result is a boolean value.
 
 All the following operations produce bit-string results when applied
 to bit-strings. All these operations require both operands to have the
@@ -2891,8 +2891,8 @@ type. The result always has the same width as the left operand.
 - Addition, denoted by ```+```
 - Subtraction, denoted by ```-```
 - Comparison for equality and inequality ```==,!=``` producing a
-  Boolean result
-- Numeric comparisons ```<,<=,>,>=``` with a Boolean result
+  boolean result
+- Numeric comparisons ```<,<=,>,>=``` with a boolean result
 - Multiplication ```*```. Result has the same width as the
   operands. P4 targets may impose additional restrictions (e.g., may
   only allow multiplications with powers of two).
@@ -2948,8 +2948,8 @@ have type ```int``` . They support the following operations:
 - Addition, denoted by ```+```
 - Subtraction, denoted by ```-```
 - Comparison for equality and inequality ```==,!=``` producing a
-  Boolean result
-- Numeric comparisons ```<,<=,>,>=``` with a Boolean result
+  boolean result
+- Numeric comparisons ```<,<=,>,>=``` with a boolean result
 - Multiplication ```*```
 - Integer division between positive values, denoted by ```/```,
   rounded towards 0, as in C
@@ -3409,7 +3409,7 @@ manipulate the elements at the front and back of the stack:
   be a positive integer that is a compile-time known value. The return
   type is ```void```.
 
-## Operations on Header Unions { #sec-expr-hu }
+## Operations on header unions { #sec-expr-hu }
 
 A variable declared with a union type is initially invalid:
 
@@ -3747,7 +3747,7 @@ be used to maintain state between different network packets.
 
 Instantiations are similar to variable declarations, but they are
 reserved for the types with constructors (```extern``` objects, ```control```
-blocks, ```parser```s and ```package```s):
+blocks, ```parser```s, and ```package```s):
 
 ~ Begin P4Grammar
 instantiation
@@ -3882,7 +3882,7 @@ emptyStatement
 
 A block statement is denoted by curly braces, as in C. It contains a
 sequence of statements and declarations, which are executed
-sequentially. The variables, constants and instantiations within a
+sequentially. The variables, constants, and instantiations within a
 block statement are only visible within the block statement.
 
 ~ Begin P4Grammar
@@ -3919,7 +3919,7 @@ returnStatement
 
 The ```exit``` statement immediately terminates the execution of all
 the blocks currently executing: the current ```action``` (if invoked
-within an ```action```), the current ```control``` and all its
+within an ```action```), the current ```control```, and all its
 callers. ```exit``` statements are not allowed within parsers.
 
 ~ Begin P4Grammar
@@ -3932,7 +3932,7 @@ exitStatement
 
 The conditional statement is very similar in syntax and semantics with
 the corresponding C if statement. The only difference is that the only
-acceptable type for the condition expression in P4 is Boolean (and not
+acceptable type for the condition expression in P4 is boolean (and not
 integer). The conditional statement cannot be used within a ```parser```.
 
 ~ Begin P4Grammar
@@ -4692,7 +4692,7 @@ P4 forbids the instantiation of ```parser``` instances within a ```control```
 block.
 
 A ```control``` block may start with declarations of ```action```s, ```table```s,
-constants, variables and instantiations.
+constants, variables, and instantiations.
 
 ~ Begin P4Grammar
 controlDeclaration
@@ -4993,7 +4993,7 @@ control c() {
 }
 ~ End P4Example
 
-Each action parameter that has a direction (```in, inout``` or ```out```)
+Each action parameter that has a direction (```in```, ```inout```, or ```out```)
 must be bound in the ```actions``` list specification; conversely, no
 directionless parameters may be bound in the list. The expressions
 supplied as arguments to an ```action``` are not evaluated until the
@@ -5024,7 +5024,7 @@ If present, the ```default_action``` property _must_ appear after the ```action`
 property. It may be declared as ```const```, indicating that it cannot
 be changed dynamically by the control-plane. The ```default action```
 _must_ be one of the actions that appear in the actions list. In
-particular, the expressions passed as ```in, out``` or ```inout```
+particular, the expressions passed as ```in```, ```out```, or ```inout```
 parameters must be syntactically identical to the expressions used in
 one of the elements of the ```actions``` list.
 
@@ -5039,7 +5039,7 @@ const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
 Note that the specified default action must supply arguments for the
 control-plane bound parameters (i.e., the directionless parameters),
 since the action is synthesized at compilation time. The expressions
-supplied as arguments for parameters with a direction (```in, inout```
+supplied as arguments for parameters with a direction (```in```, ```inout```,
 or ```out```) are evaluated when the action is invoked while the
 expressions supplied as arguments for directionless parameters are
 evaluated at compile time.
@@ -5291,7 +5291,7 @@ embodied by a control block: the body of the control block is
 executed, similarly to the execution of a traditional imperative
 program:
 
-- At run-time, statements within a block are executed in the order
+- At runtime, statements within a block are executed in the order
   they appear in the control block.
 - Execution of the ```return``` statement causes immediate termination
   of the execution of the current ```control``` block, and a return to
@@ -5348,7 +5348,7 @@ can have two sets of parameters:
 -	Optional parser constructor parameters
      (```optConstructorParameters```)
 
-All constructor parameters must be directionless (i.e., they cannot be ```in```, ```out```
+All constructor parameters must be directionless (i.e., they cannot be ```in```, ```out```,
 or ```inout```). When instantiating a parser one has to supply
 expressions that can be fully evaluated at compilation time for all ```optConstructorParameters```.
 
@@ -5553,7 +5553,7 @@ Java.
 ## Example architecture description { #sec-arch-desc-example }
 
 The following example describes a switch by using two packages, each
-containing a parser, a match-action pipeline and a deparser:
+containing a parser, a match-action pipeline, and a deparser:
 
 ~ Begin P4Example
 parser Parser<IH>(packet_in b, out IH parsedHeaders);
@@ -5596,10 +5596,10 @@ information about the architecture of the described switch, as shown
 in Figure [#fig-switcharch]:
 
 - The switch contains two separate ```package```s ```Ingress``` and ```Egress```
-- The ```Parser```, ```IPipe``` and ```Deparser``` in the ```Ingress``` package
+- The ```Parser```, ```IPipe```, and ```Deparser``` in the ```Ingress``` package
   are chained in this order. The ```Ingress.IPipe``` block has an
   input of type ```Ingress.IH```, which is an output of the ```Ingress.Parser```.
-- Similarly, the ```Parser```, ```EPipe``` and ```Deparser``` are
+- Similarly, the ```Parser```, ```EPipe```, and ```Deparser``` are
   chained in the ```Egress``` package.
 - The ```Ingress.IPipe``` is connected to the ```Egress.EPipe```,
   because the first one outputs a value of type ```T```, which is an
@@ -5672,7 +5672,7 @@ Switch<bit<32>>(P(), Pipe1()) main;
 
 ## A Packet Filter Model { #sec-pkt-filter }
 
-~ Figure { #fig-packetfilter; caption: "A packet filter target model. The parser computes a Boolean value, which is used to decide whether the packet is dropped." }
+~ Figure { #fig-packetfilter; caption: "A packet filter target model. The parser computes a boolean value, which is used to decide whether the packet is dropped." }
 ![packetfilter]
 ~
 [packetfilter]: figs/packetfilter.png { width: 5cm; page-align: here }
@@ -5716,14 +5716,14 @@ The evaluation of a P4 program is done in two stages:
 ## Compile-time known values { #sec-ct-constants }
 The following are compile-time known values:
 
-- Integer literals, Boolean literals, and string literals.
-- Identifiers declared in an ```error```, ```enum``` or ```match_kind```
+- Integer literals, boolean literals, and string literals.
+- Identifiers declared in an ```error```, ```enum```, or ```match_kind```
   declaration.
 - The ```default``` identifier.
 - The `size` field of a value with type header stack.
 - The ```_``` identifier when used as a ```select``` expression label
 - Identifiers that represent declared types, actions, tables, parsers,
-  controls or packages.
+  controls, or packages.
 - List expression where all components are compile-time known values.
 - Instances constructed by instance declarations (Section
   [#sec-instantiations]) and constructor invocations.
@@ -5731,7 +5731,7 @@ The following are compile-time known values:
   when their operands are all compile-time known values.
 - Identifiers declared as constants using the ```const``` keyword.
 
-## Compile-Time Evaluation { #sec-ct-eval }
+## Compile-time Evaluation { #sec-ct-eval }
 
 Evaluation of a program proceeds in order of declarations, starting in
 the top-level namespace:
@@ -5781,11 +5781,11 @@ Switch(TopParser(ck16),
 
 The evaluation of this program proceeds as follows:
 
-1.	The declarations of ```p, c, d, Switch``` and ```Checksum16``` all
+1.	The declarations of ```p```, ```c```, ```d```, ```Switch```, and ```Checksum16``` all
       evaluate as themselves.
 2.	The ```Checksum16() ck16``` instantiation is evaluated and it
       produces an object named ```ck16``` with type ```Checksum16```.
-3.	The declarations for ```TopParser```, ```Pipe``` and ```TopDeparser```
+3.	The declarations for ```TopParser```, ```Pipe```, and ```TopDeparser```
     evaluate as themselves.
 4.	The ```main``` variable instantiation is evaluated:
   1.	The arguments to the constructor are evaluated recursively
@@ -6112,7 +6112,7 @@ are subject to data races. P4 mandates the following behaviors:
 
 To allow users to express atomic execution of larger code blocks, P4
 provides an ```@atomic``` annotation, which can be applied to block
-statements, parser states, control blocks or whole parsers.
+statements, parser states, control blocks, or whole parsers.
 
 Consider the following example:
 
