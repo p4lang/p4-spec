@@ -1371,7 +1371,7 @@ do not require terminating semicolons).
 Various constructs act as namespaces that create local scopes for
 names:
 
-- Derived type declarations (```struct```, ```header```, ```enum```)
+- Derived type declarations (```struct```, ```header```, ```header_union```, ```enum```)
   introduce local scopes for the field names
 - Block statements introduce local lexically-enclosed scopes
 - ```parser```, ```table```, ```action```, and ```control``` blocks
@@ -1447,8 +1447,8 @@ lvalue
 ~ End P4Grammar
 
 - Identifiers of a base or derived type.
-- Structure/header field member access operations (using the dot
-  notation).
+- Structure, header, and header union field member access operations
+  (using the dot notation).
 - References to elements within header stacks (see Section
   [#sec-expr-hs]): indexing, and references to ```last``` and ```next```.
 - The result of a bit-slice operator ```[m:l]```.
@@ -1476,9 +1476,9 @@ Each parameter is labeled with a direction:
      passed as a non-```in``` argument to a callee. ```in```
      parameters are always initialized by copying the value of the
      corresponding argument at call execution time.
--	```out``` parameters are uninitialized (parameters of type ```header```
-     are set to "invalid"); they are l-values (they can
-     be assigned to --- l-values are described in Section
+-    ```out``` parameters are uninitialized (parameters of type ```header```
+     or ```header_union``` are set to "invalid"); they are l-values
+     (they can be assigned to --- l-values are described in Section
      [#sec-lvalues]). The argument corresponding to an ```out```
      parameter in a call must be an l-value; after execution of a
      call, the value of an ```out``` parameter is copied out to the
