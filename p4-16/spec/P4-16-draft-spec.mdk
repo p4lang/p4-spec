@@ -432,27 +432,28 @@ between the block and the other components in the architecture.
 For example, the architecture might contain a declaration such as the following:
 
 ~ Begin P4Example
-control matchActionPipe(in bit<4> inputPort,
-                        inout ParsedHeaders parsedHeaders,
-                        out bit<4> outputPort);
+control MatchActionPipe<H>(in bit<4> inputPort,
+                           inout H parsedHeaders,
+                           out bit<4> outputPort);
 ~ End P4Example
 
-This type declaration describes a block named ```matchActionPipe```
-that can be programmed using a data-dependent sequence of
-match-action unit invocations and other imperative constructs (indicated by the ```control``` keyword).
-The interface between the ```matchActionPipe``` block
-and the surrounding hardware can be read from this declaration:
+This type declaration describes a block named ```MatchActionPipe```
+that can be programmed using a data-dependent sequence of match-action
+unit invocations and other imperative constructs (indicated by the ```control```
+keyword).  The interface between the ```MatchActionPipe``` block and
+the other components of the architecture can be read off from this declaration:
 
 - The first parameter is a 4-bit value named ```inputPort.``` The
-  direction ```in``` indicates that it is an input that cannot be
-  modified by the ```control```.
-- The second parameter is an object of type ```ParsedHeaders```, named ```parsedHeaders```.
-  The type ```ParsedHeaders``` indicates a programmer-defined type
-  that represents the full set of headers.  The direction ```inout```
-  indicates that it is both an input and an output.
+  direction ```in``` indicates that this parameter is an input that
+  cannot be modified.
+- The second parameter is an object of type ```H``` named ```parsedHeaders```,
+  where ```H``` is a type variable representing the headers that will
+  be defined later by the P4 programmer.
+  The direction ```inout``` indicates that this parameter is
+  both an input and an output.
 - The third parameter is a 4-bit value named ``outputPort```. The
-  direction ```out``` indicates that it is an output whose value is
-  undefined initially can be modified by the control.
+  direction ```out``` indicates that this parameter is an output
+  whose value is undefined initially but can be modified.
 
 ## Extern objects and functions { #sec-external-units }
 
