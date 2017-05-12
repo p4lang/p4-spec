@@ -1856,7 +1856,7 @@ do not require terminating semicolons).
 names:
 </p>
 <ul class="ul list-dash compact" data-line="1374">
-<li class="li ul-li list-dash-li compact-li" data-line="1374"><span data-line="1374"></span>Derived type declarations (<span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="1374"></span>, <span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header</span></code><span data-line="1374"></span>, <span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span></code><span data-line="1374"></span>)
+<li class="li ul-li list-dash-li compact-li" data-line="1374"><span data-line="1374"></span>Derived type declarations (<span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="1374"></span>, <span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header</span></code><span data-line="1374"></span>, <span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span></code><span data-line="1374"></span>, <span data-line="1374"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span></code><span data-line="1374"></span>)
 introduce local scopes for the field names
 </li>
 <li class="li ul-li list-dash-li compact-li" data-line="1376"><span data-line="1376"></span>Block statements introduce local lexically-enclosed scopes
@@ -1935,8 +1935,8 @@ lvalue
 <ul class="ul list-dash compact" data-line="1449">
 <li class="li ul-li list-dash-li compact-li" data-line="1449"><span data-line="1449"></span>Identifiers of a base or derived type.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1450"><span data-line="1450"></span>Structure/header field member access operations (using the dot
-notation).
+<li class="li ul-li list-dash-li compact-li" data-line="1450"><span data-line="1450"></span>Structure, header, and header union field member access operations
+(using the dot notation).
 </li>
 <li class="li ul-li list-dash-li compact-li" data-line="1452"><span data-line="1452"></span>References to elements within header stacks (see Section
 <span data-line="1453"></span><a href="#sec-expr-hs" title="8.14.&#8194;Operations on header stacks" class="localref" style="target-element:h2"><span class="heading-label">8.14</span></a><span data-line="1453"></span>): indexing, and references to <span data-line="1453"></span><code class="code code3 language-p4 lang-p4 p4 colorized">last</code><span data-line="1453"></span> and <span data-line="1453"></span><code class="code code3 language-p4 lang-p4 p4 colorized">next</code><span data-line="1453"></span>.
@@ -1972,8 +1972,8 @@ parameters are always initialized by copying the value of the
 corresponding argument at call execution time.
 </li>
 <li class="li ul-li list-dash-li compact-li" data-line="1479"><span data-line="1479"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span></code><span data-line="1479"></span> parameters are uninitialized (parameters of type <span data-line="1479"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header</span></code><span data-line="1479"></span>
-are set to <span data-line="1480"></span>&#8220;invalid&#8221;<span data-line="1480"></span>); they are l-values (they can
-be assigned to<span data-line="1481"></span> <span data-line="1481"></span>&#8212;<span data-line="1481"></span> l-values are described in Section
+or <span data-line="1480"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span></code><span data-line="1480"></span> are set to <span data-line="1480"></span>&#8220;invalid&#8221;<span data-line="1480"></span>); they are l-values
+(they can be assigned to<span data-line="1481"></span> <span data-line="1481"></span>&#8212;<span data-line="1481"></span> l-values are described in Section
 <span data-line="1482"></span><a href="#sec-lvalues" title="6.6.&#8194;L-values" class="localref" style="target-element:h2"><span class="heading-label">6.6</span></a><span data-line="1482"></span>). The argument corresponding to an <span data-line="1482"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span></code><span data-line="1482"></span>
 parameter in a call must be an l-value; after execution of a
 call, the value of an <span data-line="1484"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span></code><span data-line="1484"></span> parameter is copied out to the
@@ -2690,7 +2690,7 @@ and IPv6 headers:
 </p>
 <div class="p4example" data-line="2213">
 <div class="p4exampleblock" data-line="2214">
-<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="2215" data-line-first="2216" style="display:block"><code data-line="2216">header_union IP_h {
+<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="2215" data-line-first="2216" style="display:block"><code data-line="2216"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span> IP_h {
   IPv4_h v4;
   IPv6_h v6;
 }</code></pre></div></div><h4 id="sec-struct-types" class="h3" data-line="2220" data-heading-depth="3" style="display:block"><span data-line="2220"></span><span class="heading-before"><span class="heading-label">7.2.5</span>.&#8194;</span><span data-line="2220"></span>Struct types</h4>
@@ -2736,7 +2736,7 @@ integer, without a width specified.
 <tr><td class="tbody tr-odd col cell-border-left col-odd col-first" data-line="2263" data-row="9" data-col="1" style="text-align:left"><span data-line="2263"></span> <span data-line="2263"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span></code><span data-line="2263"></span>         </td><td class="tbody tr-odd col cell-border-left col-even" data-line="2263" data-row="9" data-col="2" style="text-align:left"><span data-line="2263"></span> error     </td><td class="tbody tr-odd col cell-border-left col-odd" data-line="2263" data-row="9" data-col="3" style="text-align:left"><span data-line="2263"></span> error   </td><td class="tbody tr-odd col cell-border-left cell-border-right col-even col-last" data-line="2263" data-row="9" data-col="4" style="text-align:left"><span data-line="2263"></span>  allowed        </td></tr>
 <tr><td class="tbody tr-even col cell-border-left col-odd col-first" data-line="2264" data-row="10" data-col="1" style="text-align:left"><span data-line="2264"></span> <span data-line="2264"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header</span></code><span data-line="2264"></span>       </td><td class="tbody tr-even col cell-border-left col-even" data-line="2264" data-row="10" data-col="2" style="text-align:left"><span data-line="2264"></span> error     </td><td class="tbody tr-even col cell-border-left col-odd" data-line="2264" data-row="10" data-col="3" style="text-align:left"><span data-line="2264"></span> allowed </td><td class="tbody tr-even col cell-border-left cell-border-right col-even col-last" data-line="2264" data-row="10" data-col="4" style="text-align:left"><span data-line="2264"></span>  allowed        </td></tr>
 <tr><td class="tbody tr-odd col cell-border-left col-odd col-first" data-line="2265" data-row="11" data-col="1" style="text-align:left"><span data-line="2265"></span> header stack       </td><td class="tbody tr-odd col cell-border-left col-even" data-line="2265" data-row="11" data-col="2" style="text-align:left"><span data-line="2265"></span> error     </td><td class="tbody tr-odd col cell-border-left col-odd" data-line="2265" data-row="11" data-col="3" style="text-align:left"><span data-line="2265"></span> error   </td><td class="tbody tr-odd col cell-border-left cell-border-right col-even col-last" data-line="2265" data-row="11" data-col="4" style="text-align:left"><span data-line="2265"></span>  allowed        </td></tr>
-<tr><td class="tbody tr-even col cell-border-left col-odd col-first" data-line="2266" data-row="12" data-col="1" style="text-align:left"><span data-line="2266"></span> <span data-line="2266"></span><code class="code code3 language-p4 lang-p4 p4 colorized">header_union</code><span data-line="2266"></span> </td><td class="tbody tr-even col cell-border-left col-even" data-line="2266" data-row="12" data-col="2" style="text-align:left"><span data-line="2266"></span> error     </td><td class="tbody tr-even col cell-border-left col-odd" data-line="2266" data-row="12" data-col="3" style="text-align:left"><span data-line="2266"></span> error   </td><td class="tbody tr-even col cell-border-left cell-border-right col-even col-last" data-line="2266" data-row="12" data-col="4" style="text-align:left"><span data-line="2266"></span>  allowed        </td></tr>
+<tr><td class="tbody tr-even col cell-border-left col-odd col-first" data-line="2266" data-row="12" data-col="1" style="text-align:left"><span data-line="2266"></span> <span data-line="2266"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span></code><span data-line="2266"></span> </td><td class="tbody tr-even col cell-border-left col-even" data-line="2266" data-row="12" data-col="2" style="text-align:left"><span data-line="2266"></span> error     </td><td class="tbody tr-even col cell-border-left col-odd" data-line="2266" data-row="12" data-col="3" style="text-align:left"><span data-line="2266"></span> error   </td><td class="tbody tr-even col cell-border-left cell-border-right col-even col-last" data-line="2266" data-row="12" data-col="4" style="text-align:left"><span data-line="2266"></span>  allowed        </td></tr>
 <tr><td class="tbody tr-odd col cell-border-left col-odd col-first" data-line="2267" data-row="13" data-col="1" style="text-align:left"><span data-line="2267"></span> <span data-line="2267"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="2267"></span>       </td><td class="tbody tr-odd col cell-border-left col-even" data-line="2267" data-row="13" data-col="2" style="text-align:left"><span data-line="2267"></span> error     </td><td class="tbody tr-odd col cell-border-left col-odd" data-line="2267" data-row="13" data-col="3" style="text-align:left"><span data-line="2267"></span> error   </td><td class="tbody tr-odd col cell-border-left cell-border-right col-even col-last" data-line="2267" data-row="13" data-col="4" style="text-align:left"><span data-line="2267"></span>  allowed        </td></tr>
 <tr><td class="tbody tr-even tr-last col cell-border-left col-odd col-first" data-line="2268" data-row="14" data-col="1" style="text-align:left"><span data-line="2268"></span> <span data-line="2268"></span><code class="code code3 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">tuple</span></code><span data-line="2268"></span>        </td><td class="tbody tr-even tr-last col cell-border-left col-even" data-line="2268" data-row="14" data-col="2" style="text-align:left"><span data-line="2268"></span> error     </td><td class="tbody tr-even tr-last col cell-border-left col-odd" data-line="2268" data-row="14" data-col="3" style="text-align:left"><span data-line="2268"></span> error   </td><td class="tbody tr-even tr-last col cell-border-left cell-border-right col-even col-last" data-line="2268" data-row="14" data-col="4" style="text-align:left"><span data-line="2268"></span>  allowed        </td></tr>
 <tr><td class="tbody tr-even col cell-border-left cell-line col-odd col-first" data-line="2269" data-row="14" data-col="1" style="text-align:left"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="2269" data-row="14" data-col="2" style="text-align:left"></td><td class="tbody tr-even col cell-border-left cell-line col-odd col-last" data-line="2269" data-row="14" data-col="3" style="text-align:left"></td></tr></tbody></table>
@@ -3865,7 +3865,7 @@ type is <span data-line="3407"></span><code class="code code3 language-p4 lang-p
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; g;
 }
 
-header_union U {
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span> U {
   H<span class="constant" style="color:purple">1</span> h1;
   H<span class="constant" style="color:purple">2</span> h2;
 }
@@ -3945,7 +3945,7 @@ IPv4 and IPv6 headers uniformly:
 </p>
 <div class="p4example" data-line="3492">
 <div class="p4exampleblock" data-line="3493">
-<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="3494" data-line-first="3495" style="display:block"><code data-line="3495">header_union IP {
+<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="3494" data-line-first="3495" style="display:block"><code data-line="3495"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span> IP {
     IPv4 ipv4;
     IPv6 ipv6;
 }
@@ -3994,7 +3994,7 @@ options:
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">8</span>&gt;         length;
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">varbit</span>&lt;<span class="constant" style="color:purple">256</span>&gt;    sack;
 }
-header_union Tcp_option_h {
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">header_union</span> Tcp_option_h {
     Tcp_option_end_h  end;
     Tcp_option_nop_h  nop;
     Tcp_option_ss_h   ss;
