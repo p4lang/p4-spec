@@ -350,9 +350,7 @@ language. Moreover, if some future version of the language requires
 breaking backwards compatibility, we will seek to provide an easy path
 for migrating P4~16~ programs to the new version.
 
-# Architecture Model
-
-## The architecture { #sec-arch }
+# Architecture Model { #sec-arch }
 
 ~ Figure { #fig-p4interface; caption: "P4 program interfaces." }
 ![p4interface]
@@ -360,41 +358,43 @@ for migrating P4~16~ programs to the new version.
 [p4interface]: figs/p4interface.png { width: 100%; page-align: here }
 
 The _P4 architecture_ identifies the P4-programmable blocks (e.g.,
-parser, ingress pipeline, egress pipeline, deparser, etc.) and their
+parser, ingress control flow, egress control flow, deparser, etc.) and their
 data plane interfaces.
 
-The P4 architecture can be thought of as a contract between the target
-and P4 code, executing on it. Each target manufacturer must therefore
-provide both the P4 compiler for it as well as an accompanying
+The P4 architecture can be thought of as a contract between the
+program and the target.
+Each manufacturer must therefore
+provide both a P4 compiler as well as an accompanying
 architecture definition for their target. (We expect that P4 compilers
-for all architectures can share a common front-end). This architecture
+can share a common front-end that handles all architectures). The architecture
 definition does not have to expose the entire programmable surface of
-the data plane --- a manufacturer may even choose to provide multiple
+the data plane---a manufacturer may even choose to provide multiple
 definitions for the same hardware device, each with different
 capabilities (e.g., with or without multicast support).
 
-Figure [#fig-p4interface] illustrates the data plane interfaces of P4
-programs. It shows a target that has two programmable blocks (#1 and #2).
-Each block is programmed through a dedicated P4 program fragment. The
+Figure [#fig-p4interface] illustrates the data plane interfaces between P4-programmable
+blocks. It shows a target that has two programmable blocks (#1 and #2).
+Each block is programmed through a separate fragment of P4 code. The
 target interfaces with the P4 program through a set of control
 registers or signals. Input controls provide information to P4
 programs (e.g., the input port that a packet was received from), while
 output controls can be written to by P4 programs to influence the
 target behavior (e.g., the output port where a packet has to be
-directed). Control registers/signals are represented in P4 by
+directed). Control registers/signals are represented in P4 as
 _intrinsic metadata_.
+P4 programs can also store and manipulate data pertaining to each
+packet as _user-defined metadata_.
 
-Moreover, P4 programs can store and manipulate data pertaining to each
-packet, represented by _user-defined metadata_.
-
-The behavior of each P4 program is completely described as a set of
-transformations mapping vectors of bits to vectors of bits. However,
-_only the architecture model attaches a meaning to the bits in a
-control register_. For example, in order to cause a network packet to
+The behavior of a P4 program can be fully described in terms of
+transformations that map vectors of bits to vectors of bits. To actually
+process a packet, the architecture
+model interprets the bits that the P4 program writes to intrinsic metadata.
+For example, to cause a packet to
 be forwarded on a specific output port, a P4 program may need to write
-the output port index into a dedicated control register. Similarly, in
-order to cause a packet to be dropped, a P4 program may need to set a
-"drop" bit into another dedicated control register.
+the index of an output port into a dedicated control register. Similarly,
+to cause a packet to be dropped, a P4 program may need to set a
+"drop" bit into another dedicated control register. Note that the details of
+how intrinsic metadata are interpreted is architecture-specific.
 
 ~ Figure { #fig-p4checksum; caption: "P4 program invoking the services of a fixed-function object." }
 ![p4checksum]
@@ -402,83 +402,68 @@ order to cause a packet to be dropped, a P4 program may need to set a
 [p4checksum]: figs/p4checksum.png { width: 50%; page-align: here }
 
 []{tex-cmd: "\indent"}
-P4 programs can invoke services of fixed-function blocks. Figure
-[#fig-p4checksum] shows a P4 program invoking the services of a target
-built-in checksum computation unit. The implementation of the checksum
-unit is not specified in P4, but its interface is. Interfaces
-(represented by P4 ```extern``` objects) describe the set of
-operations that are offered by a fixed-function object as well as
-their arguments, similar to methods in object-oriented programming
-languages.
+P4 programs can invoke services implemented by extern objects and functions provided by the architecture.
+Figure [#fig-p4checksum] depicts a P4 program invoking the services of a
+built-in checksum computation unit on a target. The implementation of the checksum
+unit is not specified in P4, but its interface is. In general, the interface for
+an extern object describes each operation it provides, as well as their parameter and return types.
 
 In general, P4 programs are not expected to be portable across
 different architectures. For example, executing a P4 program that
-controls packet broadcast by writing into a custom control register
-will not work on a target that provides no such control
+broadcasts packets by writing into a custom control register
+will not function correctly on a target that does not have the control
 register. However, P4 programs written for a given architecture should
 be portable across all targets that faithfully implement the
-corresponding model (assuming that enough resources are available to
-implement the program).
+corresponding model, provided there are sufficient resources.
 
-## The P4 standard architecture { #sec-p4-std-arch }
+## Standard architectures { #sec-p4-std-arch }
 
-We expect that the P4 community will evolve a standard architecture
-model (or a small set of models, pertaining to specific verticals,
-e.g., switches and network cards). Wide adoption of such standard
-architectures should promote wide portability of P4 programs. The
-standard architecture is the scope of a separate document.
+We expect that the P4 community will evolve a small set of standard architecture
+models pertaining to specific verticals. Wide adoption of such standard
+architectures will promote portability of P4 programs across different targets.
+However, defining these
+standard architectures is outside of the scope of this document.
 
-## P4 program data plane interfaces { #sec-dp-interfaces }
+## Data plane interfaces { #sec-dp-interfaces }
 
-(In the following examples P4 keywords are highlighted in fixed-size
-fonts, e.g., ```parser```.) To describe a functional block that can be
-programmed in P4 the target manufacturer provides a target type
-declaration. Target declarations are discussed in Section
-[#sec-arch-desc], but we give a brief introduction here to make things
-concrete. For example, the target manufacturer could write a
-declaration as follows:
+To describe a functional block that can be programmed in P4, the
+architecture includes a type declaration that specifies the interfaces
+between the block and the other components in the architecture.
+For example, the architecture might contain a declaration such as the following:
 
 ~ Begin P4Example
-control matchActionPipe<H>(in bit<4> inputPort,
-                           inout H parsedHeaders,
-                           out bit<4> outputPort);
+control matchActionPipe(in bit<4> inputPort,
+                        inout ParsedHeaders parsedHeaders,
+                        out bit<4> outputPort);
 ~ End P4Example
 
-This declaration describes a programmable block named ```matchActionPipe```
-that performs match-action processing (shown by the ```control``` P4
-reserved keyword). The interface between the ```matchActionPipe``` block
+This type declaration describes a block named ```matchActionPipe```
+that can be programmed using a data-dependent sequence of
+match-action unit invocations and other imperative constructs (indicated by the ```control``` keyword).
+The interface between the ```matchActionPipe``` block
 and the surrounding hardware can be read from this declaration:
 
-- ```bit<4>``` is a type indicating a 4-bit value,
-- The ```in```, ```inout```, and ```out``` keywords indicate the
-  direction of parameters
-- The first input is a 4-bit value named ```inputPort```, received as
-  an input (```in```) (an instance of intrinsic metadata).
-- The second input is an object of type ```H```, named ```parsedHeaders```.
-  It is both an input and an output, shown by ```inout```.
-- The type ```H``` is given by a type variable ```<H>``` in the
-  declaration (the syntax is similar to Java). The type ```H```
-  indicates a type that will be defined later by the programmer.
-- The first output is the same ```parsedHeaders``` as an output, also
-  stored in general-purpose registers. The user mutates this value
-  in-place in the pipeline implementation, and the value of the ```parsedHeaders```
-  at the completion of pipe is the result of the computation.
-- The second output is a four-bit value named ```outputPort```. This
-  value is written into a control register.
+- The first parameter is a 4-bit value named ```inputPort.``` The
+  direction ```in``` indicates that it is an input that cannot be
+  modified by the ```control```.
+- The second parameter is an object of type ```ParsedHeaders```, named ```parsedHeaders```.
+  The type ```ParsedHeaders``` indicates a programmer-defined type
+  that represents the full set of headers.  The direction ```inout```
+  indicates that it is both an input and an output.
+- The third parameter is a 4-bit value named ``outputPort```. The
+  direction ```out``` indicates that it is an output whose value is
+  undefined initially can be modified by the control.
 
-## External units with predefined functionality { #sec-external-units }
+## Extern objects and functions { #sec-external-units }
 
-P4 programs can also interact with fixed-function objects by invoking
-their services. Such fixed-function objects are described using the ```extern```
-object construct, which only describes the interfaces that such an
-object exposes to the data-plane; a complete description of ```extern```
-is given in Section [#sec_extern], but we provide an overview here.
+P4 programs can also interact with objects and functions provided by the architecture.
+Such objects are described using the ```extern``` construct, which
+describes the interfaces that such objects expose to the data-plane.
 
-An ```extern``` object is similar to a pure abstract class from
-object-oriented programming (or an interface in Java and C#). It
-describes a set of methods that are implemented by an object, but not
-the implementation of these methods. For example, the following
-construct could be used to describe the operations offered by an
+An ```extern``` object describes a set of methods that are implemented
+by an object, but not the implementation of these methods (i.e., it is similar
+to an abstract class in an object-oriented language). For example,
+the following construct could be used to describe the operations offered by an
 incremental checksum unit:
 
 ~ Begin P4Example
@@ -493,12 +478,11 @@ extern Checksum16 {
 
 # Example: A very simple switch { #sec-vss-example }
 
-To make the discussion concrete we begin by presenting a complete
-example: we start by describing the architecture of a very simple
-switch. We then provide the P4 description of the architecture. We end
-by writing a complete P4 program for controlling the switch. The
-example demonstrates many important features of the P4 programming
-language.
+As an example to illustrate the features of architectures, consider
+implementing a very simple switch in P4. We will first describe the
+architecture of the switch and then write a complete P4 program
+that specifies the data plane behavior of the switch. This example
+demonstrates many important features of the P4 programming language.
 
 ~ Figure { #fig-vssarch; caption: "The Very Simple Switch (VSS) architecture." }
 ![vssarch]
@@ -507,14 +491,10 @@ language.
 
 []{tex-cmd: "\indent"}
 We call our architecture the "Very Simple Switch" (VSS). Figure
-[#fig-vssarch] is a diagram of this architecture. There is nothing
-special about VSS, it is just a pedagogical example which allows us to
-illustrate how programmable switches can be described and programmed
-in P4. We expect that each target manufacturer will publish one or
-multiple architecture model(s) reflecting the capabilities of their
-own hardware; in addition we expect that the community will evolve a
-standard switch architecture, which will be more full-featured than
-VSS. VSS has some fixed-function blocks (shown in cyan in our
+[#fig-vssarch] is a diagram of this architecture. There is nothing inherently
+special about VSS---it is just a pedagogical example that
+illustrates how programmable switches can be described and programmed
+in P4. VSS has a number of fixed-function blocks (shown in cyan in our
 example), whose behavior is described in Section [#sec_vssarch]. The
 white blocks are programmable using P4.
 
@@ -531,11 +511,11 @@ or one of 3 "special" ports:
   through a special input port
 
 The white blocks in the figure are programmable, and the user must
-provide a corresponding P4 program to control the behavior of each
-such block. The red arrows show the flow of user-defined data.  The
-cyan blocks are fixed-function. The green arrows are data plane
+provide a corresponding P4 program to specify the behavior of each
+such block. The red arrows indicate the flow of user-defined data.  The
+cyan blocks are fixed-function components. The green arrows are data plane
 interfaces used to convey information between the fixed-function
-blocks and the programmable blocks --- exposed in the P4 program as
+blocks and the programmable blocks---exposed in the P4 program as
 intrinsic metadata.
 
 ## Very Simple Switch Architecture { #sec-vss-arch }
@@ -548,7 +528,7 @@ programmable blocks are described by their types; the implementation
 of these blocks has to be provided by the switch programmer.
 
 ~ Begin P4Example
-// File "very_simple_model.p4"
+// File "very_simple_switch.p4"
 // Simple switch P4 declaration
 // core library needed for packet_in definition
 # include <core.p4>
@@ -623,11 +603,11 @@ extern Checksum16 {
 Let us describe some of these elements:
 
 - The included file ```core.p4``` is described in more detail in
-  Appendix [#sec-p4-core-lib]. We use it here for some standard
+  Appendix [#sec-p4-core-lib]. It defines some standard
   data-types and error codes.
 - ```bit<4>``` is the type of bit-strings with 4 bits.
 - The syntax ```4w0xF``` indicates the value 15 represented using 4
-  bits. An alternative notation is ```4w15```. In some circumstances
+  bits. An alternative notation is ```4w15```. In many circumstances
   the width modifier can be omitted, writing just ```15```.
 - ```error``` is a built-in P4 type for holding error codes
 - Next follows the declaration of a parser:
@@ -635,25 +615,25 @@ Let us describe some of these elements:
 parser Parser<H>(packet_in b, out H parsedHeaders);
 ~ End P4Example
 
-This declaration describes a parser --- but not yet its
-implementation. The parser implementation will have to be provided by
-the user. The parser reads its input from a ```packet_in```, which is
-a pre-defined P4 abstraction that represents an incoming network
+This declaration describes a the interface for a parser, but not yet its
+implementation, which will be provided by
+the programmer. The parser reads its input from a ```packet_in```, which is
+a pre-defined P4 extern object that represents an incoming
 packet, declared in the ```core.p4``` library. The parser writes its
 output (the ```out``` keyword) into the ```parsedHeaders```
-argument. The type of this argument is ```H```, yet unknown - it will
-also be provided by the user.
+argument. The type of this argument is ```H```, yet unknown---it will
+also be provided by the programmer.
 
 - The declaration
 ~ Begin P4Example
 control Pipe<H>(inout H headers,
-                  in error parseError,
-                  in InControl inCtrl,
-                  out OutControl outCtrl);
+                in error parseError,
+                in InControl inCtrl,
+                out OutControl outCtrl);
 ~ End P4Example
 describes the interface of a Match-Action pipeline named ```Pipe```.
 
-The pipeline receives 3 inputs: the headers ```headers```, a parser
+The pipeline receives three inputs: the headers ```headers```, a parser
 error ```parseError```, and the ```inCtrl``` control data. Figure
 [#fig-vssarch] indicates the different sources of these pieces of
 information. The pipeline writes its outputs into ```outCtrl```, and
@@ -674,14 +654,14 @@ produce the parsed representation of these headers, and the
 match-action pipeline will update the input headers in place to
 produce the output headers.
 
-- The ```package VSS``` declaration has 3 complex parameters, of
+- The ```package VSS``` declaration has three complex parameters, of
   types ```Parser```, ```Pipe```, and ```Deparser``` respectively; which are
   exactly the declarations we have just described. In order to program
   the target one has to supply values for these parameters.
 - In this program the ```inCtrl``` and ```outCtrl``` structures
   represent control registers. The content of the headers structure is
   stored in general-purpose registers.
-- The ```extern Checksum16``` declaration describes an external block
+- The ```extern Checksum16``` declaration describes an extern object
   whose services can be invoked to compute checksums.
 
 ## Very Simple Switch Architecture Description { #sec_vssarch }
@@ -692,12 +672,12 @@ full behavioral description of the fixed-function blocks. This section
 can be seen as a simple example illustrating all the details that have
 to be handled when writing an architecture description. The P4
 language is not intended to cover the description of all such
-functional blocks --- the language can only describe the interfaces
-between programmable blocks and the target --- in the previous program
+functional blocks---the language can only describe the interfaces
+between programmable blocks and the architecture. For the current program,
 this interface is given by the ```Parser```, ```Pipe```, and ```Deparser```
-declarations. In practice we expect that the complete target description
+declarations. In practice we expect that the complete description of the architecture
 will be provided as an executable program and/or diagrams and text; in
-this document we provide a verbal description in English.
+this document we will provide informal descriptions in English.
 
 ### Arbiter block
 
@@ -716,10 +696,10 @@ The input arbiter block performs the following functions:
   without indicating the fact that the packets were dropped in any
   way.
 - After receiving a packet, the arbiter block sets the ```inCtrl.inputPort```
-  value that is an input to the parser with the
-  identity of the input port where the packet originated. Physical
-  Ethernet ports are numbered 0 to 7, while the input recirculation
-  port has a number 13 and the CPU port has the number 14.
+  value that is an input to the parser with the identity of the input
+  port where the packet originated. Physical Ethernet ports are
+  numbered 0 to 7, while the input recirculation port has a number 13
+  and the CPU port has the number 14.
 
 ### Parser runtime block
 
@@ -739,30 +719,28 @@ the parser, to assemble them into a new packet and to send the result
 to the correct output port. The output port is specified by the value
 of ```outCtrl.ouputPort```, which is set by the match-action pipeline.
 
-- Sending the packet to the drop port causes the packet to disappear
-  forever.
+- Sending the packet to the drop port causes the packet to disappear.
 - Sending the packet to an output Ethernet port numbered between 0 and
-  7 causes it to be emitted on the corresponding physical switch
+  7 causes it to be emitted on the corresponding physical
   interface. The packet may be placed in a queue if the output
-  interface is busy emitting a previous packet. When the packet is
+  interface is already busy emitting another packet. When the packet is
   emitted, the physical interface computes a correct Ethernet checksum
   trailer and appends it to the packet.
 - Sending a packet to the output CPU port causes the packet to be
-  transferred to the control plane. In this case, **the packet that is
-  sent to the CPU is the original input packet**, and not the packet
-  received from the deparser. The latter packet is discarded.
+  transferred to the control plane. In this case, the packet that is
+  sent to the CPU is the **original input packet**, and not the packet
+  received from the deparser---the latter packet is discarded.
 - Sending the packet to the output recirculation port causes it to
   appear at the input recirculation port. Recirculation is useful when
-  packet processing cannot be done in a single pass.
+  packet processing cannot be completed in a single pass.
 - If the ```outputPort``` has an illegal value (e.g., 9), the packet
-  is sent to the drop port.
-- If the demux unit is busy processing a previous packet and there is
+  is dropped.
+- Finally, if the demux unit is busy processing a previous packet and there is
   no capacity to queue the packet coming from the deparser, **the
-  demux unit may drop the packet by its own choice**, irrespective of
-  the output port indicated.
+  demux unit may drop the packet**, irrespective of the output port indicated.
 
 Please note that some of the behaviors of the demux block may be
-unexpected --- we have highlighted them in bold. We are not specifying
+unexpected---we have highlighted them in bold. We are not specifying
 here several important behaviors related to queue size, arbitration,
 and timing, which also influence the packet processing.
 
@@ -777,24 +755,24 @@ The VSS architecture provides an incremental checksum extern block,
 called ```Checksum16```. The checksum unit has a constructor and four
 methods:
 
-- ```clear()``` --- prepares the unit for a new computation
-- ```update<T>(in T data)``` --- add some data to be checksummed. The
+- ```clear()```: prepares the unit for a new computation
+- ```update<T>(in T data)```: add some data to be checksummed. The
   data must be either a bit-string, a header-typed value, or a ```struct```
   containing such values. The fields in the header/struct
   are concatenated in the order they appear in the type declaration.
-- ```get()``` --- returns the 16-bit one's complement checksum. When
+- ```get()```: returns the 16-bit one's complement checksum. When
   this function is invoked the checksum must have received an integral
   number of bytes of data.
-- ```remove<T>(in T data)``` --- under the assumption that ```data```
+- ```remove<T>(in T data)```: assuming that ```data```
   was used for computing the current checksum, ```data``` is removed
-  from the checksum (“undo”).
+  from the checksum.
 
 ## A complete Very Simple Switch program { #sec-vss-all }
 
-Here we provide a complete P4 program performing L2/L3 forwarding for
-IPv4 packets for the VSS. This program does not take advantage of some
-features of the switch: e.g., recirculation. The details of many
-constructs will be explained throughout the document.
+Here we provide a complete P4 program that implements basic forwarding for
+IPv4 packets on the VSS architecture. This program does not utilize all of the
+features provided by the architecture---e.g., recirculation---but it does use
+preprocessor ```#include``` directives (see Section [#sec-preprocessor]).
 
 ~ Figure { #fig-vssmau; caption: "Diagram of the match-action pipeline expressed by the VSS P4 program." }
 ![vssmau]
@@ -802,53 +780,50 @@ constructs will be explained throughout the document.
 [vssmau]: figs/vssmau.png { width: 100%; page-align: here }
 
 []{tex-cmd: "\indent"}
-Parsing attempts to recognize an Ethernet header and an IPv4 header;
-if these headers are missing parsing terminates with an
+The parser attempts to recognize an Ethernet header followed by an IPv4 header.
+If either of these headers are missing, parsing terminates with an
 error. Otherwise it extracts the information from these headers into a
-structure with type ```Parsed_packet```. The match-action pipeline is
-shown in Figure [#fig-vssmau]; it comprises 4 match-action units
+```Parsed_packet``` structure. The match-action pipeline is
+shown in Figure [#fig-vssmau]; it comprises four match-action units
 (represented by the P4 ```table``` keyword):
 
-- If any parser error has occurred, the packet is dropped (sending it
+- If any parser error has occurred, the packet is dropped (i.e., by assigning ```outputPort```
   to ```DROP_PORT```)
-- The first table uses the IPv4 destination address to discover the ```outputPort```
-  and the IPv4 address of the next hop. If this
-  look-up fails, the packet is dropped. The table also decrements the
-  IPv4 ttl value.
-- The second table checks the ttl value: if the ttl becomes 0, the
-  packet is sent through the CPU port towards the control plane.
-- The third table uses the IPv4 address of the next hop (computed by
-  the first table) to figure out the Ethernet address of the next hop.
+- The first table uses the IPv4 destination address to determine the ```outputPort```
+  and the IPv4 address of the next hop. If this lookup fails, the packet is dropped.
+  The table also decrements the IPv4 ```ttl``` value.
+- The second table checks the ```ttl``` value: if the ```ttl``` becomes 0, the
+  packet is sent to the control plane through the CPU port.
+- The third table uses the IPv4 address of the next hop (which was computed by
+  the first table) to determine the Ethernet address of the next hop.
 - Finally, the last table uses the ```outputPort``` to identify the
   source Ethernet address of the current switch, which is set in the
   outgoing packet.
 
-The deparser puts together a packet by reassembling the Ethernet and
-IPv4 headers as computed in the pipeline.  This example uses
-preprocessor ```#include``` directives (see Section
-[#sec-preprocessor]).
+The deparser constructs the outgoing packet by reassembling the Ethernet and
+IPv4 headers as computed by the pipeline.
 
 ~ Begin P4Example
+// Include P4 core library
 # include <core.p4>
 
-// include the very simple switch declaration from the previous section
+// Include very simple switch architecture declarations
 # include "very_simple_model.p4"
 
-// This program processes packets composed of an Ethernet and
-// an IPv4 header, performing forwarding based on the
-// destination IP address
+// This program processes packets comprising an Ethernet and an IPv4
+// header, and it forwards packets using the destination IP address
 
 typedef bit<48>  EthernetAddress;
 typedef bit<32>  IPv4Address;
 
-// standard Ethernet header
+// Standard Ethernet header
 header Ethernet_h {
     EthernetAddress dstAddr;
     EthernetAddress srcAddr;
     bit<16>         etherType;
 }
 
-// IPv4 header without options
+// IPv4 header (without options)
 header IPv4_h {
     bit<4>       version;
     bit<4>       ihl;
@@ -864,19 +839,19 @@ header IPv4_h {
     IPv4Address  dstAddr;
 }
 
+// Structure of parsed headers
+struct Parsed_packet {
+    Ethernet_h ethernet;
+    IPv4_h     ip;
+}
+
 // Parser section
 
-// Declare user-defined errors that may be signaled during parsing
+// User-defined errors that may be signaled during parsing
 error {
     IPv4OptionsNotSupported,
     IPv4IncorrectVersion,
     IPv4ChecksumError
-}
-
-// List of all recognized headers
-struct Parsed_packet {
-    Ethernet_h ethernet;
-    IPv4_h     ip;
 }
 
 parser TopParser(packet_in b, out Parsed_packet p) {
@@ -902,10 +877,11 @@ parser TopParser(packet_in b, out Parsed_packet p) {
     }
 }
 
-// match-action pipeline section
+// Match-action pipeline section
+
 control TopPipe(inout Parsed_packet headers,
-                in error parseError,// parser error
-                in InControl inCtrl,// input port
+                in error parseError, // parser error
+                in InControl inCtrl, // input port
                 out OutControl outCtrl) {
      IPv4Address nextHop;  // local variable
 
@@ -913,8 +889,9 @@ control TopPipe(inout Parsed_packet headers,
       * Indicates that a packet is dropped by setting the
       * output port to the DROP_PORT
       */
-      action Drop_action()
-      { outCtrl.outputPort = DROP_PORT; }
+      action Drop_action() {
+          outCtrl.outputPort = DROP_PORT;
+      }
 
      /**
       * Set the next hop and the output port.
@@ -922,8 +899,7 @@ control TopPipe(inout Parsed_packet headers,
       * @param ivp4_dest ipv4 address of next hop
       * @param port output port
       */
-      action Set_nhop(IPv4Address ipv4_dest,
-                      PortId port) {
+      action Set_nhop(IPv4Address ipv4_dest, PortId port) {
           nextHop = ipv4_dest;
           headers.ip.ttl = headers.ip.ttl - 1;
           outCtrl.outputPort = port;
@@ -941,7 +917,6 @@ control TopPipe(inout Parsed_packet headers,
               Drop_action;
               Set_nhop;
          }
-
          size = 1024;
          default_action = Drop_action;
      }
@@ -949,8 +924,9 @@ control TopPipe(inout Parsed_packet headers,
      /**
       * Send the packet to the CPU port
       */
-      action Send_to_cpu()
-      { outCtrl.outputPort = CPU_OUT_PORT; }
+      action Send_to_cpu() {
+          outCtrl.outputPort = CPU_OUT_PORT;
+      }
 
      /**
       * Check packet TTL and send to CPU if expired.
@@ -965,8 +941,10 @@ control TopPipe(inout Parsed_packet headers,
       * Set the destination MAC address of the packet
       * @param dmac destination MAC address.
       */
-      action Set_dmac(EthernetAddress dmac)
-      { headers.ethernet.dstAddr = dmac; }
+      action Set_dmac(EthernetAddress dmac) {
+          headers.ethernet.dstAddr = dmac;
+      }
+
      /**
       * Set the destination Ethernet address of the packet
       * based on the next hop IP address.
@@ -986,8 +964,9 @@ control TopPipe(inout Parsed_packet headers,
        * Set the source MAC address.
        * @param smac: source MAC address to use
        */
-       action Set_smac(EthernetAddress smac)
-       { headers.ethernet.srcAddr = smac; }
+       action Set_smac(EthernetAddress smac) {
+           headers.ethernet.srcAddr = smac;
+       }
 
       /**
        * Set the source mac address based on the output port.
@@ -1036,8 +1015,7 @@ control TopDeparser(inout Parsed_packet p, packet_out b) {
     }
 }
 
-// Instantiate the top-level VSS package.
-// use TopParser for the p Parser, etc.
+// Instantiate the top-level VSS package
 VSS(TopParser(),
     TopPipe(),
     TopDeparser()) main;
