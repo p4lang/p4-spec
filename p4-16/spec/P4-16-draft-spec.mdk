@@ -1139,22 +1139,20 @@ library. Including the core library is done with
 All P4 keywords use only ASCII characters. All P4 identifiers must use
 only ASCII characters. P4 compilers should handle correctly strings
 containing 8-bit characters in comments and string literals.
-
 P4 is case-sensitive.
-
 Whitespace characters, including newlines are treated as token
 separators. Indentation is free-form; however, P4 has C-like block
-constructs, and all our examples use C-like indentation. Tab
+constructs, and all our examples use C-style indentation. Tab
 characters are treated as spaces.
 
 The lexer recognizes the following kinds of terminals:
 
-- ```IDENTIFIER``` - start with a letter or underscore, and contain
+- ```IDENTIFIER```: start with a letter or underscore, and contain
   letters, digits and underscores
-- ```TYPE``` - identifier that denotes a type name
-- ```INTEGER``` - integer literals
-- ```DONTCARE``` - a single underscore
-- Keywords, e.g., ```RETURN```. Each keyword terminal corresponds to a
+- ```TYPE```: identifier that denotes a type name
+- ```INTEGER```: integer literals
+- ```DONTCARE```: a single underscore
+- Keywords such as ```RETURN```. By convention, each keyword terminal corresponds to a
   language keyword with the same spelling but using lowercase. For
   example, the ```RETURN``` terminal corresponds to the ```return```
   keyword.
@@ -1162,10 +1160,10 @@ The lexer recognizes the following kinds of terminals:
 ### Identifiers { #sec-identifiers }
 
 P4 identifiers may contain only letters, numbers, and the underscore
-character ```_```, and must start with a letter or with
+character ```_```, and must start with a letter or
 underscore. The special identifier consisting of a single underscore ```_```
-is reserved to indicate a "don't care" value in several contexts; its
-type may vary depending on the context. Some reserved keywords (e.g., ```apply```)
+is reserved to indicate a "don't care" value; its
+type may vary depending on the context. Certain keywords (e.g., ```apply```)
 can be used as identifiers if the context makes it unambiguous.
 
 ~ Begin P4Grammar
@@ -1185,20 +1183,19 @@ name
 
 ### Comments { #sec-comments }
 
-Comments are Java style:
+P4 supports several kinds of comments:
 
-- Single-line comments, spanning to the end of line, introduced by ```//```
+- Single-line comments, introduced by ```//``` and spanning to the end of line,
 - Multi-line comments, enclosed between ```/*``` and ```*/```
 - Nested multi-line comments are not supported.
-- JavaDoc comments, starting with ```/**``` and ending with ```*/```
+- Javadoc-style comments, starting with ```/**``` and ending with ```*/```
 
-JavaDoc comments are strongly encouraged for the P4 language elements
-that are used to synthesize the interface with the control-plane:
-tables and actions.
+Use of Javadoc-style comments is strongly encouraged for the tables and actions
+that are used to synthesize the interface with the control-plane.
 
-Comments are token separators: no comments are allowed within a token,
-e.g. ```bi/**/t``` is parsed as two tokens, ```bi``` and ```t```, and
-not as a single ```bit``` token.
+P4 treats comments as token separators and no comments are allowed within a
+token---e.g. ```bi/**/t``` is parsed as two tokens, ```bi``` and ```t```, and
+not as a single token ```bit```.
 
 ### Literal constants { #sec-literals }
 
@@ -1208,8 +1205,8 @@ There are two boolean literal constants: ```true``` and ```false```.
 
 #### Integer literals { #sec-integer-literals }
 
-Integer literals are positive integers of an arbitrary precision. By
-default, literals are assumed in base 10. To use a different base for
+Integer literals are positive, arbitrary-precision integers. By
+default, literals are represented in base 10. To use a different base for
 the literal, one of the following prefixes must be employed:
 
 - ```0x``` or ```0X``` indicates base 16 (hexadecimal)
@@ -1223,9 +1220,9 @@ indicator:
 - ```w``` indicates unsigned numbers
 - ```s``` indicates signed numbers
 
-Note that, unlike C, a leading zero by itself does not indicate an
+Note that a leading zero by itself does not indicate an
 octal (base 8) constant.  The underscore character is considered a
-digit within number literals but it is ignored when computing the
+digit within number literals but is ignored when computing the
 value of the parsed number. This allows long constant numbers to be
 more easily read by grouping digits together. The underscore cannot be
 used in the width specification or as the first character of an
@@ -1247,17 +1244,17 @@ literal. Here are some examples of numeric literals:
 
 String literals (string constants) are specified as an arbitrary
 sequence of 8-bit characters, enclosed within double quote signs ```"```
-(ASCII code 34). A P4 string starts with a double quote sign
-and extends to the first double quote sign which is not immediately
+(ASCII code 34). Strings start with a double quote sign
+and extend to the first double quote sign which is not immediately
 preceded by an odd number of backslash characters (ASCII code 92). P4
 does not make any validity checks on strings (i.e., it does not check
 that strings represent legal UTF-8 encodings).
 
-Since P4 does not provide any operations on strings, in general the P4
-string literals will be passed unchanged through the P4 compiler to
+Since P4 does not provide any operations on strings,
+string literals are generally passed unchanged through the P4 compiler to
 other third-party tools or compiler-backends, including the
 terminating quotes. These tools can define their own handling of
-escape sequences (e.g., how to specify Unicode characters, or
+escape sequences (e.g., how to specify Unicode characters, or handle
 unprintable ASCII characters).
 
 Here are 3 examples of string literals:
@@ -1269,28 +1266,25 @@ Here are 3 examples of string literals:
 
 ## Naming conventions { #sec-naming-conventions }
 
-P4 provides a rich assortment of types. There are built-in types to
-represent constructs such as parsers, pipelines, actions, and
-tables. Base types include bit-strings, numbers, and errors. Users can
+P4 provides a rich assortment of types. Base types include bit-strings, numbers, and errors.
+There are also built-in types for
+representing constructs such as parsers, pipelines, actions, and
+tables. Users can
 construct new types based on these: structures, enumerations, headers,
 header stacks, header unions, etc.
 
-In this document we adopt the Java-like naming guidelines:
+In this document we adopt the following conventions:
 
-- The P4 built-in types all start with lowercase characters and are
-  shown in bold, e.g., ```int<20>```
-- In all our examples we write user-defined types with an uppercase
-  character, e.g., ```IPv4Address```
-- Type variables (e.g., used in templates) are always uppercase,
-  e.g., ```parser P<H, IH>(...)```
-- All variables are named with lowercase names, e.g., ```ipv4header```
-- Constants are all uppercase, e.g., ```CPU_PORT```
-- Errors and enumerations have camel-case names,
-  e.g. ```PacketTooShort```
+- Built-in types are written with lowercase characters---e.g., ```int<20>```,
+- User-defined types are capitalized---e.g., ```IPv4Address```,
+- Type variables are always uppercase---e.g., ```parser P<H, IH>(...)```,
+- Variables are uncapitalized--- e.g., ```ipv4header```,
+- Constants are written with uppercase characters---e.g., ```CPU_PORT```, and
+- Errors and enumerations are written in camel-case--- e.g. ```PacketTooShort```.
 
-## P4 Program structure { #sec-p4-prog-structure }
+## P4 programs { #sec-p4-prog-structure }
 
-A P4 program is a collection of declarations:
+A P4 program is a list of declarations:
 
 ~ Begin P4Grammar
 p4program
@@ -1312,23 +1306,22 @@ declaration
     ;
 ~ End P4Grammar
 
-Empty declarations are indicated by a single semicolon. Allowing empty
-declarations, denoted by a semicolon, makes it easy to accommodate the
-habits of C/C++ and Java programmers (some P4 declarations, e.g., ```struct```,
-do not require terminating semicolons).
+An empty declarations is indicated with a single semicolon. (Allowing empty
+declarations accommodates the
+habits of C/C++ and Java programmers---e.g., certain constructs, like ```struct```,
+do not require a terminating semicolon).
 
 ### Scopes { #sec-scopes }
 
-Various constructs act as namespaces that create local scopes for
-names:
+Some P4 constructs act as namespaces that create local scopes for names including:
 
-- Derived type declarations (```struct```, ```header```, ```header_union```, ```enum```)
-  introduce local scopes for the field names
-- Block statements introduce local lexically-enclosed scopes
-- ```parser```, ```table```, ```action```, and ```control``` blocks
+- Derived type declarations (```struct```, ```header```, ```header_union```, ```enum```),
+  which introduce local scopes for field names,
+- Block statements, which introduce local lexically-enclosed scopes,
+- ```parser```, ```table```, ```action```, and ```control``` blocks, which
   introduce local scopes
-- A declaration with type variables introduces a new scope for that
-  variable. For example, in the following ```extern``` declaration,
+- Declarations with type variables, which introduce a new scope for those
+  variables. For example, in the following ```extern``` declaration,
   the scope of the type variable ```H``` extends to the end of the
   declaration:
 
@@ -1338,39 +1331,40 @@ extern E<H>(...) { ... } // scope of H ends here.
 
 The order of declarations is important; with the exception of parser
 states, all uses of a symbol must follow the symbol's
-declaration. (This is a change from the P4~14~ specification, which
-allows declarations in any order. This requirement is similar to the C
-language, and it significantly simplifies the implementation of
+declaration. (This is a departure from P4~14~, which
+allows declarations in any order. This requirement significantly simplifies the implementation of
 compilers for P4, allowing compilers to use additional information
 about declared identifiers to resolve ambiguities.)
 
 ### Stateful elements { #sec-stateful-elems }
 
 Most P4 constructs are stateless: given some inputs they produce a
-result that solely depends on these inputs. There are only two kinds
-of constructs that may retain information across packets (we call them
-"stateful"):
+result that solely depends on these inputs. There are only two stateful constructs
+that may retain information across packets:
 
-- ```table```s. Tables are read-only for the data plane; their
-  contents can only be modified by the control-plane
-- ```extern``` objects. Some of these objects may be both read and
-  modified by the data plane. All constructs from the P4~14~ language
-  version that represent state (counters, meters, registers) are
+- ```table```s" Tables are read-only for the data plane, but their
+  entries can be modified by the control-plane,
+- ```extern``` objects: many objects have state that can be read and
+  written by the control plane and data plane. All constructs from the P4~14~ language
+  version that encapsulate state (e.g., counters, meters, registers) are
   represented using ```extern``` objects in P4~16~.
 
 In P4 all stateful elements must be explicitly allocated at
 compilation-time through the process called "instantiation".
 
 In addition, ```parser```s, ```control``` blocks, and ```package```s
-may contain stateful element instantiations; thus they are also
-treated as stateful elements (even if they happen to contain no actual
-state). All stateful elements (```extern``` objects, ```parser```s, ```control```s, ```package```s,
-but not ```table```s) are represented in P4 by types. In order to use
-such an object, it must be first instantiated.
+may contain stateful element instantiations. Thus, they are also
+treated as stateful elements, even if they appear to contain no state,
+and must be instantiated before they can be used. However, although
+they are stateful, ```table```s do not need to be instantiated
+explicitly---declaring a ```table``` also creates an instance of
+it. This convention is designed to support the common case, since most
+tables are used just once. To have finer-grained control over when a
+```table``` is instantiated, a programmer can declare it within a
+```control```.
 
-Considering the example in Section [#sec-vss-all], ```TopParser```, ```TopPipe```, ```TopDeparser```, ```Checksum16```,
-and ```Switch``` are types. These are instantiated in the program to
-be used: there are two instances of ```Checksum16```, one in ```TopParser``` and
+Recall the example in Section [#sec-vss-all]: ```TopParser```, ```TopPipe```, ```TopDeparser```, ```Checksum16```,
+and ```Switch``` are types. There are two instances of ```Checksum16```, one in ```TopParser``` and
 one in ```TopDeparser```, both called ```ck```. The ```TopParser```, ```TopDeparser```, ```TopPipe```,
 and ```Switch``` are instantiated at the end of the program, in the
 declaration of the ```main``` instance object, which is an instance of
@@ -1378,7 +1372,7 @@ the ```Switch``` type (a ```package```).
 
 ## L-values { #sec-lvalues }
 
-L-values are expressions that can appear on the left side of an
+L-values are expressions that may appear on the left side of an
 assignment operation or as arguments corresponding to ```out``` and ```inout```
 function parameters. An l-value represents a storage reference.  The
 following expressions are legal l-values:
@@ -1405,45 +1399,46 @@ lvalue
 - The result of a bit-slice operator ```[m:l]```.
 
 The following is a legal l-value: ```headers.stack[4].field```.  Note
-that method or function calls cannot return l-values.
+that method and function calls cannot return l-values.
 
 ## Calling convention: call by copy in/copy out { #sec-calling-convention }
 
 P4 provides multiple constructs for writing modular programs: extern
 methods, parsers, controls, actions. All these constructs behave
-similarly to procedures in traditional programming languages:
+similarly to procedures in standard general-purpose programming languages:
 
 - They have named and typed parameters.
 - They introduce a new local scope for parameters and local variables.
 - They allow arguments to be passed by binding them to their
   parameters.
 
-Invocations are executed using a copy-in/copy-out semantics.
+Invocations are executed using copy-in/copy-out semantics.
 
-Each parameter is labeled with a direction:
+Each parameter may be labeled with a direction:
 
--	```in``` parameters are read-only. It is an error if an ```in```
-     parameter is used on the left-hand side of an assignment or is
-     passed as a non-```in``` argument to a callee. ```in```
-     parameters are always initialized by copying the value of the
-     corresponding argument at call execution time.
--    ```out``` parameters are uninitialized (parameters of type ```header```
-     or ```header_union``` are set to "invalid"); they are l-values
-     (they can be assigned to --- l-values are described in Section
-     [#sec-lvalues]). The argument corresponding to an ```out```
-     parameter in a call must be an l-value; after execution of a
-     call, the value of an ```out``` parameter is copied out to the
-     corresponding argument after completion of the function.
--	```inout``` parameters are both ```in``` and ```out```. They must
-     be bound to an l-value argument.
--	No direction indicates that value of parameter is either:
+- ```in``` parameters are read-only. It is an error to use an ```in```
+  parameter on the left-hand side of an assignment or to
+  pass it to a callee as a non-```in``` argument. ```in``` parameters
+  are initialized by copying the value of the corresponding
+  argument when the invocation is executed.
+
+- ```out``` parameters are uninitialized (parameters of type ```header```
+  or ```header_union``` are set to "invalid") and are treated as l-values
+  (See Section [#sec-lvalues]) within the body of the method or function.
+  An arguments passed as an ```out```
+  parameter must be an l-value; after the execution of the
+  call, the value of the parameter is copied to the corresponding storage location
+  for that l-value.
+- ```inout``` parameters are both ```in``` and ```out```. An argument passed as
+    an ```inout``` parameter must be an l-value.
+- No direction indicates that value of parameter is either:
 	- a compile-time known value
 	- an action parameter that can only be set by the control plane
 	- an action parameter that can be set directly by another calling
       action; in this case it behaves like an ```in``` parameter
 
-Arguments are evaluated from left to right, prior to the called
-function being invoked. The order of evaluation is important when the
+Arguments are evaluated from left to right prior to the invocation of the
+function itself. The order of evaluation is important when the
 expression supplied for an argument can have side-effects. Consider
 the following example:
 
@@ -1454,7 +1449,7 @@ bit a;
 f(a, g(a));
 ~ End P4Example
 
-The evaluation of ```g``` may mutate its argument ```a```, so the
+Note that the evaluation of ```g``` may mutate its argument ```a```, so the
 compiler has to ensure that the value passed to ```f``` for its first
 parameter is not changed by the evaluation of the second argument. The
 semantics for evaluating a function call is given by the following
@@ -1466,7 +1461,7 @@ the same result):
 2.	For each ```out``` and ```inout``` argument the corresponding
       l-value is saved (so it cannot be changed by the evaluation of
       the following arguments). This is important if the argument
-      contains array indexing operations.
+      contains indexing operations into a header stack.
 3.	The value of each argument is saved into a temporary.
 4.	The function is invoked with the temporaries as arguments. We are
       guaranteed that the temporaries that are passed as arguments are
@@ -1487,7 +1482,7 @@ f(tmp1, tmp2);    // evaluate f; modifies tmp1
 a = tmp1;         // copy inout result back into a
 ~ End P4Example
 
-Step 2 in the above algorithm is important; consider the following
+To see why Step 2 in the above algorithm is important, consider the following
 example:
 
 ~ Begin P4Example
@@ -1508,19 +1503,19 @@ s[tmp1].z = tmp2;      // copy inout result back; dest is not s[a].z
 ~ End P4Example
 
 When used as arguments, ```extern``` objects can only be passed as
-directionless parameters (see for example the packet argument in the
-very simple switch example).
+directionless parameters---e.g., see the packet argument in the
+very simple switch example.
 
-**Justification**
+### Justification
 
-The main reason for using copy-in/copy-out (instead of the more common
-call-by-reference convention) is for controlling the side-effects of ```extern```
-functions and methods. ```extern``` functions and methods
+The main reason for using copy-in/copy-out semantics (instead of the more common
+call-by-reference semantics) is for controlling the side-effects of ```extern```
+functions and methods. ```extern``` methods and functions
 are the main mechanism by which a P4 program communicates with its
 environment. With copy-in/copy-out semantics ```extern``` functions
 cannot hold references to P4 program objects; this enables the
 compiler to limit the side-effects that ```extern``` functions may
-have on the P4 program both in space (they can only affect out
+have on the P4 program both in space (they can only affect ```out```
 parameters) and in time (side-effects can only occur at function call
 time).
 
@@ -1528,14 +1523,14 @@ In general, ```extern``` functions are arbitrarily powerful: they can store
 information in global storage, spawn separate threads, "collude" with
 each other to share information --- but they cannot access any
 variable in a P4 program. With copy-in/copy-out semantics the compiler
-can still reason about the P4 program that invokes ```extern```
+can still reason about P4 programs that invoke ```extern```
 functions.
 
-There are additional benefits of a copy-in copy-out semantics:
+There are additional benefits of using copy-in copy-out semantics:
 
-- This enables P4 to be compiled for architectures that do not support
+- It enables P4 to be compiled for architectures that do not support
   references (e.g., where all data is allocated to named
-  registers. Such architectures may require array indices that appear
+  registers. Such architectures may require indices into header stacks that appear
   in a program to be compile-time known values.)
 - It simplifies some compiler analyses, since function parameters can
   never alias to each other within the function body.
@@ -1563,20 +1558,20 @@ direction
     ;
 ~ End P4Grammar
 
-Here is a summary of the constraints imposed by the parameter
+Following is a summary of the constraints imposed by the parameter
 directions:
 
-* When used as arguments, extern objects can only be passed as
+- When used as arguments, extern objects can only be passed as
   directionless parameters.
-* All constructor parameters are evaluated at compilation-time, and in
+- All constructor parameters are evaluated at compilation-time, and in
   consequence they must all be directionless (they cannot be `in`,
   `out`, or `inout`); this applies to `package`, `control`, `parser`,
   and `extern` objects. Values for these parameters must be specified
   at compile-time, and must evaluate to compile-time known values.
-* For actions all directionless parameters must be at the end of the
+- For actions all directionless parameters must be at the end of the
   parameter list.  When an action appears in a `table`'s `actions`
   list, only the parameters with a direction must be bound.
-* Actions can also be explicitly invoked using function call syntax,
+- Actions can also be explicitly invoked using function call syntax,
   either from a control block or from another action. In this case,
   values for all action parameters must be supplied explicitly,
   including values for the directionless parameters. The directionless
@@ -1584,15 +1579,12 @@ directions:
 
 ## Name resolution { #sec-name-resolution }
 
-### Lookup in the top-level namespace Identifiers or type names can be
-preceded by a dot ```.``` prefix, which will cause the identifier to
-be looked-up in the top-level namespace.
+P4 objects that introduce namespaces are organized in a hierarchical
+fashion. There is a top-level unnamed namespace containing all
+top-level declarations.
 
-~ Begin P4Grammar
-dotPrefix
-    : '.'
-    ;
-~ End P4Grammar
+Identifiers prefixed with a dot are always resolved in the top-level
+namespace.
 
 ~ Begin P4Example
 const bit<32> x = 2;
@@ -1604,15 +1596,6 @@ control c() {
    }
 }
 ~ End P4Example
-
-### Name resolution order
-
-P4 objects that introduce namespaces are organized in a hierarchical
-fashion. There is a top-level unnamed namespace containing all
-top-level declarations.
-
-Identifiers prefixed with a dot are always resolved in the top-level
-namespace.
 
 References to resolve an identifier are attempted inside-out, starting
 with the current scope and proceeding to all lexically enclosing
@@ -1629,36 +1612,34 @@ control p() {
 }
 ~ End P4Example
 
-### Visibility
+## Visibility { #sec-name-visibility }
 
-Identifiers defined in the top-level namespace are globally visible.
-
-Declarations within a ```parser``` or ```control``` are private and
-cannot be referred to from outside of the enclosing ```parser``` or ```control```.
+Identifiers defined in the top-level namespace are globally
+visible. Declarations within a ```parser``` or ```control``` are
+private and cannot be referred to from outside of the enclosing
+```parser``` or ```control```.
 
 # P4 data types { #sec-p4-type }
 
-P$4_{16}$ is a statically-typed language. Programs that do not pass
-the type checker are invalid and must be rejected by the
-compiler. Some values can be converted to a different type using
-casts. To make user intents clear, implicit casts are only allowed in
+P4~16~ is a statically-typed language. Programs that do not pass
+the type checker are considered invalid and rejected by the
+compiler. P4 provides a number of base types as well as type operators that
+construct derived types. Some values can be converted to a different type using
+casts. However, to make user intents clear, implicit casts are only allowed in
 a few circumstances and the range of casts available is intentionally
 restricted.
-
-P4 provides a number of base types as well as type operators that
-construct derived types.
 
 ## Base types { #sec-base-types }
 
 P4 supports the following built-in base types:
 
-- The ```void``` type, which has no values (can be used only in
-  restricted circumstances)
-- The ```error``` type, used to convey errors in a
-  machine-independent, compiler-managed way
-- The ```match_kind``` type, used for describing the implementation of
-  table lookups
-- ```bool```, representing boolean values
+- The ```void``` type, which has no values and can be used only in a few
+  restricted circumstances.
+- The ```error``` type, which is used to convey errors in a
+  target-independent, compiler-managed way.
+- The ```match_kind``` type, which is used for describing the implementation of
+  table lookups,
+- ```bool```, which represents boolean values
 - Bit-strings of fixed width, denoted by ```bit<>```
 - Fixed-width signed integers represented using two's complement ```int<>```
 - Bit-strings of dynamically-computed width with a fixed maximum width ```varbit<>```
@@ -1676,8 +1657,9 @@ baseType
 
 ### The void type
 
-The void type is written as ```void```. It contains no values. It can
-only appear in few restricted places in P4 programs.
+The void type is written as ```void```. It contains no values. It is
+not included in the set of base types as it can only appear in few
+restricted places in P4 programs.
 
 ### The error type
 
@@ -1691,16 +1673,16 @@ errorDeclaration
     ;
 ~ End P4Grammar
 
-All ```error``` constants thus declared are inserted in the ```error```
+All ```error``` constants are inserted into the ```error```
 namespace, irrespective of the place where an error is
-defined. ```error``` is similar to a C/C# enumeration (```enum```)
-type. A program can contain multiple ```error``` declarations, which
+defined. ```error``` is similar to an enumeration (```enum```)
+type in other languages. A program can contain multiple ```error``` declarations, which
 the compiler will merge together. It is an error to declare the same
 identifier multiple times. Expressions of type ```error``` are
 described in Section [#sec-error-exprs].
 
 For example, the following declaration creates two constants of ```error```
-type (these declarations are from the P4 core library):
+type (these errors are declared in the P4 core library):
 
 ~ Begin P4Example
 error { ParseError, PacketTooShort }
@@ -1710,11 +1692,13 @@ The underlying representation of errors is target-dependent.
 
 ### The match kind type { #sec-match-kind-type }
 
-The ```match_kind``` type is very similar to the ```error``` type, and
-to a C enum type. All declared identifiers are inserted in the
-top-level namespace. It is used to declare a set of names that may be
+The ```match_kind``` type is very similar to the ```error``` type and
+is used to declare a set of names that may be
 used in a table's key property (described in Section
-[#sec-table-props]). It is an error to declare the same ```match_kind```
+[#sec-table-props]).
+All identifiers are inserted into the
+top-level namespace.
+It is an error to declare the same ```match_kind```
 identifier multiple times.
 
 ~ Begin P4Grammar
@@ -1723,7 +1707,7 @@ matchKindDeclaration
     ;
 ~ End P4Grammar
 
-The core library contains the following match_kind declaration:
+The P4 core library contains the following match_kind declaration:
 
 ~ Begin P4Example
 match_kind {
@@ -1739,9 +1723,8 @@ description files; P4 programmers cannot declare new match kinds.
 
 ### The boolean type { #sec-bool-type }
 
-The boolean type contains two values, ```false``` and ```true```. The
-type is written as ```bool```. Booleans are not integers or
-bit-strings.
+The boolean type ```bool``` contains just two values, ```false``` and ```true```.
+Boolean values are not integers or bit-strings.
 
 ### Strings { #sec-strings }
 
@@ -1761,17 +1744,16 @@ for a table when generating the control-plane API:
 P4 supports arbitrary-size integer values. The typing rules for the
 integer types are chosen according to the following principles:
 
-- **Inspired from C**: Typing of integers is modeled after the
+- **Inspired by C**: Typing of integers is modeled after the
   well-defined parts of C, expanded to cope with arbitrary fixed-width
   integers. In particular, the type of the result of an expression
   only depends on the expression operands, and not on how the result
   of the expression is consumed.
-- **No undefined behaviors**: P4 attempts to remedy the undefined C
-  behaviors. Unfortunately, C has many undefined behaviors, including
-  specifying the size of an integer (int), what results are produced
+- **No undefined behaviors**: P4 attempts to avoid many of C's
+  behaviors, which include the size of an integer (int), the results produced
   on overflow, and the results produced for some input combinations
   (e.g., shifts with negative amounts, overflows on signed numbers,
-  etc.). In contrast, P4 computations on integer types have no
+  etc.). P4 computations on integer types have no
   undefined behaviors.
 - **Least surprise**: The P4 typing rules are chosen to behave as
   closely as possible to traditional well-behaved C programs.
@@ -1781,14 +1763,14 @@ integer types are chosen according to the following principles:
   ambiguous interpretations. For example, P4 does not allow binary
   operations that combine signed and unsigned integers.
 
-The priority of arithmetic operations is also chosen identical to C
-(e.g., multiplication binds stronger than addition).
+The priority of arithmetic operations is identical to C---e.g.,
+multiplication binds tighter than addition.
 
 #### Portability
 
 No P4 target can support all possible types and operations. For
-example, the following type is legal in P4: ```bit<23132312>```, but
-it is highly unlikely to be supported by any practical targets. Hence,
+example, the type ```bit<23132312>``` is legal in P4, but
+it is highly unlikely to be supported on any target in practice. Hence,
 each target can impose restrictions on the types it can support. Such
 restrictions may include:
 
@@ -1799,7 +1781,7 @@ restrictions may include:
   support multiplications with small constants, or shifts with small
   values).
 
-Target-specific documentation should describe such restrictions, and
+The documentation supplied with each target should clearly specify such restrictions, and
 target-specific compilers should provide clear error messages when
 such restrictions are encountered. An architecture may reject a
 well-typed P4 program and still be conformant to the P4 spec. However,
@@ -1811,7 +1793,7 @@ behavior should match this specification.
 An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width ```W``` is
 declared as: ```bit<W>```. ```W``` must be a compile-time known value
-(see Section [#sec-ct-constants]) evaluating to a positive integer
+(see Section [#sec-ct-constants]) that evaluates to a positive integer
 greater or equal to 0.
 
 Bits within a bit-string are numbered from ```0``` to ```W-1```. Bit ```0```
@@ -1914,9 +1896,8 @@ types. For additional examples of literals see Section
 
 ## Derived types { #sec-derived-types }
 
-Additional types can be created in P4 from base types. Some derived
-types can be created by programmers explicitly using type
-constructors. P4 provides the following type constructors:
+P4 provides a number of type constructors that can be used to derive
+additional types including:
 
 - ```enum```
 - ```header```
@@ -1940,8 +1921,7 @@ internally to represent the type of certain language constructs. These
 types are described in Section [#sec-synth-types]: set types and
 function types. For example, the programmer cannot declare a variable
 with type "set", but she can write an expression whose value evaluates
-to a ```set``` type. These types are used in the type-checking
-process.
+to a ```set``` type. These types are used during type-checking.
 
 ~ Begin P4Grammar
 typeDeclaration
@@ -1954,6 +1934,7 @@ typeDeclaration
 
 derivedTypeDeclaration
     : headerTypeDeclaration
+    | headerUnionDeclaration
     | structTypeDeclaration
     | enumDeclaration
     ;
@@ -1978,8 +1959,7 @@ typeName
 
 ### Enumeration types { #sec-enum-types }
 
-An enumeration type is a more restricted version of the C enum. It is
-defined with the following syntax:
+An enumeration type is defined using the following syntax:
 
 ~ Begin P4Grammar
 enumDeclaration
@@ -1998,15 +1978,18 @@ For example, the declaration
 enum Suits { Clubs, Diamonds, Hearths, Spades }
 ~ End P4Example
 
-introduces a new enumeration type, which contains four constants. One
-of these constants is ```Suits.Clubs```.
+introduces a new enumeration type, which contains four
+constants---e.g., ```Suits.Clubs```. An ```enum``` declaration
+introduces a new identifier in the current scope for naming the
+created type. The underlying representation of such values is not
+specified, so their "size" in bits is not specified (it is
+target-specific).
 
-Annotations, represented by the non-terminal ```optAnnotations``` are
-described in Section [#sec-annotations].  This declaration introduces
-a new identifier in the current scope for naming the created type. The
-underlying representation of such values is not specified, so their
-"size" in bits is not specified (it is target-specific). Operations on ```enum```
-values are described in Section [#sec-enum-exprs].
+Annotations, represented by the non-terminal ```optAnnotations```, are
+described in Section [#sec-annotations].
+
+Operations on ```enum``` values are described in Section
+[#sec-enum-exprs].
 
 ### Header types { #sec-header-types }
 
@@ -2032,14 +2015,14 @@ where each ```typeRef``` is restricted to a bit-string type (fixed or
 variable) or an integer type. This declaration introduces a new
 identifier in the current scope; the type can be referred to using
 this identifier. A header is similar to a ```struct``` in C,
-containing all the specified fields. In addition, a header also
+containing all the specified fields. However, in addition, a header also
 contains a hidden boolean "validity" field. When the "validity" bit is ```true```
 we say that the "header is valid". When a header is created
 its "validity" bit is automatically set to ```false```. The "validity"
 bit can be manipulated by using the header methods ```isValid()```, ```setValid()```,
 and ```setInvalid()```, as described in Section [#sec-ops-on-hdrs].
 
-An empty header is acceptable:
+Header types may be empty:
 
 ~ Begin P4Example
 header Empty_h { }
@@ -2048,12 +2031,12 @@ header Empty_h { }
 Note that an empty header still contains a validity bit.
 
 Headers that do not contain any ```varbit``` field are "fixed
-size". Headers containing ```varbit``` fields have "variable
-size". The size (in bits) of a fixed-size header is a constant, and it
+size." Headers containing ```varbit``` fields have "variable
+size." The size (in bits) of a fixed-size header is a constant, and it
 is simply the sum of the sizes of all component fields (without
 counting the validity bit). There is no padding or alignment of the
-header fields. _Individual P4 targets may impose some constraints on
-header types_, e.g., restricting headers to sizes that are an integer
+header fields. Architectures may impose additional constraints on
+header types---e.g., restricting headers to sizes that are an integer
 number of bytes.
 
 For example, the following declaration describes a typical Ethernet
@@ -2067,14 +2050,13 @@ header Ethernet_h {
 }
 ~ End P4Example
 
-The type can be referred to using the introduced identifier; the
-following is a variable declaration using the newly introduced type:
+The following variable declaration uses the newly introduced type ```Ethernet_h```:
 
 ~ Begin P4Example
 Ethernet_h ethernetHeader;
 ~ End P4Example
 
-The P4 parser language uses the ```extract``` method of a packet to
+P4's parser language provides an ```extract``` method that can be used to
 "fill in" the fields of a header from a network packet, as described
 in Section [#sec-packet-data-extraction]. The successful execution of
 an ```extract``` operation also sets the validity bit of the extracted
@@ -2142,7 +2124,7 @@ of type ```Mpls_h```.
 A header union represents an alternative between different
 headers. Header unions can be used to represent "options" in protocols
 like TCP and IP. They also provide hints to P4 compilers that only one
-alternative will be present, allowing it to conserve resources.
+alternative will be present, allowing it to conserve storage resources.
 
 A header union is defined as:
 
@@ -2170,8 +2152,7 @@ header_union IP_h {
 
 ### Struct types { #sec-struct-types }
 
-P4 ```struct``` types are similar to C/C++ ```struct``` types.  They
-are defined with the following syntax:
+P4 ```struct``` types are defined with the following syntax:
 
 ~ Begin P4Grammar
 structTypeDeclaration
@@ -2180,8 +2161,8 @@ structTypeDeclaration
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
-local scope. An empty struct is legal.  For example, the structure ```Parsed_headers```
-below contains the headers supported by a simple parser:
+local scope. An empty struct is legal. For example, the structure ```Parsed_headers```
+below contains the headers recognized by a simple parser:
 
 ~ Begin P4Example
 header Tcp_h { ... }
@@ -2219,29 +2200,21 @@ infinite-precision integer, without a width specified.
 | ```tuple```        | error     | error   |  allowed        |
 |-----|-----|-----|
 
-The two-argument ```extract``` method on packets only supports a
-single ```varbit``` field in a header.
-
-Rationale: ```int<W>``` is sufficient to allow a signed integer as a
-member, and it has easily-determined storage requirements, unlike an
-infinite precision ```int```.  ```match_kind``` values are not useful
+The rationale for the restrictions is as follows. The type ```int<W>```
+has easily-determined storage requirements, unlike
+infinite precision ```int```s.  ```match_kind``` values are not useful
 to store in a variable, as they are only used to specify how to match
 fields in table search keys, which are all declared at compile time. ```void```
 is not useful as part of another data structure.  Headers must have
 precisely defined formats as sequences of bits in order for them to be
 parsed or deparsed.
 
-
 ### Tuple types { #sec-tuple-types }
 
 A tuple is similar to a ```struct```, in that it holds multiple
 values. Unlike a ```struct``` type, tuples have no named fields. The
 type of tuples with n component types ```T1```,...,```Tn``` is written
-as
-
-~ Begin P4Example
-tuple<T1,...,Tn>
-~ End P4Example
+as ```tuple<T1,...,Tn>```.
 
 ~ Begin P4Grammar
 tupleType
@@ -2251,12 +2224,13 @@ tupleType
 
 Operations that manipulate tuple types are described in Sections
 [#sec-list-exprs] and [#sec-set-exprs]. Tuple types can be converted
-to structure types that have the same number of fields.
+to structure types that have the same number of fields when each field
+has a type that is identical to the corresponding tuple element.
 
 ~ Begin P4Example
-struct S { bit<32> a; bit<32> b; }
-tuple<bit<32>, bit<32>> x;
-x = { 32w25, 32w35 };
+struct S { bit<32> a; bit<16> b; }
+tuple<bit<32>, bit<16>> x;
+x = { 32w25, 16w35 };
 S y = x;
 ~ End P4Example
 
@@ -2284,8 +2258,8 @@ type-checking. Expressions with set types are described in Section
 
 []{tex-cmd: "\indent"}
 Currently function types cannot be created explicitly in P4 programs;
-they are created by the P4 compiler internally to represent the type
-of a function, procedure, or method, and they are used for
+they are created by the P4 compiler internally to represent the types
+of functions, procedures, and methods during
 type-checking. We also call the type of a function its
 signature. Libraries can contain extern function declarations.
 
@@ -2306,11 +2280,7 @@ representing the following information:
 ### Extern types { #sec_extern }
 
 []{tex-cmd: "\indent"}
-P4 programs can invoke the service of fixed-function blocks. A typical
-example of such a fixed-function block is a checksum unit. The functionality
-of such blocks is exposed to P4 programs through ```extern``` declarations.
-
-P4 supports extern object declarations and extern function declarations.
+P4 supports extern object declarations and extern function declarations using the following syntax.
 
 ~ Begin P4Grammar
 externDeclaration
@@ -2322,8 +2292,8 @@ externDeclaration
 #### Extern functions
 
 []{tex-cmd: "\indent"}
-An extern function declaration describes a function and its signature,
-but not the function's implementation.
+An extern function declaration describes the name and type signature of the function,
+but not its implementation.
 
 ~ Begin P4Grammar
 functionPrototype
@@ -2337,11 +2307,11 @@ For an example of an ```extern``` function declaration, see Section
 #### Extern objects
 
 []{tex-cmd: "\indent"}
-An extern object declaration declares an object and *all methods* that
+An extern object declaration declares an object and all methods that
 can be invoked to perform computations and to alter the state of the
 object. Extern object declarations can also optionally declare
 constructor methods; these must have the same name as the enclosing ```extern```
-type, no type parameters, and no return type.  Extern declarations can
+type, no type parameters, and no return type.  Extern declarations may
 only appear as allowed by the architecture model and may be specific
 to a target.
 
@@ -2373,10 +2343,11 @@ typeParameterList
     ;
 ~ End P4Grammar
 
-For example, the P4 core library introduces two interfaces ```packet_in```
-and ```packet_out``` used for manipulating network packets (see
-Sections 13.8 and 16.1). Here is an example showing how operations on
-a network packet can be invoked:
+For example, the P4 core library introduces two extern objects ```packet_in```
+and ```packet_out``` used for manipulating packets
+(see Sections [#sec-packet-data-extraction] and [#sec-deparse]). Here
+is an example showing how the methods of these objects can be invoked
+on a packet:
 
 ~ Begin P4Example
 extern packet_out {
@@ -2389,7 +2360,7 @@ control d(packet_out b, in Hdr h) {
 }
 ~ End P4Example
 
-Functions and methods are the only P4 constructs which support
+Functions and methods are the only P4 constructs that support
 overloading: there can exist multiple methods with the same name in
 the same scope. Even so, two functions (or methods of an ```extern```
 object) can have the same name only if they have a different number of
@@ -2434,7 +2405,8 @@ type specialized with the ```bit<32>``` bound to the ```T``` type argument.
 
 Parsers and control blocks types are similar to function types: they
 describe the signature of parsers and control blocks. Such functions
-have no return values. Parsers and control block types may be generic
+have no return values. Declarations of parsers and control block types
+in architectures may be generic
 (i.e., have type parameters).
 
 The types ```parser```, ```control```, and ```package``` cannot be
@@ -2456,16 +2428,16 @@ parserTypeDeclaration
 ~ End P4Grammar
 
 For example, the following is a type declaration of a parser type
-named ```P``` that depends on a type variable ```IH```. The parser
+named ```P``` that is parameterized on a type variable ```H```. The parser
 that receives as input a ```packet_in``` value ```b``` and produces
 two values:
-- A value with a user-defined type ```IH```
-- A value with a predefined type ```Counters```
+- A value of type ```H```, and
+- A value with a predefined type ```Counters```.
 
 ~ Begin P4Example
 struct Counters { ... }
-parser P<IH>(packet_in b,
-             out IH packetHeaders,
+parser P<H>(packet_in b,
+             out H packetHeaders,
              out Counters counters);
 ~ End P4Example
 
@@ -2480,7 +2452,7 @@ controlTypeDeclaration
     ;
 ~ End P4Grammar
 
-Control type declarations are very similar to parser type
+Control type declarations are similar to parser type
 declarations.
 
 ### Package types { #sec-pkg-types }
@@ -2497,15 +2469,15 @@ packageTypeDeclaration
 All parameters of a package are evaluated at compilation-time, and in
 consequence they must all be directionless (they cannot be ```in```, ```out```,
 or ```inout```). Otherwise package types are very similar to
-parser type declarations. Packages can only be instantiated; they have
-no runtime behaviors associated.
+parser type declarations. Packages can only be instantiated; there are
+no runtime behaviors associated with them.
 
 ### Don't care types { #sec-dont-care-types }
 
 A don't care (underscore, "`_`") can be used in some circumstances as
 a type.  It should be only used in a position where one could write a
-bound type variable; it is similar to the Java `?` wildcard type.  The
-underscore can be used to reduce code complexity --- when it is not
+bound type variable.  The
+underscore can be used to reduce code complexity---when it is not
 important what the type variable binds to (during type unification the
 don't care type can unify with any other type).  An example is given
 Section [#sec-arch-desc-example].
@@ -2527,9 +2499,9 @@ typedef struct Point { int<32> x; int<32> y; } Pt;
 typedef Empty_h[32] HeaderStack;
 ~ End P4Grammar
 
-All operations that can be executed on the original type can be also
-executed on the newly created type. This behavior is similar to the C ```typedef```
-keyword.
+The two types are treated as synonyms, and all operations that can be
+executed using the original type can be also executed using the newly
+created type.
 
 # Expressions { #sec-exprs }
 
