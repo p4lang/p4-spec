@@ -1022,7 +1022,7 @@ VSS(TopParser(),
     TopDeparser()) main;
 ~ End P4Example
 
-# P4 Language definition { #sec-p4-lang-def }
+# P4 language definition { #sec-p4-lang-def }
 
 The P4 language can be viewed as having several distinct components,
 which we describe separately:
@@ -1037,19 +1037,17 @@ which we describe separately:
 - A sub-language for describing architectures (Section
   [#sec-arch-desc]).
 
-
 ## Syntax and semantics { #sec-syntax }
 
 ### Grammar { #sec-grammar-intro }
 
 The complete grammar of P4~16~ is given in Appendix [#sec-grammar],
-using the YACC/bison grammar description language. In this text we use
-the same grammar; we use the following conventions when we provide
+using Yacc/Bison grammar description language. This text is based on
+the same gramar. We adopt several standard conventions when we provide
 excerpts from the grammar:
 
-- grammar rules are written using ```fixed-size font```
-- ```UPPERCASE``` symbols denote grammar terminals. Grammar fragments
-  will be shown using a special style, as in the following example:
+- ```UPPERCASE``` symbols denote terminals in the grammar.
+- Excerpts from the grammar are given in BNF notation as follows:
 ~ Begin P4Grammar
 p4program
     : /* empty */
@@ -1058,7 +1056,7 @@ p4program
     ;
 ~ End P4Grammar
 
-Pseudo-code examples (mostly used for describing the semantics of
+Pseudo-code (mostly used for describing the semantics of
 various P4 constructs) are shown with fixed-size fonts as in the
 following example:
 
@@ -1073,33 +1071,32 @@ ParserModel.verify(bool condition, error err) {
 
 ### Semantics and the P4 abstract machines
 
-The P4 semantics is described in terms of abstract machines executing
+We describe the semantics of P4 in terms of abstract machines executing
 traditional imperative code. There is an abstract machine for each P4
 sub-language (parser, control). The abstract machines are described in
 this text in pseudo-code and English.
 
-P4 compilers can reorganize the generated code in any way as long as
+P4 compilers are free to reorganize the code they generate in any way as long as
 the externally visible behaviors of the P4 programs are preserved as
-described by this specification. The externally visible behavior of a
-P4 program is defined entirely by:
+described by this specification where externally visible behavior is defined as:
 
 - The input/output behavior of all P4 blocks, i.e., the values of the
-  outputs computed by a P4 parser/control block given a set of inputs
-- The state maintained by extern blocks
+  outputs computed by a P4 parser/control block given a set of inputs, and
+- The state maintained by extern blocks.
 
 ## Preprocessing { #sec-preprocessor }
 
-To aid composition of programs from multiple source files P$4_{16}$
+To aid composition of programs from multiple source files P4
 compilers should support the following subset of the C preprocessor
 functionality:
 
--	```#define``` for defining macros without arguments
+-	```#define``` for defining macros (without arguments)
 -	```#undef```
 -	```#if #else #endif #ifdef #ifndef #elif```
 -	```#include```
 
-The preprocessor will also remove the following sequence of two ASCII
-characters: backslash newline (ASCII codes 92, 10).
+The preprocessor should also remove the sequence backslash newline (ASCII codes 92, 10)
+to facilitate splitting content across multiple lines when convenient for formatting.
 
 Additional capabilities of the C preprocessor may be supported, but
 are not guaranteed (e.g., macros with arguments).  Similar to C, ```#include```
@@ -1114,25 +1111,22 @@ The difference between the two forms is the order in which the
 preprocessor searches for header files when the path is incompletely
 specified.
 
-In addition, P4 compilers should correctly handle ```#line``` directives
+P4 compilers should correctly handle ```#line``` directives
 that may be generated during preprocessing.  This functionality allows
 P4 programs to be built from multiple source files, potentially
 produced by different programmers at different times:
 
-- the P4 core library, produced by the P4 language designers
-- the architecture interfaces, specified by the target manufacturer
-- target libraries, describing extern blocks provided by the
-  architecture
-- user-defined and other libraries of useful components (e.g. standard
-  protocol header definitions)
-- the P4 programs that control programmable functional blocks of a
-  target
+- the P4 core library, defined in this document,
+- the architecture, defining data plane interfaces and extern blocks,
+- user-defined libraries of useful components (e.g. standard
+  protocol header definitions), and
+- the P4 programs that specify the behavior of each programmable block.
 
 ### P4 core library
 
-Similar to the C standard library, the P4 language specification
-defines a core library that declares useful P4 constructs. A
-description of the P4 core library is provided in Appendix
+The P4 language specification defines a core library that includes
+several common programming constructs. A
+description of the core library is provided in Appendix
 [#sec-p4-core-lib]. Most P4 programs will include the core
 library. Including the core library is done with
 
