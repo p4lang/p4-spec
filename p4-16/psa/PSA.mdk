@@ -1,6 +1,6 @@
-Title : P4~16~ Portable[^titleoptions]  Switch Architecture
+Title : P4~16~ Portable Switch Architecture (PSA)
 Title Note : (draft)
-Title Footer: Feb 28, 2017
+Title Footer: May 15, 2017
 Author : The P4.org language consortium
 Heading depth: 4
 
@@ -26,6 +26,7 @@ Document Class: [10pt]article
 Package: [top=1in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
 Package: fancyhdr
 
+
 Tex Header:
   \setlength{\headheight}{30pt}
   \renewcommand{\footrulewidth}{0.5pt}
@@ -39,700 +40,788 @@ Tex Header:
 []{tex-cmd: "\pagestyle{fancy}"}
 
 ~ Begin Abstract
-P4 is a language for expressing how packets are processed by the data plane of
-a programmable network forwarding element. P4 programs specify how the various
-programmable blocks of a target architecture are programmed and connected.
-The Portable Switch Architecture is target architecture that describes common
-capabilities of network switch devices which process and forward packets across
-multiple interface ports.
-~ End Abstract
 
-[^titleoptions]: We are also considering Basic/Common Switch Architecture, or simply PISA.
+P4 is a language for expressing how packets are processed by the data
+plane of a programmable network forwarding element. P4 programs
+specify how the various programmable blocks of a target architecture
+are programmed and connected.  The Portable Switch Architecture (PSA)
+is target architecture that describes common capabilities of network
+switch devices which process and forward packets across multiple
+interface ports.
+
+~ End Abstract
 
 # Target Architecture Model
 
 
-The Portable Switch Architecture (PSA) Model has six programmable P4 blocks and
-one fixed-function block, as shown in Figure [#fig-switch]. Programmable blocks
-are hardware blocks whose function can be programmed using the P4 language. The
-Packet buffer and Replication Engine (PRE) is a target dependent functional
-block. From the point of view of the P4 programmer, this block provides a set
-of fixed functions. A subset of the behavior of these functions may be
-configured at runtime by the control plane.
+The Portable Switch Architecture (PSA) Model has six programmable P4
+blocks and two fixed-function blocks, as shown in Figure
+[#fig-switch]. Programmable blocks are hardware blocks whose function
+can be programmed using the P4 language. The Packet buffer and
+Replication Engine (PRE) and the Buffer Queueing Engine (BQE) are
+target dependent functional blocks that may be configured for a fixed
+set of operations.
 
-~ Figure { #fig-switch; caption: "Portable Switch Pipeline" }
+Incoming packets are parsed and have their checksums validated and are
+then passed to an ingress match action pipeline, which makes decisions
+on where the packets should go. After the ingress pipeline, the packet
+may be buffered and/or replicated (sent to multiple egress ports). For
+each such egress port, the packet passes through an egress match
+action pipleline and a checksum update calculation before it is
+deparsed and queued to leave the pipeline..
+
+~ Figure { #fig-switch; caption: "Portable Switch Pipeline"; page-align: here; }
 ![switch]
 ~
-[switch]: std_switch.png { .wide: true; page-align: inplace}
+[switch]: psa_pipeline.png { width: 100%; }
 
-Incoming packets are parsed and have their checksums validated and are then
-passed to an ingress match action pipeline, which makes decisions on where the
-packets should go. After the ingress pipeline, the packet may be buffered
-and/or replicated (sent to multiple egress ports). For each such egress port,
-the packet passes through an egress match action pipleline and a checksum
-update calculation and is finally deparsed.
+A programmer targetting the PSA is required to instantiate objects for
+the programmable blocks that conform to these APIs. Note that the
+programmable block APIs are templetized on user defined headers and
+metadata. The PSA offers flexibility in defining the user metadata,
+however, one may chose to use a common metadata types for subsets of
+the objects.
 
-# Architecture
+When instantiating the `main` `package` object, the instances
+corresponding to the programmable blocks are passed as arguments.
 
-The Portable Switch Architecture defines the APIs for each programmable block.
-For the PSA, these are:
+# PSA Data types
 
-```
-parser Parser_t<H, MP>(packet_in buffer, out H hdr, inout MP user_meta,
-                      in std_parser_input_metadata_t istd,
-                      out std_parser_output_metadata_t ostd);
-control VerifyChecksum_t<H, MC>(in H hdr, inout MC user_meta);
-control Ingress_t<H, MI>(inout H hdr, inout MI user_meta,
-                        in std_ingress_input_metadata_t istd,
-                        out std_ingress_output_metadata_t ostd);
-control Egress_t<H, ME>(inout H hdr, inout ME user_meta,
-                       in std_egress_input_metadata_t istd,
-                       out std_egress_output_metadata_t ostd);
+## PSA type definitions
 
-control ComputeChecksum_t<H, MCC>(inout H hdr, inout MCC user_meta);
-
-control Deparser_t<H>(packet_out buffer, in H hdr);
-
-// Switch declaration
-package switch<H, MP, MC, MI, ME, MCC>(
-                     Parser_t<H, MP> parser,
-                     VerifyChecksum_t<H, MC> verify,
-                     Ingress_t<H, MI> ingress,
-                     Egress_t<H, ME> egress,
-                     ComputeChecksum_t<H, MCC> checksum,
-                     Deparser_t<H> deparser);
-```
-
-A programmer targetting the PSA is required to instantiate objects for the
-programmable blocks that conform to these APIs. Note that the programmable
-block APIs are templetized on user defined headers and metadata. The PSA offers
-flexibility in defining the user metadata, however, one may chose to use a
-common metadata types for subsets of the objects.
-
-When instantiating the ```main``` switch object, the instances corresponding to
-the programmable blocks are passed as arguments.
-
-
-~ Begin Tbd
-there is a desire to allow a single architecture define a series of
-switches, using the same types of components and relying on pre-defined
-behavior of the components that are not specified.
-~ End Tbd
-~ Begin Tbd
-do we force the definition of a deparser or should it be generated from the parser?
-~ End Tbd
-~ Begin Tbd
-What is the default behavior of a switch with no arguments?
-  - default NULL behavior: compiler instantiates a control that calls drop immediately
-  - default forward behavior: forwards the packet on port 0
-~ End Tbd
-
-Support for cloning requires a new template parameter (C for clone metadata)
-
-By default C = M
-
-Needs to be a union of structs: we could reuse header unions and set the
-predefined valid bit for the variant that we want cloned
-
-Cloning discussion:
-
-  - can we use templetized egress spec?
-  - how many of such types are needed: at least a few for different types of clone
-  - field list type that gives you a name to carry for a tuple
-  - ecoding/decoding from a varbit -- loses semantics of field lists and to do you need to keep the type of clone
-
-```
-control Ingress_t<H, M, C>(inout H hdr, inout M user_meta,
-                           in std_ingress_input_metadata_t istd,
-                           out std_ingress_output_metadata_t ostd,
-                           out C clone_meta = user_meta);
-```
-
-
-```
-control Egress_t<H, M, C>(inout H hdr, inout M user_meta,
-                          in C clone_meta,
-                          in std_egress_input_metadata_t istd,
-                          out std_egress_output_metadata_t ostd);
-
-// switch instantiation can take either form (named arguments or overloading)
-package switch<H, M, C>(Parser_t<H, M> parser,
-                  VerifyChecksum_t<H, M> verify,
-                  Ingress_t<H, M, C> ingress,
-                  Egress_t<H, M, C> egress,
-                  ComputeChecksum_t<H, M> checksum,
-                  Deparser_t<H> deparser);
-```
-
-
-~ Begin Tbd
-combine H and M into a single (U?) argument.
-~ End Tbd
-~ Begin Tbd
-need standard metadata for checksums?
-~ End Tbd
-~ Begin Tbd
-need any metadata for deparser?
-~ End Tbd
-~ Begin Tbd
-combine std meta into fewer types? Possible language extension – allow in and out modifiers on individual elements of a struct? Annotations to specify which controls can access each field?
-~ End Tbd
-# Intrinsic Metadata
-
-The parser and each Match-Action pipeline each have an inout standard_metadata argument that provides information from
-other parts of the architecture, and is used to control other non-programmable parts of the architecture.
+These types need to be defined before including the architecture file
+and the macro protecting them should be defined.
 
 ```
 typedef bit<unspecified> PortId_t;
+typedef bit<unspecified> MulticastGroup_t;
 typedef bit<unspecified> PacketLength_t;
-typedef bit<unspecified> PacketPriority_t;
 typedef bit<unspecified> EgressInstance_t;
-typedef bit<unspecified> InstanceType_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
-const InstanceType_t INSTANCE_NORMAL = unspecified;
-const PortId_t PORT_DROP = unspecified;
-const PortId_t PORT_CPU = unspecified;
+typedef bit<unspecified> entry_key;           /// for DirectCounters
+
+const   PortId_t         PORT_CPU = unspecified;
+
 ```
 
-Implicitly the metadata coming for the first time in the pipeline has the value 0.
-~ Begin Tbd
-Cloned packets have metadata set (or subset set). How do we define a subset of md fields?
-~ End Tbd
+## PSA supported metadata types
+
 ```
-struct std_clone_metadata_fields_t {
+typedef enum { NORMALINSTANCE_, CLONE_INSTANCE } InstanceType_t;
 
+struct psa_parser_input_metadata_t {
+  PortId_t                 ingress_port;
+  InstanceType_t           instance_type;
 }
 
-struct std_parser_input_metadata_t {
-	PortId_t			ingress_port;
-	InstanceType_t		instance_type;
+struct psa_ingress_input_metadata_t {
+  PortId_t                 ingress_port;
+  InstanceType_t           instance_type;  /// Clone or Normal
+  /// set by the runtime in the parser, these are not under programmer control
+  ParserStatus_t           parser_status;
+  ParserErrorLocation_t    parser_error_location;
 }
 
-struct std_parser_output_metadata_t {
-	PacketPriority_t		priority;
+struct psa_ingress_output_metadata_t {
+  PortId_t                 egress_port;
 }
 
-struct std_ingress_input_metadata_t {
-	PortId_t			ingress_port;
-	InstanceType_t		instance_type;  // Clone or Normal
-	ParserStatus_t		parser_status;
-	ParserErrorLocation_t	parser_error_location;
-}
-
-struct std_ingress_output_metadata_t {
-	SpecId_t			egress_spec;
-    SpecId_t             clone_spec;
-}
-
-struct std_egress_input_metadata_t {
-	PortId_t			egress_port;
-	InstanceType_t		instance_type;  // Clone or Normal
-    EgressInstance_t     instance; // instance coming from PRE
-}
-struct std_egress_output_metadata_t {
-    SpecId_t             clone_spec;
-    bit<1>               drop;
+struct psa_egress_input_metadata_t {
+  PortId_t                 egress_port;
+  InstanceType_t           instance_type;  /// Clone or Normal
+  EgressInstance_t         instance;       /// instance coming from PRE
 }
 ```
 
-# Standard PRE Operations
+## Match kinds
 
+Additional supported match_kind types
 
-The standard architecture defines the following operations: unicast, multicast,
-drop, and clone. Targets may implement these operations as primitives or as
-combinations of primitive operations. Targets may also decide to implement
-other operations, such as broadcast, as primitive operations. In the standard
-architecture, the operations that are not specified are intended to be executed
-as sequences of the above operations. For example, broadcast is implemented as
-multicast to a group that includes all hosts, forward to CPU is implemented as
-unicast to the ```PORT_CPU``` port.
-
-The ingress output spec, ```SpecId_t```, is an aggregate type (union?) that
-supports all the required operations of the PRE.
-The standard architecture requires a target manufacturer to declare the
-conversion functions to/from ```SpecId_t``` to the
-operation data type, e.g.: ```SpecId_t <-> PortId_t```, ```SpecId_t <-> MulticastGroup_t,``` etc.
-
-The ports in the egress spec may refer to physical ports or logical ports, but
-the values of these ports are defined by what the control plane sets in the PRE.
-
-## Operation: Unicast to a port
-
-For unicast, ```SpecId_t``` corresponds to a  ```PortId_t```
-
-Alternatives for conversion: macros
 ```
-#define EGRESS_SPECID_TO_PORTID(SpecId_t s) (        \
-    /* define how to get the port from SpecId_t s */ \
-    )
-#define EGRESS_SPECID_HAS_PORTID(SpecId_t s) ( \
-    /* check whether SpecId_t s has a port */  \
-    )
-// TBD: do we return a new SpecId_t or we fill in an existing one?
-#define EGRESS_SPECID_FROM_PORTID(PortId_t p) (    \
-    /* define how to put a port into a SpecId_t */ \
-    )
-```
-
-Alternative for conversion; inline functions (currently supported by the
-front-end compiler, even though not available in the spec)
-```
-PortId_t egressSpecId2PortId(const SpecId_t s) {
-    // return the portid
-}
-bool egressSpecIdHasPortId(const SpecId_t s) {
-    // return whether the specId has a portid
-}
-SpecId_t egressSpecIdFromPortId(const PortId_t p) {
-    // return the specId
-}
-// or return void and fill an out param
-void egressSpecIdFromPortId(const PortId_t p, out SpecId_t s) {
-    // s.portId = p;
+match_kind {
+    range,   /// Used to represent min..max intervals
+    selector /// Used for implementing dynamic_action_selection
 }
 ```
 
-## Operation: Multicast to a group {#sec-multicast}
+## Cloning methods
 
-For multicast, ```SpecId_t``` corresponds to a  ```MulitcastGroup_t```
-
-Alternatives for conversion: macros
 ```
-#define EGRESS_SPECID_TO_DROP_METHOD(SpecId_t s) (              \
-    /* define how to get the multicast group from SpecId_t s */ \
-    )
-#define EGRESS_SPECID_HAS_DROP_METHOD(SpecId_t s) (      \
-    /* check whether SpecId_t s has a multicast group */ \
-    )
-// TBD: do we return a new SpecId_t or we fill in an existing one?
-#define EGRESS_SPECID_FROM_DROP_METHOD(MulticastGroup_t m) (  \
-    /* define how to put a multicast group into a SpecId_t */ \
-    )
-```
-
-// Alternative for conversion; inline functions (currently supported by the
-// front-end compiler, even though not available in the spec)
-```
-MulticastGroup_t egressSpecId2MulticastGroup(const SpecId_t s) {
-    // return the multicast group
-}
-bool egressSpecIdHasMulticastGroup(const SpecId_t s) {
-    // return whether the specId has a multicast group
-}
-SpecId_t egressSpecIdFromMulticastGroup(const MulticastGroup_t m) {
-    // return the specId
-}
-// or return void and fill an out param
-void egressSpecIdFromMulticastGroup(const MulticastGroup_t m, out SpecId_t s) {
-    // s.portId = m;
+enum CloneMethod_t {
+  /// Clone method         Packet source             Insertion point
+  Ingress2Ingress,  /// original ingress,            Ingress parser
+  Ingres2Egress,    /// post parse original ingres,  Buffering queue
+  Egress2Ingress,   /// post deparse in egress,      Ingress parser
+  Egress2Egress     /// inout to deparser in egress, Buffering queue
 }
 ```
 
+# PSA Externs
 
+## Packet Replication Engine
 
-## Operation: Drop
-For drop, ```SpecId_t``` corresponds to   ```DropMethod_t```
+The ```PacketReplicationEngine``` extern represents the non-programmable
+part of the PSA pipeline.
 
-```
-enum DropMethod_t {
-    markToDrop,         /// mark drop in metadata and drop whenever convenient
-    immediateDrop,      /// drop and end the computation for this packet
-    endOfPipelineDrop,  /// drop at the end of current pipeline computation
-};
-```
+Even though the PRE can not be programmed using P4, it can be
+configured both directly using control plane APIs and by setting
+intrinsic metadata. In this specification we opt to define the
+operations available in the PRE as method invocations. A target
+backend is responsible for mapping the PRE extern APIs to the
+appropriate mechanisms for performing these operations in the
+hardware.
 
-Alternatives for conversion: macros
-```
-#define EGRESS_SPECID_TO_DROP_METHOD(SpecId_t s) (          \
-    /* define how to get the drop method from SpecId_t s */ \
-    )
-#define EGRESS_SPECID_HAS_DROP_METHOD(SpecId_t s) (  \
-    /* check whether SpecId_t s has a drop method */ \
-    )
-// TBD: do we return a new SpecId_t or we fill in an existing one?
-#define EGRESS_SPECID_FROM_DROP_METHOD(DropMethod_t d) (  \
-    /* define how to put a drop method into a SpecId_t */ \
-    )
-```
+The PRE is instantiated by the architecture and a P4 program can use
+it directly. It is an error to instantiate the PRE multiple times.
+The PRE is made available to the Ingress programmable block using the
+same mechanism as packet_in. A corresponding Buffering and Queueing
+Engine (BQE) extern is defined for the Egress pipeline (@see
+BufferingQueueingEngine).
 
-Alternative for conversion; inline functions (currently supported by the
-front-end compiler, even though not available in the spec)
-```
-DropMethod_t egressSpecId2DropMethod(const SpecId_t s) {
-    // return the drop method
-}
-bool egressSpecIdHasDropMethod(const SpecId_t s) {
-    // return whether the specId has a drop method
-}
-SpecId_t egressSpecIdFromDropMethod(const DropMethod_t d) {
-    // return the specId
-}
-// or return void and fill an out param
-void egressSpecIdFromDropMethod(const DropMethod_t d, out SpecId_t s) {
-    // s.portId = d;
-}
-```
+Note: some of these operations may not be implemented as primitive
+operations on a certain target. However, All of the operations can be
+implemented as a combination of other operations. Applications that
+rely on non-primitive operations may incur significant performance
+penalties, however, they should be functionally correct.
 
-## Operation: Cloning (Mirroring) and Recirculation
+Semantics of behavior for multiple calls to PRE APIs
 
-Many standard networking functions, such as mirroring and recursive packet
-processing, require more complicated primitives than setting or testing fields.
-To support such operations, the P4 standard architecture provides primitive
-actions that allow a packet to be recirculated --- sent back to the start of
-the processing pipeline, or cloned --- a second instance of the packet is
-created. Table [#tab-cloning] summarizes the different operations.
+The semantics of calling the PRE APIs is equivalent to setting
+intrinsic metadata fields/bits and assumming that the PRE looks up the
+fields in the following order: drop, truncate, multicast, clone,
+output_port.
 
-Cloning operations generate a new version of the packet. The original version
-continues to be processed as if the clone operation did not take place. We use
-the term clone (rather than mirror) to emphasize that this action is only
-responsible for generating a new version of the packet.
+ Following this semantics, examples of the behaviors are:
 
-The source of the clone may be the original instance of the packet (an ingress
-clone), or the packet as it would exit the switch (an egress clone). The
-processing of the new instance may be limited to the egress pipeline ("to
-egress") or it may start with the ingress pipeline ("to ingress"). Hence we
-have four different clone operations. For cloned packets, the ```instance_type```
- metadata field is used to distinguish between the original
-and cloned packet instances.
+- any call to drop in the pipeline will cause the packet, and all
+   potential clone copies (see below) to drop.
 
-Executing multiple clone actions on one packet will result in as many clone
-instances of the packet as the number of clone actions. Specific targets may
-impose limits on the number of clone instances supported.
+- any call to truncate, will cause the packet (and its clones
+   \todo: check) to be truncated.
 
-Note that cloning is not intended to be the mechanism by which multicast is
-normally implemented. That is expected to be done by the Buffering Mechanism in
-conjunction with the egress specification. See Section [#sec-multicast].
+- multiple calls to send_to_port -- the last call in the ingress
+   pipeline sets the output port.
 
-~ TableFigure {#tab-cloning; caption: "Cloning and recirculation operations. The first four (clone) operations create an entirely new instance of the packet. The last two, resubmit and recirculate, operate on the original packet and do not, by themselves, result in the generation of a new packet."}
-+:----------------+:----------------+:---------------+:-------------------+
-| Name           |  Operation    |  Source       | Insertion Point |
-|----------------|----------------|---------------|-------------------|
-| i2i                 | clone ingress packet to ingress | original ingress packet | Ingress parser |
-| i2e                | clone ingress packet to egress | original ingress packet (after parse) | Buffering mechanism |
-| e2i                | clone egress packet to ingress | post deparsed packet | Ingress parser |
-| e2e               | clone egress packet to egress | packet as inout to deparser | Buffering mechanism |
-| resubmit       | resubmit packet to ingress (no clone) | original ingress packet | Ingress parser |
-| recirculate    | resubmit packet to ingress (no clone) | post deparsed packet | Ingress parser |
-|----------------|----------------|---------------|-------------------|
-~
+- multiple calls to multicast -- the last in the ingress pipeline
+   sets the multicast group
 
-Note: Some targets may not support all these operations as primitives. All of
-the operations can be implemented as a combination of other operations. For
-example, i2i can be implemented as an i2e operation followed by a recirculation
-operation. Implementing applications that rely on non-primitive operations may
-incur significant costs. Please refer to the target specification manual to
-understand the resource usage for each of these operations.
+- interleaving send_to_port and multicast -- the semantics of multicast
+   is defined as below (https://github.com/p4lang/tutorials/issues/22):
+     if (multicast_group != 0)
+        multicast_to_group(multicast_group);
+     else
+        send_to_port(output_port);
 
+   From this, it follows that if there is a call that sets the
+   multicast_group, the packet will be multicast to the group that
+   last set the multicast group. Otherwise, the packet will be sent
+   to the port set by send_to_port.
+
+- multiple clone invocations will cause the packet to be cloned to
+   the corresponding port. Any drop call in the pipeline will cause
+   the packet to drop, and no clone will be created (following the
+   analogy with intrinsic metadata bit fields, drop bits are
+   processed before clone bits are looked up).
+
+- resubmit
+- recirculate
+
+\TODO: finalize the semantics of calling multiple of the PRE APIs
 
 ```
-enum CloneType_t {
-    NoClone,
-    Clone2Ingress,
-    Clone2Egress,
-    Reprocess // Resubmit on ingress, recirculate on egress
-};
-```
-SpecId encodes the CloneType_t and the sessionId. And we have macros/functions to extract each.
+extern PacketReplicationEngine {
 
-~ Begin Tbd
-Discussion:
-
-- if we can not supprot enums in structs, we could define the CloneType_t as a bit repr, and predefined bit patterns.
-- we should consider CloneType and SessionType as separate types, aggregated in a tagged union type for cloning (Nate to write)
-~ End Tbd
-
-Alternatives for conversion: macros
-```
-#define EGRESS_SPECID_TO_CLONE_TYPE(SpecId_t s) (          \
-    /* define how to get the clone type from SpecId_t s */ \
-    )
-#define EGRESS_SPECID_HAS_CLONE_TYPE(SpecId_t s) (  \
-    /* check whether SpecId_t s has a clone type */ \
-    )
-// TBD: do we return a new SpecId_t or we fill in an existing one?
-#define EGRESS_SPECID_FROM_CLONE_TYPE(CloneType_t c) (  \
-    /* define how to put a clone type into a SpecId_t */ \
-    )
-#define EGRESS_SPECID_TO_SESSION_ID(SpecId_t s) (          \
-    /* define how to get the session id from SpecId_t s */ \
-    )
-#define EGRESS_SPECID_HAS_SESSION_ID(SpecId_t s) (  \
-    /* check whether SpecId_t s has a session id */ \
-    )
-// TBD: do we return a new SpecId_t or we fill in an existing one?
-#define EGRESS_SPECID_FROM_SESSION_ID(SessionId_t s) (  \
-    /* define how to put a session id into a SpecId_t */ \
-    )
+  // PacketReplicationEngine(); /// No constructor. PRE is instantiated
+                                /// by the architecture.
 ```
 
-Alternative for conversion; inline functions (currently supported by the
-front-end compiler, even though not available in the spec)
-```
-CloneType_t egressSpecId2CloneType(const SpecId_t s) {
-    // return the clone type
-}
-bool egressSpecIdHasCloneType(const SpecId_t s) {
-    // return whether the specId has a clone type
-}
-SpecId_t egressSpecIdFromCloneType(const CloneType_t c) {
-    // return the specId
-}
-// or return void and fill an out param
-void egressSpecIdFromCloneType(const CloneType_t c, out SpecId_t s) {
-    // s.portId = c;
-}
-SessionId_t egressSpecId2SessionId(const SpecId_t s) {
-    // return the session id
-}
-bool egressSpecIdHasSessionId(const SpecId_t s) {
-    // return whether the specId has a session id
-}
-SpecId_t egressSpecIdFromSessionId(const SessionId_t s) {
-    // return the specId
-}
-// or return void and fill an out param
-void egressSpecIdFromSessionId(const SessionId_t s, out SpecId_t s) {
-    // s.portId = s;
-}
-```
+### PRE Methods
 
+#### Unicast operation
 
-Discussion: we considered adding LAG as an option that should be represented in
-the egress spec and we decided that at this time, we do not support it
-directly. A programmer who wants to support the notion of lag will have to
-explicitly dedup the packet on the LAG ports.
-~ Begin Tbd
-What should the architecture say about SessionIds?
+Sends packet to a port.
 
- - mapping from SessionId to \[egress input\] port?
-~ End Tbd
-~ Begin Tbd
-No bridged metadata exposed
-~ End Tbd
-# Standard externs
+Targets may implement this operation by setting the appropriate
+intrinsic metadata or through some other mechanism of configuring the
+PRE.
 
-Externs are functional blocks that have pre-defined behavior, typically
-standardized by a body such as IETF, as well as several other constructs that
-support the P4~16~ language implementation. Examples include: counters (),
-meters (IETF RFC2722), registers (), digests().
-
-The architecture defines both the data plane and the control plane APIs. The
-data plane APIs are used in P4 programs to exercise the ```extern```
-functionality. The control plane APIs are used by control programs to configure
-```extern```s for use by the data plane. Control plane APIs are denoted by
-blocks tagged with the ```@ControlPlaneAPI``` annotation.
-
-~ Begin Tbd
-
-## PRE
-
-Treating the PRE as an externs will allow us to define an interface that
-encapsulates operations that are currently expressed as metadata setting --
-which is a bit too specific to the way things were expressed in P4~14~. By
-providing an interface, we allow architecture implementers to decide the means
-by which the functionality is implemented. The APIs can be called anywhere in
-the ingress pipeline, with the understanding that the action is taken in the
-PRE. This should simplify the above exposition of standard operations.
-~End Tbd
-~Begin Tbd
-- ```mark_to_drop``` becomes one of the methods in PRE
-- Need to spec out what other methods are to be standardized
-~End Tbd
-
-
-## Counter
-
-Counters are a simple mechanism for keeping statistics about the packets that
-trigger a table in a Match Action unit.
-
-Direct counters fire automatically every time the table hits, and have an
-instance for each entry in the table.
-
-Non-direct counters need to be explicitly triggered in an action, and different
-entries may trigger the same or different counters. Targets may prohibit
-triggering a counter from more than one table, or triggering multiple elements
-of a non-direct counter from a single action.
+The port parameter is the output port. If the port is PORT_CPU the
+packet will be sent to CPU.
 
 ```
-enum count_t { packets, bytes, packets_and_bytes }
-```
-~ Begin Tbd
-
-- should T (width of each counter be a type parameter on the counter \
-itself, rather than a parameter for each method?
-- saturated ops?
-~ End Tbd
-```
-extern counter {
-	counter<T>(int n_counters, T size_in_bits, count_t type);
-	void count<T>(in int index, in T increment);
-
-    @ControlPlaneAPI
-    {
-	  T    read<T>      (in int index);
-      T    sync_read<T> (in int index);
-      void set          (in int index, in int seed);
-      void reset        (in int index);
-      void start        (in int index);
-      void stop         (in int index);
-    }
-}
-extern direct_counter {
-	direct_counter(in entry_key key, in count_t type);
-
-    @ControlPlaneAPI
-    {
-	  T    read<T>      (in entry_key key);
-      T    sync_read<T> (in entry_key key);
-      void set          (in int seed);
-      void reset        (in entry_key key);
-      void start        (in entry_key key);
-      void stop         (in entry_key key);
-    }
-}
+void send_to_port (in PortId_t port);
 ```
 
-## Meter
-Meters are a more complex mechanism for keeping statistics about the packets that trigger a table. The meters specified in the PSA are 3-color meters.
+#### Multicast operation
+
+Sends packet to a multicast group or a port.
+
+Targets may implement this operation by setting the appropriate
+intrinsic metadata or through some other mechanism of configuring the
+PRE.
+
+The multicast_group parameter is the multicast group id. The control
+plane must program the multicast groups through a separate mechanism.
 
 ```
-enum Color_t { RED, GREEN, YELLOW };
-extern meter {
-	meter(int n_meters, count_t type);
-	Color_t execute(in int index, in Color_t color);
-
-    @ControlPlaneAPI
-    {
-        reset(in Color_t color);
-        setParams(in int committedRate, out int committedBurstSize
-                  in int peakRate, in int peakBurstSize);
-        getParams(out int committedRate, out int committedBurstSize
-                  out int peakRate, out int peakBurstSize);
-    }
-}
-extern direct_meter {
-	direct_meter(count_t type);
-	Color_t execute(in Color_t color);
-
-    @ControlPlaneAPI
-    {
-        reset(in Color_t color);
-        setParams(in int committedRate, out int committedBurstSize
-                  in int peakRate, in int peakBurstSize);
-        getParams(out int committedRate, out int committedBurstSize
-                  out int peakRate, out int peakBurstSize);
-    }
-}
+void multicast (in MulticastGroup_t multicast_group);
 ```
 
-## Checksum and Hash Value Generators
+#### Drop operation
 
-Checksums and hash value generators are examples of functions that operate on a
-stream of bytes from a packet to produce an integer. These have many
-applications in networking. The integer may be used, for example, as an
-integrity check for a packet or as a means to generate a pseudo-random value in
-a given range on a packet-by-packet or flow-by-flow basis.
+Do not forward the packet.
 
-Incremental checksum unit for computing 16-bit one’s complement
+The PSA implements drop as an operation in the PRE. While the drop
+operation can be invoked anywhere in the ingress pipeline, the
+semantics supported by the PSA is that the drop will be at the end of
+the pipeline (ingress or egress).
 
 ```
-extern Checksum16 {
-    void clear();           // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
-    bit<16> get();      	// get the checksum for the data added since last clear
+void drop      ();
+```
+
+#### Clone operation
+
+Create a copy of the packet and send it to the specified port.
+
+The PSA specifies four types of cloning, with the packet sourced
+from different points in the pipeline and sent back to ingress
+or to the buffering queue in the egress (@see CloneMethod_t).
+\TODO: needs both source and destination data
+
+Parameters:
+
+- clone_method  The type of cloning.
+- port          The port to send the cloned packet to.
+
+```
+void clone     (in CloneMethod_t clone_method, in PortId_t port);
+```
+
+#### Clone with extra data operation { #sec-pre-clone-with-data }
+
+Create a copy of the packet with additional data and send it to the
+specified port.
+
+The PSA specifies four types of cloning, with the packet sourced
+from different points in the pipeline and sent back to ingress
+or to the buffering queue in the egress (@see CloneMethod_t).
+\TODO: needs both source and destination data
+
+Parameters:
+
+- clone_method  The type of cloning.
+- port          The port to send the cloned packet to.
+- data additional header data attached to the packet
+
+```
+void clone<T>  (in CloneMethod_t clone_method, in PortId_t port, in T data);
+```
+
+#### Resubmit operation
+
+Send a packet to the ingress port with additional data appended.
+
+This operation is intended for recursive packet processing.
+\TODO: needs both source and destination data
+
+Parameters:
+
+- data A header definition that can be added to the set of
+  packet headers.
+- port The input port at which the packet will be resubmitted.
+
+```
+void resubmit<T>(in T data, in PortId_t port);
+```
+
+#### Recirculate operation
+
+Send a post deparse packet to the ingress port with additional data
+appended.
+
+This operation is intended for recursive packet processing.
+\TODO: needs both source and destination data
+
+Parameters:
+
+- data A header definition that can be added to the set of packet headers.
+- port The input port at which the packet will be resubmitted.
+
+```
+void recirculate<T>(in T data, in PortId_t port);
+```
+
+#### Truncate operation
+
+Truncate the outgoing packet to the specified length.
+
+The length parameter represents the packet length.
+
+```
+void truncate(in bit<32> length);
+```
+
+## Buffering Queueing Engine
+
+The BufferingQueueingEngine extern represents the the other
+non-programmable part of the PSA pipeline (after Egress).
+
+Even though the BQE can not be programmed using P4, it can be
+configured both directly using control plane APIs and by setting
+intrinsic metadata. In this specification we opt to define the
+operations available in the BQE as method invocations. A target
+backend is responsible for mapping the BQE extern APIs to the
+appropriate mechanisms for performing these operations in the
+hardware.
+
+The BQE is instantiated by the architecture and a P4 program can
+use it directly. It is an error to instantiate the BQE multiple
+times.  The BQE is made available to the Egress programmable block
+using the same mechanism as packet_in. A corresponding Packet
+Replication Engine (PRE) extern is defined for the Igress pipeline
+(@see PacketReplicationEngine).
+
+Note: some of these operations may not be implemented as primitive
+operations on a certain target. However, All of the operations can
+be implemented as a combination of other operations. Applications
+that rely on non-primitive operations may incur significant
+performance penalties, however, they should be functionally
+correct.
+
+The ordering semantics of multiple calls to BQE APIs is identical
+to the semantics ordering of PRE invocations, for the subset of
+functions supported in the BQE.
+
+```
+extern BufferingQueueingEngine {
+
+  // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
+                                /// by the architecture.
+
+```
+
+### BQE Methods
+
+
+#### Unicast operation { #sec-bqe-unicast }
+
+Sends packet to port.
+
+Targets may implement this operation by setting the appropriate
+intrinsic metadata or through some other mechanism of configuring the
+BQE.
+
+The port parameter is the output port. If the port is PORT_CPU the
+packet will be sent to CPU.
+
+```
+void send_to_port (in PortId_t port);
+```
+
+#### Drop operation { #sec-bqe-drop }
+
+Do not forward the packet.
+
+The PSA implements drop as an operation in the BQE. While the
+drop operation can be invoked anywhere in the ingress pipeline,
+the semantics supported by the PSA is that the drop will be at
+the end of the pipeline (ingress or egress).
+
+```
+void drop      ();
+```
+
+#### Truncate operation { #sec-bqe-truncate }
+
+Truncate the outgoing packet to the specified length
+
+The length parameter represents the packet length.
+
+```
+void truncate(in bit<32> length);
+```
+
+## Hashes
+
+Supported hash algorithms:
+```
+enum HashAlgorithm {
+  crc32,
+  crc32_custom,
+  crc16,
+  crc16_custom,
+  random,           /// are random hash algorithms useful?
+  identity
 }
 ```
 
-### Generic checksum unit
+### Hash function
+
+Example usage:
+
+```
+parser P() {
+  Hash<crc16, bit<56>> h();
+  bit<56> hash_value = h.getHash(16, buffer, 100);
+}
+```
+
+Parameters:
+
+- Algo The algorithm to use for computation (@see HashAlgorithm).
+- O    The type of the return value of the hash.
+
+```
+extern Hash<Algo, O> {
+  /// Constructor
+  Hash();
+
+  /// compute the hash for data
+  O getHash<T, D, M>(in T base, in D data, in M max);
+}
+```
+
+## Checksum computation
+
+Checksums and hash value generators are examples of functions that
+operate on a stream of bytes from a packet to produce an integer. The
+integer may be used, for example, as an integrity check for a packet
+or as a means to generate a pseudo-random value in a given range on a
+packet-by-packet or flow-by-flow basis.
+
+Parameters:
+
+- W    The width of the checksum
 
 ```
 extern Checksum<W> {
-    void clear();        // prepare unit for computation
-    void update<T>(T data); // add data to checksum
-    void remove<T>(T data); // remove data from existing checksum
-    W get();      	     // get the checksum for the data added since last clear
+  Checksum(HashAlgorithm hash);          /// constructor
+  void clear();              /// prepare unit for computation
+  void update<T>(in T data); /// add data to checksum
+  void remove<T>(in T data); /// remove data from existing checksum
+  W    get();      	     /// get the checksum for data added since last clear
 }
 ```
 
-### Hashes
-```
-enum HashAlgorithm {
-    crc32,
-    crc32_custom,
-    crc16,
-    crc16_custom,
-    random,
-    identity
-}
+## Counters
 
-extern void hash<O, T, D, M>(out O result, in HashAlgorithm algo,
-                             in T base, in D data, in M max);
-```
+Counters are a simple mechanism for keeping statistics about the
+packets that trigger a table in a Match Action unit.
 
-## ActionProfile
+Direct counters fire when the count method is ivoked in an action, and
+have an instance for each entry in the table.
+
+
+### Counter types
 
 ```
-extern action_profile {
-    @ControlPlaneAPI
-    {
-        entry_handle_t entry(in bit<T> key, in actionRef action, in action_data);
-    }
+enum CounterType_t {
+    packets,
+    bytes,
+    packets_and_bytes
 }
 ```
 
-## ActionSelector
+### Counter
 
 ```
-extern action_selector {
-    action_selector(HashAlgorithm algorithm, bit<32> size, bit<32> outputWidth);
+extern Counter<W, S> {
+  Counter(S n_counters, W size_in_bits, CounterType_t counter_type);
+  void count(in S index, in W increment);
+
+  /*
+  @ControlPlaneAPI
+  {
+    W    read<W>      (in S index);
+    W    sync_read<W> (in S index);
+    void set          (in S index, in W seed);
+    void reset        (in S index);
+    void start        (in S index);
+    void stop         (in S index);
+  }
+  */
 }
 ```
 
-## Register
-
-Registers are stateful memories whose values can be read and written in
-actions. Registers are similar to counters, but can be used in a more general
-way to keep state.
-
-A simple example use might be to verify that a "first packet" was seen for a
-particular type of flow. A register cell would be allocated to the flow,
-initialized to "clear". When the protocol signalled a "first packet", the table
-would match on this value and update the flow’s cell to "marked". Subsequent
-packets in the flow could would be mapped to the same cell; the current cell
-value would be stored in metadata for the packet and a subsequent table could
-check that the flow was marked as active.
+### Direct Counter
 
 ```
-extern register<T, S> {
-    register(S size);
-    T read(in S index);
-    void write(in S index, in T value);
+extern DirectCounter<W> {
+  DirectCounter(CounterType_t counter_type);
+  void count();
+
+  /*
+  @ControlPlaneAPI
+  {
+    W    read<W>      (in entry_key key);
+    W    sync_read<W> (in entry_key key);
+    void set          (in W seed);
+    void reset        (in entry_key key);
+    void start        (in entry_key key);
+    void stop         (in entry_key key);
+  }
+  */
 }
 ```
 
-Although registers cannot be used directly in matching, they may be used as the
-RHS of an assignment operation, allowing the current value of the register to
-be copied into metadata and be available for matching in subsquent tables.
+## Meters
+
+Meters (RFC 2698) are a more complex mechanism for keeping statistics about
+the packets that trigger a table. The meters specified in the PSA
+are 3-color meters.
+
+
+### Meter types
+```
+enum MeterType_t {
+    packets,
+    bytes
+}
+```
+
+### Meter colors
+
+```
+enum MeterColor_t { RED, GREEN, YELLOW };
+```
+
+### Meter
+
+```
+extern Meter<S> {
+  Meter(S n_meters, MeterType_t type);
+  MeterColor_t execute(in S index, in MeterColor_t color);
+
+  /*
+  @ControlPlaneAPI
+  {
+    reset(in MeterColor_t color);
+    setParams(in S committedRate, in S committedBurstSize
+              in S peakRate, in S peakBurstSize);
+    getParams(out S committedRate, out S committedBurstSize
+              out S peakRate, out S peakBurstSize);
+  }
+  */
+}
+```
+
+### Direct Meter
+
+```
+extern DirectMeter {
+  DirectMeter(MeterType_t type);
+  MeterColor_t execute(in MeterColor_t color);
+
+  /*
+  @ControlPlaneAPI
+  {
+    reset(in entry_key entry, in MeterColor_t color);
+    void setParams<S>(in entry_key entry,
+                      in S committedRate, in S committedBurstSize
+                      in S peakRate, in S peakBurstSize);
+    void getParams<S>(in entry_key entry,
+                      out S committedRate, out S committedBurstSize
+                      out S peakRate, out S peakBurstSize);
+  }
+  */
+}
+```
+
+## Registers
+
+Registers are stateful memories whose values can be read and
+written in actions. Registers are similar to counters, but can be
+used in a more general way to keep state.
+
+Although registers cannot be used directly in matching,
+register.read may be used as the RHS of an assignment operation,
+allowing the current value of the register to be copied into
+metadata and be available for matching in subsequent tables.
+
+A simple usage example might be to verify that a "first packet" was seen
+for a particular type of flow. A register cell would be allocated to
+the flow, initialized to "clear". When the protocol signalled a "first
+packet", the table would match on this value and update the flow’s
+cell to "marked". Subsequent packets in the flow could would be mapped
+to the same cell; the current cell value would be stored in metadata
+for the packet and a subsequent table could check that the flow was
+marked as active.
+
+
+```
+extern Register<T, S> {
+  Register(S size);
+  T    read  (in S index);
+  void write (in S index, in T value);
+
+  /*
+  @ControlPlaneAPI
+  {
+    T    read<T>      (in S index);
+    void set          (in S index, in T seed);
+    void reset        (in S index);
+  }
+  */
+}
+```
 
 ## Random
 
-```
-extern random<T> {
-    random(in T min, in T max);
-    T read();
+The random extern provides a reliable, target specific number generator
+in the min .. max range.
 
-    @ControlPlaneAPI
-    {
-        void reset();
-        void setSeed(in T seed);
-    }
+
+The set of distributions supported by the Random extern.
+\TODO: should this be removed in favor of letting the extern
+return whatever distribution is supported by the target?
+
+```
+enum RandomDistribution {
+  PRNG,
+  Binomial,
+  Poisson
 }
 ```
 
-## Digest
+```
+extern Random<T> {
+  Random(RandomDistribution dist, T min, T max);
+  T read();
+
+  /*
+  @ControlPlaneAPI
+  {
+    void reset();
+    void setSeed(in T seed);
+  }
+  */
+}
+```
+
+## Action Profile
+
+Action profiles are used as table implementation attributes.
+
+Action profiles implement a mechanism to populate table entries
+with actions and action data. The only data plane operation
+required is to instantiate this extern. When the control plane adds
+entries (members) into the extern, they are essentially populating
+the corresponding table entries.
 
 ```
-extern void digest<T>(in bit<32> receiver, in T data);
+extern ActionProfile {
+  /// Construct an action profile of 'size' entries
+  ActionProfile(bit<32> size);
+
+  /*
+  @ControlPlaneAPI
+  {
+     entry_handle add_member    (action_ref, action_data);
+     void         delete_member (entry_handle);
+     entry_handle modify_member (entry_handle, action_ref, action_data);
+  }
+  */
+}
+```
+
+## Action Selector
+
+Action selectors are used as table implementation attributes.
+
+Action selectors implement another mechanism to populate table
+entries with actions and action data. They are similar to action
+profiles, with additional support to define groups of
+entries. Action selectors require a hash algorithm to select
+members in a group. The only data plane operation required is to
+instantiate this extern. When the control plane adds entries
+(members) into the extern, they are essentially populating the
+corresponding table entries.
+
+```
+extern ActionSelector {
+  /// Construct an action selector of 'size' entries
+  /// @param algo hash algorithm to select a member in a group
+  /// @param size number of entries in the action selector
+  /// @param outputWidth size of the key
+  ActionSelector(HashAlgorithm algo, bit<32> size, bit<32> outputWidth);
+
+  /*
+  @ControlPlaneAPI
+  {
+     entry_handle add_member        (action_ref, action_data);
+     void         delete_member     (entry_handle);
+     entry_handle modify_member     (entry_handle, action_ref, action_data);
+     group_handle create_group      ();
+     void         delete_group      (group_handle);
+     void         add_to_group      (group_handle, entry_handle);
+     void         delete_from_group (group_handle, entry_handle);
+  }
+  */
+}
+```
+
+## Packet Generation
+
+\TODO: is generating a new packet and sending it to the stream or is
+it adding a header to the current packet and sending it to the
+stream (copying or redirecting).
+
+```
+extern Digest<T> {
+  Digest(PortId_t receiver); /// define a digest stream to receiver
+  void emit(in T data);      /// emit data into the stream
+
+  /*
+  @ControlPlaneAPI
+  {
+  // TBD
+  // If the type T is a named struct, the name should be used
+  // to generate the control-plane API.
+  }
+  */
+}
+```
+
+# Programmable blocks
+
+The following declarations provide a template for the programmable
+blocks in the PSA. The P4 programmer is responsible for
+implementing controls that match these interfaces and instantiate
+them in a package definition.
+
+The current implementation uses the same user-defined metadata
+structure for all the controls.
+An alternative design is to split the user-defined metadata into an
+input parameter and an output parameter for each block. The
+compiler will have to check that the out parameter of a block
+matches the in parameter of the subsequent block.
+
+
+```
+parser Parser<H, M>(packet_in buffer, out H parsed_hdr, inout M user_meta,
+                    in psa_parser_input_metadata_t istd);
+
+control VerifyChecksum<H, M>(in H hdr, inout M user_meta);
+
+control Ingress<H, M>(inout H hdr, inout M user_meta,
+                      PacketReplicationEngine pre,
+                      in  psa_ingress_input_metadata_t  istd,
+                      out psa_ingress_output_metadata_t ostd);
+
+control Egress<H, M>(inout H hdr, inout M user_meta,
+                     BufferingQueueingEngine bqe,
+                     in  psa_egress_input_metadata_t  istd);
+
+control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
+
+control Deparser<H>(packet_out buffer, in H hdr);
+
+package PSA_Switch<H, M>(Parser<H, M> p,
+                         VerifyChecksum<H, M> vr,
+                         Ingress<H, M> ig,
+                         Egress<H, M> eg,
+                         ComputeChecksum<H, M> ck,
+                         Deparser<H> dep);
 ```
