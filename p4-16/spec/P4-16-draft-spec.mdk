@@ -4823,7 +4823,15 @@ In addition, the tables may optionally define the following property,
 - ```default_action```: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
 
-as well as architecture-specific properties (see Section [#sec-additional-table-properties]).
+The compiler may manually set the ```default_action``` to ```NoAction```
+(and also insert it into the list of ```actions```) for tables that do
+not define the ```default_action``` property. This is
+consistent with the semantics given in Section [#sec-default-action].
+In this document, we assume that that this transformation has been
+performed, so that all tables have a ```default_action``` property.
+
+In addition, tables may contain architecture-specific properties (see
+Section [#sec-additional-table-properties]).
 
 A property marked as ```const``` cannot be changed dynamically by the
 control-plane. The ```key``` and ```actions``` properties are always
@@ -4884,13 +4892,17 @@ match_kind {
 ~ End P4Example
 
 These identifiers correspond to the P4~14~ match kinds with the same
-names. From the point of view of the P4 program, a look-up table is an
-abstract finite map that is given a key and produces as a result
-either an action or a "miss" indication, as described in Section
-[#sec-mau-semantics].
+names. The semantics of these annotations is actually not needed to
+describe the behavior of the P4 abstract machine; how they are used
+influences only the control-plane API and the implementation of
+the look-up table. From the point of view of the P4 program, a look-up
+table is an abstract finite map that is given a key and produces as a
+result either an action or a "miss" indication, as described in
+Section [#sec-mau-semantics].
 
 If a table has no ```key``` property, then it contains no look-up
-table---i.e., the associated lookup table is always the empty map.
+table, just a default action---i.e., the associated lookup table is
+always the empty map.
 
 Each key element can have an optional ```@name``` annotation which is
 used to synthesize the control-plane visible name for the key field.
@@ -4970,7 +4982,7 @@ table t {
 }
 ~ End P4Example
 
-#### Default action
+#### Default action { #sec-default-action }
 
 The default action for a table is an action that is invoked
 automatically by the match-action unit whenever the lookup table does
