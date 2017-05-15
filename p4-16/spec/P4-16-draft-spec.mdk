@@ -3430,6 +3430,17 @@ if `e` is valid and
 ~End P4Example
 otherwise.
 
+Assignments between variables of the same type of header union are
+permitted. The assignment `u1 = u2` copies the full state of header
+union `u2` to `u1`. If `u2` is valid, then there is some header
+`u2.hi` that is valid. The assignment behaves the same as `u1.hi =
+u2.hi`. If `u2` is not valid, then `u1` becomes invalid (i.e. if any
+header of `u1` was valid, it becomes invalid).
+
+`u.isValid()` returns true if any member of the header union `u` is
+valid, otherwise it returns false.  `setValid()` and `setInvalid()`
+methods are not defined for header unions.
+
 Supplying an expression with a union type to `emit` simply emits the
 single header that is valid, if any.
 
