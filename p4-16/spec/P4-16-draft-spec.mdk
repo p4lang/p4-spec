@@ -3402,15 +3402,15 @@ We can also assign a list to an element of a header union,
 
 ~Begin P4Example
 U u;
-u.h2 = { 16w1 };     // u and u.h1 are valid
+u.h2 = { 16w1 };     // u and u.h2 are both valid
 ~End P4Example
 
 or set their validity bits directly.
 
 ~Begin P4Example
 U u;
-u.h1.setValid();     // u and u.h1 are valid
-H1 my_h1 = u.h1;     // my_h1 contains an undefined value
+u.h1.setValid();     // u and u.h1 are both valid
+H1 my_h1 = u.h1;     // my_h1 is now valid, but contains an undefined value
 ~End P4Example
 
 Note that reading an uninitialized header produces an undefined value,
@@ -3452,8 +3452,8 @@ otherwise.
 Assignments between variables of the same type of header union are
 permitted. The assignment `u1 = u2` copies the full state of header
 union `u2` to `u1`. If `u2` is valid, then there is some header
-`u2.hi` that is valid. The assignment behaves the same as `u1.hi =
-u2.hi`. If `u2` is not valid, then `u1` becomes invalid (i.e. if any
+`u2.hi` that is valid. The assignment behaves the same as `u1.hi = u2.hi`.
+If `u2` is not valid, then `u1` becomes invalid (i.e. if any
 header of `u1` was valid, it becomes invalid).
 
 `u.isValid()` returns true if any member of the header union `u` is
@@ -3605,7 +3605,7 @@ arguments can be explicitly specified in the function call. The compiler does no
 insert implicit casts for the arguments to methods or functions---the argument types
 must match the parameter types exactly.
 
-the result returned by a function call is discarded when the function
+The result returned by a function call is discarded when the function
 call is used as a statement.
 
 ## Constructor invocations { #sec-constructor }
