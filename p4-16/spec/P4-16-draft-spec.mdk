@@ -1065,7 +1065,7 @@ following example:
 ParserModel.verify(bool condition, error err) {
     if (condition == false) {
         ParserModel.parserError = err;
-        ParserModel.currentState = reject;
+        goto reject;
     }
 }
 ~ End P4Pseudo
@@ -4039,11 +4039,9 @@ when one of the ```reject``` or ```accept``` states has been reached.
 ~ Begin P4Pseudo
 ParserModel {
     error       parseError;
-    state       currentState;
     onPacketArrival(packet p) {
         ParserModel.parseError = error.NoError;
-        ParserModel.currentState = start;
-        execute(ParserModel.currentState);
+        goto start;
     }
 }
 ~ End P4Pseudo
@@ -4130,7 +4128,7 @@ In terms of the `ParserModel`, the semantics of a `transition`
 statement can be formalized as follows:
 
 ~ Begin P4Example
-ParserModel.currentState = eval(stateExpression)
+goto eval(stateExpression)
 ~ End P4Example
 
 For example, this statement:
@@ -4258,7 +4256,7 @@ statement is given by:
 ParserModel.verify(bool condition, error err) {
     if (condition == false) {
         ParserModel.parserError = err;
-        ParserModel.currentState = reject;
+        goto reject;
     }
 }
 ~ End P4Pseudo
