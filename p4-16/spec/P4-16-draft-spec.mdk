@@ -5883,36 +5883,49 @@ This action's local name is ```a```.
 The local names of ```extern```, ```parser```, and ```control```
 instances are derived based on how the instance is used.  If the
 instance is bound to a name, that name becomes its local control plane
-name.  In the following example, the local name of the instance is ```c_inst```.
+name.  For example, if ```control``` ```C``` is declared as,
 
 ~ Begin P4Example
-control c(...)() { ... }
-c() c_inst;
+control C(...)() { ... }
 ~ End P4Example
 
-Otherwise, if the instance is created as an actual argument, then its
+and instantiated as,
+
+~ Begin P4Example
+C() c_inst;
+~ End P4Example
+
+then the local name of the instance is ```c_inst```.
+
+Alternatively, if the instance is created as an actual argument, then its
 local name is the name of the formal parameter to which it will be
-bound.  In the following example, the local name of the extern
-instance is ```e_in```.
+bound. For example, if ```extern``` ```E``` and ```control`` ```C``` are declared as,
 
 ~ Begin P4Example
-extern e( ... ) { ... }
-control c ( ... )(e e_in) { ... }
-c(e()) c_inst;
+extern E { ... }
+control C( ... )(E e_in) { ... }
 ~ End P4Example
+
+and instantiated as,
+
+~ Begin P4Example
+C(E()) c_inst;
+~ End P4Example
+
+then the local name of the extern instance is ```e_in```.
 
 If the construct being instantiated is passed as an argument to a
 package, the instance name is derived from the user-supplied type
 definition when possible.  In the following example, the local name of
-the instance of ```MyC``` is ```c```, and the local name of the extern
+the instance of ```MyC``` is ```c```, and the local name of the ```extern```
 is ```e2```, not ```e1```.
 
 ~ Begin P4Example
-extern ExternX { ... }
-control ArchC(ExternX e1);
+extern E { ... }
+control ArchC(E e1);
 package Arch(ArchC c);
 
-control MyC(ExternX e2)() { ... }
+control MyC(E e2)() { ... }
 Arch(MyC()) main;
 ~ End P4Example
 
@@ -5937,7 +5950,7 @@ control Caller() {
     }
 }
 control Simple();
-package Top(simple s);
+package Top(Simple s);
 Top(Caller()) main;
 ~ End P4Example
 
