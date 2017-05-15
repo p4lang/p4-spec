@@ -2505,10 +2505,10 @@ created type.
 
 # Expressions { #sec-exprs }
 
-This section describes all computations that can be performed in P4,
-grouped by the type of the values than can be processed.
+This section describes all expressions that can be used in P4,
+grouped by the type of value they produce.
 
-The grammar for general expressions is given by:
+The grammar production rule for general expressions is as follows:
 
 ~ Begin P4Grammar
 expression
@@ -2590,43 +2590,41 @@ typeArgumentList
 
 ~ End P4Grammar
 
-See also the complete P4 grammar in Appendix [#sec-grammar].
-
-An additional semantic check is required for the right shift to check
-that there is no space between the two consecutive greater-than signs ```>>```.
-This rule is required to allow parsing for both the right
-shift operators and specialized types, such as in ```function<bit<32>>```.
+See Appendix [#sec-grammar] for the complete P4 grammar.
 
 This grammar does not indicate the precedence of the various
 operators. The precedence follows exactly the C precedence
 rules. Concatenation (```++```) has the same precedence as infix
 addition. Bit-slicing ```a[m:l]``` has the same precedence as array
 indexing (```a[i]```).
+An additional semantic check is required for right shift to check
+that there is no space between the two consecutive greater-than signs ```>>```.
+This rule is required to allow parsing for both the right
+shift operators and specialized types, such as in ```function<bit<32>>```.
 
-In addition to these expressions, ```select``` expressions (described
-in Section [#sec-select]) may be used only in parsers.
+In addition to these expressions, P4 also supports ```select``` expressions (described
+in Section [#sec-select]), which may be used only in parsers.
 
 ## Expression evaluation order { #sec-expr-eval-order }
 
-Given a complex expression, the order in which sub-expressions are
-evaluated can be important if these sub-expressions can produce
+Given a compound expression, the order in which sub-expressions are
+evaluated is important when the sub-expressions have
 side-effects. P4 expressions are evaluated as follows:
 
-- Boolean operators ```&&``` and ```||``` are evaluated short-circuit:
+- Boolean operators ```&&``` and ```||``` use short-circuit evaluation---i.e.,
   the second operand is only evaluated if necessary.
-- The conditional operator ```?:``` evaluates its first argument, and
-  based on its values it evaluates the second or the third.
+- The conditional operator ```e1 ? e2 : e3``` evaluates ```e1`, and then
+  either evaluates `e2` or `e3`.
 - All other expressions are evaluated left-to-right as they appear in
   the source program.
-- Function and method calls are evaluated as described in Section
+- Method and function calls are evaluated as described in Section
   [#sec-calling-convention].
 
-## Expressions on error values { #sec-error-exprs }
+## Operations on expressions of type ```error``` { #sec-error-exprs }
 
 Symbolic names declared by an ```error``` declaration belong to the ```error```
-namespace.  The ```error``` type only supports comparisons
-for equality and difference.  The result of a comparison is a boolean
-value.
+namespace.  The ```error``` type only supports equality (`==`) and inequality (`!=`) comparisons.
+The result of such a comparison is a boolean value.
 
 For example, the following operation tests for the occurrence of an
 error:
@@ -2636,9 +2634,9 @@ error errorFromParser;
 if (errorFromParser != error.NoError) { ... }
 ~ End P4Example
 
-## Expressions on enum values { #sec-enum-exprs }
+## Operations on expressions of type ```enum``` { #sec-enum-exprs }
 
-Symbolic names declared by an ```enum``` do not belong to the
+Symbolic names declared by an ```enum``` declaration do not belong to the
 top-level namespace, but to a newly introduced namespace.
 
 ~ Begin P4Example
@@ -2647,196 +2645,191 @@ X.v1  // reference to v1
 v1    // error - v1 is not in the top-level namespace
 ~ End P4Example
 
-An ```enum``` value can only be compared for equality/difference using ```== and !=```. ```enum```
-values cannot be cast to or from any other types.
+Similar to errors, ```enum``` expressions only support equality (`==`)
+and inequality (`!=`) comparisons. Expressions whose type is an `enum`
+cannot be cast to or from any other type.
 
-When ```enum``` values appear in the control-plane API the compiler
-back-end has to choose a suitable serialization data type and
+Note that if an ```enum``` value appears in the control-plane API, the
+compiler must select a suitable serialization data type and
 representation.
 
-## Expressions on boolean values { #sec-bool-exprs }
+## Expressions on boolean expressions { #sec-bool-exprs }
 
-The following operations are provided on boolean values:
-- And, designated by ```&&```
-- Or designated by ```||```
-- Negation, designated by ```!```
-- Equality tests (```==``` and ```!=```)
+The following operations are provided on boolean expressions:
+- And, denoted by ```&&```,
+- Or denoted by ```||```,
+- Negation, denoted by ```!```, and
+- Equality and inequality tests, denoted by ```==``` and ```!=``` respectively.
 
-Operator precedence is similar to C. Operator evaluation is
-short-circuit.
+The precedence of these operators is similar to C and uses short-circuit evaluation.
 
-There are no implicit casts from bit-strings to booleans or
-vice-versa. As a consequence, a C program fragment such as:
+P4 does not implicit cast from bit-strings to booleans and
+vice versa. As a consequence, a program is valid in a language like C such as,
 
 ~ Begin P4Example
 if (x) ...
 ~ End P4Example
 
-(for x an integer base type) must be written in P4 as:
+(where x has an integer type) must instead be written in P4 as:
 
 ~ Begin P4Example
 if (x != 0) ...
 ~ End P4Example
 
-(see also the discussion on infinite-precision types and implicit
-casts in Section [#sec-implicit-casts] for how the 0 in this
-expression is evaluated).
+See the discussion on infinite-precision types and implicit casts
+in Section [#sec-implicit-casts] for details on how the `0` in this
+expression is evaluated.
 
-### The conditional operator
+### Conditional operator
 
-The ```?:``` expression behaves as in C, e.g.:
+A conditional expression of the form ```e1 ? e2 : e3``` behaves the
+same as in languages like C. The expression `e1` is evaluated first,
+and either `e2` or `e3` is evaluated depending on the result.
 
-~ Begin P4Example
-(x == 0) ? e0 : e1;
-~ End P4Example
+The first sub-expression `e1` must have type boolean, and the second
+and third sub-expressions must have the same type, which cannot both
+be infinite precision integers unless the condition itself can be
+evaluated at compilation time. This restriction is designed to ensure
+that the width of the result of the conditional expression can be
+inferred statically at compile time.
 
-The first argument is boolean, and the second and third arguments must
-have the same type. The second and third arguments cannot be both
-infinite precision integers unless the condition itself can be
-evaluated at compilation time (this restriction exists in order to
-allow the width of the result of the conditional operation to be
-inferred; the type of the result cannot be ```int```, which is
-reserved for integer literals). The conditional operator evaluation is
-short-circuit: only the selected alternative is evaluated.
+## Operations on expressions with bit types (unsigned integers) { #sec-bit-ops }
 
-## Bit-string (unsigned integer) operations { #sec-bit-ops }
-
-This section discusses all operations that can be performed on values
-with ```bit<W>``` types.
+This section discusses all operations that can be performed on
+expressions of type ```bit<W>``` for some width `W`, also known as
+bit-strings.
 
 Arithmetic operations "wrap-around", similar to C operations on
 unsigned values (i.e., representing a large value on W bits will only
-keep the least-significant W bits of the value). There are no
-arithmetic exceptions; the runtime result of an arithmetic operation
-is defined for all combinations of input arguments.
+keep the least-significant W bits of the value). In particular, P4
+does not have arithmetic exceptions---the result of an arithmetic
+operation is defined for all possible inputs.
 
 All binary operations (except shifts) require both operands to have
 the same exact type and width; supplying operands with different
 widths produces an error at compile time. No implicit casts are
 inserted by the compiler to equalize the widths. There are no binary
 operations that combine signed and unsigned values (except shifts).
-The following operations are provided on Bit-string values:
+The following operations are provided on bit-string expressions:
 
 - Test for equality between bit-strings of the same width, designated
   by ```==```. The result is a boolean value.
-- Test for difference between bit-strings of the same width,
+- Test for inequality between bit-strings of the same width,
   designated by ```!=```. The result is a boolean value.
 - Unsigned comparisons ```<,>,<=,>=```. Both operands must have the
   same width; the result is a boolean value.
 
-All the following operations produce bit-string results when applied
-to bit-strings. All these operations require both operands to have the
+Each of the following operations produces a bit-string result when applied
+to bit-strings of the same width:
 same width.
 
-- Negation, denoted by unary ```-```. Result is computed by
-  subtracting the value from 2^W^. The result is always unsigned and
-  it has the same width as the input. The semantics is the same as the
+- Negation, denoted by unary ```-```. The result is computed by
+  subtracting the value from 2^W^. The result is unsigned and
+  has the same width as the input. The semantics is the same as the
   C negation of unsigned numbers.
-- Unary plus, denoted by ```+```. Behaves as a no-op.
-- Addition, denoted by ```+```.  Associative. Result is computed by
+- Unary plus, denoted by ```+```. This operation behaves like a no-op.
+- Addition, denoted by ```+```. This operation is associative. The result is computed by
   truncating the result of the addition to the width of the output
   (similar to C).
-- Subtraction, denoted by ```-```. Result is unsigned, and has the
-  same type as the operands. Result is computed by adding the negation
+- Subtraction, denoted by ```-```. The result is unsigned, and has the
+  same type as the operands. It is computed by adding the negation
   of the second operand (similar to C).
-- Multiplication ```*```. Result has the same width as the
-  operands. P4 targets may impose additional restrictions (e.g., may
-  only allow multiplications with powers of two).
-- Bitwise "and" between two bit-strings of the same width, designated
-  by ```&```
-- Bitwise "or" between two bit-strings of the same width, designated
-  by ```|```
-- Bitwise "complement" of a single bit-string, designated by ```~```
-- Bitwise "xor" of two bit-strings of the same width, designated by ```^```
+- Multiplication, denoted by ```*```. The result has the same width as the
+  operands and is computed by truncating the result to the width of the output.
+  P4 architectures may impose additional restrictions---e.g., they may
+  only allow multiplication by a power of two.
+- Bitwise "and" between two bit-strings of the same width, denoted
+  by ```&```.
+- Bitwise "or" between two bit-strings of the same width, denoted
+  by ```|```.
+- Bitwise "complement" of a single bit-string, denoted by ```~```.
+- Bitwise "xor" of two bit-strings of the same width, denoted by ```^```.
 
-There are also the following operations:
+Bit-strings also support the following operations:
 
-- Concatenation of two bit-strings, resulting in a bit-string whose
-  length is the sum of the lengths, designated by the infix operator ```++```.
-  The left bit-string provides the most significant bits.
-- Extraction of a set of contiguous bits (bit slice), designated by ```[m:l]```,
+- Concatenation of two bit-strings, denoted by the infix operator ```++```. The result is a bit-string whose
+  length is the sum of the lengths of the inputs where the most significant bits are taken from the left operand.
+- Extraction of a set of contiguous bits, also known as a slice, denoted by ```[m:l]```,
   where ```m``` and ```l``` must be positive integers
   that are compile-time known values, and ```m >= l```. The result is
   a bit-string of width ```m - l + 1```, including the bits numbered
-  from ```l``` (which becomes the LSB of the result) to ```m``` (the
-  MSB of the result) from the source operand. The conditions ```0 <= l < W```
+  from ```l``` (which becomes the least significant bit of the result) to ```m``` (the
+  most significant bit of the result) from the source operand. The conditions ```0 <= l < W```
   and ```l <= m < W``` are checked statically (where ```W``` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
   compile-time known values so that the result width can be computed
-  at compile time.
-- Slices are l-values: one can assign to a slice: ``` e[m:l] = x ```
-  This statement sets bits ```m``` to ```l``` of ```e``` to the
+  at compile time. Slices are also l-values, which means taht P4 supports asssigning to a slice: ``` e[m:l] = x ```.
+  The effect of this statement is to sets bits ```m``` to ```l``` of ```e``` to the
   bit-pattern represented by ```x```, and leaves all other bits of ```e```
   unchanged.
 - Logical shift left and right with a runtime known unsigned integer
-  value (left operand is unsigned, right operand must be either an
-  unsigned number of type ```bit<S>``` or a non-negative constant
-  integer), designated by ```<<``` and ```>>```. The result has the
-  same type as the left operand. Shifts with an amount greater than
-  the width of the input produce a result with all bits zero.
+  value, denoted by ```<<``` and ```>>``` respectively. In a shift, the left operand is unsigned, and right operand must be either an
+  expression of type ```bit<S>``` or a non-negative integer literal.
+  The result has the
+  same type as the left operand. Shifting by an amount greater than
+  the width of the input produces a result where all bits are zero.
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
 
-This section discusses all operations that can be performed on ```int<W>```
-types. An ```int<W>``` type is a signed integer with ```W``` bits
+This section discusses all operations that can be performed on expressions of type ```int<W>```
+for some ```W````. Recall that the ```int<W>``` denotes signed ```W```-bit integers,
 represented using 2's complement.
 
-"Underflow" or "overflow" produced by arithmetic cannot be detected:
-operations "wrap around", similar to C operations on unsigned values
-(i.e., representing a large value on W bits will only keep the
-least-significant W bits of the value)
+In general, P4 arithmetic operations do not detect "underflow" or "overflow":
+operations simply "wrap around", similar to C operations on unsigned values.
+Hence, attempting to representing large values using `W` bits will only keep
+the least-significant `W` bits of the value.
 
-There are no arithmetic exceptions; the runtime result of an
+P4 also does not support arithmetic exceptions. The runtime result of an
 arithmetic operation is defined for all combinations of input
-arguments (note that C does not specify the result of overflows on
-signed integers).
+arguments.
 
 All binary operations (except shifts) require both operands to have
-the same exact type (signedness) and width; supplying operands with
-different widths or signedness produces an error at compile time. No
+the same exact type (signedness) and width and supplying operands with
+different widths or signedness produces a compile-time error. No
 implicit casts are inserted by the compiler to equalize the
-types. There are no binary operations that combine signed and unsigned
-values (except shifts).
+types. With the exception of shifts, P4 does not have any no binary operations that combine signed and unsigned
+values.
 
-Note that bitwise operations are well-defined, since the
+Note that bitwise operations on signed integers are well-defined, since the
 representation is mandated to be 2's complement.
 
 The ```int<W>``` datatype supports the following operations; all
 binary operations require both operands to have the exact same
 type. The result always has the same width as the left operand.
 
-- Negation, denoted by unary ```-```
-- Unary plus, denoted by ```+```. Behaves as a no-op.
-- Addition, denoted by ```+```
-- Subtraction, denoted by ```-```
-- Comparison for equality and inequality ```==,!=``` producing a
-  boolean result
-- Numeric comparisons ```<,<=,>,>=``` with a boolean result
-- Multiplication ```*```. Result has the same width as the
-  operands. P4 targets may impose additional restrictions (e.g., may
-  only allow multiplications with powers of two).
+- Negation, denoted by unary ```-```.
+- Unary plus, denoted by ```+```. This operation behaves like a no-op.
+- Addition, denoted by ```+```.
+- Subtraction, denoted by ```-```.
+- Comparison for equality and inequality, denoted ```==``` and ```!=``` respectively. These operations produce a
+  boolean result.
+- Numeric comparisons, denoted by ```<,<=,>,``` and ```>=```. These operations produce a boolean result.
+- Multiplication, denoted by ```*```. Result has the same width as the
+  operands. P4 architectures may impose additional restrictions---e.g., they may
+  only allow multiplication by a power of two.
 - Arithmetic shift left and right denoted by ```<<``` and ```>>```.
-  Left operand is signed, right operand must be either an
-  unsigned number of type ```bit<S>``` or a non-negative constant
-  integer. The result has the same type as the left operand. Shifts
-  with an amount greater or equal to the width of the input are
-  allowed.
+  The left operand is signed and the right operand must be either an
+  unsigned number of type ```bit<S>``` or a non-negative
+  integer literal. The result has the same type as the left operand. Shifting by an amount greater than
+  the width of the input produces a result where all bits are zero.
 
 ### A note about shifts
 
 Shifts (on signed and unsigned values) deserve a special discussion
 for the following reasons:
 
-- As in C, right shift behaves differently for signed and unsigned
+- Right shift behaves differently for signed and unsigned
   values: right shift for signed values is an arithmetic shift.
 - Shifting with a negative amount does not have a clear semantics:
-  while in C the result is undefined, in P4 the type system makes it
+   the P4 type system makes it
   illegal to shift with a negative amount.
-- In C, shifting with an amount larger or equal to the number of bits
-  has an undefined result (unlike the P4 definition).
-- Finally, shifting may require doing work which is exponential in the
-  number of bits of the right-hand-side operand.
+- Unlike C, shifting by an amount larger or equal to the number of bits
+  has a well-defined result (unlike C).
+- Finally, depending on the capabilities of the target, shifting may
+  require doing work which is exponential in the number of bits of the
+  right-hand-side operand.
 
 Consider the following examples:
 
@@ -2847,15 +2840,15 @@ bit<16> y;
 ... y << 1024 ...
 ~ End P4Example
 
-Unlike C, P4 gives a precise meaning shifting with an amount larger
-than the size of the shifted value.
+As mentioned above, P4 gives a precise meaning shifting with an amount
+larger than the size of the shifted value, unlike C.
 
-P4 targets may impose additional restrictions on shift operations:
+P4 targets may impose additional restrictions on shift operations such as the following:
 
-- Targets may reject shifts by non-constant amounts.
-- Targets may reject shifts with large non-constant amounts. For
+- Targets may reject shifts by non-constant expressions.
+- Targets may reject shifts by large non-constant expressions. For
   example, a target may forbid shifting an 8-bit value by a
-  non-constant value wider than 3 bits.
+  non-constant value whose width is greater than 3 bits.
 
 ## Operations on arbitrary-precision constant integers { #sec-varint-ops }
 
