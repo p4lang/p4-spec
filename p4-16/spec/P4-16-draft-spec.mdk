@@ -263,11 +263,13 @@ cards, FPGAs, software switches, and hardware ASICs. As such, the
 language is restricted to constructs that can be efficiently
 implemented on all of these platforms.
 
-P4 is not a Turing-complete language. In fact, assuming a fixed cost
-for a table lookup operations and interactions with extern objects,
-all P4 programs (i.e., parsers and controls) execute a constant number
-of operations for each byte of an input packet received and
-analyzed. In other words, the computational complexity of a P4 program
+Assuming a fixed cost for a table lookup operations and interactions
+with extern objects, all P4 programs (i.e., parsers and controls)
+execute a constant number of operations for each byte of an input
+packet received and analyzed. Although parsers may contain loops,
+provided some header is extracted on each cycle, the packet itself
+provides a bound on the total execution of the parser. In other words,
+under these assumptions, the computational complexity of a P4 program
 is linear in the total size of all headers, and never depends on the
 size of the state accumulated while processing data (e.g., the number
 of flows, or the total number of packets processed). These guarantees
