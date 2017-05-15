@@ -3559,7 +3559,7 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
          transition start;
     }
     state parse_tcp_option_sack {
-         bit<32> n = b.lookahead<Tcp_option_sack_top>().length;
+         bit<32> n = (bit<32>)b.lookahead<Tcp_option_sack_top>().length;
          b.extract(vec.next.sack, n);
          transition start;
     }
@@ -4483,7 +4483,7 @@ T packet_in.lookahead<T>() {
 }
 ~ End P4Pseudo
 
-The next example shows how ```lookahead``` could be used to parse TCP options:
+The TCP options example from Section [#sec-expr-hu] also illustrates how ```lookahead``` can be used:
 
 ~ Begin P4Example
 state start {
@@ -4495,10 +4495,11 @@ state start {
         5: parse_tcp_option_sack;
     }
 }
+...
 state parse_tcp_option_sack {
-     b.extract(vec.next.sack,
-               (bit<32>)(b.lookahead<Tcp_option_sack_top>().length));
-     transition next;
+    bit<32> n = (bit<32>)b.lookahead<Tcp_option_sack_top>().length;
+    b.extract(vec.next.sack, n);
+    transition start;
 }
 ~ End P4Example
 
