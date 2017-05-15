@@ -4696,7 +4696,11 @@ control C<H>(inout H data) { ... }
 ~ End P4Example
 
 P4 does not support exceptional control-flow within a ```control```
-block. That is, there is no equivalent of the ```verify``` statement
+block.
+The only statement which
+has a non-local effect on control flow is `exit`, which causes
+execution of the enclosing control block to immediately terminate.
+That is, there is no equivalent of the ```verify``` statement
 or the ```reject``` state from parsers. Hence, all error handling must
 be performed explicitly by the programmer.
 
@@ -4946,7 +4950,7 @@ action a() {}
 control c() {
     action a() {}
     // Illegal table: two actions with the same name
-    table t { actions = { a; a; } }
+    table t { actions = { a; .a; } }
 }
 ~ End P4Example
 
@@ -5024,7 +5028,7 @@ This is useful in situations where tables are
 used to implement fixed algorithms---defining table entries statically
 enables expressing these algorithm directly in P4,
 which allows the compiler to infer how the table is actually used and
-potentially make better allocation decisions for tagets with limited
+potentially make better allocation decisions for targets with limited
 resources. Entries declared in the P4 source are installed in the
 table when the program is loaded onto the target.
 
@@ -5125,7 +5129,7 @@ enumerated in the program.
 
 A ```table``` declaration defines its essential control and data plane
 interfaces---i.e., keys and actions. However, the best way to
-implement a table may actually dependend on the nature of the entries
+implement a table may actually depend on the nature of the entries
 that will be installed at runtime (for example, tables could be
 dense or sparse, could be implemented as hash-tables, associative
 memories, tries, etc.) In addition, some architectures may support extra table
@@ -5160,7 +5164,7 @@ table t {
 ~ End P4Example
 
 Here the action profile might be used to optimize for the case where
-the table has a large number of entries, but the actions assocated
+the table has a large number of entries, but the actions associated
 with those entries are expected to range over a small number of
 distinct values. Introducing a layer of indirection enables sharing
 identical entries, which can significantly reduce the table's storage
@@ -5460,7 +5464,7 @@ packet_out {
     }
     // append the data to the packet
     void raw_emit<T>(T data) {
-        really this.data.append(data);
+        this.data.append(data);
         this.lengthInBits += data.lengthInBits;
     }
     // append data to the packet if valid
@@ -5481,7 +5485,9 @@ packet_out {
 
 Here we use the special ```valid$``` identifier to indicate the hidden
 valid bit of headers and ```fields$``` to indicate the list of fields
-for a struct or header union.
+for a struct or header union. We also use standard `for` notation to
+iterate through the elements of a stack `(e : data)` and list of
+fields for header stacsk and unions `(f : data.fields$)`.
 
 # Architecture description { #sec-arch-desc }
 
