@@ -2927,7 +2927,7 @@ for programmers, it has several benefits:
 
 The following casts are legal in P4:
 
-- ```bit<1> <-> bool```: converts the value ```0``` is converted to ```false```, the value ```1``` is converted ```true```, and vice versa.
+- ```bit<1> <-> bool```: converts the value ```0``` to ```false```, the value ```1``` to ```true```, and vice versa.
 - ```int<W> -> bit<W>```: preserves all bits unchanged and reinterprets negative
   values as positive values
 - ```bit<W> -> int<W>```: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
@@ -3996,7 +3996,7 @@ rule `parserTypeDeclaration` should not yield type parameters.
 At least one state, named ```start```, must be present in any ```parser```.
 A parser may not define two states with the same name.
 It is also illegal for a parser to give explicit definitions for
-the ```accept``` and ```reject``` states explicitly---those
+the ```accept``` and ```reject``` states---those
 states are logically distinct from the states defined by the programmer.
 
 State declarations are described below. Preceding the parser states, a ```parser```
@@ -4061,11 +4061,12 @@ Each state has a name and a body. The body consists of a sequence of
 statements that describe the processing performed when the parser
 transitions to that state including:
 
-- Mocal variable declarations,
-- Assignment statements, and
-- Method calls, which can serve several purposes:
+- Local variable declarations,
+- Assignment statements,
+- Method calls, which serve several purposes:
   * Invoking functions (e.g., using ```verify``` to check the validity of data already parsed), and
-  * Invoking methods (e.g., extracting data out of packets or computing checksums) and other parsers (see Section [ #sec-invoke-subparser ]).
+  * Invoking methods (e.g., extracting data out of packets or computing checksums) and other parsers (see Section [ #sec-invoke-subparser ]), and
+- Transitions to other states (discussed in Section [#sec-transition]).
 
 The syntax for parser statements is given by the following grammar rules:
 
@@ -4088,7 +4089,7 @@ parserBlockStatement
 ~ End P4Grammar
 
 Architectures may place restrictions on the expressions and statements
-that can used in a parser---e.g., they may forbid the use of
+that can be used in a parser---e.g., they may forbid the use of
 operations such as multiplication or place restrictions on the number
 of local variables that may be used.
 
