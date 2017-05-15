@@ -324,8 +324,8 @@ and semantics of the language. The evolution from the previous version
 features have been eliminated from the language and moved into
 libraries including counters, checksum units, meters, etc.
 
-Hence, the language has been transformed from a complex language (74
-keywords) into a relatively small core language (35 keywords, shown in
+Hence, the language has been transformed from a complex language (more than 70
+keywords) into a relatively small core language (les than 40 keywords, shown in
 Section [#sec-p4-keywords]) accompanied by a library of fundamental
 constructs that are needed for writing most P4.
 
@@ -529,8 +529,8 @@ of these blocks has to be provided by the switch programmer.
 
 ~ Begin P4Example
 // File "very_simple_switch_model.p4"
-// Simple switch P4 declaration
-// core library needed for packet_in definition
+// Very Simple Switch P4 declaration
+// core library needed for packet_in and packet_out definitions
 # include <core.p4>
 /* Various constants and structure declarations */
 /* ports are represented using 4-bit values */
@@ -574,7 +574,7 @@ control Pipe<H>(inout H headers,
                 in InControl inCtrl,// input port
                 out OutControl outCtrl); // output port
 /**
- * Switch deparser.
+ * VSS deparser.
  * @param <H> type of headers; defined by user
  * @param b output packet
  * @param outputHeaders headers for output packet
@@ -808,7 +808,7 @@ IPv4 headers as computed by the pipeline.
 # include <core.p4>
 
 // Include very simple switch architecture declarations
-# include "very_simple_model.p4"
+# include "very_simple_switch_model.p4"
 
 // This program processes packets comprising an Ethernet and an IPv4
 // header, and it forwards packets using the destination IP address
@@ -1126,7 +1126,7 @@ produced by different programmers at different times:
 The P4 language specification defines a core library that includes
 several common programming constructs. A
 description of the core library is provided in Appendix
-[#sec-p4-core-lib]. Most P4 programs will include the core
+[#sec-p4-core-lib]. All P4 programs must include the core
 library. Including the core library is done with
 
 ~ Begin P4Example
@@ -1198,9 +1198,9 @@ not as a single token ```bit```.
 
 ### Literal constants { #sec-literals }
 
-#### Boolean literals { #sec-boolean-literals }
+#### Boolean literals { #sec-Boolean-literals }
 
-There are two boolean literal constants: ```true``` and ```false```.
+There are two Boolean literal constants: ```true``` and ```false```.
 
 #### Integer literals { #sec-integer-literals }
 
@@ -1638,7 +1638,7 @@ P4 supports the following built-in base types:
   target-independent, compiler-managed way.
 - The ```match_kind``` type, which is used for describing the implementation of
   table lookups,
-- ```bool```, which represents boolean values
+- ```bool```, which represents Boolean values
 - Bit-strings of fixed width, denoted by ```bit<>```
 - Fixed-width signed integers represented using two's complement ```int<>```
 - Bit-strings of dynamically-computed width with a fixed maximum width ```varbit<>```
@@ -1720,9 +1720,9 @@ Architectures may support additional ```match_kind```s. The
 declaration of new ```match_kind```s can only occur within model
 description files; P4 programmers cannot declare new match kinds.
 
-### The boolean type { #sec-bool-type }
+### The Boolean type { #sec-bool-type }
 
-The boolean type ```bool``` contains just two values, ```false``` and ```true```.
+The Boolean type ```bool``` contains just two values, ```false``` and ```true```.
 Boolean values are not integers or bit-strings.
 
 ### Strings { #sec-strings }
@@ -1793,7 +1793,7 @@ An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width ```W``` is
 declared as: ```bit<W>```. ```W``` must be a compile-time known value
 (see Section [#sec-ct-constants]) that evaluates to a positive integer
-greater or equal to 0.
+greater than 0.
 
 Bits within a bit-string are numbered from ```0``` to ```W-1```. Bit ```0```
 is the least significant, and bit ```W-1``` is the most significant.
@@ -1901,8 +1901,8 @@ additional types including:
 - ```enum```
 - ```header```
 - header stacks
-- header unions
 - ```struct```
+- ```header_union```
 - ```tuple```
 - type specialization
 - ```extern```
@@ -1935,6 +1935,7 @@ derivedTypeDeclaration
     : headerTypeDeclaration
     | headerUnionDeclaration
     | structTypeDeclaration
+    | headerUnionDeclaration
     | enumDeclaration
     ;
 
@@ -2015,7 +2016,7 @@ variable) or an integer type. This declaration introduces a new
 identifier in the current scope; the type can be referred to using
 this identifier. A header is similar to a ```struct``` in C,
 containing all the specified fields. However, in addition, a header also
-contains a hidden boolean "validity" field. When the "validity" bit is ```true```
+contains a hidden Boolean "validity" field. When the "validity" bit is ```true```
 we say that the "header is valid". When a header is created
 its "validity" bit is automatically set to ```false```. The "validity"
 bit can be manipulated by using the header methods ```isValid()```, ```setValid()```,
@@ -2120,10 +2121,10 @@ of type ```Mpls_h```.
 
 ### Header unions {#sec-header-unions}
 
-A header union represents an alternative between different
+A header union represents an alternative containing at most one of several different
 headers. Header unions can be used to represent "options" in protocols
 like TCP and IP. They also provide hints to P4 compilers that only one
-alternative will be present, allowing it to conserve storage resources.
+alternative will be present, allowing them to conserve storage resources.
 
 A header union is defined as:
 
@@ -2135,7 +2136,7 @@ headerUnionDeclaration
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
-local scope. Each element of the list of fields used to declare a
+current scope. Each element of the list of fields used to declare a
 header union must be a header type. However, the empty list of fields
 is legal.
 
@@ -2149,6 +2150,8 @@ header_union IP_h {
 }
 ~ End P4Example
 
+A header union is not considered a type with fixed width.
+
 ### Struct types { #sec-struct-types }
 
 P4 ```struct``` types are defined with the following syntax:
@@ -2160,7 +2163,7 @@ structTypeDeclaration
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
-local scope. An empty struct is legal. For example, the structure ```Parsed_headers```
+current scope. An empty struct is legal. For example, the structure ```Parsed_headers```
 below contains the headers recognized by a simple parser:
 
 ~ Begin P4Example
@@ -2173,6 +2176,28 @@ struct Parsed_headers {
     Udp_h      udp;
 }
 ~ End P4Example
+
+### Tuple types { #sec-tuple-types }
+
+A tuple is similar to a ```struct```, in that it holds multiple
+values. Unlike a ```struct``` type, tuples have no named fields. The
+type of tuples with n component types ```T1```,...,```Tn``` is written
+as
+
+~ Begin P4Example
+tuple<T1,...,Tn>
+~ End P4Example
+
+~ Begin P4Grammar
+tupleType
+    : TUPLE '<' typeArgumentList '>'
+    ;
+~ End P4Grammar
+
+Operations that manipulate tuple types are described in Sections
+[#sec-tuple-exprs] and [#sec-set-exprs].
+
+### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
 header unions, structs, and tuples.  Note that ```int``` means an
@@ -2199,39 +2224,18 @@ infinite-precision integer, without a width specified.
 | ```tuple```        | error     | error   |  allowed        |
 |-----|-----|-----|
 
-The rationale for the restrictions is as follows. The type ```int<W>```
-has easily-determined storage requirements, unlike
-infinite precision ```int```s.  ```match_kind``` values are not useful
-to store in a variable, as they are only used to specify how to match
-fields in table search keys, which are all declared at compile time. ```void```
-is not useful as part of another data structure.  Headers must have
-precisely defined formats as sequences of bits in order for them to be
-parsed or deparsed.
+Rationale:```int``` does not have precise storage requirements, unlike
+``bit<>``` or ```int<>``` types.
+```match_kind``` values are not useful to store in a variable, as they
+are only used to specify how to match fields in table search keys,
+which are all declared at compile time. ```void``` is not useful as
+part of another data structure.  Headers must have precisely defined
+formats as sequences of bits in order for them to be parsed or
+deparsed.
 
-### Tuple types { #sec-tuple-types }
-
-A tuple is similar to a ```struct```, in that it holds multiple
-values. Unlike a ```struct``` type, tuples have no named fields. The
-type of tuples with n component types ```T1```,...,```Tn``` is written
-as ```tuple<T1,...,Tn>```.
-
-~ Begin P4Grammar
-tupleType
-    : TUPLE '<' typeArgumentList '>'
-    ;
-~ End P4Grammar
-
-Operations that manipulate tuple types are described in Sections
-[#sec-list-exprs] and [#sec-set-exprs]. Tuple types can be converted
-to structure types that have the same number of fields when each field
-has a type that is identical to the corresponding tuple element.
-
-~ Begin P4Example
-struct S { bit<32> a; bit<16> b; }
-tuple<bit<32>, bit<16>> x;
-x = { 32w25, 16w35 };
-S y = x;
-~ End P4Example
+Note the two-argument ```extract``` method (see Section
+[#sec-packet-extract-two]) on packets only supports a single
+```varbit``` field in a header.
 
 ### Synthesized data types { #sec-synth-types }
 
@@ -2430,8 +2434,9 @@ For example, the following is a type declaration of a parser type
 named ```P``` that is parameterized on a type variable ```H```. The parser
 that receives as input a ```packet_in``` value ```b``` and produces
 two values:
-- A value of type ```H```, and
-- A value with a predefined type ```Counters```.
+
+- A value with a user-defined type ```H```
+- A value with a predefined type ```Counters```
 
 ~ Begin P4Example
 struct Counters { ... }
@@ -2493,10 +2498,13 @@ typedefDeclaration
     | annotations TYPEDEF typeRef name ';'
     | annotations TYPEDEF derivedTypeDeclaration name ';'
     ;
+~ End P4Grammar
+
+~ Begin P4Example
 typedef bit<32> u32;
 typedef struct Point { int<32> x; int<32> y; } Pt;
 typedef Empty_h[32] HeaderStack;
-~ End P4Grammar
+~ End P4Example
 
 The two types are treated as synonyms, and all operations that can be
 executed using the original type can be also executed using the newly
@@ -2555,7 +2563,8 @@ expression
     ;
 
 expressionList
-    : expression
+    : /* empty */
+    | expression
     | expressionList ',' expression
     ;
 
@@ -2623,7 +2632,7 @@ side-effects. P4 expressions are evaluated as follows:
 
 Symbolic names declared by an ```error``` declaration belong to the ```error```
 namespace.  The ```error``` type only supports equality (`==`) and inequality (`!=`) comparisons.
-The result of such a comparison is a boolean value.
+The result of such a comparison is a Boolean value.
 
 For example, the following operation tests for the occurrence of an
 error:
@@ -2651,9 +2660,9 @@ Note that if an ```enum``` value appears in the control-plane API, the
 compiler must select a suitable serialization data type and
 representation.
 
-## Expressions on booleans { #sec-bool-exprs }
+## Expressions on Booleans { #sec-bool-exprs }
 
-The following operations are provided on boolean expressions:
+The following operations are provided on Boolean expressions:
 - And, denoted by ```&&```,
 - Or denoted by ```||```,
 - Negation, denoted by ```!```, and
@@ -2661,7 +2670,7 @@ The following operations are provided on boolean expressions:
 
 The precedence of these operators is similar to C and uses short-circuit evaluation.
 
-P4 does not implicitly cast from bit-strings to booleans or
+P4 does not implicitly cast from bit-strings to Booleans or
 vice versa. As a consequence, a program that is valid in a language like C such as,
 
 ~ Begin P4Example
@@ -2684,7 +2693,7 @@ A conditional expression of the form ```e1 ? e2 : e3``` behaves the
 same as in languages like C. As described above, the expression `e1` is evaluated first,
 and either `e2` or `e3` is evaluated depending on the result.
 
-The first sub-expression `e1` must have type boolean, and the second
+The first sub-expression `e1` must have type Boolean, and the second
 and third sub-expressions must have the same type, which cannot both
 be infinite precision integers unless the condition itself can be
 evaluated at compilation time. This restriction is designed to ensure
@@ -2711,11 +2720,11 @@ operations that combine signed and unsigned values (except shifts).
 The following operations are provided on bit-string expressions:
 
 - Test for equality between bit-strings of the same width, designated
-  by ```==```. The result is a boolean value.
+  by ```==```. The result is a Boolean value.
 - Test for inequality between bit-strings of the same width,
-  designated by ```!=```. The result is a boolean value.
+  designated by ```!=```. The result is a Boolean value.
 - Unsigned comparisons ```<,>,<=,>=```. Both operands must have the
-  same width; the result is a boolean value.
+  same width; the result is a Boolean value.
 
 Each of the following operations produces a bit-string result when applied
 to bit-strings of the same width:
@@ -2801,8 +2810,8 @@ type. The result always has the same width as the left operand.
 - Addition, denoted by ```+```.
 - Subtraction, denoted by ```-```.
 - Comparison for equality and inequality, denoted ```==``` and ```!=``` respectively. These operations produce a
-  boolean result.
-- Numeric comparisons, denoted by ```<,<=,>,``` and ```>=```. These operations produce a boolean result.
+  Boolean result.
+- Numeric comparisons, denoted by ```<,<=,>,``` and ```>=```. These operations produce a Boolean result.
 - Multiplication, denoted by ```*```. Result has the same width as the
   operands. P4 architectures may impose additional restrictions---e.g., they may
   only allow multiplication by a power of two.
@@ -2856,8 +2865,8 @@ expressions of type `int` must be compile-time known values.  The type
 - Addition, denoted by ```+```.
 - Subtraction, denoted by ```-```.
 - Comparison for equality and inequality, denoted by `==` and `!=` respectively. These operations produce a
-  boolean result.
-- Numeric comparisons `<,<=,>`, and `>=`. These operations produce a boolean result.
+  Boolean result.
+- Numeric comparisons `<,<=,>`, and `>=`. These operations produce a Boolean result.
 - Multiplication, denoted by ```*```.
 - Truncating integer division between positive values, denoted by ```/```.
 - Modulo between positive values, denoted by ```%```.
@@ -2940,8 +2949,7 @@ The following casts are legal in P4:
   sufficiently-large two's complement bit string to avoid information
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
-- ```T <-> S``` where the `T` represents a base type and the program
-  includes a declaration ```typedef S T```: behaves like a no-op.
+- casts between two types that are introduced by ```typedef``` and are equivalent to one of the above combinations
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -3005,6 +3013,16 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 | ```5 & -3```            | Bitwise operation on int |  ```32w5 & -3 ``` |
 |-----|-----|-----|
 
+## Operations on tuples expressions { #sec-tuple-exprs }
+
+Tuples can be assigned to other tuples with the same type, passed as
+arguments and returned from functions, and can be initialized with
+list expressions.
+
+~ Begin P4Example
+tuple<bit<32>, bool> x = { 10, false };
+~ End P4Example
+
 ## Operations on lists { #sec-list-exprs }
 
 A list expression is written using curly braces, with each element
@@ -3015,7 +3033,8 @@ expression ...
     | '{' expressionList '}'
 
 expressionList
-    : expression
+    : /* empty */
+    | expression
     | expressionList ',' expression
     ;
 ~ End P4Grammar
@@ -3052,7 +3071,7 @@ const S x = { 10, 20 }; //a = 10
 ~ End P4Example
 
 List expressions can also be used to initialize variables whose type
-is a ```tuple``` type:
+is a ```tuple``` type.
 
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
@@ -3368,7 +3387,6 @@ cannot be initialized. However, the validity of a header union can be
 updated by assigning a valid header to one of its elements:
 
 ~Begin P4Example
-header H1
 U u;
 H1 my_h1 = { 8w0 }; // my_h1 is valid
 u.h1 = my_h1;       // u and u.h1 are both valid
@@ -3738,38 +3756,18 @@ control c(...) {
 
 ## Restrictions on top-level instantiations
 
-A P4 program may only instantiate a single top-level package, as well
-as the ```parser```s and ```control```s used to instantiate the
-package, as specified by the architecture. This restriction is
-designed to ensure that most state resides in the architecture itself,
-or is local to a ```parser``` or ```control```. For example, the
-following program is not valid,
+A P4 program may not instantiate controls and parsers at the top-level
+package. This restriction is designed to ensure that most state
+resides in the architecture itself, or is local to a ```parser``` or
+```control```. For example, the following program is not valid:
 
 ~ Begin P4Example
-// Architecture
-control c(...);
-control d(...);
-package switch(c x, d y);
-
 // Program
 control c(...) { ... }
-c() c1;
-c() c2;
-
-control d(...) {
-  apply {
-    ...
-    c2.apply();
-    ...
-  }
-}
-d() d1;
-
-switch(c1, d1);
+c() c1;  // illegal top-level instantiation
 ~ End P4Example
 
-because control `c2` is instantiated at the top-level, but is not
-specified by the architecture. Note that top-level declarations of
+because control `c1` is instantiated at the top-level. Note that top-level declarations of
 constants and instantiations of extern objects are permitted.
 
 # Statements { #sec-stmts }
@@ -3879,7 +3877,7 @@ exitStatement
 ## Conditional statement { #sec-cond-stmt }
 
 The conditional statement uses standard syntax and semantics familiar from many programming languages.
-However, the condition expression in P4 is required to be a boolean (and not
+However, the condition expression in P4 is required to be a Boolean (and not
 an integer). Conditional statements may not be used within a ```parser```.
 
 ~ Begin P4Grammar
@@ -4049,13 +4047,13 @@ ParserModel {
 }
 ~ End P4Pseudo
 
-An architecture must specify its behavior for packets that
-are ```accept```ed and ```reject```ed. For example, an architecture may
+An architecture must specify the behavior when the
+```accept``` and ```reject``` states are reached. For example, an architecture may
 specify that all packets reaching the ```reject``` state are dropped
 without further processing. Alternatively, it may specify that
-such packets are passed to the next control block after the
+such packets are passed to the next block after the
 parser, with intrinsic metadata indicating that the parser reached
-the ```reject``` state, along with any errors recorded.
+the ```reject``` state, along with the error recorded.
 
 ## Parser states { #sec-parser-state-stmt }
 
@@ -4065,7 +4063,6 @@ parserState
     : optAnnotations STATE name
      '{' parserStatements transitionStatement '}'
     ;
-~ End P4Grammar
 
 Each state has a name and a body. The body consists of a sequence of
 statements that describe the processing performed when the parser
@@ -4272,7 +4269,7 @@ type called ```packet_in``` that represents incoming network
 packets. The ```packet_in``` extern is special: it cannot be
 instantiated by the user explicitly. Instead, the architecture
 supplies a separate instance for each ```packet_in``` argument to a
-top-level ```parser``` or ```control``` block.
+```parser``` instantiation.
 
 ~ Begin P4Example
 extern packet_in {
@@ -4447,6 +4444,8 @@ parser Top(packet_in b, out Parsed_headers headers) {
    }
 
    state parse_ipv4_options {
+       // use information in the ipv4 header to compute the number
+       // of bits to extract
        b.extract(headers.ipv4options,
                  (bit<32>)(((bit<16>)headers.ipv4.ihl - 5) * 32));
        transition dispatch_on_protocol;
@@ -4807,6 +4806,7 @@ tablePropertyList
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
+    | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     | optAnnotations CONST IDENTIFIER '=' initializer ';'
     | optAnnotations IDENTIFIER '=' initializer ';'
     ;
@@ -4972,7 +4972,7 @@ table t {
        // a; -- illegal, x parameter must be bound
        a(5);  // binding a's parameter x to 5
        b(z);  // binding b's parameter x to z
-       // b(z, 3);  // -- illegal, cannot bind directionless data parameter
+       // b(z, 3); -- illegal, cannot bind directionless data parameter
        // b(); -- illegal, x parameter must be bound
     }
 }
@@ -5016,6 +5016,7 @@ and illegal specifications for ```table t``` above:
   // default_action = a(z); -- illegal, a's x parameter is already bound to 5
   default_action = b(z,8w8); // OK - bind b's data parameter to 8w8
   // default_action = b(z); -- illegal, b's data parameter is not bound
+  // default_action = b(x, 3); -- illegal: x parameter of b bound to x instead of z
 ~ End P4Example
 
 If a table does not specify the ```default_action``` property and no
@@ -5065,9 +5066,8 @@ Sec. [#sec-table-props]). The table key type must match the type of
 the element of the set. ```actionRef``` must be an action which
 appears in the table actions list, with all its arguments bound.
 
-Entries in a table are matched in priority order, with the priority
-computed based on the program order of the entries -- entries occuring
-first have higher priority.
+Entries in a table are matched in the program order, stopping at the
+first matching entry.
 
 Depending on the ```match_kind``` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
@@ -5124,11 +5124,10 @@ control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t stan
 }
 ~ End P4Example
 
-In this example we define a set of 6 entries that populate various
-fields in the header and send the invoke one action ```a_with_control_params```
-to send the packet to a particular output port. Once the program is
-loaded, these entries are installed in the table in the order they are
-enumerated in the program, with decreasing priority levels.
+In this example we define a set of 6 entries that cause the invocation
+of action ```a_with_control_params```. Once the program is loaded,
+these entries are installed in the table in the order they are
+enumerated in the program.
 
 #### Additional table properties {#sec-additional-table-properties}
 
@@ -5322,9 +5321,8 @@ Consider the following example:
 parser GenericParser(packet_in b,          // parser API
                      out Packet_header p)
                      (bool udpSupport) {   // constructor parameters
-    EthernetParser() ethParser;
     state start {
-        ethParser.apply(b, p.ethernet);
+        b.extract(p.ethernet);
         transition select(p.ethernet.etherType) {
             16w0x0800: ipv4;
         }
@@ -5355,12 +5353,6 @@ the ```udpSupport``` parameter, as in the following example:
 // TopParser is a GenericParser where udpSupport = false
 GenericParser(false) TopParser;
 ~ End P4Example
-
-## Optional constructor parentheses
-
-For the sake of readability, type definitions with no constructor
-arguments may omit the second set of parentheses.  That is, ```control
-c(...)();``` and ```control c(...);``` are equivalent.
 
 ## Direct type invocation
 
@@ -5636,7 +5628,7 @@ Switch<bit<32>>(P(), Pipe1()) main;
 
 ## A Packet Filter Model { #sec-pkt-filter }
 
-~ Figure { #fig-packetfilter; caption: "A packet filter target model. The parser computes a boolean value, which is used to decide whether the packet is dropped." }
+~ Figure { #fig-packetfilter; caption: "A packet filter target model. The parser computes a Boolean value, which is used to decide whether the packet is dropped." }
 ![packetfilter]
 ~
 [packetfilter]: figs/packetfilter.png { width: 5cm; page-align: here }
@@ -5680,7 +5672,7 @@ The evaluation of a P4 program is done in two stages:
 ## Compile-time known values { #sec-ct-constants }
 The following are compile-time known values:
 
-- Integer literals, boolean literals, and string literals.
+- Integer literals, Boolean literals, and string literals.
 - Identifiers declared in an ```error```, ```enum```, or ```match_kind```
   declaration.
 - The ```default``` identifier.
@@ -5864,7 +5856,7 @@ following example.
 ~ Begin P4Example
 table t {
     keys = {
-        data.f1 + 1 : exact @name("f1_inc");
+        data.f1 + 1 : exact @name("f1_mask");
     }
     actions = { ... }
 }
@@ -5928,16 +5920,6 @@ Note that in this example, the architecture will supply an instance of
 the extern when it applies the instance of ```MyC``` passed to the ```Arch```
 package.  The fully-qualified name of that instance is ```main.c.e2```.
 
-A programmer can always assign a control plane name to an instance by
-binding it to a name in the program, rather than relying on the
-parameter name supplied by the type definition or architecture.
-
-~ Begin P4Example
-MyC() d;
-Arch(d) main;
-~ End P4Example
-
-In the example above, the name of the ```MyC``` instance is ```d```.
 Next, consider a larger example that demonstrates name generation when
 there are multiple instances.
 
@@ -5972,7 +5954,6 @@ corresponding formal parameter.
 ![evalmultiple]
 ~
 [evalmultiple]: figs/evalmultiple.png { width: 5cm; page-align: here }
-
 
 ### Annotations controlling naming { #sec-name-annotations }
 
@@ -6166,7 +6147,7 @@ table t {
 The ```@name``` annotation directs the compiler to use a different
 local name when generating the external APIs used to manipulate a
 language element from the control plane. It must have a string literal
-argument, which shall not contain the "```.```" character.  In the
+argument.  In the
 following example, the fully-qualified name of the table is ```c_inst.t1```.
 
 ~ Begin P4Example
@@ -6179,9 +6160,8 @@ c() c_inst;
 
 The ```@globalname``` annotation acts like the ```@name``` annotation,
 except it overrides the fully-qualified name (not just the local name)
-for the annotated element, and its argument may contain the "```.```"
-character.  In the following example, the fully-qualified name of the
-table is ```foo.bar```.
+for the annotated element.  In the following example, the
+fully-qualified name of the table is ```foo.bar```.
 
 ~ Begin P4Example
 control c( ... )() {
@@ -6206,16 +6186,18 @@ annotation is instantiated more than once, it will result in the same
 global name referring to two controllable entities.
 
 ~ Begin P4Example
-control c( ... )() {
+control noargs();
+package top(noargs c1, noargs c2);
+
+control c() {
     @globalname("foo.bar") table t { ... }
     apply { ... }
 }
-c() c1;
-c() c2;
+top(c(), c()) main;
 ~ End P4Example
 
 Without the ```@globalname``` annotation, this program would produce
-two controllable entities with fully-qualified names ```c1.t``` and ```c2.t```.
+two controllable entities with fully-qualified names ```main.c1.t``` and ```main.c2.t```.
 However, the ```@globalname("foo.bar")``` annotation renames table ```t```
 in both instances to ```foo.bar```, resulting in one name that refers
 to two controllable entities, which is illegal.
@@ -6249,12 +6231,12 @@ are treated as keywords only in specific contexts (e.g., the keyword ```actions`
 | ```action```   |  ```apply ``` | ```bit```        | ```bool``` |
 | ```const```    |  ```control``` | ```default``` | ```else``` |
 | ```enum```   | ```error```     |   ```extern```  |  ```exit```  |
-| ```false```   |  ```header```   |  ```if```         |  ```in```   |
-| ```inout``` | ```int```         | ```match_kind``` | ```package``` |
-| ```parser``` | ```out```         | ```return```  | ```select``` |
-| ```state``` | ```struct```   |  ```switch``` | ```table```    |
-| ```transition``` |  ```true``` |  ```tuple``` | ```typedef``` |
-| ```varbit```  | ```verify``` | ```void```       |   |
+| ```false```   |  ```header```   |  ```header_union``` | ```if```         |
+|  ```in```   | ```inout``` | ```int```         | ```match_kind``` |
+| ```package``` | ```parser``` | ```out```         | ```return```  |
+|```select``` | ```state``` | ```struct```   |  ```switch``` |
+| ```table```   | ```transition``` |  ```true``` |  ```tuple``` |
+| ```typedef``` | ```varbit```  | ```verify``` | ```void```       |
 |------|------|------|------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
