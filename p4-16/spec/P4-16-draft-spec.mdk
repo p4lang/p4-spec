@@ -2432,7 +2432,7 @@ representing the received packet that is processed.
 parserTypeDeclaration
     : optAnnotations PARSER name optTypeParameters
      '(' parameterList ')'
-    ;    ;
+    ;
 ~ End P4Grammar
 
 For example, the following is a type declaration of a parser type
@@ -4653,11 +4653,6 @@ of constants, variables, ```action```s, ```table```s, and other
 instantiations:
 
 ~ Begin P4Grammar
-controlTypeDeclaration
-    : optAnnotations CONTROL name optTypeParameters
-      '(' parameterList ')'
-    ;
-
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
       /* controlTypeDeclaration cannot contain type parameters */
@@ -5290,11 +5285,6 @@ use of constructor parameters.
 Consider again the parser declaration syntax:
 
 ~ Begin P4Grammar
-parserTypeDeclaration
-    : optAnnotations PARSER name optTypeParameters
-     '(' parameterList ')'
-    ;
-
 parserDeclaration
     : parserTypeDeclaration optConstructorParameters
       '{' parserLocalElements parserStates '}'
@@ -5435,9 +5425,8 @@ extern packet_out {
 }
 ~ End P4Example
 
-The ```emit``` method appends the data in its argument, but provides
-special behavior for headers, header stacks, `struct`s, and header
-unions:
+The ```emit``` method supports appending the data contained in a
+header, header stack, `struct`, or header union to the output packet.
 
 - When applied to a header, `emit` appends the data in the header to
   the packet if it is valid and otherwise behaves like a no-op.
@@ -5446,10 +5435,8 @@ unions:
 - When applied to a `struct` or header union, `emit` recursively
   invokes itself to each field.
 
-Appending a value such as a bit-string or integer value to a
-```packet_out``` writes the value starting with the most-significant
-bit. This process is the inverse of data extraction. It is illegal to
-invoke `emit` on an expression of type `enum` or `error`.
+It is illegal to invoke `emit` on an expression of whose type is a
+base type, `enum`,or `error`.
 
 We can define the meaning of the ```emit``` method in pseudo-code as
 follows:
@@ -5462,24 +5449,21 @@ packet_out {
         this.data.clear();
         this.lengthInBits = 0;
     }
-    // append the data to the packet
-    void raw_emit<T>(T data) {
-        this.data.append(data);
-        this.lengthInBits += data.lengthInBits;
-    }
-    // append data to the packet if valid
+    /// Append data to the packet. Type T must be a header, header
+    /// stack, header union, or struct formed recursively from those types
     void emit<T>(T data) {
         if (isHeader(T))
-            if(data.valid$)
-                raw_emit(data);
+            if(data.valid$) {
+                this.data.append(data);
+                this.lengthInBits += data.lengthInBits;
+            }
         else if (isHeaderStack(T))
             for (e : data)
                  emit(e);
-        else if (isStruct(T) || isHeaderUnion(T))
+        else if (isHeaderUnion(T) || isStruct(T))
             for (f : data.fields$)
                  emit(e.f)
-        else
-            raw_emit(data)
+        // Other cases for T are illegal
     }
 ~ End P4Pseudo
 
