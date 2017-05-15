@@ -2855,9 +2855,10 @@ As mentioned above, P4 gives a precise meaning shifting with an amount
 larger than the size of the shifted value, unlike C.
 
 P4 targets may impose additional restrictions on shift operations such
-as non-constant expressions, or expressions whose width exceeds a
-certain bound.  For example, a target may forbid shifting an 8-bit
-value by a non-constant value whose width is greater than 3 bits.
+as forbidding shifts by non-constant expressions, or by expressions
+whose width exceeds a certain bound.  For example, a target may forbid
+shifting an 8-bit value by a non-constant value whose width is greater
+than 3 bits.
 
 ## Operations on arbitrary-precision integers { #sec-varint-ops }
 
@@ -2925,7 +2926,7 @@ Variable-length bit-strings support a limited set of operations:
 
 P4 provides a limited set of casts between types. A cast is written
 `(t) e`, where `t` is a type and `e` is an expression. Casts are only
-permitted between base types. While this design arguably more onerous
+permitted between base types. While this design is arguably more onerous
 for programmers, it has several benefits:
 
 - It makes user intent unambiguous.
@@ -2954,7 +2955,7 @@ The following casts are legal in P4:
   sufficiently-large two's complement bit string to avoid information
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
-- casts between two types that are introduced by ```typedef``` and are equivalent to one of the above combinations
+- casts between two types that are introduced by ```typedef``` and are equivalent to one of the above combinations.
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -3072,7 +3073,7 @@ struct S {
     bit<32> a;
     bit<32> b;
 }
-const S x = { 10, 20 }; //a = 10
+const S x = { 10, 20 }; //a = 10, b = 20
 ~ End P4Example
 
 List expressions can also be used to initialize variables whose type
@@ -3088,7 +3089,7 @@ Some P4 expressions denote sets of values (```set<T>```, for some type
 ```T```; see Section [#sec-synth-types].1). These expressions can
 appear only in a few contexts---parsers and constant table
 entries. For example, the ```select``` expression (Section
-[#sec-select]) has the following shape:
+[#sec-select]) has the following structure:
 
 ~ Begin P4Example
 select (expression) {
@@ -3185,8 +3186,8 @@ values.
 
 ### Ranges { #sec-ranges }
 
-The infix operator ```..``` takes two arguments of the same type ```T
-bit<W>``` or ```int<W>``` and creates a value of type
+The infix operator ```..``` takes two arguments of the same type ```T```,
+where ```T``` is either ```bit<W>``` or ```int<W>```, and creates a value of type
 ```set<T>```. The set contains all values numerically between the
 first and the second, inclusively. For example:
 
@@ -3270,7 +3271,7 @@ hs.nextIndex = 0;
 hs.size = n;
 ~ End P4Pseudo
 
-That is, intuitively, a header stack can be thought of as a struct containing
+Intuitively, a header stack can be thought of as a struct containing
 an ordinary array of headers ```hs``` and a counter ```nextIndex```
 that can be used to simplify the construction of parsers for header
 stacks, as discussed below. The ```nextIndex``` counter is initialized
@@ -3607,7 +3608,7 @@ must match the parameter types exactly.
 the result returned by a function call is discarded when the function
 call is used as a statement.
 
-## Constructors and instantiations { #sec-constructor }
+## Constructor invocations { #sec-constructor }
 
 Several P4 constructs denote resources that are allocated at
 compilation time:
@@ -3693,7 +3694,7 @@ stacks, which have their ```nextIndex``` counter initialized to ```0```,
 as discussed in [#sec-expr-hs]). The language places few restrictions on
 the types of the variables: most P4 types that can be written
 explicitly can be used (e.g., base types, ```struct```, ```header```,
-header stack, ```tuple```). However, it is illegal to declare variables with types
+header stack, ```tuple```). However, it is impossible to declare variables with types
 that are only synthesized by the compiler (e.g., ```set```). In addition, variables of type  ```parser```, ```control```, ```package```,
 or ```extern``` types must be declared using instantiations (see Section [#sec-instantiations]).
 
@@ -3755,7 +3756,7 @@ control c(...) {
 }
 ~ End P4Example
 
-## Restrictions on top-level instantiations
+### Restrictions on top-level instantiations
 
 A P4 program may not instantiate controls and parsers at the top-level
 package. This restriction is designed to ensure that most state
@@ -3958,7 +3959,7 @@ final states. The start state is always named ```start```.  The two
 final states are named ```accept``` (indicating successful parsing)
 and ```reject``` (indicating a parsing failure). The ```start``` state
 is part of the parser, while the ```accept``` and ```reject``` states
-are logically distinct from the states provided by the programmer.  Figure [#fig-parserstatemachine]
+are distinct from the states provided by the programmer and are logically outside of the parser.  Figure [#fig-parserstatemachine]
 illustrates the general structure of a parser state machine.
 
 ## Parser declarations { #sec-parser-decl }
@@ -4501,7 +4502,7 @@ state parse_tcp_option_sack {
 }
 ~ End P4Example
 
-### Advancing { #sec-skip-bits }
+### Skipping bits { #sec-skip-bits }
 
 P4 provides two ways to skip over bits in an input packet without
 assigning them to a header:
@@ -4630,7 +4631,7 @@ Architectures may impose (static or dynamic) constraints on the
 number of parser states that can be traversed for processing each
 packet. For example, a compiler for a specific target may reject
 parsers containing loops that cannot be unrolled at compilation time
-or that do not advance the cursor.
+or that may contain cycles that do not advance the cursor.
 If a parser aborts execution dynamically because it exceeded
 the time budget allocated for parsing, the parser should transition to
 the `reject` state and set
