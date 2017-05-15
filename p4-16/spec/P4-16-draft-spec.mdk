@@ -4639,23 +4639,17 @@ the standard error ```error.ParserTimeout```.
 # Control blocks { #sec-control }
 
 P4 parsers are responsible for extracting bits from a packet into
-headers. The headers can be manipulated and transformed within ```control```
-blocks. Control blocks are a P4 construct that are used
-for describing match-action pipelines. The body of a control block
-resembles a traditional C program. Within the body of a control block,
+headers. These headers (and other metadata) can be manipulated and transformed within ```control```
+blocks. The body of a control block
+resembles a traditional imperative program. Within the body of a control block,
 match-action units can be invoked to perform data
 transformations. Match-action units are represented in P4 by
 constructs called ```tables```.
 
-There is no exceptional control-flow in a ```control``` block: no
-equivalent of the ```verify``` parser statement or of the ```reject```
-state. Error handling has to be performed explicitly by users.
-
-P4 forbids the instantiation of ```parser``` instances within a ```control```
-block.
-
-A ```control``` block may start with declarations of ```action```s, ```table```s,
-constants, variables, and instantiations.
+Syntactically, a ```control``` block is declared with a name,
+parameters, optional type parameters, and a sequence of declarations
+of constants, variables, ```action```s, ```table```s, and other
+instantiations:
 
 ~ Begin P4Grammar
 controlDeclaration
@@ -4682,20 +4676,29 @@ controlBody
     ;
 ~ End P4Grammar
 
-Controls cannot be generic (unlike control type declarations); thus
-when used in the context of a `controlDeclaration` the
-`controlTypeDeclaration` cannot contain any type parameters.  I.e.,
-the following declaration is illegal:
+It is illegal to instantiate a ```parser``` within a ```control```
+block.
+For a description of the ```optConstructorParameters```, which
+can be used to build parameterized control blocks, see Section
+[#sec-parametrization].
+
+Unlike control type declarations, control declarations may not be
+generic---e.g., the following declaration is illegal:
 
 ~ Begin P4Example
 control C<H>(inout H data) { ... }
 ~ End P4Example
 
-For a description of the ```optConstructorParameters```, which can be
-used to build parameterized control blocks, see Section
-[#sec-parameterization].
+P4 does not support exceptional control-flow within a ```control```
+block.
+The only statement which
+has a non-local effect on control flow is `exit`, which causes
+execution of the enclosing control block to immediately terminate.
+That is, there is no equivalent of the ```verify``` statement
+or the ```reject``` state from parsers. Hence, all error handling must
+be performed explicitly by the programmer.
 
-We start by describing the core components of a ```control``` block,
+The rest of this section describes the core components of a ```control``` block,
 starting with actions.
 
 ## Actions { #sec-actions}
@@ -4705,14 +4708,12 @@ starting with actions.
 ~
 [actions]: figs/actions.png { width: 8cm; page-align: here }
 
-[]{tex-cmd: "\indent"}
 Actions are code fragments that can read and write the data being
 processed. Actions may contain data values that can be written by the
-control plane and read by the data plane. Actions are the fundamental
+control plane and read by the data plane. Actions are the main
 construct by which the control-plane can influence dynamically the
 behavior of the data plane. Figure [#fig-actions] shows the abstract
-model of an ```action```. Formally, actions are function objects
-<https://en.wikipedia.org/wiki/Function_object>.
+model of an ```action```.
 
 ~ Begin P4Grammar
 actionDeclaration
@@ -4721,8 +4722,8 @@ actionDeclaration
 ~ End P4Grammar
 
 Syntactically actions resemble functions with no return
-values. Actions may be declared within a control block; in this case
-they can only be used within an instance of that control block.
+value. Actions may be declared within a control block; in this case
+they can only be used within instances of that control block.
 
 The following example shows an action declaration:
 ~ Begin P4Example
@@ -4733,40 +4734,39 @@ action Forward_a(out bit<9> outputPort, bit<9> port) {
 
 Action parameters may not have ```extern``` types. Action parameters
 that have no direction (e.g., ```port``` in the previous example)
-indicate action data. All such parameters must be at the end of the
-parameter list. For actions that appear in a table actions list
-(described in Section [#sec-table-action-list]), these parameters are
-bound by the control plane.
+indicate "action data." All such parameters must appear at the end of the
+parameter list. When used in a match-action table
+(see Section [#sec-table-action-list]), these parameters will be
+provided by the control plane.
 
 The body of an action consists of a sequence of statements and
-declarations. No switch statements are allowed within an action (the
-grammar as written permits them, but a semantic check should reject
-them). Some targets may impose additional restrictions on action
-bodies---e.g., only straight-line code, with no ```if``` statements or
-conditional expressions (```?:```).
+declarations. No ```switch``` statements are allowed within an
+action---the grammar permits them, but a semantic check should reject
+them. Some targets may impose additional restrictions on action
+bodies---e.g., only allowing straight-line code, with no conditional
+statements or expressions.
 
 ### Invoking actions { #sec-invoke-actions }
 
 Actions can be executed in two ways:
 
-- Actions can be implicitly invoked by tables during match-action
-  processing.
-- Actions can be explicitly invoked, either from a ```control``` block
-  or from another ```action```. In this case, values for all action
-  parameters must be supplied explicitly, including values for the
-  directionless parameters. The directionless parameters in this case
-  behave like ```in``` parameters.
+- Implicitly: by tables during match-action processing.
+- Explicitly: either from a ```control``` block or from another
+  ```action```. In either case, the values for all action parameters
+  must be supplied explicitly, including values for the directionless
+  parameters. In this case, the directionless parameters behave like
+  ```in``` parameters.
 
 ## Tables { #sec-tables }
+
 ~ Figure { #fig-maudataflow; caption: "Match-Action Unit Dataflow." }
 ![maudataflow]
 ~
 [maudataflow]: figs/maudataflow.png { width: 80%; page-align: here }
 
-[]{tex-cmd: "\indent"}
-The P4 ```table``` construct describes a match-action unit. The
+A ```table``` describes a match-action unit. The
 structure of a match-action unit is shown in Figure
-[#fig-maudataflow]. The match-action processing consists of the
+[#fig-maudataflow]. Processing a packet using a match-action table executes the
 following steps:
 
 - Key construction.
@@ -4775,20 +4775,19 @@ following steps:
 - Action execution (the "action step") over the input data, resulting
   in mutations of the data.
 
-A ```table``` declaration introduces a table instance. If one desires
-to instantiate a table multiple times one needs to declare a table in
-a separate control block and instantiate that control block multiple
-times.
+A ```table``` declaration introduces a table instance. To obtain
+multiple instances of a table, it must be declared within a control
+block that is itself instantiated multiple times.
 
 The look-up table is a finite map whose contents are manipulated
 asynchronously (read/write) by the target control-plane, through a
 separate control-plane API (see Figure [#fig-maudataflow]). Note that
 the term "table" is overloaded: it can refer to the P4 ```table```
 objects that appear in P4 programs, as well as the internal look-up
-tables used in targets. In this document, we use the term
-"match-action unit" whenever possible instead of "table".
+tables used in targets. We will use the term "match-action unit" when
+necessary to disambiguate.
 
-Syntactically a table is described by a set of key-value
+Syntactically a table is defined in terms of a set of key-value
 properties. Some of these properties are "standard" properties, but
 the set of properties can be extended by target-specific compilers as
 needed.
@@ -4823,10 +4822,15 @@ In addition, the tables may optionally define the following property,
 - ```default_action```: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
 
-as well as architecture-specific properties (see
-Sec. [#sec-additional-table-properties]).
+The compiler may set the ```default_action``` to ```NoAction```
+(and also insert it into the list of ```actions```) for tables that do
+not define the ```default_action``` property. This is
+consistent with the semantics given in Section [#sec-default-action].
+In this document, we assume that that this transformation has been
+performed, so that all tables have a ```default_action``` property.
 
-We discuss each of these properties in detail.
+In addition, tables may contain architecture-specific properties (see
+Section [#sec-additional-table-properties]).
 
 A property marked as ```const``` cannot be changed dynamically by the
 control-plane. The ```key``` and ```actions``` properties are always
@@ -4834,11 +4838,13 @@ constant, so the ```const``` keyword is not needed for these.
 
 ### Table properties { #sec-table-props }
 
-#### Table keys
+#### Keys
 
-The ```key``` is a table property which specifies the key used when
-looking up an action in the lookup table. The key is given by a set of
-pairs (expression : matchKind):
+The ```key``` is a table property which specifies the data plane
+values that should be used to look up an entry. A key is a list of
+pairs of the form `(e : m)`, where `e` is an expression that describes
+the data to be matched in the table, and `m` is a `match_kind`
+constant that describes the algorithm used to perform the lookup (see Section [#sec-match-kind-type]).
 
 ~ Begin P4Grammar
 keyElementList
@@ -4851,10 +4857,7 @@ keyElement
     ;
 ~ End P4Grammar
 
-Each name in a ```keyElement``` must be a constant of type ```match_kind```
-(see Section [#sec-match-kind-type]).
-
-For example, let us consider the following ```table``` declaration fragment:
+For example, consider the following program fragment:
 
 ~ Begin P4Example
 table Fwd {
@@ -4866,18 +4869,18 @@ table Fwd {
 }
 ~ End P4Example
 
-In this example the lookup key is composed of two fields of the ```ipv4header```
-structure: ```dstAddress``` and ```version```. The ```match_kind``` information
-attached to each key expression is used for two purposes:
+Here the key comprises two fields from the ```ipv4header``` header:
+```dstAddress``` and ```version```. The ```match_kind``` constants
+serve three purposes:
 
-- It is used to synthesize the control-plane API that is used to
-  populate the table. The control-plane API specification is part of a
-  separate document.
-- It is used by the compiler back-end to allocate resources for the
-  table's implementation.
+- They specify the algorithm used to match data plane values against
+  the entries in the table at runtime.
+- They are used to synthesize the control-plane API that is used to
+  populate the table.
+- They are used by the compiler back-end to allocate resources for the
+  implementation of the table.
 
-The P4 core library contains three predefined ```match_kind```
-identifiers:
+The P4 core library contains three predefined ```match_kind``` identifiers:
 
 ~ Begin P4Example
 match_kind {
@@ -4888,22 +4891,22 @@ match_kind {
 ~ End P4Example
 
 These identifiers correspond to the P4~14~ match kinds with the same
-names. The semantics of these annotations is actually irrelevant for
-describing the behavior of the P4 abstract machine; how they are used
-influences only the control-plane API and the actual implementation of
+names. The semantics of these annotations is actually not needed to
+describe the behavior of the P4 abstract machine; how they are used
+influences only the control-plane API and the implementation of
 the look-up table. From the point of view of the P4 program, a look-up
 table is an abstract finite map that is given a key and produces as a
 result either an action or a "miss" indication, as described in
 Section [#sec-mau-semantics].
 
 If a table has no ```key``` property, then it contains no look-up
-table, just a default action, which is always executed (i.e., the
-associated lookup table is always the empty map).
+table, just a default action---i.e., the associated lookup table is
+always the empty map.
 
 Each key element can have an optional ```@name``` annotation which is
 used to synthesize the control-plane visible name for the key field.
 
-#### The list of actions { #sec-table-action-list }
+#### Actions { #sec-table-action-list }
 
 A table must declare all possible actions that may appear within the
 associated lookup table or in the default action. This is done with
@@ -4921,15 +4924,17 @@ actionRef
     ;
 ~ End P4Grammar
 
-Let us consider an example from the Very Simple Switch program in
+To illustrate, recall the example Very Simple Switch program in
 Section [#sec-vss-all]:
 
 ~ Begin P4Example
-action Drop_action()
-{ outCtrl.outputPort = DROP_PORT; }
+action Drop_action() {
+  outCtrl.outputPort = DROP_PORT;
+}
 
-action Rewrite_smac(EthernetAddress sourceMac)
-{ headers.ethernet.srcAddr = sourceMac; }
+action Rewrite_smac(EthernetAddress sourceMac) {
+  headers.ethernet.srcAddr = sourceMac;
+}
 
 table smac {
     key = { outCtrl.outputPort : exact; }
@@ -4940,13 +4945,11 @@ table smac {
 }
 ~ End P4Example
 
-- The ```smac``` ```table``` can contain two types of actions, named ```Drop_action```
-  and ```Rewrite_mac```.
-- The ```Rewrite_smac``` action has one parameter, which is bound by
-  the control plane.
+- The entries in the ```smac``` ```table``` may contain two different actions: ```Drop_action``` and ```Rewrite_mac```.
+- The ```Rewrite_smac``` action has one parameter, ```sourceMac```, which is bound by the control plane.
 
-All actions in the list of actions of a table must have different
-names; e.g., the following program fragment is illegal:
+Each action in the list of actions for a table must have a distinct
+name---e.g., the following program fragment is illegal:
 
 ~ Begin P4Example
 action a() {}
@@ -4978,9 +4981,9 @@ table t {
 }
 ~ End P4Example
 
-#### The default action
+#### Default action { #sec-default-action }
 
-The default action of a table is an action that is invoked
+The default action for a table is an action that is invoked
 automatically by the match-action unit whenever the lookup table does
 not find a match for the supplied key.
 
@@ -4993,8 +4996,7 @@ parameters must be syntactically identical to the expressions used in
 one of the elements of the ```actions``` list.
 
 For example, in the above ```table``` we could set the default action
-as follows (marking it also as constant --- i.e., not changeable by
-the control plane):
+as follows (marking it also as constant):
 
 ~ Begin P4Example
 const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
@@ -5008,8 +5010,8 @@ or ```out```) are evaluated when the action is invoked while the
 expressions supplied as arguments for directionless parameters are
 evaluated at compile time.
 
-Continuing the example in the previous section, here are various legal
-and illegal specifications for ```table t``` above:
+Continuing the example from the previous section, following are several legal
+and illegal specifications of default actions for the ```table t```:
 
 ~ Begin P4Example
   default_action = a(5); // OK - no control-plane parameters
@@ -5024,17 +5026,19 @@ entry matches a given packet, then the table does not affect the
 packet and processing continues according to the imperative control
 flow of the program.
 
-#### Table entries
+#### Entries
 
-A table may be initialized at compile-time with a set of
-entries. While it is typical that entries are installed in tables by
-the contol plane program, there are situations in which tables are
-used to implement fixed algorithms. In such cases, defining the
-entries that enable the execution of the algorithm in the P4 source,
-allows the compiler to infer how the table is actually used and
-potentially make better placement decisions for tagets with constraint
+While table entries are typically installed by the contol plane,
+tables may also be initialized at compile-time with a set of entries.
+This is useful in situations where tables are
+used to implement fixed algorithms---defining table entries statically
+enables expressing these algorithm directly in P4,
+which allows the compiler to infer how the table is actually used and
+potentially make better allocation decisions for targets with limited
 resources. Entries declared in the P4 source are installed in the
-table at program load time.
+table when the program is loaded onto the target.
+
+Table entries are defined using the following syntax:
 
 ~ Begin P4Grammar
 tableProperty
@@ -5049,15 +5053,13 @@ entry
 
 ~ End P4Grammar
 
-In the current specification, we define entries as immutable (const)
--- they can only be read, not changed or removed through control plane
-APIs. It follows that tables that define entries in the P4 source are
-immutable, thus no additional entries may be inserted in tables that
-define a set of immutable entries.  This design choice is important
-for the P4 runtime since it does not have to keep track of different
-types of entries in one table (mutable and immutable).  Future
-versions of the specification may add mutable entries and shall
-preserve compatibility with the current specification by declaring
+Table entries are immutable (const)---i.e., they can only be read and
+cannot be changed or removed by the control plane. It follows that
+tables that define entries in the P4 source are immutable. This design
+choice has important ramifications for the P4 runtime since it does
+not have to keep track of different types of entries in one table
+(mutable and immutable).  Future versions of P4 may add the ability to
+mix mutable and immutable entries in the same table, by declaring
 additional ```entries``` properties without the ```const``` keyword.
 
 The ```keysetExpression``` component of an entry is a tuple that must
@@ -5076,14 +5078,14 @@ the ability of synthesizing entries. For example, if the number of synthesized
 entries exceeds the table size, the compiler implementation may choose to issue
 a warning or an error, depending on target capabilities.
 
-Consider the following example:
+To illustrate, consider the following example:
 
 ~ Begin P4Example
 header hdr {
     bit<8>  e;
     bit<16> t;
     bit<8>  l;
-    bit<8> r;
+    bit<8>  r;
     bit<1>  v;
 }
 
@@ -5129,24 +5131,24 @@ of action ```a_with_control_params```. Once the program is loaded,
 these entries are installed in the table in the order they are
 enumerated in the program.
 
-#### Additional table properties {#sec-additional-table-properties}
+#### Additional properties {#sec-additional-table-properties}
 
-A ```table``` declaration indicates the interfaces expected from a ```table```:
-keys and actions. However, the best way to implement a table is
-actually dependent on the nature of the entries that will populate the
-table at runtime (for example, tables could be dense or sparse, could
-be implemented as hash-tables, associative memories, tries, etc.) Some
-architectures may provide additional table properties whose semantics
-lies outside the scope of this specification. For example, in
-architectures where table resources are statically allocated,
-programmers may be required to define a ```size``` table property,
-which can be used by the compiler back-end to allocate storage
-resources. However, an architecture-specific property may not change
-the semantics of table lookups, which always produce either a ```hit```
-and an action or a ```miss```---they can only change how those results
-are interpreted on the state of the data plane. This restriction is
-needed to ensure that it is possible to reason about the behavior of
-tables during compilation.
+A ```table``` declaration defines its essential control and data plane
+interfaces---i.e., keys and actions. However, the best way to
+implement a table may actually depend on the nature of the entries
+that will be installed at runtime (for example, tables could be
+dense or sparse, could be implemented as hash-tables, associative
+memories, tries, etc.) In addition, some architectures may support extra table
+properties whose semantics lies outside the scope of this
+specification. For example, in architectures where table resources are
+statically allocated, programmers may be required to define a
+```size``` table property, which can be used by the compiler back-end
+to allocate storage resources. However, these architecture-specific
+properties may not change the semantics of table lookups, which always
+produce either a ```hit``` and an action or a ```miss```---they can
+only change how those results are interpreted on the state of the data
+plane. This restriction is needed to ensure that it is possible to
+reason about the behavior of tables during compilation.
 
 As another example, an ```implementation``` property could be used to
 pass additional information to the compiler back-end. The value of
@@ -5158,7 +5160,7 @@ a construct such as the following:
 
 ~ Begin P4Example
 extern ActionProfile {
-   ActionProfile(bit<32> size); // how many distinct actions are expected
+   ActionProfile(bit<32> size); // number of distinct actions expected
 }
 table t {
     key = { ...}
@@ -5167,20 +5169,21 @@ table t {
 }
 ~ End P4Example
 
-(An action profile specifies the fact that, although the table is
-expected to have a large number of entries, only a small number of
-distinct entry values are expected. This can lead to an optimized
-implementation of the table, using an indirection level to share
-identical entries. The ```ActionProfile``` ```extern``` object in the
-previous example is meant to convey this information.)
+Here the action profile might be used to optimize for the case where
+the table has a large number of entries, but the actions associated
+with those entries are expected to range over a small number of
+distinct values. Introducing a layer of indirection enables sharing
+identical entries, which can significantly reduce the table's storage
+requirements.
 
-### Invoking a table (match-action unit) { #sec-invoke-mau }
+### Match-action unit invocation { #sec-invoke-mau }
 
-A ```table``` is invoked by calling its ```apply``` method. Calling an
-apply method on a table instance returns a value with a ```struct```
-type with two fields. This structure is synthesized by the compiler
-automatically. For each ```table T```, the compiler synthesizes an ```enum```
-and a ```struct```, shown in pseudo-P4:
+A ```table``` can be invoked by calling its ```apply```
+method. Calling an apply method on a table instance returns a value
+with a ```struct``` type with two fields. This structure is
+synthesized by the compiler automatically. For each ```table T```, the
+compiler synthesizes an ```enum``` and a ```struct```, shown in
+pseudo-P4:
 
 ~ Begin P4Pseudo
 enum action_list(T) {
@@ -5305,22 +5308,22 @@ optConstructorParameters
 ~ End P4Grammar
 
 From this grammar fragment we infer that a ```parser``` declaration
-can have two sets of parameters:
+may have two sets of parameters:
 
--	The runtime parser parameters
+-	The runtime parser parameters (```parameterList```)
 -	Optional parser constructor parameters
      (```optConstructorParameters```)
 
-All constructor parameters must be directionless (i.e., they cannot be ```in```, ```out```,
-or ```inout```). When instantiating a parser one has to supply
-expressions that can be fully evaluated at compilation time for all ```optConstructorParameters```.
+Constructor parameters must be directionless (i.e., they cannot be
+```in```, ```out```, or ```inout```) and when the parser is
+instantiated, it must be possible to fully evaluate the expressions
+supplied for these parameters at compilation time.
 
 Consider the following example:
 
 ~ Begin P4Example
-parser GenericParser(packet_in b,          // parser API
-                     out Packet_header p)
-                     (bool udpSupport) {   // constructor parameters
+parser GenericParser(packet_in b, out Packet_header p)
+                    (bool udpSupport) {   // constructor parameters
     state start {
         b.extract(p.ethernet);
         transition select(p.ethernet.etherType) {
@@ -5346,12 +5349,12 @@ parser GenericParser(packet_in b,          // parser API
 }
 ~ End P4Example
 
-When instantiating the ```GenericParser``` one must supply a value for
+When instantiating the ```GenericParser``` it is necessary to supply a value for
 the ```udpSupport``` parameter, as in the following example:
 
 ~ Begin P4Example
-// TopParser is a GenericParser where udpSupport = false
-GenericParser(false) TopParser;
+// topParser is a GenericParser where udpSupport = false
+GenericParser(false) topParser;
 ~ End P4Example
 
 ## Direct type invocation
@@ -5362,27 +5365,27 @@ parameters may be applied directly, as if they were an instance.  This
 has the effect of creating and applying a local instance of that type.
 
 ~ Begin P4Example
-control callee( ... ) { ... }
+control Callee( ... ) { ... }
 
-control caller( ... )( ... ) {
+control Caller( ... )( ... ) {
     apply {
-        callee.apply( ... ); // callee is treated as an instance
+        Callee.apply( ... ); // callee is treated as an instance
     }
 }
 ~ End P4Example
 
-The definition of ```caller``` is equivalent to the following.
+The definition of ```Caller``` is equivalent to the following.
 
 ~ Begin P4Example
-control caller( ... )( ... ) {
-    @name("callee") callee() callee_inst; // local instance of callee
+control Caller( ... )( ... ) {
+    @name("Callee") Callee() Callee_inst; // local instance of Callee
     apply {
-        callee_inst.apply( ... );         // callee_inst is applied
+        Callee_inst.apply( ... );         // Callee_inst is applied
     }
 }
 ~ End P4Example
 
-This feature is intended to ease the case where a type is instantiated
+This feature is intended to streamline the common case where a type is instantiated
 exactly once.  For completeness, the behavior of directly invoking the
 same type more than once is defined as follows.
 
@@ -5399,7 +5402,7 @@ same type more than once is defined as follows.
 See Section [#sec-name-annotations] for details of ```@name```
 annotations.
 
-# Packet construction (deparsing) { #sec-deparse }
+# Deparsing { #sec-deparse }
 
 The inverse of parsing is deparsing, or packet construction. P4 does
 not provide a separate language for packet deparsing; deparsing is
@@ -5424,21 +5427,30 @@ the stack in order of increasing indexes.
 ## Data insertion into packets { #sec-deparse-insert }
 
 The ```packet_out``` datatype is defined in the P4 core library, and
-reproduced below. It provides two methods for appending data to an
-output packet; both methods are called ```emit```. The first version
-only accepts headers, and the second one accepts arbitrary data.
+reproduced below. It provides a method for appending data to an
+output packet called ```emit```:
 
 ~ Begin P4Example
 extern packet_out {
-    void emit<T>(in T hdr);
-    void emit<T>(in bool condition, in T data);
+    void emit<T>(in T data);
 }
 ~ End P4Example
 
-The first version of ```emit``` just calls the second one with the
-header validity bit as a condition.
+The ```emit``` method supports appending the data contained in a
+header, header stack, `struct`, or header union to the output packet.
 
-We describe the meaning of these methods in pseudo-code as follows:
+- When applied to a header, `emit` appends the data in the header to
+  the packet if it is valid and otherwise behaves like a no-op.
+- When applied to a header stack, `emit` recursively invokes itself to
+  each element of the stack.
+- When applied to a `struct` or header union, `emit` recursively
+  invokes itself to each field.
+
+It is illegal to invoke `emit` on an expression of whose type is a
+base type, `enum`,or `error`.
+
+We can define the meaning of the ```emit``` method in pseudo-code as
+follows:
 
 ~ Begin P4Pseudo
 packet_out {
@@ -5448,41 +5460,29 @@ packet_out {
         this.data.clear();
         this.lengthInBits = 0;
     }
-    // append entire header if it is valid
-    // T must be a header type
-    void emit<T>(T header) {
-        this.emit(header.valid$, header);
+    /// Append data to the packet. Type T must be a header, header
+    /// stack, header union, or struct formed recursively from those types
+    void emit<T>(T data) {
+        if (isHeader(T))
+            if(data.valid$) {
+                this.data.append(data);
+                this.lengthInBits += data.lengthInBits;
+            }
+        else if (isHeaderStack(T))
+            for (e : data)
+                 emit(e);
+        else if (isHeaderUnion(T) || isStruct(T))
+            for (f : data.fields$)
+                 emit(e.f)
+        // Other cases for T are illegal
     }
-
-    // append the data to the packet if the condition is true
-    void emit<T>(bool cond, T data) {
-        if (!cond) return;
-        this.data.append(data);
-        this.lengthInBits += data.lengthInBits;
-    }
-}
 ~ End P4Pseudo
 
-We describe the two-argument ```emit``` method. For a base type ```T```, ```emit```:
-
-- does nothing if the condition is ```false```,
-- otherwise it appends the ```data``` value to the tail of the ```packet_out```.
-
-For derived type, ```emit``` recursively proceeds on fields:
-
-- If the argument is a header, its validity bit is AND-ed with the
-  condition bit to determine; if the result is ```false``` no action
-  is taken
-- If the argument is a header stack, the ```emit``` statement is
-  applied to each component of the stack starting from the element
-  with index 0.
-- If the argument is a ```struct``` containing multiple fields, the ```emit```
-  is recursively applied to each component of the struct in the order
-  of their declaration in the struct.
-
-Appending a bit-string or integer value to a ```packet_out``` writes
-the value starting with the most-significant bit. This process is the
-inverse of data extraction.
+Here we use the special ```valid$``` identifier to indicate the hidden
+valid bit of headers and ```fields$``` to indicate the list of fields
+for a struct or header union. We also use standard `for` notation to
+iterate through the elements of a stack `(e : data)` and list of
+fields for header stacsk and unions `(f : data.fields$)`.
 
 # Architecture description { #sec-arch-desc }
 
@@ -5502,9 +5502,9 @@ which can be nested.
 
 Since some of the target components may manipulate user-defined types,
 which are unknown at the target declaration time, these are described
-using type parameters (type variables). This mechanism is similar to
-the use of generic types or templates in languages such as C++ and
-Java.
+using type variables, which must be used parametrically in the
+program---i.e., type variables are checked similar to Java generics,
+not C++ templates.
 
 ## Example architecture description { #sec-arch-desc-example }
 
@@ -5545,7 +5545,6 @@ package Switch<T>( // Top-level switch contains two packages
 ~
 [switcharch]: figs/switcharch.png { width: 80%; page-align: here }
 
-[]{tex-cmd: "\indent"}
 Just from these declarations, even without reading a precise
 description of the target, the programmer can infer some useful
 information about the architecture of the described switch, as shown
@@ -5569,21 +5568,21 @@ Note that this architecture models a target switch that contains two
 separate channels between the ingress and egress pipeline:
 
 - A channel that can pass data directly (through the ```T```-type
-  argument -- on a software target with shared memory between ingress
+  argument---on a software target with shared memory between ingress
   and egress this could be implemented by passing directly a pointer;
   on an architecture without shared memory presumably the compiler
   will need to synthesize automatically serialization code).
-- Indirectly through a parser/deparser that serialize data to a packet
-  and back.
+- A channel that can pass data indirectly through a parser/deparser
+  that serializes data into a packet and back.
 
-## Target program instantiation { #sec-target-instantiation }
+## Example architecture program { #sec-target-instantiation }
 
-In order to build a program for the target, the compiled P4 program
-has to instantiate a top-level ```package``` by passing values for all
-its arguments creating a variable called ```main``` in the top-level
-namespace. The types of the arguments have to match the types of the
-parameters --- after a suitable substitution of the type
-variables. The type substitution can be expressed directly, using type
+To construct a program for the architecture, the P4 program must
+instantiate a top-level ```package``` by passing values for all its
+arguments creating a variable called ```main``` in the top-level
+namespace. The types of the arguments must match the types of the
+parameters---after a suitable substitution of the type variables. The
+type substitution can be expressed directly, using type
 specialization, or can be inferred by a compiler, using a unification
 algorithm like Hindley-Milner.
 
@@ -5633,7 +5632,6 @@ Switch<bit<32>>(P(), Pipe1()) main;
 ~
 [packetfilter]: figs/packetfilter.png { width: 5cm; page-align: here }
 
-[]{tex-cmd: "\indent"}
 To illustrate the versatility of P4 architecture description language,
 we give an example of another architecture, which models a packet
 filter that makes a drop/no drop decision based only on the
@@ -5641,7 +5639,7 @@ computation in a P4 parser, as shown in Figure [#fig-packetfilter].
 
 This model could be used to program packet filters running in the
 Linux kernel. For example, we could replace the TCP dump language with
-the much more powerful P4 language; P4 can support seamlessly new
+the much more powerful P4 language; P4 can seamlessly support new
 protocols, while providing complete "type safety" during packet
 processing. For such a target the P4 compiler could generate an eBPF
 (Extended Berkeley Packet Filter) program, which is injected by the
@@ -5651,25 +5649,26 @@ kernel JIT compiler/runtime.
 In this case the target is the Linux kernel, and the architecture
 model is a packet filter.
 
-The declaration for this architecture is very simple:
+The declaration for this architecture is as follows:
 ~ Begin P4Example
-parser _parser<H>(packet_in packet, out H headers);
-control _filter<H>(inout H headers, out bool accept);
+parser Parser<H>(packet_in packet, out H headers);
+control Filter<H>(inout H headers, out bool accept);
 
-package Filter<H>(_parser<H> p, _filter<H> f);
+package Program<H>(Parser<H> p, Filter<H> f);
 ~ End P4Example
 
 # P4 abstract machine: Evaluation { #sec-p4-abstract-mach }
 
 The evaluation of a P4 program is done in two stages:
 
-- **static evaluation**: at compilation time the P4 program is
+- **static evaluation**: at compile time the P4 program is
   analyzed and all stateful blocks are instantiated.
 - **dynamic evaluation**: at runtime each P4 functional block is
   executed atomically, in isolation, when it receives control from the
   architecture
 
 ## Compile-time known values { #sec-ct-constants }
+
 The following are compile-time known values:
 
 - Integer literals, Boolean literals, and string literals.
@@ -5715,11 +5714,11 @@ As an example, consider the following program fragment:
 
 ~ Begin P4Example
 // architecture declaration
-parser p(...);
-control c(...);
-control d(...);
+parser P(...);
+control C(...);
+control D(...);
 
-package Switch(p prs, c ctrl, d dep);
+package Switch(P prs, C ctrl, D dep);
 
 extern Checksum16 { ...}
 
@@ -5737,8 +5736,8 @@ Switch(TopParser(ck16),
 
 The evaluation of this program proceeds as follows:
 
-1.	The declarations of ```p```, ```c```, ```d```, ```Switch```, and ```Checksum16``` all
-      evaluate as themselves.
+1.	The declarations of ```P```, ```C```, ```D```, ```Switch```, and ```Checksum16``` all
+      evaluate to themselves.
 2.	The ```Checksum16() ck16``` instantiation is evaluated and it
       produces an object named ```ck16``` with type ```Checksum16```.
 3.	The declarations for ```TopParser```, ```Pipe```, and ```TopDeparser```
@@ -5758,11 +5757,11 @@ The evaluation of this program proceeds as follows:
         Their signatures are matched with the ```Switch``` declaration.
   6.	Finally, the ```Switch``` constructor can be evaluated. The
         result is an instance of the ```Switch``` package (that
-        contains a ```TopParser``` named ```prs``` --- the first
-        parameter of the ```Switch```, a ```Pipe``` named ```ctrl```
+        contains a ```TopParser``` named ```prs``` the first
+        parameter of the ```Switch```; a ```Pipe``` named ```ctrl```;
         and a ```TopDeparser``` named ```dep```).
 5.	The result of the program evaluation is the value of the ```main```
-    variable, which is the above instance of the ```Switch package```.
+    variable, which is the above instance of the ```Switch``` ```package```.
 
 Figure [#fig-compileeval] shows the result of the evaluation in a
 graphical form. The result is always a graph of instances. There is
@@ -5796,8 +5795,8 @@ names.
  - control instances
  - parser instances
 
-The evaluation process may create multiple instances from one type,
-each of which must have a unique, fully-qualified name.
+Evaluation may create multiple instances from one type, each of which
+must have a unique, fully-qualified name.
 
 ### Computing control names
 
@@ -6014,31 +6013,29 @@ Not all unambiguous postfix shortcuts are recommended.  Consider the
 first example in Section [#sec-cp-names].  One might be tempted to
 refer to ```s.c1``` simply as ```c1```, as no other instance named ```c1```
 appears in the program.  However, this leads to a brittle
-program: Future modifications can never introduce an instance named ```c1```
-or include libraries of P4 code that contain instances with
-that name.
+program since future modifications can never introduce an instance named ```c1```,
+or include libraries of P4 code that contain instances with that name.
 
 ## Dynamic evaluation { #sec-dynamic-eval }
 
-The dynamic evaluation of a P4 program is orchestrated by the target
-model. Each target model needs to specify the order and the conditions
+The dynamic evaluation of a P4 program is orchestrated by the architecture
+model. Each architecture model needs to specify the order and the conditions
 under which the various P4 component programs are dynamically
 executed. For example, in the Simple Switch example from Section
 [#sec-vss-arch] the execution flow goes ```Parser->Pipe->Deparser```.
 
 Once a P4 execution block is invoked its execution proceeds until
-termination according to the semantics defined in this document (the
-various abstract machines).
+termination according to the semantics defined in this document.
 
 ### Concurrency model { #sec-concurrency }
 
 A typical packet processing system needs to execute multiple
-simultaneous logical “threads:” at the very least there is a thread
+simultaneous logical "threads." At the very least there is a thread
 executing the control plane, which can modify the contents of the
 tables. Architecture specifications should describe in detail the
 interactions between the control-plane and the data-plane. The data
 plane can exchange information with the control plane through ```extern```
-function and method calls. Moreover, high throughput packet processing
+function and method calls. Moreover, high-throughput packet-processing
 systems may be processing multiple packets simultaneously, e.g., in a
 pipelined fashion, or concurrently parsing a first packet while
 performing match-action operations on a second packet. This section
@@ -6047,7 +6044,7 @@ executions.
 
 Each top-level ```parser``` or ```control``` block is executed as a
 separate thread when invoked by the architecture. All the parameters
-of the block and all local variables are thread-local: i.e., each
+of the block and all local variables are thread-local---i.e., each
 thread has a private copy of these resources. This applies to the ```packet_in```
 and ```packet_out``` parameters of parsers and deparsers.
 
@@ -6059,11 +6056,11 @@ same output.
 
 In contrast, ```extern``` blocks instantiated by a P4 program are
 global, shared across all threads. If ```extern``` blocks mediate
-access to state (e.g., counters, registers) –-- i.e., the methods of
+access to state (e.g., counters, registers)–--i.e., the methods of
 the ```extern``` block read and write state, these stateful operations
 are subject to data races. P4 mandates the following behaviors:
 
-- Execution of an action is atomic, i.e., the other threads can “see”
+- Execution of an action is atomic---i.e., the other threads can “see”
   the state as it is either before the start of the action or after
   the completion of the action.
 - Execution of a method call on an extern instance is atomic.
@@ -6130,8 +6127,8 @@ Annotation names that start with lowercase letters are reserved for
 the standard library and architecture.  This document pre-defines a
 set of "standard" annotations.  We expect that this list will grow.
 We encourage custom architectures to define annotations starting with
-a manufacturer prefix: e.g., company X would use annotations named
-like ```@X_annotation```
+a manufacturer prefix: e.g., an organization named X would use
+annotations named like ```@X_annotation```
 
 ### Annotations on the table action list
 
@@ -6226,7 +6223,7 @@ Each P4 compiler implementation can define additional annotations
 specific to the target of the compiler. The syntax of the annotations
 should conform to the above description. The semantics of such
 annotations is target-specific. They could be used in a similar way to
-pragmas in the C language.
+pragmas in other languages.
 
 The P4 compiler should provide:
 
@@ -6293,15 +6290,11 @@ extern packet_in {
     bit<32> length();
 }
 extern packet_out {
-    /// Write @hdr into the output packet, advancing cursor.
+    /// Write @data into the output packet, skipping invalid headers
+    /// and advancing the cursor
     /// @T can be a header type, a header stack, a header_union, or a struct
     /// containing fields with such types.
-    void emit<T>(in T hdr);
-    /// If @condition is true write the specified @data into the output packet,
-    /// advancing cursor.  @T can be a header type, a header stack, a header_union,
-    /// or a struct containing fields with such types.  If @condition is false,
-    /// do nothing.
-    void emit<T>(in bool condition, in T data);
+    void emit<T>(in T data);
 }
 action NoAction() {}
 /// Standard match kinds for table key fields.
@@ -6320,7 +6313,7 @@ match_kind {
 # Appendix: Checksums { #sec-checksums }
 
 There are no built-in constructs in P4~16~ for manipulating packet
-checksums. We expect that all checksum operations can be expressed as ```extern```
+checksums. We expect that checksum operations can be expressed as ```extern```
 library objects that are provided in target-specific libraries. The
 standard architecture library should provide such checksum units.
 
