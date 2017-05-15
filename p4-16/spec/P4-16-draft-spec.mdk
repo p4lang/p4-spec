@@ -2229,9 +2229,9 @@ infinite-precision integer, without a width specified.
 | ```tuple```        | error     | error   |  allowed        |
 |-----|-----|-----|
 
-Rationale:```int``` does not have precise storage requirements, unlike
-``bit<>``` or ```int<>``` types.
-```match_kind``` values are not useful to store in a variable, as they
+Rationale: ```int``` does not have precise storage requirements,
+unlike ```bit<>``` or ```int<>``` types. ```match_kind```
+values are not useful to store in a variable, as they
 are only used to specify how to match fields in table search keys,
 which are all declared at compile time. ```void``` is not useful as
 part of another data structure.  Headers must have precisely defined
@@ -2239,8 +2239,8 @@ formats as sequences of bits in order for them to be parsed or
 deparsed.
 
 Note the two-argument ```extract``` method (see Section
-[#sec-packet-extract-two]) on packets only supports a single
-```varbit``` field in a header.
+[#sec-packet-extract-two]) on packets only supports a single ```varbit```
+field in a header.
 
 ### Synthesized data types { #sec-synth-types }
 
@@ -2249,7 +2249,7 @@ type representations which cannot be directly expressed by
 users. These are described in this section: set types and function
 types.
 
-#### Set types
+#### Set types { #sec-set-types }
 
 The type ```set<T>``` describes _sets_ of values of type ```T```. Set
 types can only appear in restricted contexts in P4 programs. For
@@ -3085,8 +3085,8 @@ tuple<bit<32>, bool> x = { 10, false };
 
 ## Operations on sets { #sec-set-exprs }
 
-Some P4 expressions denote sets of values (```set<T>```, for some type
-```T```; see Section [#sec-synth-types].1). These expressions can
+Some P4 expressions denote sets of values (```set<T>```, for some type ```T```;
+see Section [#sec-set-types]). These expressions can
 appear only in a few contexts---parsers and constant table
 entries. For example, the ```select``` expression (Section
 [#sec-select]) has the following structure:
@@ -3157,8 +3157,8 @@ select (hdr.ipv4.version) {
 
 ### Masks { #sec-cubes }
 
-The infix operator ```&&&``` takes two arguments of the same
-```bit<W>``` type, and creates a value of type ```set<bit<W>>```. The
+The infix operator ```&&&``` takes two arguments of the same ```bit<W>```
+type, and creates a value of type ```set<bit<W>>```. The
 right value is used as a "mask", where each bit set to `0` in the mask
 indicates a "don't care" bit. More formally, the set denoted by ```a
 &&& b``` is defined as follows:
@@ -3187,8 +3187,8 @@ values.
 ### Ranges { #sec-ranges }
 
 The infix operator ```..``` takes two arguments of the same type ```T```,
-where ```T``` is either ```bit<W>``` or ```int<W>```, and creates a value of type
-```set<T>```. The set contains all values numerically between the
+where ```T``` is either ```bit<W>``` or ```int<W>```, and creates a value of
+type ```set<T>```. The set contains all values numerically between the
 first and the second, inclusively. For example:
 
 ~ Begin P4Example
@@ -3760,8 +3760,8 @@ control c(...) {
 
 A P4 program may not instantiate controls and parsers at the top-level
 package. This restriction is designed to ensure that most state
-resides in the architecture itself, or is local to a ```parser``` or
-```control```. For example, the following program is not valid:
+resides in the architecture itself, or is local to a ```parser``` or ```control```.
+For example, the following program is not valid:
 
 ~ Begin P4Example
 // Program
@@ -3922,8 +3922,8 @@ the result of a table invocation (See Section [#sec-invoke-mau]).
 
 If a switch label is not followed by a block statement it falls
 through to the next label. However, if a block statement is present,
-it does not fall through. Note, that this is different from C-style
-```switch``` statements, where a ```break``` is needed to prevent
+it does not fall through. Note, that this is different from C-style ```switch```
+statements, where a ```break``` is needed to prevent
 fall-through. It is legal to have no matching label for some actions,
 or no ```default``` label. At runtime, if no case matches, execution
 of the program simply continues. However, no label can appear twice in
@@ -4047,8 +4047,8 @@ ParserModel {
 }
 ~ End P4Pseudo
 
-An architecture must specify the behavior when the
-```accept``` and ```reject``` states are reached. For example, an architecture may
+An architecture must specify the behavior when the ```accept```
+and ```reject``` states are reached. For example, an architecture may
 specify that all packets reaching the ```reject``` state are dropped
 without further processing. Alternatively, it may specify that
 such packets are passed to the next block after the
@@ -4268,8 +4268,8 @@ The P4 core library contains the following declaration of a built-in ```extern``
 type called ```packet_in``` that represents incoming network
 packets. The ```packet_in``` extern is special: it cannot be
 instantiated by the user explicitly. Instead, the architecture
-supplies a separate instance for each ```packet_in``` argument to a
-```parser``` instantiation.
+supplies a separate instance for each ```packet_in``` argument to
+a ```parser``` instantiation.
 
 ~ Begin P4Example
 extern packet_in {
@@ -4681,7 +4681,7 @@ It is illegal to instantiate a ```parser``` within a ```control```
 block.
 For a description of the ```optConstructorParameters```, which
 can be used to build parameterized control blocks, see Section
-[#sec-parametrization].
+[#sec-parameterization].
 
 Unlike control type declarations, control declarations may not be
 generic---e.g., the following declaration is illegal:
@@ -4752,11 +4752,11 @@ statements or expressions.
 Actions can be executed in two ways:
 
 - Implicitly: by tables during match-action processing.
-- Explicitly: either from a ```control``` block or from another
-  ```action```. In either case, the values for all action parameters
+- Explicitly: either from a ```control``` block or from another ```action```.
+  In either case, the values for all action parameters
   must be supplied explicitly, including values for the directionless
-  parameters. In this case, the directionless parameters behave like
-  ```in``` parameters.
+  parameters. In this case, the directionless parameters behave like ```in```
+  parameters.
 
 ## Tables { #sec-tables }
 
@@ -4870,8 +4870,8 @@ table Fwd {
 }
 ~ End P4Example
 
-Here the key comprises two fields from the ```ipv4header``` header:
-```dstAddress``` and ```version```. The ```match_kind``` constants
+Here the key comprises two fields from the ```ipv4header```
+header: ```dstAddress``` and ```version```. The ```match_kind``` constants
 serve three purposes:
 
 - They specify the algorithm used to match data plane values against
@@ -5142,8 +5142,8 @@ dense or sparse, could be implemented as hash-tables, associative
 memories, tries, etc.) In addition, some architectures may support extra table
 properties whose semantics lies outside the scope of this
 specification. For example, in architectures where table resources are
-statically allocated, programmers may be required to define a
-```size``` table property, which can be used by the compiler back-end
+statically allocated, programmers may be required to define a ```size```
+table property, which can be used by the compiler back-end
 to allocate storage resources. However, these architecture-specific
 properties may not change the semantics of table lookups, which always
 produce either a ```hit``` and an action or a ```miss```---they can
@@ -5315,8 +5315,8 @@ may have two sets of parameters:
 -	Optional parser constructor parameters
      (```optConstructorParameters```)
 
-Constructor parameters must be directionless (i.e., they cannot be
-```in```, ```out```, or ```inout```) and when the parser is
+Constructor parameters must be directionless (i.e., they cannot
+be ```in```, ```out```, or ```inout```) and when the parser is
 instantiated, it must be possible to fully evaluate the expressions
 supplied for these parameters at compilation time.
 
