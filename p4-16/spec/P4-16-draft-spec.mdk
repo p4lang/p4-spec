@@ -23,7 +23,7 @@ title,titlenote,titlefooter,authors,h1,h2,h3,h4,h5 {
 pre, code {
   language: p4;
   font-family: monospace;
-  font-size: 11pt;
+  font-size: 10pt;
 }
 }
 
@@ -47,11 +47,35 @@ Colorizer: p4
     font-weight: bold;
 }
 
+@if html {
 p4example {
   replace: "~ Begin P4ExampleBlock&nl;\
                  ````&nl;&source;&nl;````&nl;\
-                 ~ End P4ExampleBlock"
+                 ~ End P4ExampleBlock";
+  padding:6pt;
+  margin-top: 6pt;
+  margin-bottom: 6pt;
+  border: solid;
+  background-color: #ffffdd;
+  border-width: 0.5pt;
 }
+}
+
+@if tex {
+p4example {
+  replace: "~ Begin P4ExampleBlock&nl;\
+                 ````&nl;&source;&nl;````&nl;\
+                 ~ End P4ExampleBlock";
+  breakable: true;
+  padding: 6pt;
+  margin-top: 6pt;
+  margin-bottom: 6pt;
+  border: solid;
+  background-color: #ffffdd;
+  border-width: 0.5pt;
+}
+}
+
 
 @if html {
 p4pseudo {
@@ -59,6 +83,8 @@ p4pseudo {
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4PseudoBlock";
   padding: 6pt;
+  margin-top: 6pt;
+  margin-bottom: 6pt;
   border: solid;
   background-color: #e9fce9;
   border-width: 0.5pt;
@@ -72,6 +98,8 @@ p4pseudo {
                  ~ End P4PseudoBlock";
   breakable : true;
   padding: 6pt;
+  margin-top: 6pt;
+  margin-bottom: 6pt;
   background-color: #e9fce9;
   border: solid;
   border-width: 0.5pt;
@@ -84,7 +112,9 @@ p4grammar {
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4GrammarBlock";
   border: solid;
-  padding: 10pt;
+  margin-top: 6pt;
+  margin-bottom: 6pt;
+  padding: 6pt;
   background-color: #e6ffff;
   border-width: 0.5pt;
 }
@@ -96,7 +126,9 @@ p4grammar {
                  ````&nl;&source;&nl;````&nl;\
                  ~ End P4GrammarBlock";
   breakable: true;
-  padding: 10pt;
+  margin-top: 6pt;
+  margin-bottom: 6pt;
+  padding: 6pt;
   background-color: #e6ffff;
   border: solid;
   border-width: 0.5pt;
@@ -156,8 +188,8 @@ Throughout this document, the following terms will be used:
   given packet may contain a sequence of packet headers representing
   different network protocols.
 - **Packet payload**: Packet data that follows the packet headers.
-- **Packet-processing system**: A data-processing system oriented
-  towards processing network packets. In general, packet-processing
+- **Packet-processing system**: A data-processing system designed
+ for processing network packets. In general, packet-processing
   systems implement control plane and data plane algorithms.
 - **Target**: A packet-processing system capable of executing a P4
   program.
@@ -235,7 +267,7 @@ The core abstractions provided by the P4 language are:
 - **Tables** associate user-defined keys with actions. P4 tables
   generalize traditional switch tables; they can be used to implement
   routing tables, flow lookup tables, access-control lists, and other
-  user-defined table types, including complex multivariable decisions.
+  user-defined table types, including complex multi-variable decisions.
 - **Actions** are code fragments that describe how packet header
   fields and metadata are manipulated. Actions can include data, which
   is supplied by the control-plane at runtime.
@@ -309,9 +341,9 @@ significant advantages:
 - **Flexibility**: P4 makes many packet-forwarding policies
   expressible as programs, in contrast to traditional switches, which
   expose fixed-function forwarding engines to their users.
-- **Expressiveness**: P4 programs may express sophisticated
+- **Expressiveness**: P4 can express sophisticated,
   hardware-independent packet processing algorithms using solely
-  general-purpose operations and table look-ups. Such programs will be
+  general-purpose operations and table look-ups. Such programs are
   portable across hardware targets that implement the same
   architectures (assuming sufficient resources are available).
 - **Resource mapping and management**: P4 programs describe storage
@@ -320,7 +352,7 @@ significant advantages:
   low-level details such as allocation and scheduling.
 - **Software engineering**: P4 programs provide important benefits
   such as type checking, information hiding, and software reuse.
-- **Component libraries**: Manufacturer-supplied component libraries
+- **Component libraries**: Component libraries supplied by manufacturers
   can be used to wrap hardware-specific functions into portable
   high-level P4 constructs.
 - **Decoupling hardware and software evolution**: Target manufacturers
@@ -336,7 +368,7 @@ significant advantages:
 ~
 [p4transition]: figs/p4transition.png { width: 100%; page-align: forcehere }
 
-Compared to P4~14~, the previous version of the language, P4~16~ makes
+Compared to P4~14~, the earlier version of the language, P4~16~ makes
 a number of significant, backwards-incompatible changes to the syntax
 and semantics of the language. The evolution from the previous version
 (P4~14~) to the current one (P4~16~) is depicted in Figure
@@ -345,7 +377,7 @@ features have been eliminated from the language and moved into
 libraries including counters, checksum units, meters, etc.
 
 Hence, the language has been transformed from a complex language (more than 70
-keywords) into a relatively small core language (les than 40 keywords, shown in
+keywords) into a relatively small core language (less than 40 keywords, shown in
 Section [#sec-p4-keywords]) accompanied by a library of fundamental
 constructs that are needed for writing most P4.
 
@@ -634,7 +666,7 @@ Let us describe some of these elements:
 ~ Begin P4Example
 parser Parser<H>(packet_in b, out H parsedHeaders);
 ~ End P4Example
-
+\
 This declaration describes the interface for a parser, but not yet its
 implementation, which will be provided by
 the programmer. The parser reads its input from a `packet_in`, which is
@@ -651,6 +683,7 @@ control Pipe<H>(inout H headers,
                 in InControl inCtrl,
                 out OutControl outCtrl);
 ~ End P4Example
+\
 describes the interface of a Match-Action pipeline named `Pipe`.
 
 The pipeline receives three inputs: the headers `headers`, a parser
@@ -1051,7 +1084,7 @@ which we describe separately:
   this part of the language.
 - A sub-language for expressing parsers, based on state machines
   (Section [#sec-packet-parsing]).
-- A sub-language for expressing match-action computations, based on
+- A sub-language for expressing computations using match-action units, based on
   traditional imperative control-flow (Section [#sec-control]).
 - A sub-language for describing architectures (Section
   [#sec-arch-desc]).
@@ -1062,7 +1095,7 @@ which we describe separately:
 
 The complete grammar of P4~16~ is given in Appendix [#sec-grammar],
 using Yacc/Bison grammar description language. This text is based on
-the same gramar. We adopt several standard conventions when we provide
+the same grammar. We adopt several standard conventions when we provide
 excerpts from the grammar:
 
 - `UPPERCASE` symbols denote terminals in the grammar.
@@ -1099,8 +1132,7 @@ P4 compilers are free to reorganize the code they generate in any way as long as
 the externally visible behaviors of the P4 programs are preserved as
 described by this specification where externally visible behavior is defined as:
 
-- The input/output behavior of all P4 blocks, i.e., the values of the
-  outputs computed by a P4 parser/control block given a set of inputs, and
+- The input/output behavior of all P4 blocks, and
 - The state maintained by extern blocks.
 
 ## Preprocessing { #sec-preprocessor }
@@ -1117,8 +1149,8 @@ functionality:
 The preprocessor should also remove the sequence backslash newline (ASCII codes 92, 10)
 to facilitate splitting content across multiple lines when convenient for formatting.
 
-Additional capabilities of the C preprocessor may be supported, but
-are not guaranteed (e.g., macros with arguments).  Similar to C, `#include`
+Additional C preprocessor capabilities may be supported, but
+are not guaranteed---e.g., macros with arguments.  Similar to C, `#include`
 can specify a file name either within double quotes or within `<>`.
 
 ~ Begin P4Example
@@ -1803,7 +1835,7 @@ restrictions may include:
   support multiplications with small constants, or shifts with small
   values).
 
-The documentation supplied with each target should clearly specify such restrictions, and
+The documentation supplied with a target should clearly specify restrictions, and
 target-specific compilers should provide clear error messages when
 such restrictions are encountered. An architecture may reject a
 well-typed P4 program and still be conformant to the P4 spec. However,
@@ -2226,26 +2258,26 @@ The table below lists all types that may appear as members of headers,
 header unions, structs, and tuples.  Note that `int` means an
 infinite-precision integer, without a width specified.
 
-|-----|-----|-----|
-|                    | Container type |||
-|                    |           | header_ |                 |
-| Element type       | header    | union   | struct or tuple |
-+:-------------------+:----------+:--------+:----------------+
-| `bit<W>`       | allowed   | error   |  allowed        |
-| `int<W>`       | allowed   | error   |  allowed        |
-| `varbit<W>`    | allowed   | error   |  allowed        |
-| `int`          | error     | error   |  error          |
-| `void`         | error     | error   |  error          |
-| `error`        | error     | error   |  allowed        |
-| `match_kind`   | error     | error   |  error          |
-| `bool`         | error     | error   |  allowed        |
-| `enum`         | error     | error   |  allowed        |
-| `header`       | error     | allowed |  allowed        |
-| header stack       | error     | error   |  allowed        |
-| `header_union` | error     | error   |  allowed        |
-| `struct`       | error     | error   |  allowed        |
-| `tuple`        | error     | error   |  allowed        |
-|-----|-----|-----|
+|--------------------|--------------------------------------------|
+|                    | Container type                           |||
+|                    |-----------|--------------|-----------------|
+| Element type       | header    | header_union | struct or tuple |
++:-------------------+:----------+:-------------+:----------------+
+| `bit<W>`       | allowed   | error   |  allowed |
+| `int<W>`       | allowed   | error   |  allowed |
+| `varbit<W>`    | allowed   | error   |  allowed |
+| `int`          | error     | error   |  error   |
+| `void`         | error     | error   |  error   |
+| `error`        | error     | error   |  allowed |
+| `match_kind`   | error     | error   |  error   |
+| `bool`         | error     | error   |  allowed |
+| `enum`         | error     | error   |  allowed |
+| `header`       | error     | allowed |  allowed |
+| header stack   | error     | error   |  allowed |
+| `header_union` | error     | error   |  allowed |
+| `struct`       | error     | error   |  allowed |
+| `tuple`        | error     | error   |  allowed |
+|----------------|-----------|---------|----------|
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
@@ -2436,7 +2468,7 @@ in architectures may be generic
 (i.e., have type parameters).
 
 The types `parser`, `control`, and `package` cannot be
-used as the types of arguments for methods, parsers, controls, tables,
+used as types of arguments for methods, parsers, controls, tables,
 actions. They _can_ be used as types for the arguments passed to
 constructors (see Section [#sec-parameterization]).
 
@@ -2747,7 +2779,7 @@ The following operations are provided on bit-string expressions:
 - Test for inequality between bit-strings of the same width,
   designated by `!=`. The result is a Boolean value.
 - Unsigned comparisons `<,>,<=,>=`. Both operands must have the
-  same width; the result is a Boolean value.
+  same width and the result is a Boolean value.
 
 Each of the following operations produces a bit-string result when applied
 to bit-strings of the same width:
@@ -2764,7 +2796,7 @@ to bit-strings of the same width:
   same type as the operands. It is computed by adding the negation
   of the second operand (similar to C).
 - Multiplication, denoted by `*`. The result has the same width as the
-  operands and is computed by truncating the result to the width of the output.
+  operands and is computed by truncating the result to the output's width.
   P4 architectures may impose additional restrictions---e.g., they may
   only allow multiplication by a power of two.
 - Bitwise "and" between two bit-strings of the same width, denoted
@@ -2788,7 +2820,7 @@ Bit-strings also support the following operations:
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
   compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports asssigning to a slice: ` e[m:l] = x `.
+  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.
@@ -2979,7 +3011,7 @@ The following casts are legal in P4:
 To keep the language simple and avoid introducing hidden costs, P4
 only implicitly casts from `int` to fixed-width types. In particular,
 applying a binary operation to an expression of type `int` and an
-expression with a fixed-width type will implicity cast the `int`
+expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression.
 
 For example, given the following declarations,
@@ -3174,8 +3206,8 @@ select (hdr.ipv4.version) {
 
 ### Masks { #sec-cubes }
 
-The infix operator `&&&` takes two arguments of the same `bit<W>`
-type, and creates a value of type `set<bit<W>>`. The
+The infix operator `&&&` takes two arguments of type `bit<W>`,
+and creates a value of type `set<bit<W>>`. The
 right value is used as a "mask", where each bit set to `0` in the mask
 indicates a "don't care" bit. More formally, the set denoted by `a
 &&& b` is defined as follows:
@@ -3320,7 +3352,7 @@ are parsed:
 - `hs.next`: produces a reference to the element with index `hs.nextIndex`
   in the stack. May only be used in a `parser`. If the stack's `nextIndex`
   counter is greater than or equal to `size`, then evaluating this
-  expression results in a transition to the `reject` state and
+  expression results in a transition to `reject` and
   sets the error to `error.StackOutOfBounds`. If `hs` is an
   l-value, then `hs.next` is also an l-value.
 
@@ -3328,7 +3360,7 @@ are parsed:
   in the stack, if such an element exists. May only be used in a `parser`.
   If the `nextIndex` counter is less than `1`,
   or greater than `size`, then evaluating this expression results
-  in a transition to the `reject` state and sets the error to `error.StackOutOfBounds`.
+  in a transition to `reject` and sets the error to `error.StackOutOfBounds`.
   Unlike `hs.next`, the resulting reference is never an l-value.
 
 - `hs.lastIndex`: produces a 32-bit unsigned integer that encodes the index `hs.nextIndex - 1`.
@@ -4264,7 +4296,7 @@ extern void verify(in bool condition, in error err);
 
 If the first argument is `true`, then executing the statement
 has no side-effect. However, if the first argument is `false`, it causes
-an immediate transition to the `reject` state, which causes
+an immediate transition to `reject`, which causes
 immediate parsing termination; at the same time, the `parserError`
 associated with the parser is set to the value of the second argument.
 
@@ -4573,7 +4605,7 @@ to access `mpls.next` element when the stack's `nextIndex`
 counter is greater than or equal to `size` causes a transition to `reject`
 and sets the error to `error.StackOutOfBounds`. Likewise,
 attempting to access `mpls.last` when the `nextIndex` counter
-is equal to `0` causes a transition to the `reject` state and
+is equal to `0` causes a transition to `reject` and
 sets the error to `error.StackOutOfBounds`.
 
 The following example shows a simplified parser for MPLS processing:
@@ -4652,7 +4684,7 @@ parsers containing loops that cannot be unrolled at compilation time
 or that may contain cycles that do not advance the cursor.
 If a parser aborts execution dynamically because it exceeded
 the time budget allocated for parsing, the parser should transition to
-the `reject` state and set
+`reject` and set
 the standard error `error.ParserTimeout`.
 
 # Control blocks { #sec-control }
@@ -5047,7 +5079,7 @@ flow of the program.
 
 #### Entries
 
-While table entries are typically installed by the contol plane,
+While table entries are typically installed by the control plane,
 tables may also be initialized at compile-time with a set of entries.
 This is useful in situations where tables are
 used to implement fixed algorithms---defining table entries statically
@@ -5113,7 +5145,8 @@ struct Header_t {
 }
 struct Meta_t {}
 
-control ingress(inout Header_t h, inout Meta_t m, inout standard_metadata_t standard_meta) {
+control ingress(inout Header_t h, inout Meta_t m,
+                inout standard_metadata_t standard_meta) {
 
     action a() { standard_meta.egress_spec = 0; }
     action a_with_control_params(bit<9> x) { standard_meta.egress_spec = x; }
@@ -5284,7 +5317,7 @@ program:
 - Execution of the `exit` statement causes the immediate
   termination of the execution of the current `control` block and
   of all the enclosing caller `control` blocks.
-- Applying a `table` causes the execution of the corresponding
+- Applying a `table` executes the corresponding
   match-action unit, as described above.
 
 ## Invoking controls { #sec-invoke-controls }
@@ -5525,6 +5558,11 @@ using type variables, which must be used parametrically in the
 program---i.e., type variables are checked similar to Java generics,
 not C++ templates.
 
+~ Figure { #fig-switcharch; caption: "Switch architecture fragment implied by the previous set of declarations." }
+![switcharch]
+~
+[switcharch]: figs/switcharch.png { width: 80%; page-align: here }
+
 ## Example architecture description { #sec-arch-desc-example }
 
 The following example describes a switch by using two packages, each
@@ -5559,11 +5597,6 @@ package Switch<T>( // Top-level switch contains two packages
 );
 ~ End P4Example
 
-~ Figure { #fig-switcharch; caption: "Switch architecture fragment implied by the previous set of declarations." }
-![switcharch]
-~
-[switcharch]: figs/switcharch.png { width: 80%; page-align: here }
-
 Just from these declarations, even without reading a precise
 description of the target, the programmer can infer some useful
 information about the architecture of the described switch, as shown
@@ -5571,7 +5604,7 @@ in Figure [#fig-switcharch]:
 
 - The switch contains two separate `package`s `Ingress` and `Egress`
 - The `Parser`, `IPipe`, and `Deparser` in the `Ingress` package
-  are chained in this order. The `Ingress.IPipe` block has an
+  are chained together in order. In addition, the `Ingress.IPipe` block has an
   input of type `Ingress.IH`, which is an output of the `Ingress.Parser`.
 - Similarly, the `Parser`, `EPipe`, and `Deparser` are
   chained in the `Egress` package.
@@ -5586,12 +5619,12 @@ in Figure [#fig-switcharch]:
 Note that this architecture models a target switch that contains two
 separate channels between the ingress and egress pipeline:
 
-- A channel that can pass data directly (through the `T`-type
-  argument---on a software target with shared memory between ingress
-  and egress this could be implemented by passing directly a pointer;
-  on an architecture without shared memory presumably the compiler
-  will need to synthesize automatically serialization code).
-- A channel that can pass data indirectly through a parser/deparser
+- A channel that can pass data directly via its argument of type
+  `T`. (On a software target with shared memory between ingress and
+  egress this could be implemented by passing directly a pointer; on
+  an architecture without shared memory presumably the compiler will
+  need to synthesize automatically serialization code).
+- A channel that can pass data indirectly using a parser and deparser
   that serializes data into a packet and back.
 
 ## Example architecture program { #sec-target-instantiation }
@@ -6028,7 +6061,7 @@ Control plane software may refer to action `c_inst.a` as `a`
 when inserting rules into table `c_inst.t`, because it is clear
 from the definition of the table which action `a` refers to.
 
-Not all unambiguous postfix shortcuts are recommended.  Consider the
+Not all unambiguous postfix shortcuts are recommended. For instance, consider the
 first example in Section [#sec-cp-names].  One might be tempted to
 refer to `s.c1` simply as `c1`, as no other instance named `c1`
 appears in the program.  However, this leads to a brittle
@@ -6200,7 +6233,7 @@ control c( ... )() {
 c() c_inst;
 ~ End P4Example
 
-The `@hidden` annotation hides a controllable entity, eg. a table,
+The `@hidden` annotation hides a controllable entity, e.g. a table,
 key, action, or extern, from the control plane.  This effectively
 removes its fully-qualified name (Section [#sec-cp-names]).  It does
 not take any arguments.
@@ -6288,7 +6321,8 @@ error {
     ParserTimeout      /// Parser execution time limit exceeded.
 }
 extern packet_in {
-    /// Read a header from the packet into a fixed-sized header @hdr and advance the cursor.
+    /// Read a header from the packet into a fixed-sized header @hdr
+    /// and advance the cursor.
     /// May trigger error PacketTooShort or StackOutOfBounds.
     /// @T must be a fixed-size header type
     void extract<T>(out T hdr);
@@ -6396,8 +6430,8 @@ in the compiler before converging on the specification.
 Portability and composability are critical to P4's long-term success:
 - Composability: implement different features, such as In-band Network
   Telemetry (INT), Network Virtualization, and Load Balancing in separate P4
-  programs written for the PSA, should easily interoperate when invoked from a
-  toplevel program.
+  programs written for the PSA, should easily inter-operate when invoked from a
+  top-level program.
 - Portability: a P4 implementation of a certain function, such as INT, against
   PSA should work consistently across architectures that support the PSA.
 To that end, a specification for an architecture definition that enables
@@ -6450,7 +6484,7 @@ and results.
 The counter-argument to this proposal is that the semantics of `select`
 in the parser is sufficiently distinct from the `switch`
 statement, and moreover these are constructs that network programmers
-are already faminliar with, and they are typically mapped very
+are already familiar with, and they are typically mapped very
 efficiently onto a variety of targets.
 
 ## Undefined behaviors
