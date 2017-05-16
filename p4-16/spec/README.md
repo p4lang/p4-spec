@@ -43,3 +43,7 @@ Note that to build the PDF you need a functional TeX version innstalled.
 You need to install miktex [http://miktex.org/], madoko
 [https://www.madoko.net/] and node.js [https://nodejs.org/en/].  To
 build you can invoke the make.bat script.
+
+###
+- https://fontsup.com/font/utopia-std-display.html
+- https://www.fontsquirrel.com/fonts/luxi-mono
