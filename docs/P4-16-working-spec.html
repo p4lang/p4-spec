@@ -5166,7 +5166,7 @@ tablePropertyList
 tableProperty
     : KEY <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> keyElementList <span style="color:maroon">&#39;}&#39;</span>
     | ACTIONS <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> actionList <span style="color:maroon">&#39;}&#39;</span>
-    | CONST ENTRIES <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> entriesList <span style="color:maroon">&#39;}&#39;</span> <span style="color:darkgreen">/*</span><span style="color:darkgreen"> immutable entries </span><span style="color:darkgreen">*/</span>
+    | CONST ENTRIES <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> entriesList <span style="color:maroon">&#39;}&#39;</span> <span style="color:darkgreen">/*</span><span style="color:darkgreen"> immutable entries </span><span style="color:darkgreen">*/</span>
     | optAnnotations CONST IDENTIFIER <span style="color:maroon">&#39;=&#39;</span> initializer <span style="color:maroon">&#39;;&#39;</span>
     | optAnnotations IDENTIFIER <span style="color:maroon">&#39;=&#39;</span> initializer <span style="color:maroon">&#39;;&#39;</span>
     ;</code></pre></div></div>
@@ -5395,14 +5395,14 @@ table when the program is loaded onto the target.
 <div class="p4grammar" data-line="5094" style="border:solid;margin-top:6pt;margin-bottom:6pt;padding:6pt;background-color:#e6ffff;border-width:0.5pt">
 <div class="p4grammarblock" data-line="5095">
 <pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="5096" data-line-first="5097" style="display:block;font-family:monospace;font-size:10pt"><code data-line="5097">tableProperty
-   : <span style="color:teal;font-weight:bold">const</span> ENTRIES <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> entriesList <span style="color:maroon">&#39;}&#39;</span> <span style="color:darkgreen">/*</span><span style="color:darkgreen"> immutable entries </span><span style="color:darkgreen">*/</span>
+ : <span style="color:teal;font-weight:bold">const</span> ENTRIES <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> entriesLlist <span style="color:maroon">&#39;}&#39;</span> <span style="color:darkgreen">/*</span><span style="color:darkgreen"> immutable entries </span><span style="color:darkgreen">*/</span>
 
 entriesList
- : entry
- | entryList entry
+ : entry
+ | entryList entry
 
 entry
- : keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
+ : keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
 </code></pre></div></div>
 <p class="p noindent" data-line="5107"><span data-line="5107"></span>Table entries are immutable (const)<span data-line="5107"></span>&#8212;<span data-line="5107"></span>i.e., they can only be read and
 cannot be changed or removed by the control plane. It follows that
@@ -6397,12 +6397,12 @@ same output.
 </p>
 <p class="p indent" data-line="6109"><span data-line="6109"></span>In contrast, <span data-line="6109"></span><code class="code code1 language-p4 lang-p4 p4 colorized" style="font-family:monospace;font-size:10pt"><span style="color:blue;font-weight:bold">extern</span></code><span data-line="6109"></span> blocks instantiated by a P4 program are
 global, shared across all threads. If <span data-line="6110"></span><code class="code code1 language-p4 lang-p4 p4 colorized" style="font-family:monospace;font-size:10pt"><span style="color:blue;font-weight:bold">extern</span></code><span data-line="6110"></span> blocks mediate
-access to state (e.g., counters, registers)–<span data-line="6111"></span>&#8211;<span data-line="6111"></span>i.e., the methods of
+access to state (e.g., counters, registers)<span data-line="6111"></span>&#8212;<span data-line="6111"></span>i.e., the methods of
 the <span data-line="6112"></span><code class="code code1 language-p4 lang-p4 p4 colorized" style="font-family:monospace;font-size:10pt"><span style="color:blue;font-weight:bold">extern</span></code><span data-line="6112"></span> block read and write state, these stateful operations
 are subject to data races. P4 mandates the following behaviors:
 </p>
 <ul class="ul list-dash compact" data-line="6115">
-<li class="li ul-li list-dash-li compact-li" data-line="6115"><span data-line="6115"></span>Execution of an action is atomic<span data-line="6115"></span>&#8212;<span data-line="6115"></span>i.e., the other threads can “see”
+<li class="li ul-li list-dash-li compact-li" data-line="6115"><span data-line="6115"></span>Execution of an action is atomic<span data-line="6115"></span>&#8212;<span data-line="6115"></span>i.e., the other threads can <span data-line="6115"></span>&#8220;see&#8221;<span data-line="6115"></span>
 the state as it is either before the start of the action or after
 the completion of the action.
 </li>
