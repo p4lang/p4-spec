@@ -20,9 +20,11 @@ script:
   - git checkout gh-pages
   - git rebase master
   - docker run -v `pwd`/p4-16/spec:/usr/src/p4-spec p4lang/madoko-debian:sid-with-fonts make
+  - docker run -v `pwd`/api/charter:/usr/src/p4-spec p4lang/madoko-debian:sid-with-fonts make
 
 after_success:
   - cp p4-16/spec/build/P4-16-spec.html docs/P4-16-working-spec.html
   - cp p4-16/spec/build/P4-16-spec.pdf docs/P4-16-working-spec.pdf
-  - git commit -m "docs for $TRAVIS_COMMIT" docs/P4-16-working-spec.{html,pdf}
+  - cp api/charter/build/P4_API_WG_charter.html docs/P4_API_WG_charter.html
+  - git commit -m "docs for $TRAVIS_COMMIT" docs/P4-16-working-spec.{html,pdf} docs/P4_API_WG_charter.html
   - git push public +gh-pages
