@@ -8,7 +8,7 @@ documentation are available on the
 [wiki](https://github.com/p4lang/p4-spec/wiki).
 
 Files:
-- ```P4-16-draft-spec.mdk``` is the main file. It's markup, with three custom
+- ```P4-16-spec.mdk``` is the main file. It is markup, with three custom
   environments: P4Example (code examples), P4Grammar (grammar
   fragments), and P4PseudoCode (P4 semantics described in pseudo-code).
 - ```grammar.mdk``` is the whole grammar in a single file included at
@@ -20,7 +20,7 @@ Files:
   off from the cpp.json provided by Madoko (the "extend" clause does
   not work, my version of Madoko asks for a "tokenizer" to be
   defined). Style customization for each token can be done using CSS
-  style attributes (see token.keyword in line 20 of ```P4-16-draft-spec.mdk```).
+  style attributes (see token.keyword in line 20 of ```P4-16-spec.mdk```).
 - ```figs/*.png``` exported figures from the P4-16-draft-spec.pptx
 - ```Makefile``` builds documentation in the build subdirectory
 
@@ -36,7 +36,7 @@ using npm:
 brew install node.js
 npm install madoko -g
 ```
-Note that to build the PDF you need a functional TeX version innstalled.
+Note that to build the PDF you need a functional TeX version installed.
 
 ### Windows
 

@@ -1,1 +1,1 @@
-madoko --pdf -vv --odir=build P4-16-draft-spec.mdk
+madoko --pdf -vv --png --odir=build P4-16-spec.mdk
