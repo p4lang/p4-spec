@@ -38,6 +38,15 @@ npm install madoko -g
 ```
 Note that to build the PDF you need a functional TeX version installed.
 
+If you check out the ```gh-pages``` branch of this repository, the
+following two files can be found in the root directory.  You may
+install them on a Mac using Font Book:
+
+```
+UtopiaStd-Regular.otf
+luximr.ttf
+```
+
 ### Windows
 
 You need to install miktex [http://miktex.org/], madoko
