@@ -5,7 +5,7 @@
 %%ptcomment See pretext.py for more information
 
 \documentclass[12pt]{article}
-
+\usepackage[T1]{fontenc}
 \usepackage[bottom=3cm]{geometry}
 \usepackage{p4doc}
 \usepackage{fleqn}
@@ -41,11 +41,11 @@
 \vspace{3mm}
 \centerline{\sffamily\Large Version 1.0.4}
 \vspace{3mm}
-\centerline{\sffamily\large March XX, 2017}
+\centerline{\sffamily\large May 24, 2017}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{March XX, 2017}
+\date{May 24, 2017}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
@@ -1364,7 +1364,7 @@ this impossible; for example, a target may not allow references to the same
 global resource in both the ingress and egress pipelines.
 
 Counters, meters and registers are referenced in special primitive actions as defined 
-in Section~\ref{sec:primitiveactions}.}
+in Section~\ref{sec:primitiveactions}.
 
 \SUBSECTION{Counters}{counters}
 
@@ -3306,7 +3306,7 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
 1.0.3 & 2016-11-3 & See \ref{sec:change-summary-1.0.3} for details. \\ \hline
-1.0.4 & 2017-MM-DD & See \ref{sec:change-summary-1.0.4} for details. \\ \hline
+1.0.4 & 2017-05-24 & See \ref{sec:change-summary-1.0.4} for details. \\ \hline
 }
 \end{tabular}
 \end{center}
@@ -3317,13 +3317,21 @@ Control flow begins with the control function \texttt{ingress}.
 \SUBSUBSECTION{Summary of changes introduced in 1.0.4}{change-summary-1.0.4}
 
 \begin{itemize}
-\item Parallel and sequntial semantics (Section \ref{sec:actionsemantics})
+\item Primitive Actions (Section \ref{sec:primitiveactions})
+\begin{itemize}
+\item Modify semantics of primitive actions so that accessing an invalid header produces an undefined value and invalid headers are omitted from field list calculations.
+\end{itemize}
+\item Parallel and Sequntial Semantics (Section \ref{sec:actionsemantics})
 \begin{itemize}
 \item Change action semantics from parallel to sequential, to match current implementations (e.g., \texttt{bmv2}).
 \end{itemize}
-\item Testing validity (Section \ref{sec:testing})
+\item Testing Validity (Section \ref{sec:testing})
 \begin{itemize}
-\item The value of an invalid header is undefined when used for matching in a table.
+\item Change semantics so that an invalid header has an undefined value when used for matching in a table.
+\end{itemize}
+\item Table Declarations (Section \ref{sec:tabledecs})
+\begin{itemize}
+\item Added a pseudo-field \texttt{hdr.valid} that can be matched against in a table.
 \end{itemize}
 \end{itemize}
 

@@ -1,6 +1,6 @@
 
 \documentclass[12pt]{article}
-
+\usepackage[T1]{fontenc}
 \usepackage[bottom=3cm]{geometry}
 \usepackage{p4doc}
 \usepackage{fleqn}
@@ -36,11 +36,11 @@
 \vspace{3mm}
 \centerline{\sffamily\Large Version 1.0.4}
 \vspace{3mm}
-\centerline{\sffamily\large March XX, 2017}
+\centerline{\sffamily\large May 24, 2017}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{March XX, 2017}
+\date{May 24, 2017}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
@@ -655,9 +655,9 @@ valid bit for a metadata field, defining a separate metadata flag to
 represent that field's validity is a reasonable work around.
 \end{adjustwidth}
 
-When an invalid packet header is matched in a table (i.e., when a value is
-specified for exact or ternary matches against the field), its value is
-undefined. A match operation may explicitly check if a header
+When an invalid packet header is used as a part of the match key for a table,
+the value of the header is undefined.
+A match operation may explicitly check if a header
 instance (or field) is valid. Only valid packet headers are considered
 for deparsing (see Section~\ref{sec:deparsing}).
 
@@ -1397,7 +1397,7 @@ this impossible; for example, a target may not allow references to the same
 global resource in both the ingress and egress pipelines.
 
 Counters, meters and registers are referenced in special primitive actions as defined 
-in Section~\ref{sec:primitiveactions}.}
+in Section~\ref{sec:primitiveactions}.
 
 \SUBSECTION{Counters}{counters}
 
@@ -1913,8 +1913,7 @@ is less than that of the destination, it will be coerced to the larger field
 size according to its signedness.
 
 If the parent header instance of \texttt{dest} is not valid, the action has no effect. 
-If \texttt{value} is a field reference and its parent header is not valid, the operation 
-has no effect.
+If \texttt{value} is a field reference and its parent header is not valid, the operation leaves \texttt{dest} with an undefined value.
 
 If \texttt{mask} is specified, then the field becomes \texttt{(current_value \& $\sim$ mask) | 
 (value \& mask)}.  If \texttt{mask} is not specified, the operation has the effect 
@@ -1935,7 +1934,7 @@ Add a value to a field.
 { % Description
 The \texttt{dest} field's value is updated by adding the value parameter. The \texttt{value} parameter 
 may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If \texttt{value} is a field reference 
-and its parent header is not valid, then no change is made to \texttt{dest}. A description 
+and its parent header is not valid, then the operation leaves \texttt{dest} with an undefined value. A description
 of the logical behavior follows in the Section~\ref{sec:fieldasgmt} below.
 If \texttt{value} is an immediate value, it may 
 be negative.
@@ -1956,8 +1955,8 @@ Add value1 and value2 and store in dest.
 The \texttt{dest} field's value is updated with the result of adding
 the two value parameters. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}.  A description of the logical
+is a field reference and its parent header is not valid, then
+the operation leaves \texttt{dest} with an undefined value.  A description of the logical
 behavior follows in the Section~\ref{sec:fieldasgmt} below.  If a
 \texttt{value} is an immediate value, it may be negative.
 }
@@ -1976,7 +1975,7 @@ Subtract a value from a field.
 The \texttt{dest} field's value is updated by subtracting the value parameter. The \texttt{value} parameter 
 may be from a table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  
 If \texttt{value} is a field reference 
-and its parent header is not valid, then no change is made to \texttt{dest}. 
+and its parent header is not valid, then the operation leaves \texttt{dest} with an undefined value.
 If a \texttt{value} is an immediate value, it may be negative.
 
 }
@@ -1996,8 +1995,8 @@ Subtract value2 from value1 and store in dest.
 The \texttt{dest} field's value is updated with the result of subtracting
 \texttt{value2} from \texttt{value1}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above.  If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. If a
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. If a
 \texttt{value} is an immediate value, it may be negative.
 }
 
@@ -2020,6 +2019,9 @@ The hash value is used to generate a value between \texttt{base} and
 The result can be used as a hash digest of a long key (such as 5-tuple) or as 
 an offset/index to reference a register array. Normal value conversion 
 takes place when setting \texttt{dest} to the result.
+
+If any of the fields in the \texttt{field_list_calc} have a parent
+header that is not valid, then those fields are left out of the field list for the purposes of calculating the hash value.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2039,6 +2041,10 @@ and stored in \texttt{dest}.
 Targets may impose different restrictions to \texttt{lower_bound} to \texttt{upper_bound}: 
 for example, a target may require \texttt{lower_bound} 
 to be zero and \texttt{upper_bound} to be 2**n - 1.
+
+If either of \texttt{lower_bound} or \texttt{upper_bound} is a field reference
+and its parent header is not valid, then the operation leaves
+\texttt{dest} with an undefined value.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2056,8 +2062,8 @@ Compute a bitwise AND of two values.
 The \texttt{dest} field's value is updated with the result of bitwise AND of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}.
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value.
 Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
 be the same bit width.
 }
@@ -2077,8 +2083,8 @@ Compute a bitwise OR of two values.
 The \texttt{dest} field's value is updated with the result of bitwise OR of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value.
 Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
 be the same bit width.
 }\\
@@ -2098,8 +2104,8 @@ Compute a bitwise XOR of two values.
 The \texttt{dest} field's value is updated with the result of bitwise XOR of
 \texttt{value1} and \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value.
 Targets may require \texttt{dest}, \texttt{value1} and \texttt{value2} to
 be the same bit width.
 }\\
@@ -2119,8 +2125,8 @@ Bitwise shift left of \texttt{value1} by \texttt{value2} number of bits.
 The \texttt{dest} field's value is updated with the result of 
 \texttt{value1} $<<$ \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. \texttt{value2} must be positive. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. \texttt{value2} must be positive.
 }\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2138,8 +2144,8 @@ Bitwise shift right of \texttt{value1} by \texttt{value2} number of bits.
 The \texttt{dest} field's value is updated with the result of 
 \texttt{value1} $>>$ \texttt{value2}. Each \texttt{value} parameter may be from a
 table parameter, an immediate value or a field reference; see \texttt{modify_field} above. If either \texttt{value}
-is a field reference and its parent header is not valid, then no
-change is made to \texttt{dest}. \texttt{value2} must be positive. 
+is a field reference and its parent header is not valid, then the operation
+leaves \texttt{dest} with an undefined value. \texttt{value2} must be positive.
 }\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2740,14 +2746,19 @@ possibly other attributes. The action specification (or action profile
 specification) in a table indicates which action functions are available to this
 table's entries.
 
-Note that masks may be specified for fields in the table declaration. This 
-should not be confused with masks for ternary matches. The masks specified 
-in table declarations are statically applied to fields before the start of 
-the match process. This allows arbitrary subfields to be used in exact match 
-tables. This is intended for exact match tables; it is allowed for ternary 
-matches in the syntax, though it is functionally redundant.
+The table declaration specifies a list of field matches that are used
+for matching packets. A field match is either a reference to a header,
+the validity bit for a header, a reference to a field, or a masked
+reference to a field. Note that masked field references should not be
+confused with masks for ternary matches. The masks specified in table
+declarations are statically applied to fields before the start of the
+match process. This allows arbitrary subfields to be used in exact
+match tables. This is intended for exact match tables; it is allowed
+for ternary matches in the syntax, though it is functionally
+redundant.
 
-Match semantics are always the conjunction (AND) of all field match specifications.
+Match semantics are always the conjunction (AND) of all field match
+specifications.
 
 Here is the BNF for a table declaration:
 
@@ -2766,7 +2777,7 @@ table_declaration ::=
 
 field_match ::= field_or_masked_ref : field_match_type ;
 field_or_masked_ref ::= 
-    header_ref | field_ref | field_ref @\textbf{mask}@ const_value
+    header_ref | header_ref "@\textbf{.}@" @\textbf{valid}@ | field_ref | field_ref @\textbf{mask}@ const_value
 
 field_match_type ::= exact | ternary | lpm | range | @\textbf{valid}@
 
@@ -3366,7 +3377,7 @@ Control flow begins with the control function \texttt{ingress}.
 1.0.1 & 2015-01-28 & Added action profiles and action selectors. Added attribute \texttt{support_timeout} to tables. \\  \hline
 1.0.2 & 2015-03-03 & Added \texttt{push} and \texttt{pop} primitive actions. \\  \hline
 1.0.3 & 2016-11-3 & See \ref{sec:change-summary-1.0.3} for details. \\ \hline
-1.0.4 & 2017-MM-DD & See \ref{sec:change-summary-1.0.4} for details. \\ \hline
+1.0.4 & 2017-05-24 & See \ref{sec:change-summary-1.0.4} for details. \\ \hline
 }
 \end{tabular}
 \end{center}
@@ -3377,13 +3388,21 @@ Control flow begins with the control function \texttt{ingress}.
 \SUBSUBSECTION{Summary of changes introduced in 1.0.4}{change-summary-1.0.4}
 
 \begin{itemize}
-\item Parallel and sequntial semantics (Section \ref{sec:actionsemantics})
+\item Primitive Actions (Section \ref{sec:primitiveactions})
+\begin{itemize}
+\item Modify semantics of primitive actions so that accessing an invalid header produces an undefined value and invalid headers are omitted from field list calculations.
+\end{itemize}
+\item Parallel and Sequntial Semantics (Section \ref{sec:actionsemantics})
 \begin{itemize}
 \item Change action semantics from parallel to sequential, to match current implementations (e.g., \texttt{bmv2}).
 \end{itemize}
-\item Testing validity (Section \ref{sec:testing})
+\item Testing Validity (Section \ref{sec:testing})
 \begin{itemize}
-\item The value of an invalid header is undefined when used for matching in a table.
+\item Change semantics so that an invalid header has an undefined value when used for matching in a table.
+\end{itemize}
+\item Table Declarations (Section \ref{sec:tabledecs})
+\begin{itemize}
+\item Added a pseudo-field \texttt{hdr.valid} that can be matched against in a table.
 \end{itemize}
 \end{itemize}
 
@@ -3682,7 +3701,7 @@ table_declaration ::=
 
 field_match ::= field_or_masked_ref : field_match_type ;
 field_or_masked_ref ::= 
-    header_ref | field_ref | field_ref @\textbf{mask}@ const_value
+    header_ref | header_ref "@\textbf{.}@" @\textbf{valid}@ | field_ref | field_ref @\textbf{mask}@ const_value
 
 field_match_type ::= exact | ternary | lpm | range | @\textbf{valid}@
 
