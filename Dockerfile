@@ -11,8 +11,8 @@ WORKDIR /usr/src/p4-spec
 # add extra fonts for P4_14 look-alike
 RUN apt-get update --fix-missing
 RUN mkdir -p /usr/share/fonts/truetype/UtopiaStd /usr/share/fonts/truetype/LuxiMono
-COPY UtopiaStd-Regular.otf /usr/share/fonts/truetype/UtopiaStd/
-COPY luximr.ttf /usr/share/fonts/truetype/LuxiMono/
+COPY fonts/UtopiaStd-Regular.otf /usr/share/fonts/truetype/UtopiaStd/
+COPY fonts/luximr.ttf /usr/share/fonts/truetype/LuxiMono/
 RUN apt-get install -y texlive-math-extra fontconfig git
-COPY fix_helvetica.conf /etc/fonts/local.conf
+COPY fonts/fix_helvetica.conf /etc/fonts/local.conf
 RUN fc-cache -fv
