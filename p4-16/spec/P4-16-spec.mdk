@@ -3607,8 +3607,11 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
          transition start;
     }
     state parse_tcp_option_sack {
-         bit<32> n = (bit<32>)b.lookahead<Tcp_option_sack_top>().length;
-         b.extract(vec.next.sack, n);
+         bit<8> n = b.lookahead<Tcp_option_sack_top>().length;
+         // n is the total length of the TCP SACK option in bytes.
+         // The length of the varbit field 'sack' of the
+         // Tcp_option_sack_h header is thus n-2 bytes.
+         b.extract(vec.next.sack, (bit<32>) (8 * n - 16));
          transition start;
     }
 }
@@ -4544,8 +4547,8 @@ state start {
 }
 ...
 state parse_tcp_option_sack {
-    bit<32> n = (bit<32>)b.lookahead<Tcp_option_sack_top>().length;
-    b.extract(vec.next.sack, n);
+    bit<8> n = b.lookahead<Tcp_option_sack_top>().length;
+    b.extract(vec.next.sack, (bit<32>) (8 * n - 16));
     transition start;
 }
 ~ End P4Example
