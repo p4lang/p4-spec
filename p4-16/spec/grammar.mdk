@@ -74,7 +74,7 @@ packageTypeDeclaration
 
 instantiation
     : typeRef '(' argumentList ')' name ';'
-    : annotations typeRef '(' argumentList ')' name ';'
+    | annotations typeRef '(' argumentList ')' name ';'
     ;
 
 optConstructorParameters
@@ -238,6 +238,7 @@ typeRef
     | typeName
     | specializedType
     | headerStackType
+    | tupleType
     ;
 
 prefixedType
@@ -258,7 +259,7 @@ headerStackType
     ;
 
 specializedType
-    : prefixedTYpe '<' typeArgumentList '>'
+    : prefixedType '<' typeArgumentList '>'
     ;
 
 baseType
@@ -353,7 +354,7 @@ typedefDeclaration
     : annotations TYPEDEF typeRef name ';'
     | TYPEDEF typeRef name ';'
     | annotations TYPEDEF derivedTypeDeclaration name ';'
-    | TYPEDEF derivedTypeDeclarationame ';'
+    | TYPEDEF derivedTypeDeclarationame name ';'
     ;
 
 /*************************** STATEMENTS *************************/
