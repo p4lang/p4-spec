@@ -58,7 +58,7 @@ The Portable Switch Architecture (PSA) Model has six programmable P4
 blocks and two fixed-function blocks, as shown in Figure
 [#fig-switch]. Programmable blocks are hardware blocks whose function
 can be programmed using the P4 language. The Packet buffer and
-Replication Engine (PRE) and the Buffer Queueing Engine (BQE) are
+Replication Engine (PRE) and the Buffer Queuing Engine (BQE) are
 target dependent functional blocks that may be configured for a fixed
 set of operations.
 
@@ -67,7 +67,7 @@ then passed to an ingress match action pipeline, which makes decisions
 on where the packets should go. After the ingress pipeline, the packet
 may be buffered and/or replicated (sent to multiple egress ports). For
 each such egress port, the packet passes through an egress match
-action pipleline and a checksum update calculation before it is
+action pipeline and a checksum update calculation before it is
 deparsed and queued to leave the pipeline..
 
 ~ Figure { #fig-switch; caption: "Portable Switch Pipeline"; page-align: here; }
@@ -75,9 +75,9 @@ deparsed and queued to leave the pipeline..
 ~
 [switch]: psa_pipeline.png { width: 100%; }
 
-A programmer targetting the PSA is required to instantiate objects for
+A programmer targeting the PSA is required to instantiate objects for
 the programmable blocks that conform to these APIs. Note that the
-programmable block APIs are templetized on user defined headers and
+programmable block APIs are templatized on user defined headers and
 metadata. The PSA offers flexibility in defining the user metadata,
 however, one may chose to use a common metadata types for subsets of
 the objects.
@@ -108,7 +108,7 @@ const   PortId_t         PORT_CPU = unspecified;
 ## PSA supported metadata types
 
 ```
-typedef enum { NORMALINSTANCE_, CLONE_INSTANCE } InstanceType_t;
+typedef enum { NORMAL_INSTANCE, CLONE_INSTANCE } InstanceType_t;
 
 struct psa_parser_input_metadata_t {
   PortId_t                 ingress_port;
@@ -151,7 +151,7 @@ match_kind {
 enum CloneMethod_t {
   /// Clone method         Packet source             Insertion point
   Ingress2Ingress,  /// original ingress,            Ingress parser
-  Ingres2Egress,    /// post parse original ingres,  Buffering queue
+  Ingress2Egress,    /// post parse original ingress,  Buffering queue
   Egress2Ingress,   /// post deparse in egress,      Ingress parser
   Egress2Egress     /// inout to deparser in egress, Buffering queue
 }
@@ -175,7 +175,7 @@ hardware.
 The PRE is instantiated by the architecture and a P4 program can use
 it directly. It is an error to instantiate the PRE multiple times.
 The PRE is made available to the Ingress programmable block using the
-same mechanism as packet_in. A corresponding Buffering and Queueing
+same mechanism as packet_in. A corresponding Buffering and Queuing
 Engine (BQE) extern is defined for the Egress pipeline (@see
 BufferingQueueingEngine).
 
@@ -188,7 +188,7 @@ penalties, however, they should be functionally correct.
 Semantics of behavior for multiple calls to PRE APIs
 
 The semantics of calling the PRE APIs is equivalent to setting
-intrinsic metadata fields/bits and assumming that the PRE looks up the
+intrinsic metadata fields/bits and assuming that the PRE looks up the
 fields in the following order: drop, truncate, multicast, clone,
 output_port.
 
@@ -363,7 +363,7 @@ The length parameter represents the packet length.
 void truncate(in bit<32> length);
 ```
 
-## Buffering Queueing Engine
+## Buffering Queuing Engine
 
 The BufferingQueueingEngine extern represents the the other
 non-programmable part of the PSA pipeline (after Egress).
@@ -380,7 +380,7 @@ The BQE is instantiated by the architecture and a P4 program can
 use it directly. It is an error to instantiate the BQE multiple
 times.  The BQE is made available to the Egress programmable block
 using the same mechanism as packet_in. A corresponding Packet
-Replication Engine (PRE) extern is defined for the Igress pipeline
+Replication Engine (PRE) extern is defined for the Ingress pipeline
 (@see PacketReplicationEngine).
 
 Note: some of these operations may not be implemented as primitive
@@ -463,8 +463,8 @@ Example usage:
 
 ```
 parser P() {
-  Hash<crc16, bit<56>> h();
-  bit<56> hash_value = h.getHash(16, buffer, 100);
+  Hash<crc16, bit<16>> h();
+  bit<16> hash_value = h.getHash(16, buffer, 100);
 }
 ```
 
@@ -510,7 +510,7 @@ extern Checksum<W> {
 Counters are a simple mechanism for keeping statistics about the
 packets that trigger a table in a Match Action unit.
 
-Direct counters fire when the count method is ivoked in an action, and
+Direct counters fire when the count method is invoked in an action, and
 have an instance for each entry in the table.
 
 
@@ -642,7 +642,7 @@ metadata and be available for matching in subsequent tables.
 
 A simple usage example might be to verify that a "first packet" was seen
 for a particular type of flow. A register cell would be allocated to
-the flow, initialized to "clear". When the protocol signalled a "first
+the flow, initialized to "clear". When the protocol signaled a "first
 packet", the table would match on this value and update the flow’s
 cell to "marked". Subsequent packets in the flow could would be mapped
 to the same cell; the current cell value would be stored in metadata
