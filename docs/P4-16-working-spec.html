@@ -296,7 +296,7 @@
 <div class="authors align-center" data-line="146" style="text-align:center;width:80%;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><table class="authorrow columns block" data-line="146" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="146" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="146" style="font-size:large;line-adjust:0"><span data-line="146"></span>The P4 Language Consortium</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="155" style="text-align:center;margin-top:0.5ex;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><span data-line="155"></span>2017-06-27</div></div>
+<div class="titlefooter align-center" data-line="155" style="text-align:center;margin-top:0.5ex;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><span data-line="155"></span>2017-06-28</div></div>
 <div class="abstract" data-line="140" style="margin-left:3em;margin-right:3em;font-size:small">
 <p class="p noindent" data-line="141"><span data-line="141"></span><strong class="strong-star2">Abstract.</strong><span data-line="141"></span> P4 is a language for programming the data plane of network
 devices. This document provides a precise definition of the P4<span data-line="142"></span><sub>16</sub><span data-line="142"></span>
@@ -6661,17 +6661,17 @@ signature such as:
 <div class="p4example" data-line="6392" style="padding:6pt;margin-top:6pt;margin-bottom:6pt;border:solid;background-color:#ffffdd;border-width:0.5pt">
 <div class="p4exampleblock" data-line="6393">
 <pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="6394" data-line-first="6395" style="display:block;font-family:monospace;font-size:10pt"><code data-line="6395">ck16.clear();           <span style="color:darkgreen">// prepare checksum unit</span>
-ck16.update(<span style="color:teal;font-weight:bold">header</span>.ipv4); <span style="color:darkgreen">// write header</span>
+ck16.update(h.ipv4);    <span style="color:darkgreen">// write header</span>
 <span style="color:blue;font-weight:bold">verify</span>(ck16.get() == <span class="constant" style="color:purple">16</span>w0, <span style="color:teal;font-weight:bold">error</span>.IPv4ChecksumError); <span style="color:darkgreen">// check for 0 checksum</span>
 </code></pre></div></div>
 <p class="p noindent" data-line="6399"><span data-line="6399"></span>IP checksum generation could be done as:
 </p>
 <div class="p4example" data-line="6401" style="padding:6pt;margin-top:6pt;margin-bottom:6pt;border:solid;background-color:#ffffdd;border-width:0.5pt">
 <div class="p4exampleblock" data-line="6402">
-<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="6403" data-line-first="6404" style="display:block;font-family:monospace;font-size:10pt"><code data-line="6404"><span style="color:teal;font-weight:bold">header</span>.ipv4.hdrChecksum = <span class="constant" style="color:purple">16</span>w0;
+<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="6403" data-line-first="6404" style="display:block;font-family:monospace;font-size:10pt"><code data-line="6404">h.ipv4.hdrChecksum = <span class="constant" style="color:purple">16</span>w0;
 ck16.clear();
-ck16.update(<span style="color:teal;font-weight:bold">header</span>.ipv4);
-<span style="color:teal;font-weight:bold">header</span>.ipv4.hdrChecksum = ck16.get();</code></pre></div></div>
+ck16.update(h.ipv4);
+h.ipv4.hdrChecksum = ck16.get();</code></pre></div></div>
 <p class="p noindent" data-line="6408"><span data-line="6408"></span>Moreover, some switch architectures do not perform checksum
 verification, but only update checksums incrementally to reflect
 packet modifications. This could be achieved as well, as the following
@@ -6680,11 +6680,11 @@ P4 program fragments illustrates:
 <div class="p4example" data-line="6413" style="padding:6pt;margin-top:6pt;margin-bottom:6pt;border:solid;background-color:#ffffdd;border-width:0.5pt">
 <div class="p4exampleblock" data-line="6414">
 <pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="6415" data-line-first="6416" style="display:block;font-family:monospace;font-size:10pt"><code data-line="6416">ck16.clear();
-ck16.update(<span style="color:teal;font-weight:bold">header</span>.ipv4.hdrChecksum);  <span style="color:darkgreen">// original checksum</span>
-ck16.remove( { <span style="color:teal;font-weight:bold">header</span>.ipv4.ttl, <span style="color:teal;font-weight:bold">header</span>.ipv4.proto } );
-<span style="color:teal;font-weight:bold">header</span>.ipv4.ttl = <span style="color:teal;font-weight:bold">header</span>.ipv4.ttl - <span class="constant" style="color:purple">1</span>;
-ck16.update( { <span style="color:teal;font-weight:bold">header</span>.ipv4.ttl, <span style="color:teal;font-weight:bold">header</span>.ipv4.proto } );
-<span style="color:teal;font-weight:bold">header</span>.ipv4.hdrChecksum = ck16.get();</code></pre></div></div><h2 id="sec-appendix--open-issues" class="h1" data-line="6422" data-heading-depth="1" style="display:block;font-family:helvetica, sans-serif;font-weight:bold"><span data-line="6422"></span><span class="heading-before"><span class="heading-label">D</span>.&#8194;</span><span data-line="6422"></span>Appendix: Open Issues</h2>
+ck16.update(h.ipv4.hdrChecksum);  <span style="color:darkgreen">// original checksum</span>
+ck16.remove( { h.ipv4.ttl, h.ipv4.proto } );
+h.ipv4.ttl = h.ipv4.ttl - <span class="constant" style="color:purple">1</span>;
+ck16.update( { h.ipv4.ttl, h.ipv4.proto } );
+h.ipv4.hdrChecksum = ck16.get();</code></pre></div></div><h2 id="sec-appendix--open-issues" class="h1" data-line="6422" data-heading-depth="1" style="display:block;font-family:helvetica, sans-serif;font-weight:bold"><span data-line="6422"></span><span class="heading-before"><span class="heading-label">D</span>.&#8194;</span><span data-line="6422"></span>Appendix: Open Issues</h2>
 <p class="p noindent" data-line="6424"><span data-line="6424"></span>There are a number of open issues that are currently under discussion
 in the P4 design working group. A brief summary of these issues is
 highlighted in this section. We seek input on these issues from the
