@@ -130,8 +130,10 @@ backend is responsible for mapping the PRE extern APIs to the
 appropriate mechanisms for performing these operations in the
 hardware.
 
-The PRE is instantiated by the architecture and a P4 program can use
-it directly. It is an error to instantiate the PRE multiple times.
+The PRE extern object has no constructor, and thus it cannot be
+instantiated in the user's P4 program. The architecture instantiates
+it exactly once, without requiring the user's P4 program to
+instantiate it.
 The PRE is made available to the Ingress programmable block using the
 same mechanism as packet_in. A corresponding Buffering and Queuing
 Engine (BQE) extern is defined for the Egress pipeline (see
@@ -335,9 +337,11 @@ backend is responsible for mapping the BQE extern APIs to the
 appropriate mechanisms for performing these operations in the
 hardware.
 
-The BQE is instantiated by the architecture and a P4 program can
-use it directly. It is an error to instantiate the BQE multiple
-times.  The BQE is made available to the Egress programmable block
+The BQE extern object has no constructor, and thus it cannot be
+instantiated in the user's P4 program. The architecture instantiates
+it exactly once, without requiring the user's P4 program to
+instantiate it.
+The BQE is made available to the Egress programmable block
 using the same mechanism as packet_in. A corresponding Packet
 Replication Engine (PRE) extern is defined for the Ingress pipeline
 (see [#sec-pre]).
