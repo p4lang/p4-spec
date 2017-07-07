@@ -451,6 +451,8 @@ enum HashAlgorithm {
   crc32_custom,
   crc16,
   crc16_custom,
+  ones_complement16,  /// One's complement 16-bit sum used for IPv4 headers,
+                      /// TCP, and UDP.
   random,           /// are random hash algorithms useful?
   identity
 }
@@ -462,25 +464,40 @@ Example usage:
 
 ```
 parser P() {
-  Hash<crc16, bit<16>> h();
-  bit<16> hash_value = h.getHash(16, buffer, 100);
+  Hash<bit<16>>(HashAlgorithm.crc16) h;
+  bit<16> hash_value = h.getHash(buffer);
 }
 ```
 
 Parameters:
 
-- Algo The algorithm to use for computation (@see HashAlgorithm).
+- algo The algorithm to use for computation (@see HashAlgorithm).
 - O    The type of the return value of the hash.
 
 ```
-extern Hash<Algo, O> {
+extern Hash<O> {
   /// Constructor
-  Hash();
+  Hash(HashAlgorithm algo);
 
-  /// compute the hash for data
+  /// Compute the hash for data.
+  /// @param data The data over which to calculate the hash.
+  /// @return The hash value.
+  O getHash<D>(in D data);
+
+  /// Compute the hash for data, with modulo by max, then add base.
+  /// @param base Minimum return value.
+  /// @param data The data over which to calculate the hash.
+  /// @param max The hash value is divided by max to get modulo.
+  ///        An implementation may limit the largest value supported,
+  ///        e.g. to a value like 32, or 256.
+  /// @return (base + (h % max)) where h is the hash value.
   O getHash<T, D, M>(in T base, in D data, in M max);
 }
 ```
+
+TBD: Should there be a `const` defined that specifies the maximum
+allowed value of `max` parameter?
+
 
 ## Checksum computation
 
