@@ -447,14 +447,14 @@ void truncate(in bit<32> length);
 Supported hash algorithms:
 ```
 enum HashAlgorithm {
+  identity,
   crc32,
   crc32_custom,
   crc16,
   crc16_custom,
   ones_complement16,  /// One's complement 16-bit sum used for IPv4 headers,
                       /// TCP, and UDP.
-  random,           /// are random hash algorithms useful?
-  identity
+  random              /// are random hash algorithms useful?
 }
 ```
 
@@ -491,7 +491,7 @@ extern Hash<O> {
   ///        An implementation may limit the largest value supported,
   ///        e.g. to a value like 32, or 256.
   /// @return (base + (h % max)) where h is the hash value.
-  O getHash<T, D, M>(in T base, in D data, in M max);
+  O getHash<T, D>(in T base, in D data, in T max);
 }
 ```
 
