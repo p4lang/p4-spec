@@ -233,10 +233,13 @@ void multicast (in MulticastGroup_t multicast_group);
 
 Do not forward the packet.
 
-The PSA implements drop as an operation in the PRE. While the drop
-operation can be invoked anywhere in the ingress pipeline, the
-semantics supported by the PSA is that the drop will be at the end of
-the pipeline (ingress or egress).
+The PSA implements drop as an operation in the PRE. While the drop operation
+can be invoked anywhere in the pipeline (ingress or egress), the semantics
+supported by the PSA is that the drop will be at the end of the pipeline
+(ingress or egress). Any other operations invoked in the pipeline, whether on
+the packet or any externs (e.g. counter updates, meter updates, register
+writes) will execute, until the packet reaches the end of the pipeline.
+Operations in the egress pipeline will not execute if drop is called in ingress.
 
 ```
 void drop      ();
