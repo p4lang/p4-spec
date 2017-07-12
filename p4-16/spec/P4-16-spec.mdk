@@ -5566,7 +5566,7 @@ not C++ templates.
 ~ Figure { #fig-switcharch; caption: "Fragment of example switch architecture." }
 ![switcharch]
 ~
-[switcharch]: figs/switcharch.png { width: 80%; page-align: here }
+[switcharch]: figs/switcharch.png { width: 75%; page-align: here }
     
 The following example describes a switch by using two packages, each
 containing a parser, a match-action pipeline, and a deparser:
@@ -5592,11 +5592,7 @@ package Ingress<T, IH, OH>(Parser<IH> p,
 package Egress<T, IH, OH>(Parser<IH> p,
                           EPipe<T, IH, OH> map,
                           Deparser<OH> d);
-package Switch<T>( // Top-level switch contains two packages
-    // Note that the types Ingress.IH and Egress.IH may be different
-    Ingress<T, _, _> ingress,
-    Egress<T, _, _> egress
-);
+package Switch<T>(Ingress<T, _, _> ingress, Egress<T, _, _> egress);
 ~ End P4Example
 
 Just from these declarations, even without reading a precise
@@ -5616,8 +5612,7 @@ in Figure [#fig-switcharch]:
   instantiated with the same type in `Switch`. In contrast, note that
   the `Ingress` type `IH` and the `Egress` type `IH` may be
   different. To force them to be the same type, we could instead
-  declare `IH` and `OH` at the switch level: `package Switch<IH, OH,
-  T>`.
+  declare `IH` and `OH` at the switch level: `package Switch<IH, OH, T>`.
 
 Hence, this architecture models a target switch that contains two
 separate channels between the ingress and egress pipeline:
