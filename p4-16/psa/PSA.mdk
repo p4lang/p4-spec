@@ -529,14 +529,16 @@ only update them.  If you wish to implement a feature involving
 sequence numbers, for example, use Registers instead (Section
 [#sec-registers]).
 
-Direct counters are counters associated with a particular P4 table.
+Direct counters are counters associated with a particular P4 table,
+and are implemented by the extern `DirectCounter`.  There are also
+'indirect' counters, which are implemented by the extern `Counter`.
 The primary differences between direct counters and indirect counters
 are:
 
 - Number of independently updatable counter values:
   - A single instantiation of a direct counter always contains as many
-    independent counter values as the table with which it is
-    associated.
+    independent counter values as the number of entries in the table
+    with which it is associated.
   - You must specify the number of independent counter values for an
     indirect counter when instantiating it.  This number of counters
     need not be the same as the size of any P4 table.
@@ -556,10 +558,10 @@ that adds 1 to the counter value.
 
 One may implement byte counters by using the `count` method that adds
 a caller-specified `add_value` to the counter, containing a value that
-the P4 program wishes to use for the length of the packet.
+you wish to use for the length of the packet.
 
-We mention these as common uses cases for counters.  You may of course
-use them to count things other than packets and bytes.
+We mention these as common use cases for counters.  You may of course
+use them to count things other than packets or bytes.
 
 
 ### Counter
