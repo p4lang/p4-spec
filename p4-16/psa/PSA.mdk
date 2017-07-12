@@ -578,8 +578,8 @@ use them to count things other than packets or bytes.
 /// bits possible in type S for the index.  Type S must contain enough
 /// bits to specify all values in the range [0, n_counters - 1].
 
-extern Counter<W, V, N, S> {
-  Counter(N n_counters);
+extern Counter<W, V, S> {
+  Counter(bit<32> n_counters);
   void count(in S index, in V add_value);
   void count(in S index);
 
@@ -744,7 +744,7 @@ control ingress(inout headers hdr,
                 in  psa_ingress_input_metadata_t  istd,
                 out psa_ingress_output_metadata_t ostd)
 {
-    Counter<ByteCounter_t, PacketLength_t, PortId_t, PortId_t>(MAX_PORTS)
+    Counter<ByteCounter_t, PacketLength_t, PortId_t>((bit<32>) MAX_PORTS)
         port_bytes_in;
     DirectCounter<PacketCounter_t, bit<1>>() per_prefix_pkt_count;
     DirectCounter<ByteCounter_t, PacketLength_t>() per_prefix_byte_count;
@@ -788,7 +788,7 @@ control egress(inout headers hdr
                // ...
                )
 {
-    Counter<ByteCounter_t, PacketLength_t, PortId_t, PortId_t>(MAX_PORTS)
+    Counter<ByteCounter_t, PacketLength_t, PortId_t>((bit<32>) MAX_PORTS)
         port_bytes_out;
     apply {
         // Note that hdr.ipv4.totalLen for a packet may have been
