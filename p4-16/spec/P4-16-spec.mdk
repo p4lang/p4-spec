@@ -5609,10 +5609,11 @@ in Figure [#fig-switcharch]:
 - The `Ingress.IPipe` is connected to the `Egress.EPipe`, because the
   first outputs a value of type `T`, which is an input to the
   second. Note that the the occurrences of the type variable `T` are
-  instantiated with the same type in `Switch`. In contrast, note that
+  instantiated with the same type in `Switch`. In contrast, 
   the `Ingress` type `IH` and the `Egress` type `IH` may be
-  different. To force them to be the same type, we could instead
-  declare `IH` and `OH` at the switch level: `package Switch<IH, OH, T>`.
+  different. To force them to be the same, we could instead
+  declare `IH` and `OH` at the switch level: 
+  `package Switch<T,IH,OH>(Ingress<T, IH, OH> ingress, Egress<T, IH, OH> egress)`.
 
 Hence, this architecture models a target switch that contains two
 separate channels between the ingress and egress pipeline:
