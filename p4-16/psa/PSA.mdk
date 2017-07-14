@@ -523,34 +523,71 @@ extern Checksum<W> {
 
 ## Counters
 
-Counters are a simple mechanism for keeping statistics about the
-packets that trigger a table in a Match Action unit.
+Counters are a mechanism for keeping statistics.  The control plane
+can read counter values.  A P4 program cannot read counter values,
+only update them.  If you wish to implement a feature involving
+sequence numbers, for example, use Registers instead (Section
+[#sec-registers]).
 
-Direct counters fire when the count method is invoked in an action, and
-have an instance for each entry in the table.
+Direct counters are counters associated with a particular P4 table,
+and are implemented by the extern `DirectCounter`.  There are also
+'indirect' counters, which are implemented by the extern `Counter`.
+The primary differences between direct counters and indirect counters
+are:
 
+- Number of independently updatable counter values:
+  - A single instantiation of a direct counter always contains as many
+    independent counter values as the number of entries in the table
+    with which it is associated.
+  - You must specify the number of independent counter values for an
+    indirect counter when instantiating it.  This number of counters
+    need not be the same as the size of any P4 table.
+- Where counter updates are allowed in the P4 program:
+  - For a direct counter, you may only invoke its `count` method from
+    inside the actions of the table with which it is associated, and
+    this always updates the counter value associated with the matching
+    table entry.
+  - For an indirect counter, you may invoke its `count` method
+    anywhere in the P4 program where extern object method invocations
+    are permitted (e.g. inside actions, or directly inside a control's
+    `apply` block), and every such invocation must specify the index
+    of the counter value to be updated.
 
-### Counter types
+One may implement packet counters by always using the `count` method
+that adds 1 to the counter value.
 
-```
-enum CounterType_t {
-    packets,
-    bytes,
-    packets_and_bytes
-}
-```
+One may implement byte counters by using the `count` method that adds
+a caller-specified `add_value` to the counter, containing a value that
+you wish to use for the length of the packet.
+
+We mention these as common use cases for counters.  You may of course
+use them to count things other than packets or bytes.
+
 
 ### Counter
 
 ```
-extern Counter<W, S> {
-  Counter(S n_counters, W size_in_bits, CounterType_t counter_type);
-  void count(in S index, in W increment);
+/// Indirect counter with n_counters independent counter values, where
+/// every counter value has a size specified by type W.  Each counter
+/// can be updated either by adding 1 via the `count(index)` method,
+/// or by adding a value add_value with size specified by type V.
+/// Type W must contain at least as many bits as type V.
+///
+/// Type N is separate from type S to handle the case when the number
+/// of counter values is a power of 2, but you wish to use the fewest
+/// bits possible in type S for the index.  Type S must contain enough
+/// bits to specify all values in the range [0, n_counters - 1].
+
+extern Counter<W, V, S> {
+  Counter(bit<32> n_counters);
+  void count(in S index, in V add_value);
+  void count(in S index);
 
   /*
   @ControlPlaneAPI
   {
     W    read<W>      (in S index);
+    W    read_and_clear<W> (in S index);
     W    sync_read<W> (in S index);
     void set          (in S index, in W seed);
     void reset        (in S index);
@@ -561,11 +598,67 @@ extern Counter<W, S> {
 }
 ```
 
+See below for pseudocode of a reference implementation for the Counter
+extern.
+
+```
+Counter(N n_counters) {
+    this.num_counters = n_counters;
+    this.counter_vals = new array of size n_counters, each element with type W;
+    this.max_counter_value = maximum value possible for type W;
+}
+
+/// Add @add_value to a saturating counter whose current value is
+/// @cur_value, and whose maximum possible value is @max_value.
+///
+/// Assume that type W is bit<X> and type V is bit<Y> where X >= Y.
+/// There is very little, if any, reason to use signed count values.
+
+W next_counter_value(W cur_value, V add_value, W max_value) {
+    bit<X+1> next_value = (bit<X+1>) cur_value + (bit<X+1>) add_value;
+    if (next_value[X] == 1) {
+        return max_value;
+    }
+    return (bit<X>) next_value;
+}
+
+void count(in S index, in V add_value) {
+    if (index < this.num_counters) {
+        this.counter_vals[index] = next_counter_value(this.counter_vals[index],
+                                           add_value, this.max_counter_value);
+    } else {
+        // No counter_vals updated if index is out of range.
+        // See below for optional debug information to record.
+    }
+}
+
+void count(in S index) {
+    count(index, 1);
+}
+```
+
+Rationale for saturating behavior: With saturating behavior, the
+control plane can know that information was lost, if it reads the
+maximum possible value from a counter.  In this case, it knows that
+the true count value is at least the maximum value.  With wrap-around
+behavior, the control plane has no way to know if wrapping occurred.
+
+Optional debugging information that may be kept if an `index` value is
+out of range includes:
+
+- Number of times this occurs.
+- A FIFO of the first N out-of-range index valus that occur, where N
+  is implementation-defined (e.g. it might only be 1).  Extra
+  information to identify which `count()` method call in the P4
+  program had the out-of-range `index` value is also recommended.
+
+
 ### Direct Counter
 
 ```
-extern DirectCounter<W> {
-  DirectCounter(CounterType_t counter_type);
+extern DirectCounter<W, V> {
+  DirectCounter();
+  void count(in V add_value);
   void count();
 
   /*
@@ -579,6 +672,138 @@ extern DirectCounter<W> {
     void stop         (in entry_key key);
   }
   */
+}
+```
+
+A `DirectCounter` instance must appear in the list of values of the
+`psa_direct_counters` table attribute for exactly one table.  We call
+this table the `DirectCounter` instance's "owner".  It is illegal to
+call the `count` method for a `DirectCounter` instance anywhere except
+inside an action of its owner table.
+
+The counter value updated by an invocation of `count` is always the
+one associated with the table entry that matched.
+
+An action of an owner table need not have `count` method calls for all
+of the `DirectCounter` instances that the table owns.
+
+The reference implementation for the `DirectCounter` extern is
+essentially the same as that for `Counter`, including the saturating
+behavior.  Since there is no `index` parameter to the `count` method,
+there is no need to check for whether it is in range.
+
+TBD: What to say about `entry_key` type?  Does it need to be made more
+precise?
+
+TBD: The rules above seem to imply that an action that calls `count`
+on a `DirectCounter` instance may only be an action of that instance's
+one owner table.  Normally an action definition can be shared across
+multiple tables (e.g. NoAction, but also the definition of more
+complex actions can be shared across tables, even ones inside of
+different control blocks if the action is defined at the top level).
+This seems to be a restriction for actions accessing 'direct' kinds of
+resources, unless there is a way to define an action that somehow
+takes as a parameter a reference to a `DirectCounter` instance to
+update.
+
+TBD: Should a `DirectCounter` instance have a counter value associated
+with a miss search result for its owner table?  This is perhaps
+superfluous for tables with `ternary` and `lpm` match kinds, since the
+control plane can always insert a lowest priority entry that matches
+all search keys that will have its own explicit counter value
+associated with it.  It might be useful for tables with the `exact`
+match kind.
+
+
+### Counter examples
+
+The following partial P4 program demonstrates the instantiation and
+updating of `Counter` and `DirectCounter` externs, including
+implementing both a packet and byte `DirectCounter` instance for table
+`ipv4_da_lpm`.
+
+```
+const bit<32> BYTE_COUNTER_WIDTH = 48;
+typedef bit<48> ByteCounter_t;
+const bit<32> PACKET_COUNTER_WIDTH = 32;
+typedef bit<32> PacketCounter_t;
+
+typedef bit<10> PortId_t;
+const PortId_t MAX_PORTS = 512;
+
+typedef bit<14> PacketLength_t;
+
+struct headers {
+    ethernet_t       ethernet;
+    ipv4_t           ipv4;
+}
+
+control ingress(inout headers hdr,
+                inout meta user_meta,
+                PacketReplicationEngine pre,
+                in  psa_ingress_input_metadata_t  istd,
+                out psa_ingress_output_metadata_t ostd)
+{
+    Counter<ByteCounter_t, PacketLength_t, PortId_t>((bit<32>) MAX_PORTS)
+        port_bytes_in;
+    DirectCounter<PacketCounter_t, bit<1>>() per_prefix_pkt_count;
+    DirectCounter<ByteCounter_t, PacketLength_t>() per_prefix_byte_count;
+
+    action next_hop() {
+        per_prefix_pkt_count.count();
+        per_prefix_byte_count.count((PacketLength_t) hdr.ipv4.totalLen);
+        // other action code here
+    }
+    action default_route_drop() {
+        per_prefix_pkt_count.count();
+        per_prefix_byte_count.count((PacketLength_t) hdr.ipv4.totalLen);
+        // other action code here
+    }
+    table ipv4_da_lpm {
+        key = { hdr.ipv4.dstAddress: lpm; }
+        actions = {
+            next_hop;
+            default_route_drop;
+        }
+        default_action = default_route_drop;
+        psa_direct_counters = {
+            // table ipv4_da_lpm owns both of these DirectCounter instances
+            per_prefix_pkt_count;
+            per_prefix_byte_count;
+        }
+    }
+
+    apply {
+        // In this program, we want to count IP layer bytes received
+        // and transmitted on interfaces, not L2.
+        if (hdr.ipv4.isValid()) {
+            port_bytes_in.count(istd.ingress_port,
+                                (PacketLength_t) hdr.ipv4.totalLen);
+            ipv4_da_lpm.apply();
+        }
+    }
+}
+
+control egress(inout headers hdr
+               // ...
+               )
+{
+    Counter<ByteCounter_t, PacketLength_t, PortId_t>((bit<32>) MAX_PORTS)
+        port_bytes_out;
+    apply {
+        // Note that hdr.ipv4.totalLen for a packet may have been
+        // changed since the packet was received on ingress,
+        // e.g. because of IP tunnel encapsulation or termination.
+
+        // Also by doing these stats updates on egress, as long as IP
+        // multicast replication happens in the packet buffer, this
+        // update will occur once for each copy made, which in this
+        // example is intentional.
+        if (hdr.ipv4.isValid()) {
+            port_bytes_out.count(ostd.egress_port,
+                                 (PacketLength_t) hdr.ipv4.totalLen);
+        }
+    }
 }
 ```
 
@@ -645,7 +870,7 @@ extern DirectMeter {
 }
 ```
 
-## Registers
+## Registers { #sec-registers }
 
 Registers are stateful memories whose values can be read and
 written in actions. Registers are similar to counters, but can be
