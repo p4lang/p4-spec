@@ -5561,13 +5561,13 @@ using type variables, which must be used parametrically in the
 program---i.e., type variables are checked similar to Java generics,
 not C++ templates.
 
-~ Figure { #fig-switcharch; caption: "Switch architecture fragment implied by the previous set of declarations." }
-![switcharch]
-~
-[switcharch]: figs/switcharch.png { width: 80%; page-align: here }
-
 ## Example architecture description { #sec-arch-desc-example }
 
+~ Figure { #fig-switcharch; caption: "Fragment of example switch architecture." }
+![switcharch]
+~
+[switcharch]: figs/switcharch.png { width: 75%; page-align: here }
+    
 The following example describes a switch by using two packages, each
 containing a parser, a match-action pipeline, and a deparser:
 
@@ -5585,19 +5585,14 @@ control EPipe<T, IH, OH>(in IH inputHeaders,
                          in T fromIngress,
                          out OH outputHeaders,
                          out OutControl outCtrl);
-
 control Deparser<OH>(in OH outputHeaders, packet_out b);
 package Ingress<T, IH, OH>(Parser<IH> p,
-                           IPipe<_, IH, OH> map,
+                           IPipe<T, IH, OH> map,
                            Deparser<OH> d);
-package Egress<T, IH, OH>(Parser<IH> p, Port
-                          EPipe<_, IH, OH> map,
+package Egress<T, IH, OH>(Parser<IH> p,
+                          EPipe<T, IH, OH> map,
                           Deparser<OH> d);
-package Switch<T>( // Top-level switch contains two packages
-    // type types Ingress.IH and Egress.IH may be different
-    Ingress<T, _, _> ingress,
-    Egress<T, _, _> egress
-);
+package Switch<T>(Ingress<T, _, _> ingress, Egress<T, _, _> egress);
 ~ End P4Example
 
 Just from these declarations, even without reading a precise
@@ -5605,28 +5600,29 @@ description of the target, the programmer can infer some useful
 information about the architecture of the described switch, as shown
 in Figure [#fig-switcharch]:
 
-- The switch contains two separate `package`s `Ingress` and `Egress`
+- The switch contains two separate `package`s `Ingress` and `Egress`.
 - The `Parser`, `IPipe`, and `Deparser` in the `Ingress` package
   are chained together in order. In addition, the `Ingress.IPipe` block has an
   input of type `Ingress.IH`, which is an output of the `Ingress.Parser`.
 - Similarly, the `Parser`, `EPipe`, and `Deparser` are
-  chained in the `Egress` package.
-- The `Ingress.IPipe` is connected to the `Egress.EPipe`,
-  because the first one outputs a value of type `T`, which is an
-  input to the second.
-- Note that the `Ingress` type `IH` and the `Egress` type `IH`
-  are independent. If we had wanted to show that they are the same
-  type, we would have instead declared `IH` and `OH` at the
-  switch level: `package Switch<IH, OH, T>`.
+  chained in the `Egress` package.  
+- The `Ingress.IPipe` is connected to the `Egress.EPipe`, because the
+  first outputs a value of type `T`, which is an input to the
+  second. Note that the the occurrences of the type variable `T` are
+  instantiated with the same type in `Switch`. In contrast, 
+  the `Ingress` type `IH` and the `Egress` type `IH` may be
+  different. To force them to be the same, we could instead
+  declare `IH` and `OH` at the switch level: 
+  `package Switch<T,IH,OH>(Ingress<T, IH, OH> ingress, Egress<T, IH, OH> egress)`.
 
-Note that this architecture models a target switch that contains two
+Hence, this architecture models a target switch that contains two
 separate channels between the ingress and egress pipeline:
 
 - A channel that can pass data directly via its argument of type
-  `T`. (On a software target with shared memory between ingress and
+  `T`. On a software target with shared memory between ingress and
   egress this could be implemented by passing directly a pointer; on
   an architecture without shared memory presumably the compiler will
-  need to synthesize automatically serialization code).
+  need to synthesize automatically serialization code.
 - A channel that can pass data indirectly using a parser and deparser
   that serializes data into a packet and back.
 
