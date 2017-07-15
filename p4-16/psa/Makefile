@@ -11,3 +11,8 @@ build/${SPEC}.pdf: psa.p4
 
 clean:
 	${RM} -rf build
+
+P4C=p4test
+
+check:
+	${P4C} examples/psa-example-counters.p4
