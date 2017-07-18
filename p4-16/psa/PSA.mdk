@@ -513,7 +513,7 @@ use Registers to achieve that (Section [#sec-registers]).
 See below for pseudocode of an example implementation for the Counter
 extern.
 
-The sample implementation for `next_counter_value` is not intended to
+The example implementation for `next_counter_value` is not intended to
 restrict PSA implementations.  In particular, the storage format for
 `packets_and_bytes` type counters is just one example of how it could
 be done.  Implementations are free to store state in other ways, as
@@ -618,24 +618,31 @@ be allowed?
 An action of an owner table need not have `count` method calls for all
 of the `DirectCounter` instances that the table owns.
 
-The reference implementation for the `DirectCounter` extern is
-essentially the same as that for `Counter`, including the saturating
-behavior.  Since there is no `index` parameter to the `count` method,
-there is no need to check for whether it is in range.
+TBD: In this Github comment
+<https://github.com/p4lang/p4-spec/issues/308#issuecomment-314860638>
+Antonin Bas says that in P4~14~, direct counters are automatically
+updated when an action of their owner table is invoked, without
+requiring any `count` method call in the actions of the owner table.
+Should PSA `DirectCounter`s be the same, or should they require
+explicit `count` method calls, and if an owner table's action has no
+such call, then no counter update is performed when those actions are
+invoked?
+
+An example implementation for the `DirectCounter` extern is
+essentially the same as the one for `Counter`.  Since there is no
+`index` parameter to the `count` method, there is no need to check for
+whether it is in range.
 
 TBD: What to say about `entry_key` type?  Does it need to be made more
 precise?
 
-TBD: The rules above seem to imply that an action that calls `count`
-on a `DirectCounter` instance may only be an action of that instance's
-one owner table.  Normally an action definition can be shared across
-multiple tables (e.g. NoAction, but also the definition of more
-complex actions can be shared across tables, even ones inside of
-different control blocks if the action is defined at the top level).
-This seems to be a restriction for actions accessing 'direct' kinds of
-resources, unless there is a way to define an action that somehow
-takes as a parameter a reference to a `DirectCounter` instance to
-update.
+The rules here mean that an action that calls `count` on a
+`DirectCounter` instance may only be an action of that instance's one
+owner table.  If you want to have a single action `A` that can be
+invoked by multiple tables, you can still do so by having a unique
+action for each such table with a `DirectCounter`, where each such
+action in turn calls action `A`, in addition to any `count`
+invocations they have.
 
 TBD: Should a `DirectCounter` instance have a counter value associated
 with a miss search result for its owner table?  This is perhaps
@@ -650,13 +657,14 @@ DirectCounter associated with it, or should it be allowed to have more
 than one?
 
 
-### Counter examples
+### Example program using counters
 
 The following partial P4 program demonstrates the instantiation and
 updating of `Counter` and `DirectCounter` externs.
 
 ```
 [INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part1]
+
 [INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part2]
 ```
 
