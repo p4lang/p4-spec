@@ -656,76 +656,8 @@ The following partial P4 program demonstrates the instantiation and
 updating of `Counter` and `DirectCounter` externs.
 
 ```
-typedef bit<48> ByteCounter_t;
-typedef bit<32> PacketCounter_t;
-typedef bit<80> PacketByteCounter_t;
-
-typedef bit<10> PortId_t;
-const PortId_t MAX_PORTS = 512;
-
-typedef bit<14> PacketLength_t;
-
-struct headers {
-    ethernet_t       ethernet;
-    ipv4_t           ipv4;
-}
-
-control ingress(inout headers hdr,
-                inout meta user_meta,
-                PacketReplicationEngine pre,
-                in  psa_ingress_input_metadata_t  istd,
-                out psa_ingress_output_metadata_t ostd)
-{
-    Counter<ByteCounter_t, PortId_t>((bit<32>) MAX_PORTS, CounterType_t.bytes)
-        port_bytes_in;
-    DirectCounter<PacketByteCounter_t>(CounterType_t.packets_and_bytes)
-        per_prefix_pkt_byte_count;
-
-    action next_hop() {
-        per_prefix_pkt_byte_count.count();
-        // other action code here
-    }
-    action default_route_drop() {
-        per_prefix_pkt_byte_count.count();
-        // other action code here
-    }
-    table ipv4_da_lpm {
-        key = { hdr.ipv4.dstAddress: lpm; }
-        actions = {
-            next_hop;
-            default_route_drop;
-        }
-        default_action = default_route_drop;
-        psa_direct_counters = {
-            // table ipv4_da_lpm owns this DirectCounter instance
-            per_prefix_pkt_byte_count;
-        }
-    }
-
-    apply {
-        if (hdr.ipv4.isValid()) {
-            port_bytes_in.count(istd.ingress_port);
-            ipv4_da_lpm.apply();
-        }
-    }
-}
-
-control egress(inout headers hdr
-               // ...
-               )
-{
-    Counter<ByteCounter_t, PortId_t>((bit<32>) MAX_PORTS, CounterType_t.bytes)
-        port_bytes_out;
-    apply {
-        // By doing these stats updates on egress, as long as IP
-        // multicast replication happens in the packet buffer, this
-        // update will occur once for each copy made, which in this
-        // example is intentional.
-        if (hdr.ipv4.isValid()) {
-            port_bytes_out.count(ostd.egress_port);
-        }
-    }
-}
+[INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part1]
+[INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part2]
 ```
 
 ## Meters
