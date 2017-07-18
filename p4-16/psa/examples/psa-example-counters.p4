@@ -49,7 +49,6 @@ struct metadata {
 }
 
 // BEGIN:Counter_Example_Part1
-#define BYTE_COUNT_SIZE 48
 typedef bit<48> ByteCounter_t;
 typedef bit<32> PacketCounter_t;
 typedef bit<80> PacketByteCounter_t;
@@ -90,8 +89,8 @@ control ingress(inout headers hdr,
                 in  psa_ingress_input_metadata_t  istd,
                 out psa_ingress_output_metadata_t ostd)
 {
-    Counter<ByteCounter_t, PortId_t>(NUM_PORTS, BYTE_COUNT_SIZE,
-        CounterType_t.bytes) port_bytes_in;
+    Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.bytes)
+        port_bytes_in;
     DirectCounter<PacketByteCounter_t>(CounterType_t.packets_and_bytes)
         per_prefix_pkt_byte_count;
 
@@ -111,12 +110,12 @@ control ingress(inout headers hdr,
         }
         default_action = default_route_drop;
         //psa_direct_counters = {
+        //    // table ipv4_da_lpm owns this DirectCounter instance
         //    per_prefix_pkt_byte_count;
         //}
     }
     apply {
-        port_bytes_in.count(istd.ingress_port,
-                            (ByteCounter_t) hdr.ipv4.totalLen);
+        port_bytes_in.count(istd.ingress_port);
         ostd.egress_port = 0;
         if (hdr.ipv4.isValid()) {
             ipv4_da_lpm.apply();
@@ -129,15 +128,14 @@ control egress(inout headers hdr,
                BufferingQueueingEngine bqe,
                in  psa_egress_input_metadata_t  istd)
 {
-    Counter<ByteCounter_t, PortId_t>(NUM_PORTS, BYTE_COUNT_SIZE,
-        CounterType_t.bytes) port_bytes_out;
+    Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.bytes)
+        port_bytes_out;
     apply {
         // By doing these stats updates on egress, as long as IP
         // multicast replication happens in the packet buffer, this
         // update will occur once for each copy made, which in this
         // example is intentional.
-        port_bytes_out.count(istd.egress_port,
-                             (ByteCounter_t) hdr.ipv4.totalLen);
+        port_bytes_out.count(istd.egress_port);
     }
 }
 // END:Counter_Example_Part2
