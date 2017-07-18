@@ -177,16 +177,29 @@ enum CounterType_t {
 // END:CounterType_defn
 
 // BEGIN:Counter_extern
+/// Indirect counter with n_counters independent counter values, where
+/// every counter value has a data plane size specified by type W.
+
 extern Counter<W, S> {
-  Counter(S n_counters, W size_in_bits, CounterType_t counter_type);
-  void count(in S index, in W increment);
+  Counter(bit<32> n_counters, CounterType_t type);
+  void count(in S index);
 
   /*
+  /// The control plane API uses 64-bit wide counter values.  It is
+  /// not intended to represent the size of counters as they are
+  /// stored in the data plane.  It is expected that control plane
+  /// software will periodically read the data plane counter values,
+  /// and accumulate them into larger counters that are large enough
+  /// to avoid reaching their maximum values for a suitably long
+  /// operational time.  A 64-bit byte counter increased at maximum
+  /// line rate for a 100 gigabit port would take over 46 years to
+  /// wrap.
+
   @ControlPlaneAPI
   {
-    W    read<W>      (in S index);
-    W    sync_read<W> (in S index);
-    void set          (in S index, in W seed);
+    bit<64> read      (in S index);
+    bit<64> sync_read (in S index);
+    void set          (in S index, in bit<64> seed);
     void reset        (in S index);
     void start        (in S index);
     void stop         (in S index);
@@ -197,7 +210,7 @@ extern Counter<W, S> {
 
 // BEGIN:DirectCounter_extern
 extern DirectCounter<W> {
-  DirectCounter(CounterType_t counter_type);
+  DirectCounter(CounterType_t type);
   void count();
 
   /*
