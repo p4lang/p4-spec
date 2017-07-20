@@ -360,6 +360,27 @@ extern Digest<T> {
 }
 // END:Digest_extern
 
+// BEGIN:ValueSet_extern
+extern ValueSet<D> {
+    ValueSet(int<32> size);
+    bool is_member(in D data);
+
+    /*
+    @ControlPlaneAPI
+    message ValueSetEntry {
+        uint32 value_set_id = 1;
+        // FieldMatch allows specification of exact, lpm, ternary, and
+        // range matching on fields for tables, and these options are
+        // permitted for the ValueSet extern as well.
+        repeated FieldMatch match = 2;
+    }
+
+    // ValueSetEntry should be added to the 'message Entity'
+    // definition, inside its 'oneof Entity' list of possibilities.
+    */
+}
+// END:ValueSet_extern
+
 // BEGIN:Programmable_blocks
 parser Parser<H, M>(packet_in buffer, out H parsed_hdr, inout M user_meta,
                     in psa_parser_input_metadata_t istd);
