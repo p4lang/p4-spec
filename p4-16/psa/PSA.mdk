@@ -109,7 +109,7 @@ Additional supported match_kind types
 [INCLUDE=psa.p4:Match_kinds]
 ```
 
-## Cloning methods
+## Cloning methods { #sec-cloning-methods }
 
 ```
 [INCLUDE=psa.p4:Cloning_methods]
@@ -117,7 +117,7 @@ Additional supported match_kind types
 
 # PSA Externs
 
-## Packet Replication Engine
+## Packet Replication Engine { #sec-pre }
 
 The ```PacketReplicationEngine``` extern represents the non-programmable
 part of the PSA pipeline.
@@ -134,8 +134,8 @@ The PRE is instantiated by the architecture and a P4 program can use
 it directly. It is an error to instantiate the PRE multiple times.
 The PRE is made available to the Ingress programmable block using the
 same mechanism as packet_in. A corresponding Buffering and Queuing
-Engine (BQE) extern is defined for the Egress pipeline (@see
-BufferingQueueingEngine).
+Engine (BQE) extern is defined for the Egress pipeline (see
+[#sec-bqe]).
 
 Note: some of these operations may not be implemented as primitive
 operations on a certain target. However, All of the operations can be
@@ -245,7 +245,7 @@ Create a copy of the packet and send it to the specified port.
 
 The PSA specifies four types of cloning, with the packet sourced
 from different points in the pipeline and sent back to ingress
-or to the buffering queue in the egress (@see CloneMethod_t).
+or to the buffering queue in the egress (see [#sec-cloning-methods]).
 \TODO: needs both source and destination data
 
 Parameters:
@@ -264,7 +264,7 @@ specified port.
 
 The PSA specifies four types of cloning, with the packet sourced
 from different points in the pipeline and sent back to ingress
-or to the buffering queue in the egress (@see CloneMethod_t).
+or to the buffering queue in the egress (see [#sec-cloning-methods]).
 \TODO: needs both source and destination data
 
 Parameters:
@@ -321,7 +321,7 @@ The length parameter represents the packet length.
 void truncate(in bit<32> length);
 ```
 
-## Buffering Queuing Engine
+## Buffering Queuing Engine { #sec-bqe }
 
 The BufferingQueueingEngine extern represents the the other
 non-programmable part of the PSA pipeline (after Egress).
@@ -339,7 +339,7 @@ use it directly. It is an error to instantiate the BQE multiple
 times.  The BQE is made available to the Egress programmable block
 using the same mechanism as packet_in. A corresponding Packet
 Replication Engine (PRE) extern is defined for the Ingress pipeline
-(@see PacketReplicationEngine).
+(see [#sec-pre]).
 
 Note: some of these operations may not be implemented as primitive
 operations on a certain target. However, All of the operations can
@@ -401,7 +401,7 @@ The length parameter represents the packet length.
 void truncate(in bit<32> length);
 ```
 
-## Hashes
+## Hashes { #sec-hash-algorithms }
 
 Supported hash algorithms:
 ```
@@ -421,7 +421,7 @@ parser P() {
 
 Parameters:
 
-- algo The algorithm to use for computation (@see HashAlgorithm).
+- algo The algorithm to use for computation (see [#sec-hash-algorithms]).
 - O    The type of the return value of the hash.
 
 ```
