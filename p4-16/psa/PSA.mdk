@@ -654,27 +654,19 @@ containing multiple bit vectors.
 [INCLUDE=examples/psa-example-value-sets3.p4:ValueSet_Example_3]
 ```
 
-TBD: Should PSA allow code in the style of the second example, where
-multiple boolean variables can be in the `select` expression?  I can't
-think of a strong reason why not.
-
-TBD: Should PSA allow programs to use the value `false` in a case of a
-`select` statement that is matching on a variable returned from an
-`is_member` method call?
-
-TBD: Should it be allowed to perform more complex calculations on the
-return value of `is_member` before using it in a `select` expression?
-Eventually I am sure some PSA implementations would (reasonably)
-reject such things as too complex.  Here is an example that might not
-be too complex, but you can easily imagine similar code that is more
-complex:
+A PSA compliant implementation is not required to support any use of a
+`ValueSet` `is_member` method call return value, other than directly
+inside of a `select` expression.  For example, a program fragment like
+the one shown below may be rejected, and thus P4 programmers striving
+for maximum portability should avoid writing such code.
 ```
-        bool is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
+    bool is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
 
-        is_tpid = is_tpid && (parsed_hdr.ethernet.dstAddr[47:40] == 0xfe);
-        transition select(is_tpid) {
-	    // ...
+    is_tpid = is_tpid && (parsed_hdr.ethernet.dstAddr[47:40] == 0xfe);
+    transition select(is_tpid) {
+        // ...
 ```
+
 
 # Programmable blocks
 
