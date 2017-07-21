@@ -647,6 +647,13 @@ Minimum requirements for tables:
   the size of one entry in bits.  The size of one entry is the key
   width, plus the maximum total bits of action parameters, maximized
   across all actions of the table.
+
+Minimum requirements for assignments, and arithmetic and Boolean
+operations.  These are total across those done within table actions,
+and those done outside of table actions (i.e. directly inside of
+control blocks, or within actions that are invoked directly from
+control blocks without applying a table).
+
 - 100 assignments executed per packet on ingress.  The same limit
   applies independently for egress.
 - 50 arithmetic/Boolean operations on operands up to 32 bits in width,
@@ -663,6 +670,9 @@ Minimum requirements for PSA externs:
 - At least 64 bytes of user-defined metadata per packet can be carried
   from the `Ingress` to `Egress` control block through the packet
   buffer.
+- 512 copies that can be made of a packet by a
+  `PacketReplicationEngine` multicast group.
+- 256 multicast groups.
 - 4 `BufferingQueueingEngine` method calls per packet (TBD if there
   should be separate limits for each method call).
 - 4 `Hash` `getHash` method calls per packet, with 160 total bytes of
