@@ -608,3 +608,196 @@ matches the in parameter of the subsequent block.
 ```
 [INCLUDE=psa.p4:Programmable_blocks]
 ```
+
+
+# PSA Portability Requirements
+
+This section lists minimum requirements for a P4 implementation to
+be PSA compliant.
+
+A PSA compliant implementation is allowed to support P4 programs that
+exceed one or more of these limits.  It is also allowed to reject such
+a P4 program as 'too complex'.
+
+A PSA compliant implementation must not reject a P4 program that obeys
+all of these limitations.  Thus P4 programs that obey all of these
+limitations should be portable across all PSA compliant
+implementations.
+
+Minimum requirements for packet parsing:
+
+- 32 bits in a parser `select` expression.
+- 50 parser states.
+- 20 parser state transitions per packet.
+- 128 bytes extracted per packet.
+- 16 bytes of metadata assigned in the parser.
+- 4 ValueSet `is_member` method calls per packet.
+
+Minimum requirements for tables:
+
+- 20 tables applied per packet in ingress.
+- 10 tables applied per packet in egress.
+- 640 bits of search key for a table with match_kind `ternary`.
+- 640 bits of search key for a table with match_kind `lpm`.
+- 640 bits of search key for a table with match_kind `exact`.
+- 32 different user-defined actions for one table.
+- 256 total bits of action parameters for an action.
+- 1M entries in a table (1M=2^20^).
+- 64 Mbits of table size in bits, which is the number of entries times
+  the size of one entry in bits.  The size of one entry is the key
+  width, plus the maximum total bits of action parameters, maximized
+  across all actions of the table.
+- 100 assignments executed per packet on ingress.  The same limit
+  applies independently for egress.
+- 50 arithmetic/Boolean operations on operands up to 32 bits in width,
+  per packet, on ingress.  The same limit applies independently for
+  egress.
+- 5 arithmetic/Boolean operations on operands up to 128 bits in width,
+  per packet, on ingress.  The same limit applies independently for
+  egress.
+
+Minimum requirements for PSA externs:
+
+- 4 `PacketReplicationEngine` method calls per packet (TBD if there
+  should be separate limits for each method call).
+- 4 `BufferingQueueingEngine` method calls per packet (TBD if there
+  should be separate limits for each method call).
+- 4 `Hash` `getHash` method calls per packet, with 160 total bytes of
+  input data.
+- 4 `Checksum` `clear` and `get` method calls per packet, with 160
+  total bytes of input data as arguments to `update` and `remove`
+  method calls.
+- 6 counter updates per packet (on different counters, which can be
+  any mix of `Counter` or `DirectCounter`).
+- 2 meter updates per packet (on different meters, which can be any
+  mix of `Meter` or `DirectMeter`).
+- 2 `Register` updates per packet (on different registers).  A
+  register `read`, followed by register `write`, counts as 1 update.
+- 2 `Random` `read` calls per packet.
+- TBD `ActionProfile` restrictions.
+- TBD `ActionSelector` restrictions.
+- TBD digest creations per packet.
+
+A PSA compliant implementation need not, but is allowed to, reject a
+P4 program if it does any of the following:
+
+- Applies the same table more than 1 time per packet.
+- Calls `getHash` on the same `Hash` instance more than 1 time per
+  packet.  (TBD: Is this a useful restriction?)
+- Calls `clear` or `get` on the same `Checksum` instance more than 1
+  time per packet, or calls `update` and `remove` more than a total of
+  6 times per packet.  (TBD: Is this a useful restriction?)
+- Updates the same `Counter`, `DirectCounter`, `Meter`, `DirectMeter`,
+  or `Register` instance more than 1 time per packet.
+- Uses the same `ActionProfile` for more than 1 table.
+- Uses the same `ActionSelector` for more than 1 table.
+- Calls `emit` on a `Digest` instance more than 1 time per packet.
+
+
+## Definition of "once per packet"
+
+An operation that is done at most once per packet must fall into one
+of the following cases.
+
+1. The operation is done at most once anywhere in the P4 program.
+2. For an operation done inside a table action, the operation is done
+   at most once in each action for one table, and it is not done
+   anywhere else in the program.
+3. The operation is done at most once in the "true" branch of an `if`
+   statement, and at most once in the "false"/`else` branch of the
+   same `if` statement.
+4. The operation is done at most once in every case of the same
+   `switch` statement.
+
+If an operation is done in the `Egress` control block, such an
+operation could be done once for each copy of a packet for which
+multiple copies were made via `PacketReplicationEngine` multicast
+replication.  This is still considered "once per packet" for the
+purposes of this definition.  Think of each packet copy as its own
+separate packet, as far as `Egress` processing is concerned.
+
+Similarly, for recirculated or resubmitted packets, consider each such
+recirculated/resubmitted packet as a separate one, and such operations
+can be done once for the original packet, and for each
+recirculated/resubmitted packet.
+
+Cases 2 through 4 are those where it is straightforward for a P4
+compiler to determine that the operation occurs at most once per
+packet.  These cases can "nest", so for example a PSA compliant
+implementation must consider the program fragment below to execute the
+operation `c1.count()` at most once per packet (assuming `c1.count()`
+is called nowhere else in the program):
+
+```
+    if (hdr.ipv4.isValid()) {
+        c1.count();
+    } else if (hdr.ipv6.isValid()) {
+        if (pkt_is_multicast == 1) {
+            c1.count();
+        } else if (pkt_is_unicast == 1) {
+            c1.count();
+        } else {
+            c1.count();
+        }
+    }
+```
+
+TBD: Do we really want to require PSA compliant implementations to
+handle cases 3 and 4, or are 1 and 2 enough?  For example, the example
+might be difficult to do for some implementations, if there are match
+data dependencies between all of the tables involved:
+
+```
+    if (hdr.ipv4.isValid()) {
+        T1.apply();
+        T2.apply();
+        T3.apply();
+        T4.apply();
+        T5.apply();
+    } else {
+        T5.apply();
+        T4.apply();
+        T3.apply();
+        T2.apply();
+        T1.apply();
+    }
+```
+
+A PSA compliant implementation is allowed to do more complex "once per
+packet" analysis than this, but a program that relies on this is not
+guaranteed to be portable across PSA compliant implementations.
+
+For example, while it is possible for a human, or a sufficiently
+sophisticated compiler, to determine that the operation `c1.count()`
+in the example code fragment below can only be invoked once per
+packet, a PSA compliant implementation need not do so.  It is free to
+reject the program for performing `c1.count()` more than once per
+packet.
+
+```
+    if (hdr.ipv4.isValid()) {
+        c1.count();
+    } else if (hdr.ipv6.isValid()) {
+        // ... more code here ...
+    }
+
+    // More code here, that cannot change the value of
+    // hdr.ipv4.isValid().
+
+    if (hdr.ipv4.isValid()) {
+        // ... more code here ...
+    } else if (hdr.ipv6.isValid()) {
+        c1.count();
+    }
+
+```
+
+TBD: We may need some clear but preferably precise way to explain that
+when we say "at most once anywhere in the P4 program", if a control
+block `C` is applied 2 times sequentially from the `Ingress` control
+block, and some operation is done exactly once inside of `C`'s `apply`
+block, that counts as 2 times per packet, even though the operation
+only occurs once in the source code for control block `C`.  Some
+semi-precise definition of "after in-line expansion of all control
+block apply calls, and all action calls nested inside of other action
+calls" might do it.
