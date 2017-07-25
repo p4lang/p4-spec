@@ -604,7 +604,7 @@ out of range includes:
 
 A `DirectCounter` instance must appear in the list of values of the
 `psa_direct_counters` table attribute for exactly one table.  We call
-this table the `DirectCounter` instance's "owner".  It is illegal to
+this table the `DirectCounter` instance's "owner".  It is an error to
 call the `count` method for a `DirectCounter` instance anywhere except
 inside an action of its owner table.
 
@@ -616,17 +616,9 @@ action profiles and direct counters?  Or should this combination even
 be allowed?
 
 An action of an owner table need not have `count` method calls for all
-of the `DirectCounter` instances that the table owns.
-
-TBD: In this Github comment
-<https://github.com/p4lang/p4-spec/issues/308#issuecomment-314860638>
-Antonin Bas says that in P4~14~, direct counters are automatically
-updated when an action of their owner table is invoked, without
-requiring any `count` method call in the actions of the owner table.
-Should PSA `DirectCounter`s be the same, or should they require
-explicit `count` method calls, and if an owner table's action has no
-such call, then no counter update is performed when those actions are
-invoked?
+of the `DirectCounter` instances that the table owns.  You must use an
+explicit `count()` method call on a `DirectCounter` to update it,
+otherwise its state will not change.
 
 An example implementation for the `DirectCounter` extern is
 essentially the same as the one for `Counter`.  Since there is no
@@ -644,13 +636,17 @@ action for each such table with a `DirectCounter`, where each such
 action in turn calls action `A`, in addition to any `count`
 invocations they have.
 
-TBD: Should a `DirectCounter` instance have a counter value associated
-with a miss search result for its owner table?  This is perhaps
-superfluous for tables with `ternary` and `lpm` match kinds, since the
-control plane can always insert a lowest priority entry that matches
-all search keys that will have its own explicit counter value
-associated with it.  It might be useful for tables with the `exact`
-match kind.
+A `DirectCounter` instance must have a counter value associated with
+its owner table that is updated only when there is a default action
+assigned to it (either in the P4 program via the `default_action`
+table property, or assigned to the table by the control plane), and a
+search of the table results in a miss.
+
+TBD: Verify that the method of reading this default action counter
+state is documented for the control plane API.  I believe that Antonin
+Bas said that it can be accessed using the same API call used to read
+a `DirectCounter` value associated with a table entry, except that the
+key in the API call should be empty.
 
 TBD: Should a single table be restricted to have at most one
 DirectCounter associated with it, or should it be allowed to have more
