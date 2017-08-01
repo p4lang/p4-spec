@@ -382,14 +382,14 @@ extern Timestamp {
     // No constructor.
 
     // The whole and fractional seconds converted to or from via these
-    // methods are the same as those defined as the Java Time-Scale as
-    // described here:
+    // methods are the same as those defined as the Java Time-Scale,
+    // documented here:
     // https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
 
     // The "_to_timestamp" methods of course allow multiple input
-    // times to return the same timestamp_t value, if it has few
-    // enough bits that it wraps within the full range of the input
-    // values.
+    // times to return the same timestamp_t value, in the expected
+    // case that it has few enough bits that it wraps within the full
+    // range of the input values.
 
     // The "timestamp_to_" methods can return different values
     // depending upon the time at which they are called.  They will

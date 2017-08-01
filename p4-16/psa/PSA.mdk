@@ -756,7 +756,7 @@ requirement for all PSA implementations because such a conversion
 would typically require taking a timestamp value and dividing it or
 multiplying it by a constant value of the same bit width that is
 unlikely to be a power of 2, and this is expected to be somewhat
-expensive on some implementation.  It may help in implementing such a
+expensive on some implementations.  It may help in implementing such a
 conversion function to know that dividing of a `W`-bit value by a
 constant can be implemented using `W`-bit multiplication by a
 constant[^MG2011].
@@ -844,10 +844,11 @@ $t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.
 
 It is perfectly reasonable to discard some bits of a timestamp value
 in a P4 program for use cases that do not need the full wrap time or
-precision.  For example, an application that only needs to detect
-protocol timeouts with an accuracy of 1 second can discard the least
-significant bits of a timestamp that change more often than every 1
-second.
+precision.  This can save a significant number of bits of storage in
+tables or `Register` instances.  For example, an application that only
+needs to detect protocol timeouts with an accuracy of 1 second can
+discard the least significant bits of a timestamp that change more
+often than every 1 second.
 
 Suppose another application needs full precision of the least
 significant bits of a timestamp, but the combination of the control
