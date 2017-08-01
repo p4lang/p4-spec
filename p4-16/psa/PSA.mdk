@@ -673,6 +673,192 @@ for maximum portability should avoid writing such code.
 ```
 
 
+## Timestamps
+
+A PSA implementation provides an `ingress_timestamp` value for every
+packet in the ingress control block, as a field in the struct with
+type `psa_ingress_input_metadata_t`.  This timestamp should be close
+to the time that the first bit of the packet arrived to the device, or
+alternately, to the time that the device began parsing the packet.
+This timestamp is _not_ automatically included with the packet in the
+egress control block.  A P4 program wishing to use the value of
+`ingress_timestamp` in egress code must copy it to a user-defined
+metadata field that reaches egress.
+
+A PSA implementation also provides an `egress_timestamp` value for
+every packet in the egress control block, as a field of the struct
+with type `psa_egress_input_metadata_t`.
+
+One expected use case for timestamps is to store them in tables or
+`Register` instances to implement checking for timeout events for
+protocols, where precision on the order of milliseconds is sufficient
+for most protocols.
+
+Another expected use case is INT (Inband Network Telemetry[^INT]),
+where precision on the order of microseconds or smaller is necessary
+to measure queueing latencies that differ by those amounts.  It takes
+only 0.74 microseconds to transmit a 9 Kbyte Ethernet jumbo frame on a
+100 gigabit per second link.
+
+[^INT]: <http://p4.org/p4/inband-network-telemetry>
+
+For these applications, it is recommended that an implementation's
+timestamp increments at least once every microsecond.  Incrementing
+once per clock cycle in an ASIC or FPGA implementation would be a
+reasonable choice.  The timestamp should increment at a constant rate
+over time.  For example, it should not be a simple count of clock
+cycles in a device that implements dynamic frequency
+scaling[^DynamicFrequencyScaling].
+
+[^DynamicFrequencyScaling]: <https://en.wikipedia.org/wiki/Dynamic_frequency_scaling>
+
+Timestamps are of type `timestamp_t`, which is type `bit<W>` for a
+value of `W` defined by the implementation.  Timestamps are expected
+to wrap around during the normal passage of time.  It is recommended
+that an implementation pick a rate of advance and a bit width such
+that wrapping around occurs at most once every hour.  Making the wrap
+time this long (or longer) makes timestamps more useful for several
+use cases.
+
+- Checking for timeouts of protocol hello / keep-alive traffic that is
+  on the order of seconds or minutes.
+- If timestamps are placed into packets without converting them to
+  other formats, then external data analysis systems using those
+  timestamps will in many cases need to do so, e.g. to compare
+  timestamps stored in packets by different PSA devices.  These
+  systems will need different formulas and/or parameters to perform
+  this conversion for each wrap period, or to add extra external time
+  references to the recorded data.  The extra data required for
+  accurate conversion is lower, and the likelihood of conversion
+  mistakes is lower, if the timestamp values wrap less often.
+- If timestamps are converted to other formats within a P4 program, it
+  will need access to parameters that are likely to change every wrap
+  time, e.g. at least a "base value" to add some calculated value to.
+  A straightforward way to do this requires the control plane to
+  update these values at least once or twice per timestamp wrap time.
+- Programs that wish to use `(egress_timestamp - ingress_timestamp)`
+  to calculate the queueing latency experienced by a packet need the
+  wrap time to exceed the maximum queueing latency.
+
+Examples of the number of bits required for wrap times of at least one
+hour:
+
+- A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
+  to wrap.
+- A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
+  wrap.
+
+A PSA implementation may optionally provide a way to convert
+timestamps to other units such as microseconds or nanoseconds at
+packet forwarding time in one's P4 program, and if so it is
+recommended to implement the methods defined below.  This is not a
+requirement for all PSA implementations because such a conversion
+would typically require taking a timestamp value and dividing it or
+multiplying it by a constant value of the same bit width that is
+unlikely to be a power of 2, and this is expected to be somewhat
+expensive on some implementation.  It may help in implementing such a
+conversion function to know that dividing of a `W`-bit value by a
+constant can be implemented using `W`-bit multiplication by a
+constant[^MG2011].
+
+[^MG2011]: N. Möller and T. Granlund, “Improved division by invariant integers,” IEEE Transactions on Computers, vol. 60, no. 2, pp. 165 –175, Feb. 2011
+
+```
+[INCLUDE=psa.p4:Timestamp_extern]
+```
+
+
+A PSA implementation is not required to implement time
+synchronization, e.g. via PTP[^PTP] or NTP[^NTP].
+
+[^PTP]: <https://en.wikipedia.org/wiki/Precision_Time_Protocol>
+[^NTP]: <https://en.wikipedia.org/wiki/Network_Time_Protocol>
+
+TBD: This text has been written assuming that it is more important for
+timestamps to be increasing at a constant rate, with no sudden "jumps"
+due to time synchronization events.  Is this what people want from
+timestamps?
+
+TBD: Some time synchronization methods avoid sudden "jumps" by
+temporarily speeding up or slowing down the rate of increase by a
+small percentage, until the desired synchronization is achieved.
+(TBD: which ones?  citation?).  Would anyone mind if PSA
+implementations were allowed to do this with their timestamp values?
+
+The control plane API excerpt below is intended to be added as part of
+the P4Runtime API[^P4RuntimeAPI].
+
+```
+// The TimestampInfo and Timestamp messages should be added to the
+// "oneof" inside of message "Entity".  It is only intended to be
+// read.  Attempts to update this entity have no effect, and should
+// return an error status that the entity is read only.
+
+message TimestampInfo {
+  // The number of bits in the device's `timestamp_t` type.
+  uint32 size_in_bits = 1;
+  // The timestamp value of this device increments
+  // `increments_per_period` times every `period_in_seconds` seconds.
+  uint64 increments_per_period = 2;
+  uint64 period_in_sec = 3;
+}
+
+// The timestamp value can be read or written.  Note that if there are
+// already timestamp values stored in tables or `Register` instances,
+// they will not be updated as a result of writing this timestamp
+// value.  Writing the device timestamp is intended only for
+// initialization and testing.
+
+message Timestamp {
+  bytes value = 1;
+}
+```
+
+For every packet `P` that is processed by ingress and then egress,
+with the minimum possible latency in the packet buffer, it is
+guaranteed that the `egress_timestamp` value for that packet will be
+the same as, or slightly larger than, the `ingress_timestamp` value
+that the packet was assigned on ingress.  By "slightly larger than",
+we mean that the difference `(egress_timestamp - ingress_timestamp)`
+should be a reasonably accurate estimate of this minimum possible
+latency through the packet buffer, perhaps truncated down to 0 if
+timestamps advance more slowly than this minimum latency.
+
+Consider two packets such that at the same time (e.g. the same clock
+cycle), one is assigned its value of `ingress_timestamp` near the time
+it begins parsing, and the other is assigned its value of
+`egress_timestamp` near the time that it begins its egress processing.
+It is allowed that these timestamps differ by a few tens of
+nanoseconds (or by one "tick" of the timestamp, if one tick is larger
+than that time), due to practical difficulties in making them always
+equal.
+
+Recall that the binary operators `+` and `-` on the `bit<W>` type in
+P4 are defined to perform wrap-around unsigned arithmetic.  Thus even
+if a timestamp value wraps around from its maximum value back to 0,
+you can always calculate the number of ticks that have elapsed from
+timestamp $t1$ until timestamp $t2$ using the expression $(t2 - t1)$
+(if more than $2^W$ ticks have elapsed, there will be aliasing of the
+result).  For example, if timestamps were $W >= 4$ bits in size,
+$t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.
+
+It is perfectly reasonable to discard some bits of a timestamp value
+in a P4 program for use cases that do not need the full wrap time or
+precision.  For example, an application that only needs to detect
+protocol timeouts with an accuracy of 1 second can discard the least
+significant bits of a timestamp that change more often than every 1
+second.
+
+Suppose another application needs full precision of the least
+significant bits of a timestamp, but the combination of the control
+plane and P4 program are designed to examine all entries of a
+`Register` array where these partial timestamps are stored more often
+than once every 5 seconds, to prevent wrapping.  In that case, the P4
+program could discard the most significant bits of the timestamp so
+that it wraps every 8 seconds, and store only those partial timestamps
+in the `Register` instance.
+
+
 # Programmable blocks
 
 The following declarations provide a template for the programmable

@@ -33,6 +33,7 @@ typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
+typedef bit<48> timestamp_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -48,6 +49,7 @@ typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
+typedef bit<unspecified> timestamp_t;
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
@@ -70,6 +72,7 @@ struct psa_ingress_input_metadata_t {
   /// set by the runtime in the parser, these are not under programmer control
   ParserStatus_t           parser_status;
   ParserErrorLocation_t    parser_error_location;
+  timestamp_t              ingress_timestamp;
 }
 
 struct psa_ingress_output_metadata_t {
@@ -80,6 +83,7 @@ struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
   InstanceType_t           instance_type;  /// Clone or Normal
   EgressInstance_t         instance;       /// instance coming from PRE
+  timestamp_t              egress_timestamp;
 }
 // END:Metadata_types
 
@@ -372,6 +376,65 @@ extern ValueSet<D> {
     */
 }
 // END:ValueSet_extern
+
+// BEGIN:Timestamp_extern
+extern Timestamp {
+    // No constructor.
+
+    // The whole and fractional seconds converted to or from via these
+    // methods are the same as those defined as the Java Time-Scale as
+    // described here:
+    // https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
+
+    // The "_to_timestamp" methods of course allow multiple input
+    // times to return the same timestamp_t value, if it has few
+    // enough bits that it wraps within the full range of the input
+    // values.
+
+    // The "timestamp_to_" methods can return different values
+    // depending upon the time at which they are called.  They will
+    // return the correct external time only when given as input a
+    // timestamp value t that meets the following conditions:
+
+    // If you get a timestamp value and "immediately" call one of the
+    // timestamp_to_* methods, it will return the correct value.
+
+    // If you get a timetamp value and store it for up to half of a
+    // timestamp wrap time, then call one of the timestamp_to_*
+    // methods, it will return the correct value.
+
+    // The timestamp_to_* methods may not return the correct values
+    // for future timestamps, nor for timestamps more than half of a
+    // wrap time old.
+
+    void timestamp_to_nanoseconds(in timestamp_t t,
+                                  out bit<64> seconds,
+                                  out bit<30> nanoseconds);
+    void timestamp_to_microseconds(in timestamp_t t,
+                                   out bit<64> seconds,
+                                   out bit<20> microseconds);
+    void timestamp_to_milliseconds(in timestamp_t t,
+                                   out bit<64> seconds,
+                                   out bit<10> milliseconds);
+    void nanoseconds_to_timestamp(in bit<64> seconds,
+                                  in bit<30> nanoseconds,
+                                  out timestampt_t t);
+    void microseconds_to_timestamp(in bit<64> seconds,
+                                   in bit<20> microseconds,
+                                   out timestampt_t t);
+    void milliseconds_to_timestamp(in bit<64> seconds,
+                                   in bit<10> milliseconds,
+                                   out timestampt_t t);
+    /*
+    @ControlPlaneAPI
+    message TimestampConversionParameters {
+        // TBD: There will need to be a control plane API that
+        // periodically writes conversion parameter values to the device,
+        // in order for these timestamp conversion methods to work.
+    }
+    */
+}
+// END:Timestamp_extern
 
 // BEGIN:Programmable_blocks
 parser Parser<H, M>(packet_in buffer, out H parsed_hdr, inout M user_meta,
