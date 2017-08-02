@@ -814,3 +814,154 @@ only occurs once in the source code for control block `C`.  Some
 semi-precise definition of "after in-line expansion of all control
 block apply calls, and all action calls nested inside of other action
 calls" might do it.
+
+
+The tables below summarize restrictions that a PSA portable program
+must obey to maximize portability.  PSA compliant implementations are
+allowed to reject programs that attempt to do anything not allowed
+here.
+
+Some of these are limitations of the P4_16 language itself, but some
+are unique to the PSA architecture.
+
+The stateful types of objects in P4_16 are packages, parsers,
+controls, externs, and tables.  All other types are referred to as
+"value types" here.
+
+Some guiding principles:
+
+- Packages can be instantiated, but have no run-time behavior, so
+  there is no use in passing them to anything else other than another
+  package.
+- Controls are not allowed to call parsers in a PSA portable program,
+  and vice versa, so there is no use in passing one type to the other
+  in constructor parameters or run-time parameters.
+- Externs are not allowed to call parsers or controls (at least in
+  PSA, and probably also P4_16 as well), so there is no use in passing
+  objects of those types to them.
+- Tables are always instantiated directly in their enclosing control,
+  and cannot be instantiated at the top level.  There is no type by
+  which a table can be passed as either a constructor or run-time
+  parameter anywhere else.  They are only intended to be used from
+  within the control where they are defined.
+
+The first table lists restrictions on what types can be passed as
+constructor parameters to other types.
+
+|-------------|-------------------------------------------------|
+|             | can be a constructor parameter for this type ||||
+|             |---------|--------|---------|--------|
+| This type   | package | parser | control | extern |
+|-------------|:-------:|:------:|:-------:|:------:|
+| package     | yes     |  no    |  no     |  no    |
+| parser      | yes     | yes    |  no     |  no    |
+| control     | yes     |  no    | yes     |  no    |
+| extern      | yes     | yes    | yes     | yes    |
+| table       |  no     |  no    |  no     |  no    |
+| value types | yes     | yes    | yes     | yes    |
+|-------------|---------|--------|---------|--------|
+
+The next table lists restrictions on what types can be instantiated
+where.  The answer for "package" is always "no" because there is no
+"inside a package" where instantiations can be written in P4_16.  One
+can definitely make constructor calls and use these as parameters when
+instantiating a package, and restrictions on those types are in the
+table above.
+
+For externs, their implementations are typically written in some other
+language, and so what can be instantiated inside of them is not the
+concern of the P4_16 language or PSA specifications.
+
+The entries for "value types" are yes for parsers and controls,
+because you can define variables of any of those types inside of
+parsers and controls.  They may not be defined at the top level of
+your program.
+
+|-------------|-------------------------------------------------|
+|             | can be instantiated in this place |||||
+|             |-----------|---------|---------|---------|--------|
+| This type   | top level | package | parser  | control | extern |
+|-------------|:---------:|:-------:|:-------:|:-------:|:------:|
+| package     | yes       |  no     | no      | no      |  no    |
+| parser      |  no[^P4]  |  no     | yes     | no[^P4] |  no    |
+| control     |  no[^P4]  |  no     | no[^P4] | yes     |  no    |
+| extern      | yes       |  no     | yes     | yes     |  no    |
+| table       |  no[^P4]  |  no     | no[^P4] | yes     |  no    |
+| value types |  no[^P4]  |  no     | yes     | yes     |  no    |
+|-------------|-----------|---------|---------|---------|--------|
+
+[^P4]: This is a limitation in the P4_16 v1.0.0 specification already,
+    independent of the PSA.
+
+The next table lists restrictions on what types can be passed as
+run-time parameters to other callable things that have run-time
+paramters: parsers, controls, extern methods, and actions.
+
+|-------------|-------------------------------------------------|
+|             | can be a run-time parameter to this callable thing ||||
+|             |-----------|---------|---------|---------|
+| This type   | parser    | control | method  | action  |
+|-------------|:---------:|:-------:|:-------:|:-------:|
+| package     |  no       |  no     | no      | no      |
+| parser      |  no       |  no     | no      | no      |
+| control     |  no       |  no     | no      | no      |
+| extern      | yes       | yes     | yes     | no      |
+| table       |  no       |  no     | no      | no      |
+| value types | yes       | yes     | yes     | yes     |
+|-------------|-----------|---------|---------|---------|
+
+The restrictions on return types of extern methods is the same as for
+parameters, with the addition that `void` can be a return type for
+methods that return no value.
+
+The next table lists restrictions on what kinds of calls can be made
+from which places in a P4 program.  Calling a parser, control, or
+table means invoking its `apply()` method.  The row for `extern`
+describes where extern method calls can be made from.
+
+|-------------|-------------------------------------------------|
+|             | can be called at run time from this place in a P4 program |||||
+|             |-----------|---------|---------|------------|--------|
+|             |           | control | action  | action not |        |
+|             | parser    | apply   | used by | used by    |        |
+| This type   | state     | block   | table   | any table  | extern |
+|-------------|:---------:|:-------:|:-------:|:----------:|:------:|
+| package     | N/A       | N/A     | N/A     | N/A        | N/A    |
+| parser      | yes       |  no     | no      | no         | no     |
+| control     |  no       | yes     | no      | yes        | no     |
+| extern      | yes       | yes     | yes     | yes        | no     |
+| table       |  no       | yes     | no      | yes        | no     |
+| action      |  no       | yes     | yes     | yes        | no     |
+| value types | N/A       | N/A     | N/A     | N/A        | N/A    |
+|-------------|-----------|---------|---------|------------|--------|
+
+There may not be any recursion in calls, neither by a thing calling
+itself directly, nor mutual recursion.
+
+An extern can never cause any other type of P4 program object to be
+called.
+
+An "action used by a table" means an action that is either in the
+`actions` list of a table, or it is possible for the action to be
+called from such an action, perhaps through one or more intermediate
+action calls.
+
+It is allowed to write actions that are not used by any table.  Such
+actions can be called from a control `apply` block.  They have exactly
+the same restrictions on what they can call as a control `apply` block
+does.  Calling such an action is nearly the same as calling another
+control, but unlike calling another control, such an action can be
+defined within the control that calls it, and thus the action has
+access to all parameter values and local variables defined within the
+control block that calls the action.
+
+Note that while the extern row shows that extern methods can be called
+from many places, particular externs may have additional restrictions
+not listed in this table.  For example, the `ValueSet` extern
+`is_member` method is only intended to be called from a parser state,
+never a control or action.
+
+TBD: All such restrictions should be documented in the description for
+each extern.  In most cases, it is expected that the restriction will
+be "from a parser state only" or "from a control apply block or action
+only".
