@@ -816,6 +816,40 @@ block apply calls, and all action calls nested inside of other action
 calls" might do it.
 
 
+## Atomicity of control plane API operations
+
+All table add, delete, and modify operations must be atomic relative
+to packet forwarding.  That is, for every table `apply` operation, and
+every _single_ control plane API operation on a table, the `apply`
+operation should behave as if that single control plane API operation
+has not yet occurred at all, or as if the single control plane API
+operation is complete.  The P4 program should never behave as if the
+control plane API operation is partially complete.
+
+For example, suppose a table `T` has an action `A` with 256 total bits
+of action parameters, and the control plane has added a table entry
+with a search key `K` and action `A`.  Later the control plane
+performs an update operation on the entry with key `K` that leaves the
+key `K` the same, but changes the 256 bits of action parameters.
+Every packet doing an `apply` on table `T` and matching the entry with
+key `K` should execute action `A` with either the old 256 bits of
+action parameters, or the new 256 bits of action parameters.
+
+There is no requirement that a sequence of _multiple_ table entry add,
+delete, or update operations should be atomic relative to packets
+being processed.  There are common "write tables from latest to
+earlier in the data flow" techniques used by existing control planes
+to achieve this, and control planes must either use techniques like
+this, or it is possible for some packets to be processed with the
+intermediate state that exists after each individual table operation
+is complete.
+
+The same applies for all control plane API operations on externs,
+unless the control plane operation explicitly documents otherwise.
+
+
+## Restrictions on use of stateful types
+
 The tables below summarize restrictions that a PSA portable program
 must obey to maximize portability.  PSA compliant implementations are
 allowed to reject programs that attempt to do anything not allowed
