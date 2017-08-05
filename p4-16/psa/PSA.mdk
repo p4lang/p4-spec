@@ -245,76 +245,125 @@ Operations in the egress pipeline will not execute if drop is called in ingress.
 void drop      ();
 ```
 
-#### Clone operation
-
-Create a copy of the packet and send it to the specified port.
-
-The PSA specifies four types of cloning, with the packet sourced
-from different points in the pipeline and sent back to ingress
-or to the buffering queue in the egress (see [#sec-cloning-methods]).
-\TODO: needs both source and destination data
-
-Parameters:
-
-- clone_method  The type of cloning.
-- port          The port to send the cloned packet to.
+### PRE Metadata
 
 ```
-void clone     (in CloneMethod_t clone_method, in PortId_t port);
+struct psa_ingress_metadata_for_pre_t {
+   bool clone;
+   bool resubmit;
+   bool recirculate;
+}
 ```
 
-#### Clone with extra data operation { #sec-pre-clone-with-data }
+#### Clone
 
-Create a copy of the packet with additional data and send it to the
-specified port.
+A PSA implementation provides a clone mechanism to create a copy of
+the original packet as an independent packet instance. The cloned
+packet can be a duplicate of the original packet or a copy of the
+deparsed packet after egress pipeline. The clone mechanism can submit
+the cloned packet to ingress parser or buffering mechanism. In a PSA
+implementation, the clone mechanism is implemented in PRE.
 
-The PSA specifies four types of cloning, with the packet sourced
-from different points in the pipeline and sent back to ingress
-or to the buffering queue in the egress (see [#sec-cloning-methods]).
-\TODO: needs both source and destination data
+The clone mechanism can optionally attach metadata to the cloned
+packet. A PSA implementation provides the `clone` extern to specify
+the attached metadata. The `clone` extern provides a `emit` method
+which accepts the attached metadata of generic type `T`. The attached
+metadata can be of type `header`, `header stack`, `header union` or
+`struct` of the above types. The PSA architecture instantiates the
+`clone` extern in the ingress and egress deparser. A P4 program can
+use it in ingress and egress deparser only. It is an error to
+instantiate the `clone` extern in the P4 program.
 
-Parameters:
+A PSA implementation provides a configuration bit `clone_ena` to the
+PRE to enable the cloning mechanism. If the `clone_ena` bit is set,
+the clone mechanism generates a cloned packet with the optional
+attached metadata. If the `clone_ena` bit is unset or unintialized,
+the clone mechanism is disabled and a cloned packet is not generated
+even if the `emit` method is invoked in the deparser.
 
-- clone_method  The type of cloning.
-- port          The port to send the cloned packet to.
-- data additional header data attached to the packet
-
-```
-void clone<T>  (in CloneMethod_t clone_method, in PortId_t port, in T data);
-```
-
-#### Resubmit operation
-
-Send a packet to the ingress port with additional data appended.
-
-This operation is intended for recursive packet processing.
-\TODO: needs both source and destination data
-
-Parameters:
-
-- data A header definition that can be added to the set of
-  packet headers.
-- port The input port at which the packet will be resubmitted.
+The PSA specifies four types of cloning, with the packet sourced from
+different points in the pipeline and sent back to ingress or to the
+buffering queue in the egress. 
 
 ```
-void resubmit<T>(in T data, in PortId_t port);
+extern clone {
+  /// Write @hdr into the ingress/egress clone engine.
+  /// @T can be a header type, a header stack, a header union, or a struct
+  /// containing fields with such types.
+  void emit<T>(in T hdr);
+}
 ```
 
-#### Recirculate operation
+#### Resubmit
 
-Send a post deparse packet to the ingress port with additional data
-appended.
+A PSA implementation provides a resubmit mechanism to resend the
+original packet to ingress parser for recursive processing. The
+resubmitted packet is the original packet as seen on the ingress
+pipeline. The resubmit mechanism send the original packet to the
+ingress parser. In a PSA implementation, the resubmit mechanism is
+implemented in PRE.
 
-This operation is intended for recursive packet processing.
-\TODO: needs both source and destination data
+The resubmit mechanism can optionally attach metadata to the
+resubmitted packet. A PSA implementation provides the `resubmit`
+extern to specify the attached metadata. The `resubmit` extern
+provides a `emit` method which accepts the attached metadata of
+generic type `T`. The attached metadata can be of type `header`,
+`header stack`, `header union` or `struct` of the above types. The PSA
+architecture instantiates the `resubmit` extern in the ingress
+deparser. A P4 program can use it in ingress deparser only. It is an
+error to instantiate the `resubmit` extern in the P4 program.
 
-Parameters:
-
-- data A header definition that can be added to the set of packet headers.
-- port The input port at which the packet will be resubmitted.
+A PSA implementation provides a configuration bit `resubmit_ena` to
+the PRE to enable the resubmit mechanism. If the `resubmit_ena` bit is
+set, the resubmit mechanism resend the original packet with the
+optional attached metadata. If the `resubmit_ena` bit is unset or
+unintialized, the resubmit mechanism is disabled and the original
+packet is not resubmitted even if the `emit` method is invoked in the
+deparser.
 
 ```
-void recirculate<T>(in T data, in PortId_t port);
+extern resubmit {
+  /// Write @hdr into the ingress packet buffer.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void emit<T>(in T hdr);
+}
+```
+
+#### Recirculate
+
+A PSA implementation provides a recirculate mechanism to send a
+deparsed packet from egress pipeline to ingress parser for recursive
+processing. The recirculated packet is the deparsed packet after the
+egress pipeline. The recirculate mechanism send the deparsed packet to
+the ingress parser. In a PSA implementation, the recirculate mechanism
+is implemented in PRE.
+
+The recirculate mechanism can optionally attach metadata to the
+recirculated packet. A PSA implementation provides the `recirculate`
+extern to specify the attached metadata. The `recirculate` extern
+provides a `emit` method which accepts the attached metadata of
+generic type `T`. The attached metadata can be of type `header`,
+`header stack`, `header union` or `struct` of the above types. The PSA
+architecture instantiates the `recirculate` extern in the ingress
+deparser. A P4 program can use it in egress deparser only. It is an
+error to instantiate the `recirculate` extern in the P4 program.
+
+A PSA implementation provides a configuration bit `recirculate_ena` to
+the PRE to enable the recirculate mechanism. If the `recirculate_ena`
+bit is set, the recirculate mechanism sends back the deparsed packet
+with the optional attached metadata to the ingress parser. If the
+`recirculate_ena` bit is unset or unintialized, the recirculate
+mechanism is disabled and the deparsed packet is not recirculated even
+if the `emit` method is invoked in the deparser.
+
+```
+extern recirculate {
+  /// Write @hdr into the egress packet.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void emit(in T hdr);
+}
 ```
 
 #### Truncate operation
