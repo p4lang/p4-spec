@@ -33,7 +33,6 @@ typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
-typedef bit<32> entry_key;           /// for DirectCounters
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -49,7 +48,6 @@ typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
-typedef bit<unspecified> entry_key;           /// for DirectCounters
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
@@ -205,12 +203,12 @@ extern DirectCounter<W> {
   /*
   @ControlPlaneAPI
   {
-    W    read<W>      (in entry_key key);
-    W    sync_read<W> (in entry_key key);
+    W    read<W>      (in TableEntry key);
+    W    sync_read<W> (in TableEntry key);
     void set          (in W seed);
-    void reset        (in entry_key key);
-    void start        (in entry_key key);
-    void stop         (in entry_key key);
+    void reset        (in TableEntry key);
+    void start        (in TableEntry key);
+    void stop         (in TableEntry key);
   }
   */
 }
@@ -236,10 +234,8 @@ extern Meter<S> {
   @ControlPlaneAPI
   {
     reset(in MeterColor_t color);
-    setParams(in S committedRate, in S committedBurstSize
-              in S peakRate, in S peakBurstSize);
-    getParams(out S committedRate, out S committedBurstSize
-              out S peakRate, out S peakBurstSize);
+    setParams(in MeterConfig);
+    getParams(out MeterConfig);
   }
   */
 }
@@ -253,13 +249,9 @@ extern DirectMeter {
   /*
   @ControlPlaneAPI
   {
-    reset(in entry_key entry, in MeterColor_t color);
-    void setParams<S>(in entry_key entry,
-                      in S committedRate, in S committedBurstSize
-                      in S peakRate, in S peakBurstSize);
-    void getParams<S>(in entry_key entry,
-                      out S committedRate, out S committedBurstSize
-                      out S peakRate, out S peakBurstSize);
+    reset(in TableEntry entry, in MeterColor_t color);
+    void setConfig(in TableEntry entry, in MeterConfig config);
+    void getConfig(in TableEntry entry, out MeterConfig config);
   }
   */
 }
