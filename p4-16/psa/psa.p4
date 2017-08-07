@@ -234,8 +234,8 @@ extern Meter<S> {
   @ControlPlaneAPI
   {
     reset(in MeterColor_t color);
-    setParams(in MeterConfig);
-    getParams(out MeterConfig);
+    setParams(in S index, in MeterConfig config);
+    getParams(in S index, out MeterConfig config);
   }
   */
 }
