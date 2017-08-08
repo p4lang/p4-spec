@@ -691,3 +691,394 @@ matches the in parameter of the subsequent block.
 ```
 [INCLUDE=psa.p4:Programmable_blocks]
 ```
+
+
+# PSA Portability Requirements
+
+This section lists minimum requirements for a P4 implementation to
+be PSA compliant.
+
+A PSA compliant implementation is allowed to support P4 programs that
+exceed one or more of these limits.  It is also allowed to reject such
+a P4 program as 'too complex'.
+
+A PSA compliant implementation must not reject a P4 program that obeys
+all of these limitations.  Thus P4 programs that obey all of these
+limitations should be portable across all PSA compliant
+implementations.
+
+Minimum requirements for packet parsing:
+
+- 32 bits in a parser `select` expression.
+- 50 parser states.
+- 20 parser state transitions per packet.
+- 128 bytes extracted per packet.
+- 16 bytes of metadata assigned in the parser.
+- 4 ValueSet `is_member` method calls per packet.
+
+Minimum requirements for tables:
+
+- 20 tables applied per packet in ingress.
+- 10 tables applied per packet in egress.
+- 640 bits of search key for a table with match_kind `ternary`.
+- 640 bits of search key for a table with match_kind `lpm`.
+- 640 bits of search key for a table with match_kind `exact`.
+- 32 different user-defined actions for one table.
+- 256 total bits of action parameters for an action.
+- 1M entries in a table (1M=2^20^).
+- 64 Mbits of table size in bits, which is the number of entries times
+  the size of one entry in bits.  The size of one entry is the key
+  width, plus the maximum total bits of action parameters, maximized
+  across all actions of the table.
+
+Minimum requirements for assignments, and arithmetic and Boolean
+operations.  These are total across those done within table actions,
+and those done outside of table actions (i.e. directly inside of
+control blocks, or within actions that are invoked directly from
+control blocks without applying a table).
+
+- 100 assignments executed per packet on ingress.  The same limit
+  applies independently for egress.
+- 50 arithmetic/Boolean operations on operands up to 32 bits in width,
+  per packet, on ingress.  The same limit applies independently for
+  egress.
+- 5 arithmetic/Boolean operations on operands up to 128 bits in width,
+  per packet, on ingress.  The same limit applies independently for
+  egress.
+
+Minimum requirements for PSA externs:
+
+- 4 `PacketReplicationEngine` method calls per packet (TBD if there
+  should be separate limits for each method call).
+- At least 64 bytes of user-defined metadata per packet can be carried
+  from the `Ingress` to `Egress` control block through the packet
+  buffer.
+- 512 copies that can be made of a packet by a
+  `PacketReplicationEngine` multicast group.
+- 256 multicast groups.
+- 4 `BufferingQueueingEngine` method calls per packet (TBD if there
+  should be separate limits for each method call).
+- 4 `Hash` `getHash` method calls per packet, with 160 total bytes of
+  input data.
+- 4 `Checksum` `clear` and `get` method calls per packet, with 160
+  total bytes of input data as arguments to `update` and `remove`
+  method calls.
+- 6 counter updates per packet (on different counters, which can be
+  any mix of `Counter` or `DirectCounter`).
+- 2 meter updates per packet (on different meters, which can be any
+  mix of `Meter` or `DirectMeter`).
+- 2 `Register` updates per packet (on different registers).  A
+  register `read`, followed by register `write`, counts as 1 update.
+- 2 `Random` `read` calls per packet.
+- TBD `ActionProfile` restrictions.
+- TBD `ActionSelector` restrictions.
+- TBD digest creations per packet.
+
+A PSA compliant implementation need not, but is allowed to, reject a
+P4 program if it does any of the following:
+
+- Applies the same table more than 1 time per packet.
+- Calls `getHash` on the same `Hash` instance more than 1 time per
+  packet.  (TBD: Is this a useful restriction?)
+- Calls `clear` or `get` on the same `Checksum` instance more than 1
+  time per packet, or calls `update` and `remove` more than a total of
+  6 times per packet.  (TBD: Is this a useful restriction?)
+- Updates the same `Counter`, `DirectCounter`, `Meter`, `DirectMeter`,
+  or `Register` instance more than 1 time per packet.
+- Uses the same `ActionProfile` for more than 1 table.
+- Uses the same `ActionSelector` for more than 1 table.
+- Calls `emit` on a `Digest` instance more than 1 time per packet.
+
+
+## Definition of "once per packet"
+
+An operation that is done at most once per packet must fall into one
+of the following cases.
+
+1. The operation is done at most once anywhere in the P4 program.
+2. For an operation done inside a table action, the operation is done
+   at most once in each action for one table, and it is not done
+   anywhere else in the program.
+3. The operation is done at most once in the "true" branch of an `if`
+   statement, and at most once in the "false"/`else` branch of the
+   same `if` statement.
+4. The operation is done at most once in every case of the same
+   `switch` statement.
+
+If an operation is done in the `Egress` control block, such an
+operation could be done once for each copy of a packet for which
+multiple copies were made via `PacketReplicationEngine` multicast
+replication.  This is still considered "once per packet" for the
+purposes of this definition.  Think of each packet copy as its own
+separate packet, as far as `Egress` processing is concerned.
+
+Similarly, for recirculated or resubmitted packets, consider each such
+recirculated/resubmitted packet as a separate one, and such operations
+can be done once for the original packet, and for each
+recirculated/resubmitted packet.
+
+Cases 2 through 4 are those where it is straightforward for a P4
+compiler to determine that the operation occurs at most once per
+packet.  These cases can "nest", so for example a PSA compliant
+implementation must consider the program fragment below to execute the
+operation `c1.count()` at most once per packet (assuming `c1.count()`
+is called nowhere else in the program):
+
+```
+    if (hdr.ipv4.isValid()) {
+        c1.count();
+    } else if (hdr.ipv6.isValid()) {
+        if (pkt_is_multicast == 1) {
+            c1.count();
+        } else if (pkt_is_unicast == 1) {
+            c1.count();
+        } else {
+            c1.count();
+        }
+    }
+```
+
+TBD: Do we really want to require PSA compliant implementations to
+handle cases 3 and 4, or are 1 and 2 enough?  For example, the example
+might be difficult to do for some implementations, if there are match
+data dependencies between all of the tables involved:
+
+```
+    if (hdr.ipv4.isValid()) {
+        T1.apply();
+        T2.apply();
+        T3.apply();
+        T4.apply();
+        T5.apply();
+    } else {
+        T5.apply();
+        T4.apply();
+        T3.apply();
+        T2.apply();
+        T1.apply();
+    }
+```
+
+A PSA compliant implementation is allowed to do more complex "once per
+packet" analysis than this, but a program that relies on this is not
+guaranteed to be portable across PSA compliant implementations.
+
+For example, while it is possible for a human, or a sufficiently
+sophisticated compiler, to determine that the operation `c1.count()`
+in the example code fragment below can only be invoked once per
+packet, a PSA compliant implementation need not do so.  It is free to
+reject the program for performing `c1.count()` more than once per
+packet.
+
+```
+    if (hdr.ipv4.isValid()) {
+        c1.count();
+    } else if (hdr.ipv6.isValid()) {
+        // ... more code here ...
+    }
+
+    // More code here, that cannot change the value of
+    // hdr.ipv4.isValid().
+
+    if (hdr.ipv4.isValid()) {
+        // ... more code here ...
+    } else if (hdr.ipv6.isValid()) {
+        c1.count();
+    }
+
+```
+
+TBD: We may need some clear but preferably precise way to explain that
+when we say "at most once anywhere in the P4 program", if a control
+block `C` is applied 2 times sequentially from the `Ingress` control
+block, and some operation is done exactly once inside of `C`'s `apply`
+block, that counts as 2 times per packet, even though the operation
+only occurs once in the source code for control block `C`.  Some
+semi-precise definition of "after in-line expansion of all control
+block apply calls, and all action calls nested inside of other action
+calls" might do it.
+
+
+## Atomicity of control plane API operations
+
+All table add, delete, and modify operations must be atomic relative
+to packet forwarding.  That is, for every table `apply` operation, and
+every _single_ control plane API operation on a table, the `apply`
+operation should behave as if that single control plane API operation
+has not yet occurred at all, or as if the single control plane API
+operation is complete.  The P4 program should never behave as if the
+control plane API operation is partially complete.
+
+For example, suppose a table `T` has an action `A` with 256 total bits
+of action parameters, and the control plane has added a table entry
+with a search key `K` and action `A`.  Later the control plane
+performs an update operation on the entry with key `K` that leaves the
+key `K` the same, but changes the 256 bits of action parameters.
+Every packet doing an `apply` on table `T` and matching the entry with
+key `K` should execute action `A` with either the old 256 bits of
+action parameters, or the new 256 bits of action parameters.
+
+There is no requirement that a sequence of _multiple_ table entry add,
+delete, or update operations should be atomic relative to packets
+being processed.  There are common "write tables from latest to
+earlier in the data flow" techniques used by existing control planes
+to achieve this, and control planes must either use techniques like
+this, or it is possible for some packets to be processed with the
+intermediate state that exists after each individual table operation
+is complete.
+
+The same applies for all control plane API operations on externs,
+unless the control plane operation explicitly documents otherwise.
+
+
+## Restrictions on use of stateful types
+
+The tables below summarize restrictions that a PSA portable program
+must obey to maximize portability.  PSA compliant implementations are
+allowed to reject programs that attempt to do anything not allowed
+here.
+
+Some of these are limitations of the P4_16 language itself, but some
+are unique to the PSA architecture.
+
+The stateful types of objects in P4_16 are packages, parsers,
+controls, externs, and tables.  All other types are referred to as
+"value types" here.
+
+Some guiding principles:
+
+- Packages can be instantiated, but have no run-time behavior, so
+  there is no use in passing them to anything else other than another
+  package.
+- Controls are not allowed to call parsers in a PSA portable program,
+  and vice versa, so there is no use in passing one type to the other
+  in constructor parameters or run-time parameters.
+- Externs are not allowed to call parsers or controls (at least in
+  PSA, and probably also P4_16 as well), so there is no use in passing
+  objects of those types to them.
+- Tables are always instantiated directly in their enclosing control,
+  and cannot be instantiated at the top level.  There is no type by
+  which a table can be passed as either a constructor or run-time
+  parameter anywhere else.  They are only intended to be used from
+  within the control where they are defined.
+
+The first table lists restrictions on what types can be passed as
+constructor parameters to other types.
+
+|-------------|-------------------------------------------------|
+|             | can be a constructor parameter for this type ||||
+|             |---------|--------|---------|--------|
+| This type   | package | parser | control | extern |
+|-------------|:-------:|:------:|:-------:|:------:|
+| package     | yes     |  no    |  no     |  no    |
+| parser      | yes     | yes    |  no     |  no    |
+| control     | yes     |  no    | yes     |  no    |
+| extern      | yes     | yes    | yes     | yes    |
+| table       |  no     |  no    |  no     |  no    |
+| value types | yes     | yes    | yes     | yes    |
+|-------------|---------|--------|---------|--------|
+
+The next table lists restrictions on what types can be instantiated
+where.  The answer for "package" is always "no" because there is no
+"inside a package" where instantiations can be written in P4_16.  One
+can definitely make constructor calls and use these as parameters when
+instantiating a package, and restrictions on those types are in the
+table above.
+
+For externs, their implementations are typically written in some other
+language, and so what can be instantiated inside of them is not the
+concern of the P4_16 language or PSA specifications.
+
+The entries for "value types" are yes for parsers and controls,
+because you can define variables of any of those types inside of
+parsers and controls.  They may not be defined at the top level of
+your program.
+
+|-------------|-------------------------------------------------|
+|             | can be instantiated in this place |||||
+|             |-----------|---------|---------|---------|--------|
+| This type   | top level | package | parser  | control | extern |
+|-------------|:---------:|:-------:|:-------:|:-------:|:------:|
+| package     | yes       |  no     | no      | no      |  no    |
+| parser      |  no[^P4]  |  no     | yes     | no[^P4] |  no    |
+| control     |  no[^P4]  |  no     | no[^P4] | yes     |  no    |
+| extern      | yes       |  no     | yes     | yes     |  no    |
+| table       |  no[^P4]  |  no     | no[^P4] | yes     |  no    |
+| value types |  no[^P4]  |  no     | yes     | yes     |  no    |
+|-------------|-----------|---------|---------|---------|--------|
+
+[^P4]: This is a limitation in the P4_16 v1.0.0 specification already,
+    independent of the PSA.
+
+The next table lists restrictions on what types can be passed as
+run-time parameters to other callable things that have run-time
+paramters: parsers, controls, extern methods, and actions.
+
+|-------------|-------------------------------------------------|
+|             | can be a run-time parameter to this callable thing ||||
+|             |-----------|---------|---------|---------|
+| This type   | parser    | control | method  | action  |
+|-------------|:---------:|:-------:|:-------:|:-------:|
+| package     |  no       |  no     | no      | no      |
+| parser      |  no       |  no     | no      | no      |
+| control     |  no       |  no     | no      | no      |
+| extern      | yes       | yes     | yes     | no      |
+| table       |  no       |  no     | no      | no      |
+| value types | yes       | yes     | yes     | yes     |
+|-------------|-----------|---------|---------|---------|
+
+The restrictions on return types of extern methods is the same as for
+parameters, with the addition that `void` can be a return type for
+methods that return no value.
+
+The next table lists restrictions on what kinds of calls can be made
+from which places in a P4 program.  Calling a parser, control, or
+table means invoking its `apply()` method.  The row for `extern`
+describes where extern method calls can be made from.
+
+|-------------|-------------------------------------------------|
+|             | can be called at run time from this place in a P4 program |||||
+|             |-----------|---------|---------|------------|--------|
+|             |           | control | action  | action not |        |
+|             | parser    | apply   | used by | used by    |        |
+| This type   | state     | block   | table   | any table  | extern |
+|-------------|:---------:|:-------:|:-------:|:----------:|:------:|
+| package     | N/A       | N/A     | N/A     | N/A        | N/A    |
+| parser      | yes       |  no     | no      | no         | no     |
+| control     |  no       | yes     | no      | yes        | no     |
+| extern      | yes       | yes     | yes     | yes        | no     |
+| table       |  no       | yes     | no      | yes        | no     |
+| action      |  no       | yes     | yes     | yes        | no     |
+| value types | N/A       | N/A     | N/A     | N/A        | N/A    |
+|-------------|-----------|---------|---------|------------|--------|
+
+There may not be any recursion in calls, neither by a thing calling
+itself directly, nor mutual recursion.
+
+An extern can never cause any other type of P4 program object to be
+called.
+
+An "action used by a table" means an action that is either in the
+`actions` list of a table, or it is possible for the action to be
+called from such an action, perhaps through one or more intermediate
+action calls.
+
+It is allowed to write actions that are not used by any table.  Such
+actions can be called from a control `apply` block.  They have exactly
+the same restrictions on what they can call as a control `apply` block
+does.  Calling such an action is nearly the same as calling another
+control, but unlike calling another control, such an action can be
+defined within the control that calls it, and thus the action has
+access to all parameter values and local variables defined within the
+control block that calls the action.
+
+Note that while the extern row shows that extern methods can be called
+from many places, particular externs may have additional restrictions
+not listed in this table.  For example, the `ValueSet` extern
+`is_member` method is only intended to be called from a parser state,
+never a control or action.
+
+TBD: All such restrictions should be documented in the description for
+each extern.  In most cases, it is expected that the restriction will
+be "from a parser state only" or "from a control apply block or action
+only".
