@@ -625,9 +625,6 @@ essentially the same as the one for `Counter`.  Since there is no
 `index` parameter to the `count` method, there is no need to check for
 whether it is in range.
 
-TBD: What to say about `entry_key` type?  Does it need to be made more
-precise?
-
 The rules here mean that an action that calls `count` on a
 `DirectCounter` instance may only be an action of that instance's one
 owner table.  If you want to have a single action `A` that can be
@@ -637,10 +634,17 @@ action in turn calls action `A`, in addition to any `count`
 invocations they have.
 
 A `DirectCounter` instance must have a counter value associated with
-its owner table that is updated only when there is a default action
-assigned to it (either in the P4 program via the `default_action`
-table property, or assigned to the table by the control plane), and a
-search of the table results in a miss.
+its owner table that is updated when there is a default action
+assigned to the table, and a search of the table results in a miss.
+If there is no default action assigned to the table, then there need
+not be any counter updated when a search of the table results in a
+miss.
+
+By "a default action is assigned to a table", we mean that either the
+table has a `default_action` table property with an action assigned to
+it in the P4 program, or the control plane has made an explicit call
+to assign the table a default action.  If neither of these is true,
+then there is no default action assigned to the table.
 
 TBD: Verify that the method of reading this default action counter
 state is documented for the control plane API.  I believe that Antonin
