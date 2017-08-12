@@ -748,26 +748,6 @@ hour:
 - A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
   wrap.
 
-A PSA implementation may optionally provide a way to convert
-timestamps to other units such as microseconds or nanoseconds at
-packet forwarding time in one's P4 program, and if so it is
-recommended to implement the methods defined below.  This is not a
-requirement for all PSA implementations because such a conversion
-would typically require taking a timestamp value and dividing it or
-multiplying it by a constant value of the same bit width that is
-unlikely to be a power of 2, and this is expected to be somewhat
-expensive on some implementations.  It may help in implementing such a
-conversion function to know that dividing of a `W`-bit value by a
-constant can be implemented using `W`-bit multiplication by a
-constant[^MG2011].
-
-[^MG2011]: N. Möller and T. Granlund, “Improved division by invariant integers,” IEEE Transactions on Computers, vol. 60, no. 2, pp. 165 –175, Feb. 2011
-
-```
-[INCLUDE=psa.p4:Timestamp_extern]
-```
-
-
 A PSA implementation is not required to implement time
 synchronization, e.g. via PTP[^PTP] or NTP[^NTP].
 
@@ -790,9 +770,11 @@ the P4Runtime API[^P4RuntimeAPI].
 
 ```
 // The TimestampInfo and Timestamp messages should be added to the
-// "oneof" inside of message "Entity".  It is only intended to be
-// read.  Attempts to update this entity have no effect, and should
-// return an error status that the entity is read only.
+// "oneof" inside of message "Entity".
+
+// TimestampInfo is only intended to be read.  Attempts to update this
+// entity have no effect, and should return an error status that the
+// entity is read only.
 
 message TimestampInfo {
   // The number of bits in the device's `timestamp_t` type.
@@ -842,22 +824,21 @@ timestamp $t1$ until timestamp $t2$ using the expression $(t2 - t1)$
 result).  For example, if timestamps were $W >= 4$ bits in size,
 $t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.
 
-It is perfectly reasonable to discard some bits of a timestamp value
-in a P4 program for use cases that do not need the full wrap time or
-precision.  This can save a significant number of bits of storage in
-tables or `Register` instances.  For example, an application that only
-needs to detect protocol timeouts with an accuracy of 1 second can
-discard the least significant bits of a timestamp that change more
-often than every 1 second.
+It is sometimes useful to minimize storage costs by discarding some
+bits of a timestamp value in a P4 program for use cases that do not
+need the full wrap time or precision.  For example, an application
+that only needs to detect protocol timeouts with an accuracy of 1
+second can discard the least significant bits of a timestamp that
+change more often than every 1 second.
 
-Suppose another application needs full precision of the least
-significant bits of a timestamp, but the combination of the control
-plane and P4 program are designed to examine all entries of a
+Another example is an application that needed full precision of the
+least significant bits of a timestamp, but the combination of the
+control plane and P4 program are designed to examine all entries of a
 `Register` array where these partial timestamps are stored more often
 than once every 5 seconds, to prevent wrapping.  In that case, the P4
 program could discard the most significant bits of the timestamp so
-that it wraps every 8 seconds, and store only those partial timestamps
-in the `Register` instance.
+that the remaining bits wrap every 8 seconds, and store those partial
+timestamps in the `Register` instance.
 
 
 # Programmable blocks
