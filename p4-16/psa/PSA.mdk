@@ -130,18 +130,21 @@ backend is responsible for mapping the PRE extern APIs to the
 appropriate mechanisms for performing these operations in the
 hardware.
 
-The PRE is instantiated by the architecture and a P4 program can use
-it directly. It is an error to instantiate the PRE multiple times.
+The PRE extern object has no constructor, and thus it cannot be
+instantiated in the user's P4 program. The architecture instantiates
+it exactly once, without requiring the user's P4 program to
+instantiate it.
 The PRE is made available to the Ingress programmable block using the
 same mechanism as packet_in. A corresponding Buffering and Queuing
 Engine (BQE) extern is defined for the Egress pipeline (see
 [#sec-bqe]).
 
-Note: some of these operations may not be implemented as primitive
-operations on a certain target. However, All of the operations can be
-implemented as a combination of other operations. Applications that
-rely on non-primitive operations may incur significant performance
-penalties, however, they should be functionally correct.
+**Note to implementers**: some of these operations may not be
+implemented as native operations on a certain target. However, the
+goal is that all operations should be implementable as a combination
+of native and non-native operations. Target documentation should highlight such
+implementations, so that application programmers are aware of the
+potentially significant performance penalties.
 
 Semantics of behavior for multiple calls to PRE APIs
 
@@ -230,10 +233,13 @@ void multicast (in MulticastGroup_t multicast_group);
 
 Do not forward the packet.
 
-The PSA implements drop as an operation in the PRE. While the drop
-operation can be invoked anywhere in the ingress pipeline, the
-semantics supported by the PSA is that the drop will be at the end of
-the pipeline (ingress or egress).
+The PSA implements drop as an operation in the PRE. While the drop operation
+can be invoked anywhere in the pipeline (ingress or egress), the semantics
+supported by the PSA is that the drop will be at the end of the pipeline
+(ingress or egress). Any other operations invoked in the pipeline, whether on
+the packet or any externs (e.g. counter updates, meter updates, register
+writes) will execute, until the packet reaches the end of the pipeline.
+Operations in the egress pipeline will not execute if drop is called in ingress.
 
 ```
 void drop      ();
@@ -335,19 +341,21 @@ backend is responsible for mapping the BQE extern APIs to the
 appropriate mechanisms for performing these operations in the
 hardware.
 
-The BQE is instantiated by the architecture and a P4 program can
-use it directly. It is an error to instantiate the BQE multiple
-times.  The BQE is made available to the Egress programmable block
+The BQE extern object has no constructor, and thus it cannot be
+instantiated in the user's P4 program. The architecture instantiates
+it exactly once, without requiring the user's P4 program to
+instantiate it.
+The BQE is made available to the Egress programmable block
 using the same mechanism as packet_in. A corresponding Packet
 Replication Engine (PRE) extern is defined for the Ingress pipeline
 (see [#sec-pre]).
 
-Note: some of these operations may not be implemented as primitive
-operations on a certain target. However, All of the operations can
-be implemented as a combination of other operations. Applications
-that rely on non-primitive operations may incur significant
-performance penalties, however, they should be functionally
-correct.
+**Note to implementers**: some of these operations may not be
+implemented as primitive operations on a certain target. However, the
+goal is that all operations should be implementable as a combination
+of other operations. Target documentation should highlight such
+implementations, so that application programmers are aware of the
+potentially significant performance penalties.
 
 The ordering semantics of multiple calls to BQE APIs is identical
 to the semantics ordering of PRE invocations, for the subset of
@@ -362,22 +370,6 @@ extern BufferingQueueingEngine {
 ```
 
 ### BQE Methods
-
-
-#### Unicast operation { #sec-bqe-unicast }
-
-Sends packet to port.
-
-Targets may implement this operation by setting the appropriate
-intrinsic metadata or through some other mechanism of configuring the
-BQE.
-
-The port parameter is the output port. If the port is PORT_CPU the
-packet will be sent to CPU.
-
-```
-void send_to_port (in PortId_t port);
-```
 
 #### Drop operation { #sec-bqe-drop }
 

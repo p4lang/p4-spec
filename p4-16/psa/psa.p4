@@ -137,7 +137,7 @@ enum HashAlgorithm {
   crc16_custom,
   ones_complement16,  /// One's complement 16-bit sum used for IPv4 headers,
                       /// TCP, and UDP.
-  random              /// are random hash algorithms useful?
+  target_default      /// target implementation defined
 }
 // END:Hash_algorithms
 
