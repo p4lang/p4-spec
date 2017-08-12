@@ -33,6 +33,7 @@ typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
+typedef bit<48> timestamp_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -48,6 +49,7 @@ typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
+typedef bit<unspecified> timestamp_t;
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
@@ -70,6 +72,7 @@ struct psa_ingress_input_metadata_t {
   /// set by the runtime in the parser, these are not under programmer control
   ParserStatus_t           parser_status;
   ParserErrorLocation_t    parser_error_location;
+  timestamp_t              ingress_timestamp;
 }
 
 struct psa_ingress_output_metadata_t {
@@ -80,6 +83,7 @@ struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
   InstanceType_t           instance_type;  /// Clone or Normal
   EgressInstance_t         instance;       /// instance coming from PRE
+  timestamp_t              egress_timestamp;
 }
 // END:Metadata_types
 
