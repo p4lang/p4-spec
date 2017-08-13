@@ -662,9 +662,9 @@ updating of `Counter` and `DirectCounter` externs.
 ## Meters
 
 Meters (RFC 2698) are a more complex mechanism for keeping statistics
-about the packets that trigger a table, most often used for dropping
+about packets, most often used for dropping
 or "marking" packets that exceed an average packet or bit rate.  To
-"mark" a packet means to change one or more of its quality of service
+mark a packet means to change one or more of its quality of service
 values in packet headers such as the 802.1Q PCP (priority code point)
 or DSCP (differentiated service code point) bits within the IPv4 or
 IPv6 type of service byte.  The meters specified in the PSA are
@@ -673,15 +673,24 @@ IPv6 type of service byte.  The meters specified in the PSA are
 PSA meters do not require any particular drop or marking actions, nor
 do they automatically implement those behaviors for you.  Meters keep
 enough state, and update their state during `execute()` method calls,
-in such a way that they return a green (also known as conform), yellow
-(exceed), or red (violate) result.  See RFC 2698 for details on the
+in such a way that they return a `GREEN` (also known as conform),
+`YELLOW` (exceed), or `RED` (violate) result.  See RFC 2698 for details on the
 conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
 
+TBD: RFC 2698 specifies two options for 3-color meters: color blind
+and color aware.  If this specification is meant to allow either one,
+it should be documented how both are supported.  Otherwise, document
+which of the two options is the only one supported.  It might be true
+that color blind policers can be implemented via a color aware policer
+that one always passes `GREEN` to as the current packet color.
+
 Similar to counters, there are two flavors of meters: indexed and
 direct.  (Indexed) meters are addressed by index, while direct meters
-are addressed using P4Runtime table entry as key.
+always update a meter state corresponding to the matched table entry
+or action, and from the control plane API are addressed using
+P4Runtime table entry as key.
 
 There are many other similarities between counters and meters,
 including:
@@ -720,8 +729,8 @@ and the type `S` used to construct the meter is `bit<W>`, since the
 index value could never be out of range.
 
 ```
-const int METER1_SIZE = 100;
-Meter<bit<7>>((bit<32>) METER1_SIZE, MeterType_t.bytes) meter1;
+#define METER1_SIZE 100
+Meter<bit<7>>(METER1_SIZE, MeterType_t.bytes) meter1;
 bit<7> idx;
 MeterColor_t color1;
 
@@ -730,8 +739,8 @@ MeterColor_t color1;
 if (idx < METER1_SIZE) {
     color1 = meter1.execute(idx, MeterColor_t.GREEN);
 } else {
-    // If idx is out of range, use default value for color1.  One may
-    // also choose to store an error flag in some metadata field.
+    // If idx is out of range, use a default value for color1.  One
+    // may also choose to store an error flag in some metadata field.
     color1 = MeterColor_t.RED;
 }
 ```
@@ -748,7 +757,7 @@ milliseconds.
 
 Implementations will also have finite ranges and precisions that they
 support for the Peak Information Rate and Committed Information Rate.
-An implementation should document the maximum rates it support, as
+An implementation should document the maximum rate it supports, as
 well as the precision it supports for implementing requested rates.
 It is recommended that the maximum rate supported be at least the rate
 of the implementation's fastest port, and that the actual implemented
