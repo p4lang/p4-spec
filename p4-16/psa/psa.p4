@@ -243,8 +243,20 @@ enum MeterColor_t { RED, GREEN, YELLOW };
 // END:MeterColor_defn
 
 // BEGIN:Meter_extern
+// Indexed meter with n_meters independent meter states.
+
 extern Meter<S> {
-  Meter(S n_meters, MeterType_t type);
+  Meter(bit<32> n_meters, MeterType_t type);
+  // TBD: Either document why there is a 'color' parameter to the
+  // execute() method, and how it can cause the behavior to differ, or
+  // remove that parameter.  If it is there for operating in 'color
+  // aware' mode as described in RFC 2698, then there needs to be a
+  // way to specify either color aware or color blind operation when
+  // constructing meters, and it should be documented that the color
+  // parameter is ignored for color blind meters, or even better,
+  // there should be separate methods, one with the color parameter
+  // for color-aware meters, and another without for color-blind
+  // meters.
   MeterColor_t execute(in S index, in MeterColor_t color);
 
   /*
@@ -261,6 +273,7 @@ extern Meter<S> {
 // BEGIN:DirectMeter_extern
 extern DirectMeter {
   DirectMeter(MeterType_t type);
+  // TBD: Same comment as for direct Meter parameter 'color' above.
   MeterColor_t execute(in MeterColor_t color);
 
   /*
