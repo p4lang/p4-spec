@@ -716,7 +716,8 @@ must not use the undefined value in a way that affects the output
 packet or other side effects.  The example code below shows one way to
 achieve predictable behavior.  Note that this undefined behavior
 cannot occur if the value of `n_meters` of an indexed meter is $2^W$,
-and the type `S` used to construct the meter is `bit<W>`.
+and the type `S` used to construct the meter is `bit<W>`, since the
+index value could never be out of range.
 
 ```
 const int METER1_SIZE = 100;
@@ -749,8 +750,8 @@ Implementations will also have finite ranges and precisions that they
 support for the Peak Information Rate and Committed Information Rate.
 An implementation should document the maximum rates it support, as
 well as the precision it supports for implementing requested rates.
-It is recommended that the maximum rate supported be equal to the
-implementation' maximum speed port, and that the actual implemented
+It is recommended that the maximum rate supported be at least the rate
+of the implementation's fastest port, and that the actual implemented
 rate should always be within plus or minus 0.1% of the requested rate.
 
 ### Meter types
