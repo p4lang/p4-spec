@@ -692,6 +692,21 @@ including:
   determined by the PSA implementation, and can vary from one PSA
   implementation to another.
 
+Further similarities between direct counters and direct meters
+include:
+
+- `DirectMeter` `execute` method calls must be performed within
+  actions invoked by the table that owns the `DirectMeter` instance.
+  It is optional for such an action to call the `execute` method.
+- There must be a meter state associated with a `DirectMeter`
+  instance's owner table, that can be updated when the table result is
+  a miss.  As for a `DirectCounter`, this state only needs to exist if
+  a default action is assigned to the table.
+
+The table attribute to specify that a table owns a `DirectMeter`
+instance is `psa_direct_meters`.  The value of this table attribute is
+a list of meter instances.
+
 As for counters, if you call the `execute(idx)` method on an indexed
 meter and `idx` is at least the number of meter states, so `idx` is
 out of range, no meter state is updated.  The `execute` call still
