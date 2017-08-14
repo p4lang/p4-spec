@@ -1163,26 +1163,29 @@ rate should always be within plus or minus 0.1% of the requested rate.
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
 }</code></pre><h3 id="sec-registers" class="h2" data-line="788" data-heading-depth="2" style="display:block"><span data-line="788"></span><span class="heading-before"><span class="heading-label">3.7</span>.&#8194;</span><span data-line="788"></span>Registers</h3>
-<p class="p noindent" data-line="790"><span data-line="790"></span>Registers are stateful memories whose values can be read and
-written in actions. Registers are similar to counters, but can be
-used in a more general way to keep state.
+<p class="p noindent" data-line="790"><span data-line="790"></span>Registers are stateful memories whose values can be read and written
+during packet forwarding under the control of the P4 program.  They
+are similar to counters and meters in that their state can be modified
+as a result of processing packets, but they are far more general in
+the behavior they can implement.
 </p>
-<p class="p indent" data-line="794"><span data-line="794"></span>Although registers cannot be used directly in matching,
-register.read may be used as the RHS of an assignment operation,
-allowing the current value of the register to be copied into
-metadata and be available for matching in subsequent tables.
+<p class="p indent" data-line="796"><span data-line="796"></span>Although you may not use register contents directly in table match
+keys, you may use the <span data-line="797"></span><code class="code code1 language-p4 lang-p4 p4 colorized">read()</code><span data-line="797"></span> method call on the right-hand side of
+an assignment statement, which retrieves the current value of the
+register.  You may copy the register value into metadata, and it is
+then available for matching in subsequent tables.
 </p>
-<p class="p indent" data-line="799"><span data-line="799"></span>A simple usage example might be to verify that a <span data-line="799"></span>&#8220;first packet&#8221;<span data-line="799"></span> was seen
-for a particular type of flow. A register cell would be allocated to
-the flow, initialized to <span data-line="801"></span>&#8220;clear&#8221;<span data-line="801"></span>. When the protocol signaled a <span data-line="801"></span>&#8220;first
-packet&#8221;<span data-line="802"></span>, the table would match on this value and update the flow’s
-cell to <span data-line="803"></span>&#8220;marked&#8221;<span data-line="803"></span>. Subsequent packets in the flow could would be mapped
-to the same cell; the current cell value would be stored in metadata
-for the packet and a subsequent table could check that the flow was
-marked as active.
+<p class="p indent" data-line="802"><span data-line="802"></span>A simple usage example might be to verify that a <span data-line="802"></span>&#8220;first packet&#8221;<span data-line="802"></span> was
+seen for a particular type of flow.  A register cell would be
+allocated to the flow, initialized to <span data-line="804"></span>&#8220;clear&#8221;<span data-line="804"></span>.  When the protocol
+signaled a <span data-line="805"></span>&#8220;first packet&#8221;<span data-line="805"></span>, the table would match on this value and
+update the flow<span data-line="806"></span>&#39;<span data-line="806"></span>s cell to <span data-line="806"></span>&#8220;marked&#8221;<span data-line="806"></span>.  Subsequent packets in the flow
+could would be mapped to the same cell; the current cell value would
+be stored in metadata for the packet and a subsequent table could
+check that the flow was marked as active.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="809" data-line-first="810;psa.p4:305" style="display:block"><code data-line="810;psa.p4:305"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
-  Register(S size);
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="811" data-line-first="812;psa.p4:305" style="display:block"><code data-line="812;psa.p4:305"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
+  Register(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
   T    read  (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> write (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T value);
 
@@ -1194,20 +1197,114 @@ marked as active.
 <span style="color:darkgreen">    void reset        (in S index);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-random" class="h2" data-line="813" data-heading-depth="2" style="display:block"><span data-line="813"></span><span class="heading-before"><span class="heading-label">3.8</span>.&#8194;</span><span data-line="813"></span>Random</h3>
-<p class="p noindent" data-line="815"><span data-line="815"></span>The random extern provides a reliable, target specific number generator
+}</code></pre>
+<p class="p noindent para-continued" data-line="815"><span data-line="815"></span>Another example using registers is given below.  It implements a
+packet and byte counter, where the byte counter can be updated by a
+packet length specified in the P4 program, rather than one chosen by
+the PSA implementation.
+</p>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="820" data-line-first="821;examples/psa-example-register2.p4:82" style="display:block"><code data-line="821;examples/psa-example-register2.p4:82"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span> PortId_t NUM_PORTS = <span class="constant" style="color:purple">512</span>;
+
+<span style="color:darkgreen">// It would be more convenient to use a struct type to represent the</span>
+<span style="color:darkgreen">// state of a combined packet and byte count, and many other compound</span>
+<span style="color:darkgreen">// values one might wish to store in a Register instance.  However,</span>
+<span style="color:darkgreen">// the latest p4test as of 2017-Aug-13 does not allow a struct type to</span>
+<span style="color:darkgreen">// be returned from a method call like Register.read().</span>
+
+<span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> PACKET_COUNT_WIDTH 32</span>
+<span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> BYTE_COUNT_WIDTH 48</span>
+<span style="color:darkgreen">//#define PACKET_BYTE_COUNT_WIDTH (PACKET_COUNT_WIDTH + BYTE_COUNT_WIDTH)</span>
+<span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> PACKET_BYTE_COUNT_WIDTH 80</span>
+
+<span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> PACKET_COUNT_RANGE (PACKET_BYTE_COUNT_WIDTH-1):BYTE_COUNT_WIDTH</span>
+<span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> BYTE_COUNT_RANGE (BYTE_COUNT_WIDTH-1):0</span>
+
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;PACKET_BYTE_COUNT_WIDTH&gt; PacketByteCountState_t;
+
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">action</span> update_pkt_ip_byte_count (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> PacketByteCountState_t s,
+                                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; ip_length_bytes)
+{
+    s[PACKET_COUNT_RANGE] = s[PACKET_COUNT_RANGE] + <span class="constant" style="color:purple">1</span>;
+    s[BYTE_COUNT_RANGE] = (s[BYTE_COUNT_RANGE] +
+                           (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;BYTE_COUNT_WIDTH&gt;) ip_length_bytes);
+}
+
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
+                <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
+                PacketReplicationEngine pre,
+                <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>  psa_ingress_input_metadata_t  istd,
+                <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_ingress_output_metadata_t ostd)
+{
+    Register&lt;PacketByteCountState_t, PortId_t&gt;((<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt;) NUM_PORTS)
+        port_pkt_ip_bytes_in;
+
+    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
+        ostd.egress_port = <span class="constant" style="color:purple">0</span>;
+        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (hdr.ipv4.isValid()) {
+<span style="color:navy">            @</span><span style="color:navy">atomic</span><span style="color:maroon"> {</span>
+                PacketByteCountState_t tmp;
+                tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);
+                update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);
+                port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);
+            }
+        }
+    }
+}</code></pre>
+<p class="p noindent para-continued" data-line="826"><span data-line="826"></span>Note the use of the <span data-line="826"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="826"></span> annotation in the block enclosing the
+<span data-line="827"></span><code class="code code1 language-p4 lang-p4 p4 colorized">read()</code><span data-line="827"></span> and <span data-line="827"></span><code class="code code1 language-p4 lang-p4 p4 colorized">write()</code><span data-line="827"></span> method calls on the <span data-line="827"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="827"></span> instance.  It is
+expected to be common that register accesses will need the <span data-line="828"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="828"></span>
+annotation around portions of your program in order to behave as you
+desire.  As stated in the P4<span data-line="830"></span>_<span data-line="830"></span>16 specification, without the <span data-line="830"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="830"></span>
+annotation in this example, an implementation is allowed to process
+two packets <span data-line="832"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P<span class="constant" style="color:purple">1</span></code><span data-line="832"></span> and <span data-line="832"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P<span class="constant" style="color:purple">2</span></code><span data-line="832"></span> in parallel, and perform the register access
+operations in this order:
+</p>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="835" data-line-first="836" style="display:block"><code data-line="836">    <span style="color:darkgreen">// Possible order of operations for the example program if the</span>
+    <span style="color:darkgreen">// @atomic annotation is _not_ used.</span>
+
+    tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  <span style="color:darkgreen">// for packet P1</span>
+    tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  <span style="color:darkgreen">// for packet P2</span>
+
+    <span style="color:darkgreen">// At this time, if P1 and P2 came from the same ingress_port,</span>
+    <span style="color:darkgreen">// each of their values of tmp are identical.</span>
+
+    update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);    <span style="color:darkgreen">// for packet P1</span>
+    update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);    <span style="color:darkgreen">// for packet P2</span>
+
+    port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  <span style="color:darkgreen">// for packet P1</span>
+    port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  <span style="color:darkgreen">// for packet P2</span>
+    <span style="color:darkgreen">// The write() from packet P1 is lost.</span></code></pre>
+<p class="p noindent para-continued" data-line="853"><span data-line="853"></span>Since different implementations may have different upper limits on the
+complexity of code that they will accept within an <span data-line="854"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="854"></span> block, we
+recommend you keep them as small as possible, subject to maintaining
+your desired correct behavior.
+</p>
+<p class="p indent" data-line="858"><span data-line="858"></span>Individual counter and meter method calls need not be enclosed in
+<span data-line="859"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="859"></span> blocks to be safe<span data-line="859"></span> <span data-line="859"></span>&#8211;<span data-line="859"></span> they guarantee atomic behavior of their
+individual method calls, without losing any updates.
+</p>
+<p class="p indent" data-line="862"><span data-line="862"></span>As for indexed counters and meters, access to an index of a register
+that is at least the size of the register is out of bounds.  An out of
+bounds write has no effect on the state of the system.  An out of
+bounds read returns an undefined value.  See the example in Section
+<span data-line="866"></span><a href="#sec-meters" title="3.6.&#8194;Meters" class="localref" style="target-element:h2"><span class="heading-label">3.6</span></a><span data-line="866"></span> for one way to write code to guarantee avoiding this
+undefined behavior.  Out of bounds register accesses are impossible
+for a register instance with type <span data-line="868"></span><code class="code code1 language-p4 lang-p4 p4 colorized">S</code><span data-line="868"></span> declared as <span data-line="868"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="868"></span> and size
+<span data-line="869"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="869"></span> entries.
+</p><h3 id="sec-random" class="h2" data-line="872" data-heading-depth="2" style="display:block"><span data-line="872"></span><span class="heading-before"><span class="heading-label">3.8</span>.&#8194;</span><span data-line="872"></span>Random</h3>
+<p class="p noindent" data-line="874"><span data-line="874"></span>The random extern provides a reliable, target specific number generator
 in the min .. max range.
 </p>
-<p class="p indent" data-line="819"><span data-line="819"></span>The set of distributions supported by the Random extern.
-<span data-line="820"></span>\<span data-line="820"></span>TODO: should this be removed in favor of letting the extern
+<p class="p indent" data-line="878"><span data-line="878"></span>The set of distributions supported by the Random extern.
+<span data-line="879"></span>\<span data-line="879"></span>TODO: should this be removed in favor of letting the extern
 return whatever distribution is supported by the target?
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="823" data-line-first="824;psa.p4:313" style="display:block"><code data-line="824;psa.p4:313"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="882" data-line-first="883;psa.p4:313" style="display:block"><code data-line="883;psa.p4:313"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
   PRNG,
   Binomial,
   Poisson
 }</code></pre>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="827" data-line-first="828;psa.p4:328" style="display:block"><code data-line="828;psa.p4:328"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="886" data-line-first="887;psa.p4:328" style="display:block"><code data-line="887;psa.p4:328"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
   Random(RandomDistribution dist, T min, T max);
   T read();
 
@@ -1218,16 +1315,16 @@ return whatever distribution is supported by the target?
 <span style="color:darkgreen">    void setSeed(in T seed);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-action-profile" class="h2" data-line="831" data-heading-depth="2" style="display:block"><span data-line="831"></span><span class="heading-before"><span class="heading-label">3.9</span>.&#8194;</span><span data-line="831"></span>Action Profile</h3>
-<p class="p noindent" data-line="833"><span data-line="833"></span>Action profiles are used as table implementation attributes.
+}</code></pre><h3 id="sec-action-profile" class="h2" data-line="890" data-heading-depth="2" style="display:block"><span data-line="890"></span><span class="heading-before"><span class="heading-label">3.9</span>.&#8194;</span><span data-line="890"></span>Action Profile</h3>
+<p class="p noindent" data-line="892"><span data-line="892"></span>Action profiles are used as table implementation attributes.
 </p>
-<p class="p indent" data-line="835"><span data-line="835"></span>Action profiles implement a mechanism to populate table entries
+<p class="p indent" data-line="894"><span data-line="894"></span>Action profiles implement a mechanism to populate table entries
 with actions and action data. The only data plane operation
 required is to instantiate this extern. When the control plane adds
 entries (members) into the extern, they are essentially populating
 the corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="841" data-line-first="842;psa.p4:344" style="display:block"><code data-line="842;psa.p4:344"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="900" data-line-first="901;psa.p4:344" style="display:block"><code data-line="901;psa.p4:344"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
   <span style="color:darkgreen">/// Construct an action profile of &#39;size&#39; entries</span>
   ActionProfile(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
 
@@ -1239,10 +1336,10 @@ the corresponding table entries.
 <span style="color:darkgreen">     entry_handle modify_member (entry_handle, action_ref, action_data);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-action-selector" class="h2" data-line="845" data-heading-depth="2" style="display:block"><span data-line="845"></span><span class="heading-before"><span class="heading-label">3.10</span>.&#8194;</span><span data-line="845"></span>Action Selector</h3>
-<p class="p noindent" data-line="847"><span data-line="847"></span>Action selectors are used as table implementation attributes.
+}</code></pre><h3 id="sec-action-selector" class="h2" data-line="904" data-heading-depth="2" style="display:block"><span data-line="904"></span><span class="heading-before"><span class="heading-label">3.10</span>.&#8194;</span><span data-line="904"></span>Action Selector</h3>
+<p class="p noindent" data-line="906"><span data-line="906"></span>Action selectors are used as table implementation attributes.
 </p>
-<p class="p indent" data-line="849"><span data-line="849"></span>Action selectors implement another mechanism to populate table
+<p class="p indent" data-line="908"><span data-line="908"></span>Action selectors implement another mechanism to populate table
 entries with actions and action data. They are similar to action
 profiles, with additional support to define groups of
 entries. Action selectors require a hash algorithm to select
@@ -1251,7 +1348,7 @@ instantiate this extern. When the control plane adds entries
 (members) into the extern, they are essentially populating the
 corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="858" data-line-first="859;psa.p4:367" style="display:block"><code data-line="859;psa.p4:367"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="917" data-line-first="918;psa.p4:367" style="display:block"><code data-line="918;psa.p4:367"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
   <span style="color:darkgreen">/// Construct an action selector of &#39;size&#39; entries</span>
   <span style="color:darkgreen">/// @param algo hash algorithm to select a member in a group</span>
   <span style="color:darkgreen">/// @param size number of entries in the action selector</span>
@@ -1270,12 +1367,12 @@ corresponding table entries.
 <span style="color:darkgreen">     void         delete_from_group (group_handle, entry_handle);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-packet-generation" class="h2" data-line="862" data-heading-depth="2" style="display:block"><span data-line="862"></span><span class="heading-before"><span class="heading-label">3.11</span>.&#8194;</span><span data-line="862"></span>Packet Generation</h3>
-<p class="p noindent" data-line="864"><span data-line="864"></span>\<span data-line="864"></span>TODO: is generating a new packet and sending it to the stream or is
+}</code></pre><h3 id="sec-packet-generation" class="h2" data-line="921" data-heading-depth="2" style="display:block"><span data-line="921"></span><span class="heading-before"><span class="heading-label">3.11</span>.&#8194;</span><span data-line="921"></span>Packet Generation</h3>
+<p class="p noindent" data-line="923"><span data-line="923"></span>\<span data-line="923"></span>TODO: is generating a new packet and sending it to the stream or is
 it adding a header to the current packet and sending it to the
 stream (copying or redirecting).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="868" data-line-first="869;psa.p4:383" style="display:block"><code data-line="869;psa.p4:383"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="927" data-line-first="928;psa.p4:383" style="display:block"><code data-line="928;psa.p4:383"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
   Digest(PortId_t receiver); <span style="color:darkgreen">/// define a digest stream to receiver</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> emit(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);      <span style="color:darkgreen">/// emit data into the stream</span>
 
@@ -1287,17 +1384,17 @@ stream (copying or redirecting).
 <span style="color:darkgreen">  </span><span style="color:darkgreen">/</span><span style="color:darkgreen">/</span><span style="color:darkgreen"> to generate the control-plane API.</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-parser-value-sets" class="h2" data-line="873" data-heading-depth="2" style="display:block"><span data-line="873"></span><span class="heading-before"><span class="heading-label">3.12</span>.&#8194;</span><span data-line="873"></span>Parser Value Sets</h3>
-<p class="p noindent" data-line="875"><span data-line="875"></span>A parser value set is a named set of values that may be used during
+}</code></pre><h3 id="sec-parser-value-sets" class="h2" data-line="932" data-heading-depth="2" style="display:block"><span data-line="932"></span><span class="heading-before"><span class="heading-label">3.12</span>.&#8194;</span><span data-line="932"></span>Parser Value Sets</h3>
+<p class="p noindent" data-line="934"><span data-line="934"></span>A parser value set is a named set of values that may be used during
 packet header parsing time to make decisions.  You may use control
 plane API calls to add values to a set, and remove values from a set,
 at run time, much like P4 tables.  Unlike tables, they may not have
 actions associated with them.  They may only be used to determine
 whether a particular value is in the set, returning a Boolean value.
-That Boolean value can then be used in a <span data-line="881"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="881"></span> statement to control
+That Boolean value can then be used in a <span data-line="940"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="940"></span> statement to control
 parsing (see examples below).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="884" data-line-first="885;psa.p4:404" style="display:block"><code data-line="885;psa.p4:404"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="943" data-line-first="944;psa.p4:404" style="display:block"><code data-line="944;psa.p4:404"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
     ValueSet(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">int</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_member(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> D data);
 
@@ -1315,34 +1412,34 @@ parsing (see examples below).
 <span style="color:darkgreen">    </span><span style="color:darkgreen">/</span><span style="color:darkgreen">/</span><span style="color:darkgreen"> definition, inside its &#39;oneof Entity&#39; list of possibilities.</span>
 <span style="color:darkgreen">    </span><span style="color:darkgreen">*/</span>
 }</code></pre>
-<p class="p noindent para-continued" data-line="888"><span data-line="888"></span>The control plane API excerpt above is intended to be added as part of
-the P4Runtime API<span data-line="889"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
+<p class="p noindent para-continued" data-line="947"><span data-line="947"></span>The control plane API excerpt above is intended to be added as part of
+the P4Runtime API<span data-line="948"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
 Buffer .proto file, can be found at
 https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="889"></span>.
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="948"></span>.
 </p>
-<p class="p indent" data-line="895"><span data-line="895"></span>The control plane API for a <span data-line="895"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="895"></span> is similar to that of a table,
+<p class="p indent" data-line="954"><span data-line="954"></span>The control plane API for a <span data-line="954"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="954"></span> is similar to that of a table,
 except only match fields may be specified, with no actions.  This
 includes API calls that specify ternary or range matching, although
-for <span data-line="898"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="898"></span>s these do not require specifying any priority values,
-since the only result of a <span data-line="899"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="899"></span> <span data-line="899"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="899"></span> call is <span data-line="899"></span>&#8220;in the set&#8221;<span data-line="899"></span>
-or <span data-line="900"></span>&#8220;not in the set&#8221;<span data-line="900"></span>.
+for <span data-line="957"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="957"></span>s these do not require specifying any priority values,
+since the only result of a <span data-line="958"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="958"></span> <span data-line="958"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="958"></span> call is <span data-line="958"></span>&#8220;in the set&#8221;<span data-line="958"></span>
+or <span data-line="959"></span>&#8220;not in the set&#8221;<span data-line="959"></span>.
 </p>
-<p class="p indent" data-line="902"><span data-line="902"></span>If a PSA target can do so, it should implement control plane API calls
+<p class="p indent" data-line="961"><span data-line="961"></span>If a PSA target can do so, it should implement control plane API calls
 involving ternary or range matching using ternary or range matching
 capabilities in the target, consuming the minimal table entries
 possible.
 </p>
-<p class="p indent" data-line="907"><span data-line="907"></span>However, a PSA target is allowed to implement such control plane API
-calls by <span data-line="908"></span>&#8220;expanding&#8221;<span data-line="908"></span> them into as many exact match entries as needed
+<p class="p indent" data-line="966"><span data-line="966"></span>However, a PSA target is allowed to implement such control plane API
+calls by <span data-line="967"></span>&#8220;expanding&#8221;<span data-line="967"></span> them into as many exact match entries as needed
 to have the same behavior.  For example, a control plane API call
 adding all values in the range 5 through 8 may be implemented as
 adding the four separate exact match values 5, 6, 7, and 8.
 </p>
-<p class="p indent" data-line="913"><span data-line="913"></span>The parser definition below shows an example that uses two <span data-line="913"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="913"></span>
-instances called <span data-line="914"></span><code class="code code1 language-p4 lang-p4 p4 colorized">tpid_types</code><span data-line="914"></span> and <span data-line="914"></span><code class="code code1 language-p4 lang-p4 p4 colorized">trill_types</code><span data-line="914"></span>.
+<p class="p indent" data-line="972"><span data-line="972"></span>The parser definition below shows an example that uses two <span data-line="972"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="972"></span>
+instances called <span data-line="973"></span><code class="code code1 language-p4 lang-p4 p4 colorized">tpid_types</code><span data-line="973"></span> and <span data-line="973"></span><code class="code code1 language-p4 lang-p4 p4 colorized">trill_types</code><span data-line="973"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="916" data-line-first="917;examples/psa-example-value-sets.p4:101" style="display:block"><code data-line="917;examples/psa-example-value-sets.p4:101"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> ParserImpl(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="975" data-line-first="976;examples/psa-example-value-sets.p4:101" style="display:block"><code data-line="976;examples/psa-example-value-sets.p4:101"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> ParserImpl(packet_in buffer,
                   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
                   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_parser_input_metadata_t istd)
@@ -1386,11 +1483,11 @@ instances called <span data-line="914"></span><code class="code code1 language-p
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> accept;
     }
 }</code></pre>
-<p class="p noindent para-continued" data-line="920"><span data-line="920"></span>The second example (below) has the same parsing behavior as the
+<p class="p noindent para-continued" data-line="979"><span data-line="979"></span>The second example (below) has the same parsing behavior as the
 example above, but combines the two parse states
-<span data-line="922"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_tpid_value_set</code><span data-line="922"></span> and <span data-line="922"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_trill_value_set</code><span data-line="922"></span> into one.
+<span data-line="981"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_tpid_value_set</code><span data-line="981"></span> and <span data-line="981"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_trill_value_set</code><span data-line="981"></span> into one.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="924" data-line-first="925;examples/psa-example-value-sets2.p4:81" style="display:block"><code data-line="925;examples/psa-example-value-sets2.p4:81">    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> dispatch_tpid_value_set {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="983" data-line-first="984;examples/psa-example-value-sets2.p4:81" style="display:block"><code data-line="984;examples/psa-example-value-sets2.p4:81">    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> dispatch_tpid_value_set {
         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_trill = trill_types.is_member(parsed_hdr.ethernet.etherType);
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(is_tpid, is_trill) {
@@ -1399,11 +1496,11 @@ example above, but combines the two parse states
             <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">default</span>: accept;
         }
     }</code></pre>
-<p class="p noindent para-continued" data-line="928"><span data-line="928"></span>The third example (below) demonstrates one way to have a <span data-line="928"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="928"></span>
-that matches on multiple fields, by making the type <span data-line="929"></span><code class="code code1 language-p4 lang-p4 p4 colorized">D</code><span data-line="929"></span> a <span data-line="929"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="929"></span>
+<p class="p noindent para-continued" data-line="987"><span data-line="987"></span>The third example (below) demonstrates one way to have a <span data-line="987"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="987"></span>
+that matches on multiple fields, by making the type <span data-line="988"></span><code class="code code1 language-p4 lang-p4 p4 colorized">D</code><span data-line="988"></span> a <span data-line="988"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="988"></span>
 containing multiple bit vectors.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="932" data-line-first="933;examples/psa-example-value-sets3.p4:80" style="display:block"><code data-line="933;examples/psa-example-value-sets3.p4:80"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> CustomValueSet1_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="991" data-line-first="992;examples/psa-example-value-sets3.p4:80" style="display:block"><code data-line="992;examples/psa-example-value-sets3.p4:80"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> CustomValueSet1_t {
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; etherType;
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">8</span>&gt;  partialMacAddress;
 }
@@ -1426,65 +1523,65 @@ containing multiple bit vectors.
     }
 
     <span style="color:darkgreen">// ... etc.</span></code></pre>
-<p class="p noindent para-continued" data-line="936"><span data-line="936"></span>A PSA compliant implementation is not required to support any use of a
-<span data-line="937"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="937"></span> <span data-line="937"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="937"></span> method call return value, other than directly
-inside of a <span data-line="938"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="938"></span> expression.  For example, a program fragment like
+<p class="p noindent para-continued" data-line="995"><span data-line="995"></span>A PSA compliant implementation is not required to support any use of a
+<span data-line="996"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="996"></span> <span data-line="996"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="996"></span> method call return value, other than directly
+inside of a <span data-line="997"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="997"></span> expression.  For example, a program fragment like
 the one shown below may be rejected, and thus P4 programmers striving
 for maximum portability should avoid writing such code.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="941" data-line-first="942" style="display:block"><code data-line="942">    <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1000" data-line-first="1001" style="display:block"><code data-line="1001">    <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
 
     is_tpid = is_tpid &amp;&amp; (parsed_hdr.ethernet.dstAddr[<span class="constant" style="color:purple">47</span>:<span class="constant" style="color:purple">40</span>] == <span class="constant" style="color:purple">0xfe</span>);
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(is_tpid) {
-        <span style="color:darkgreen">// ...</span></code></pre><h3 id="sec-timestamps" class="h2" data-line="950" data-heading-depth="2" style="display:block"><span data-line="950"></span><span class="heading-before"><span class="heading-label">3.13</span>.&#8194;</span><span data-line="950"></span>Timestamps</h3>
-<p class="p noindent" data-line="952"><span data-line="952"></span>A PSA implementation provides an <span data-line="952"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="952"></span> value for every
+        <span style="color:darkgreen">// ...</span></code></pre><h3 id="sec-timestamps" class="h2" data-line="1009" data-heading-depth="2" style="display:block"><span data-line="1009"></span><span class="heading-before"><span class="heading-label">3.13</span>.&#8194;</span><span data-line="1009"></span>Timestamps</h3>
+<p class="p noindent" data-line="1011"><span data-line="1011"></span>A PSA implementation provides an <span data-line="1011"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1011"></span> value for every
 packet in the ingress control block, as a field in the struct with
-type <span data-line="954"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_ingress_input_metadata_t</code><span data-line="954"></span>.  This timestamp should be close
+type <span data-line="1013"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_ingress_input_metadata_t</code><span data-line="1013"></span>.  This timestamp should be close
 to the time that the first bit of the packet arrived to the device, or
 alternately, to the time that the device began parsing the packet.
-This timestamp is <span data-line="957"></span><em class="em-low1">not</em><span data-line="957"></span> automatically included with the packet in the
+This timestamp is <span data-line="1016"></span><em class="em-low1">not</em><span data-line="1016"></span> automatically included with the packet in the
 egress control block.  A P4 program wishing to use the value of
-<span data-line="959"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="959"></span> in egress code must copy it to a user-defined
+<span data-line="1018"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1018"></span> in egress code must copy it to a user-defined
 metadata field that reaches egress.
 </p>
-<p class="p indent" data-line="962"><span data-line="962"></span>A PSA implementation also provides an <span data-line="962"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="962"></span> value for
+<p class="p indent" data-line="1021"><span data-line="1021"></span>A PSA implementation also provides an <span data-line="1021"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1021"></span> value for
 every packet in the egress control block, as a field of the struct
-with type <span data-line="964"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_input_metadata_t</code><span data-line="964"></span>.
+with type <span data-line="1023"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_input_metadata_t</code><span data-line="1023"></span>.
 </p>
-<p class="p indent" data-line="966"><span data-line="966"></span>One expected use case for timestamps is to store them in tables or
-<span data-line="967"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="967"></span> instances to implement checking for timeout events for
+<p class="p indent" data-line="1025"><span data-line="1025"></span>One expected use case for timestamps is to store them in tables or
+<span data-line="1026"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1026"></span> instances to implement checking for timeout events for
 protocols, where precision on the order of milliseconds is sufficient
 for most protocols.
 </p>
-<p class="p indent" data-line="971"><span data-line="971"></span>Another expected use case is INT (Inband Network Telemetry<span data-line="971"></span><sup id="back-fn-int" ><a href="#fn-int" title="2.http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">2</span></a></sup><span data-line="971"></span>),
+<p class="p indent" data-line="1030"><span data-line="1030"></span>Another expected use case is INT (Inband Network Telemetry<span data-line="1030"></span><sup id="back-fn-int" ><a href="#fn-int" title="2.http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">2</span></a></sup><span data-line="1030"></span>),
 where precision on the order of microseconds or smaller is necessary
 to measure queueing latencies that differ by those amounts.  It takes
 only 0.74 microseconds to transmit a 9 Kbyte Ethernet jumbo frame on a
 100 gigabit per second link.
 </p>
-<p class="p indent" data-line="979"><span data-line="979"></span>For these applications, it is recommended that an implementation<span data-line="979"></span>&#39;<span data-line="979"></span>s
+<p class="p indent" data-line="1038"><span data-line="1038"></span>For these applications, it is recommended that an implementation<span data-line="1038"></span>&#39;<span data-line="1038"></span>s
 timestamp increments at least once every microsecond.  Incrementing
 once per clock cycle in an ASIC or FPGA implementation would be a
 reasonable choice.  The timestamp should increment at a constant rate
 over time.  For example, it should not be a simple count of clock
 cycles in a device that implements dynamic frequency
-scaling<span data-line="985"></span><sup id="back-fn-dynamicfrequencyscaling" ><a href="#fn-dynamicfrequencyscaling" title="3.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">3</span></a></sup><span data-line="985"></span>.
+scaling<span data-line="1044"></span><sup id="back-fn-dynamicfrequencyscaling" ><a href="#fn-dynamicfrequencyscaling" title="3.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">3</span></a></sup><span data-line="1044"></span>.
 </p>
-<p class="p indent" data-line="989"><span data-line="989"></span>Timestamps are of type <span data-line="989"></span><code class="code code1 language-p4 lang-p4 p4 colorized">timestamp_t</code><span data-line="989"></span>, which is type <span data-line="989"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="989"></span> for a
-value of <span data-line="990"></span><code class="code code1 language-p4 lang-p4 p4 colorized">W</code><span data-line="990"></span> defined by the implementation.  Timestamps are expected
+<p class="p indent" data-line="1048"><span data-line="1048"></span>Timestamps are of type <span data-line="1048"></span><code class="code code1 language-p4 lang-p4 p4 colorized">timestamp_t</code><span data-line="1048"></span>, which is type <span data-line="1048"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1048"></span> for a
+value of <span data-line="1049"></span><code class="code code1 language-p4 lang-p4 p4 colorized">W</code><span data-line="1049"></span> defined by the implementation.  Timestamps are expected
 to wrap around during the normal passage of time.  It is recommended
 that an implementation pick a rate of advance and a bit width such
 that wrapping around occurs at most once every hour.  Making the wrap
 time this long (or longer) makes timestamps more useful for several
 use cases.
 </p>
-<ul class="ul list-dash compact" data-line="997">
-<li class="li ul-li list-dash-li compact-li" data-line="997"><span data-line="997"></span>Checking for timeouts of protocol hello / keep-alive traffic that is
+<ul class="ul list-dash compact" data-line="1056">
+<li class="li ul-li list-dash-li compact-li" data-line="1056"><span data-line="1056"></span>Checking for timeouts of protocol hello / keep-alive traffic that is
 on the order of seconds or minutes.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="999"><span data-line="999"></span>If timestamps are placed into packets without converting them to
+<li class="li ul-li list-dash-li compact-li" data-line="1058"><span data-line="1058"></span>If timestamps are placed into packets without converting them to
 other formats, then external data analysis systems using those
 timestamps will in many cases need to do so, e.g. to compare
 timestamps stored in packets by different PSA devices.  These
@@ -1494,51 +1591,51 @@ references to the recorded data.  The extra data required for
 accurate conversion is lower, and the likelihood of conversion
 mistakes is lower, if the timestamp values wrap less often.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1008"><span data-line="1008"></span>If timestamps are converted to other formats within a P4 program, it
+<li class="li ul-li list-dash-li compact-li" data-line="1067"><span data-line="1067"></span>If timestamps are converted to other formats within a P4 program, it
 will need access to parameters that are likely to change every wrap
-time, e.g. at least a <span data-line="1010"></span>&#8220;base value&#8221;<span data-line="1010"></span> to add some calculated value to.
+time, e.g. at least a <span data-line="1069"></span>&#8220;base value&#8221;<span data-line="1069"></span> to add some calculated value to.
 A straightforward way to do this requires the control plane to
 update these values at least once or twice per timestamp wrap time.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1013"><span data-line="1013"></span>Programs that wish to use <span data-line="1013"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1013"></span>
+<li class="li ul-li list-dash-li compact-li" data-line="1072"><span data-line="1072"></span>Programs that wish to use <span data-line="1072"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1072"></span>
 to calculate the queueing latency experienced by a packet need the
 wrap time to exceed the maximum queueing latency.
 </li></ul>
 
-<p class="p noindent" data-line="1017"><span data-line="1017"></span>Examples of the number of bits required for wrap times of at least one
+<p class="p noindent" data-line="1076"><span data-line="1076"></span>Examples of the number of bits required for wrap times of at least one
 hour:
 </p>
-<ul class="ul list-dash compact" data-line="1020">
-<li class="li ul-li list-dash-li compact-li" data-line="1020"><span data-line="1020"></span>A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
+<ul class="ul list-dash compact" data-line="1079">
+<li class="li ul-li list-dash-li compact-li" data-line="1079"><span data-line="1079"></span>A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
 to wrap.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1022"><span data-line="1022"></span>A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
+<li class="li ul-li list-dash-li compact-li" data-line="1081"><span data-line="1081"></span>A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
 wrap.
 </li></ul>
 
-<p class="p noindent" data-line="1025"><span data-line="1025"></span>A PSA implementation is not required to implement time
-synchronization, e.g. via PTP<span data-line="1026"></span><sup id="back-fn-ptp" ><a href="#fn-ptp" title="4.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">4</span></a></sup><span data-line="1026"></span> or NTP<span data-line="1026"></span><sup id="back-fn-ntp" ><a href="#fn-ntp" title="5.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">5</span></a></sup><span data-line="1026"></span>.
+<p class="p noindent" data-line="1084"><span data-line="1084"></span>A PSA implementation is not required to implement time
+synchronization, e.g. via PTP<span data-line="1085"></span><sup id="back-fn-ptp" ><a href="#fn-ptp" title="4.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">4</span></a></sup><span data-line="1085"></span> or NTP<span data-line="1085"></span><sup id="back-fn-ntp" ><a href="#fn-ntp" title="5.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">5</span></a></sup><span data-line="1085"></span>.
 </p>
-<p class="p indent" data-line="1031"><span data-line="1031"></span>TBD: This text has been written assuming that it is more important for
-timestamps to be increasing at a constant rate, with no sudden <span data-line="1032"></span>&#8220;jumps&#8221;<span data-line="1032"></span>
+<p class="p indent" data-line="1090"><span data-line="1090"></span>TBD: This text has been written assuming that it is more important for
+timestamps to be increasing at a constant rate, with no sudden <span data-line="1091"></span>&#8220;jumps&#8221;<span data-line="1091"></span>
 due to time synchronization events.  Is this what people want from
 timestamps?
 </p>
-<p class="p indent" data-line="1036"><span data-line="1036"></span>TBD: Some time synchronization methods avoid sudden <span data-line="1036"></span>&#8220;jumps&#8221;<span data-line="1036"></span> by
+<p class="p indent" data-line="1095"><span data-line="1095"></span>TBD: Some time synchronization methods avoid sudden <span data-line="1095"></span>&#8220;jumps&#8221;<span data-line="1095"></span> by
 temporarily speeding up or slowing down the rate of increase by a
 small percentage, until the desired synchronization is achieved.
 (TBD: which ones?  citation?).  Would anyone mind if PSA
 implementations were allowed to do this with their timestamp values?
 </p>
-<p class="p indent" data-line="1042"><span data-line="1042"></span>The control plane API excerpt below is intended to be added as part of
-the P4Runtime API<span data-line="1043"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
+<p class="p indent" data-line="1101"><span data-line="1101"></span>The control plane API excerpt below is intended to be added as part of
+the P4Runtime API<span data-line="1102"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
 Buffer .proto file, can be found at
 https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="1043"></span>.
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="1102"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1045" data-line-first="1046" style="display:block"><code data-line="1046"><span style="color:darkgreen">// The TimestampInfo and Timestamp messages should be added to the</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1104" data-line-first="1105" style="display:block"><code data-line="1105"><span style="color:darkgreen">// The TimestampInfo and Timestamp messages should be added to the</span>
 <span style="color:darkgreen">// &quot;oneof&quot; inside of message &quot;Entity&quot;.</span>
 
 <span style="color:darkgreen">// TimestampInfo is only intended to be read.  Attempts to update this</span>
@@ -1563,63 +1660,63 @@ message TimestampInfo {
 message Timestamp {
   bytes value = <span class="constant" style="color:purple">1</span>;
 }</code></pre>
-<p class="p noindent para-continued" data-line="1073"><span data-line="1073"></span>For every packet <span data-line="1073"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P</code><span data-line="1073"></span> that is processed by ingress and then egress,
+<p class="p noindent para-continued" data-line="1132"><span data-line="1132"></span>For every packet <span data-line="1132"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P</code><span data-line="1132"></span> that is processed by ingress and then egress,
 with the minimum possible latency in the packet buffer, it is
-guaranteed that the <span data-line="1075"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1075"></span> value for that packet will be
-the same as, or slightly larger than, the <span data-line="1076"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1076"></span> value
-that the packet was assigned on ingress.  By <span data-line="1077"></span>&#8220;slightly larger than&#8221;<span data-line="1077"></span>,
-we mean that the difference <span data-line="1078"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1078"></span>
+guaranteed that the <span data-line="1134"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1134"></span> value for that packet will be
+the same as, or slightly larger than, the <span data-line="1135"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1135"></span> value
+that the packet was assigned on ingress.  By <span data-line="1136"></span>&#8220;slightly larger than&#8221;<span data-line="1136"></span>,
+we mean that the difference <span data-line="1137"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1137"></span>
 should be a reasonably accurate estimate of this minimum possible
 latency through the packet buffer, perhaps truncated down to 0 if
 timestamps advance more slowly than this minimum latency.
 </p>
-<p class="p indent" data-line="1083"><span data-line="1083"></span>Consider two packets such that at the same time (e.g. the same clock
-cycle), one is assigned its value of <span data-line="1084"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1084"></span> near the time
+<p class="p indent" data-line="1142"><span data-line="1142"></span>Consider two packets such that at the same time (e.g. the same clock
+cycle), one is assigned its value of <span data-line="1143"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1143"></span> near the time
 it begins parsing, and the other is assigned its value of
-<span data-line="1086"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1086"></span> near the time that it begins its egress processing.
+<span data-line="1145"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1145"></span> near the time that it begins its egress processing.
 It is allowed that these timestamps differ by a few tens of
-nanoseconds (or by one <span data-line="1088"></span>&#8220;tick&#8221;<span data-line="1088"></span> of the timestamp, if one tick is larger
+nanoseconds (or by one <span data-line="1147"></span>&#8220;tick&#8221;<span data-line="1147"></span> of the timestamp, if one tick is larger
 than that time), due to practical difficulties in making them always
 equal.
 </p>
-<p class="p indent" data-line="1092"><span data-line="1092"></span>Recall that the binary operators <span data-line="1092"></span><code class="code code1 language-p4 lang-p4 p4 colorized">+</code><span data-line="1092"></span> and <span data-line="1092"></span><code class="code code1 language-p4 lang-p4 p4 colorized">-</code><span data-line="1092"></span> on the <span data-line="1092"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1092"></span> type in
+<p class="p indent" data-line="1151"><span data-line="1151"></span>Recall that the binary operators <span data-line="1151"></span><code class="code code1 language-p4 lang-p4 p4 colorized">+</code><span data-line="1151"></span> and <span data-line="1151"></span><code class="code code1 language-p4 lang-p4 p4 colorized">-</code><span data-line="1151"></span> on the <span data-line="1151"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1151"></span> type in
 P4 are defined to perform wrap-around unsigned arithmetic.  Thus even
 if a timestamp value wraps around from its maximum value back to 0,
 you can always calculate the number of ticks that have elapsed from
-timestamp <span data-line="1096"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAdCAYAAAAkXAW5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABaklEQVRIx8WX0W2EMAxAnysGQB2BbsAKpRswAyPcDoxAR+iNcGxQlQ24EdrbwP0JkpWSQBEESxZB8TkPx+fEqCpHK1ACNyCfnU8AcAHUabEJArgCP0C1wjYHCqAGOvc7NVr+GwKojIPLgm3tLfgFNB7IJoh2yYEXhdIP+RqIjLhU00BVh5ihqj6AgQ3ytDBfumfPgRKEEJHKvN5OgQDezLg/C2J1PuwCISKjiKhVkw/4cyLS7gmRmdAXXkJOC727gjXJN3DfHUJV79axiNh86JJsx5n5EINIUh+CECnrQywSyepDDCJpPoQgkubDHwgRKc3r9RQIuxWnRcIk5cMVsLnTtUsViT4A0Hjlfdezw8+Hz4B9C7weGQn7hcNMFFrg44i/bRZb2NuGWlVfNqyRm/Fz6ILq9xjqTs7JQeeu7/nKTmvS2vibdHRtQGXs8lDHNLqr+rjUb3hXft2gjTgHu4iI5DNtQNROVR+/AFw+4vvcN5QAAAAASUVORK5CYII=" alt="$t1$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1096"></span> until timestamp <span data-line="1096"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAdCAYAAADPa766AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB4UlEQVRIx82X4XGjQAyFP3muAE9KIB24hZAOXIPTAT2QDnwlhBJIOkjcAZQQ3IHyI/LN3oZlBdgz2Zkd2LW0PCPpPSGqym8Ym1scKiKliDQiMoiI2hxsbz/qpKpXm8AWaAEFjsABKO36YfsKDED5n6/j8GbMMWHb2QO3id8PARgF9i4g9m8uTpUDcJcCEdjVEZidB0gdOyTsdjmbKHwhkA8PkH9xzdgdLXyH3BsJ7EMwRc7hYtg6ciNMxFx44lypNlMlGCzbTMXeBfdby62p8R6t76d45DG4f515cH9NQisDrjllznkCTsAZeHbYF9H6PBZjz6xXEl9cwqWoKiJSRCh3Zgzw1zjiMj6BXlXPKySgC57Xq+r9Kv5Y+DZKN6F5+WMhkFBzmkmK9/LHAhD71Nmr9GWBMg8hrYdzs5I/5ow3A9MDD9l+5Bb5EWhLukW4dX4AlUuvEnKuwOGKyXnM2ibQK1BciS/qjF0B7OLNS785TMXbAaLwSoHlT5XKj2aij2idZVrPILh9Kj+qhNOQo3wT0HoGtyhQ/ElI82lEqGrgZUriRaQ1nmijxirVCjwahfRjcdUf3xzfIekcXbwumN1Y1TRhudmrO04R0Ui1zZ1titAqi/Ng18oR62EFkFpV+QImDmrl3dzOQAAAAABJRU5ErkJggg==" alt="$t2$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1096"></span> using the expression <span data-line="1096"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAArCAYAAAB8fLoNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFUUlEQVR42u1d7ZHaSBB9TRGAjCMwm4GWi+BEBmwIhgzYcgRXOAPsDIwzYB2BV8oAOYIzyqDvBy3cEvoYfR4rzauagoXZ0WzrqftNz8cSM6MIROQAWDDzCyxGCSLyALwyc1RUb1LSyBzAL2vO0eM3gF9E5NYikxDJB/CP9UrjBjMHAD4C8IsIRVlhTkKbDyBg5idrTgvhxQ7AGsCHrJCX55kOAGbCxl5iMhEdiOhMRCzlLJ+t7G1s1dYuER3FYVT1UM8AQgA/8iokijCPAazS37VdADgAjnK9vVzbk1dfPmcAZwBe1/0ZegGwVTad12zDld/f3XyXcXPPAPwGHT6Y3nwAJyGNk/P9Wv3xvRD8zslQxbYOgDmAlTyo55Qt3Qb9OGYRMl1pJ5W8mhfxVGe3BoY55REpo0+NjfDGiVTFtquUzXx5MM8tkSnuyyGTTMJiBnBqcJGdSWeVq3QNn7CEYUZKpp0pEcRm7o3naIlMKqok2tECfCOv+wb6zksNJ/OwARABWJQJQRk1fFEfuZK2GBtMbQtmjpg5YOaww/48y+unGwGuWOs0YGvM+qMhq2NxXRbq0tppO0LPZGTbkjbObcqFuK2EZ5J0uQMgLEuZl6TcYxxLqs/Ue0c/dTl4Tf38MMLpDFPb9olA+rfWeaY4xDXJdC/V+5eK5Ahh0ZZt+0TclydNpjhF7vcR04W8geimzwb10xopGhmZqti2T/xM98+pGkdTmsek7FocydROXbwRbdSZbTvQTAnuTGuyfpnyFq7ccMjI65CacW4axvSUSjjwiee+bdtkAjgiokhItZiqjocVGgl1fSLSMX3fpisW8amNO+iJ5z5t2xJCIfzjRI2MmuiQLmP6Tr3/fofGHKte0t4RAOYT9dT/btCg28VIQ1YMXNse6XKYTmzbIiJNplkTz9RVDkQy41/jfAYzL8fGojvOL2V5ptlExFMTz9RVDuSH9C0E8LfNL929Z0Jjz9RFTCeivbj3AMBj3ax8TttrtQCvq3IYiV4CgH/jFNNUPJLToLFWYzoRbXGZi3vpKLS9yhB71qHbbysk3bteSmCq3js1brxeXH5ogUgrGb19YeZNR0PvAH+mj+5ZL7Vq2w7xPo5sExXe6jypXlsxXcTmAZfplU1BvXnZlpuhpQTu3DNdNfcEfxJkdUJdHIaivLUzon/KiDSX0PBZFq0X4RnlqwyGJL4b2bYHzLRnClvwTC95Yhe3k7RZKQDfkEgAsMA4Vhk0tm3Pnimc4jKxiKodS4WanznVdgbDel800rPBNR01yhssWrRtH5hrMsVrixwicioMwzX5ggyD7AB8KxrSEtFRvMwxlaDLu95SRPTQPVNj2/4PfT1OmTkgIu1avxs2UkSSNS7bkh4K6hyUK6+igcYQ4hrZ1iAk1ZU1RR70dZLq/F8VhtihIt5THIZEFG4APBZ0YovkshJYMrVjW32jVVllJFL3ksD1VL2qg7BFfE+YOUrv9DzW3CV6wmXh1QkGi/1xuyGwt4V2b3AHbiXb5mwPMy3rGptCr/eEmDkemp9kGPoOFkMQ8U7K20Vl9apOWxHRSTTTIzMH11NQRAx7AJb2CB0Lw9zgSULcA5A8BWWvY7SFRQluNu0mzmdSbutdmzP1FoP0TGcJjVdZNMlh2ydrLouS9ISD1PldNyfHiXZaIOd0MAsL8UohMydSFJOcWOgguZDfwiIm0i7LK2WSSRJmTwDWBlMcFuMikotL7muTNZVDeeeAq8MwH0cwF2ZRTiQHl2O8v+WtN6OiQ+Ulfe/VnAeyGBaZfNFJuakjMvgPBVsA7w3XGlkMk0hGHPgPrsvrttJk/5cAAAAASUVORK5CYII=" alt="$(t2 - t1)$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1096"></span>
-(if more than <span data-line="1097"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1097"></span> ticks have elapsed, there will be aliasing of the
-result).  For example, if timestamps were <span data-line="1098"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAfCAYAAADqfF/MAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEeklEQVR42u1c4XXaMBD+Li8DuN2gZAOzAmwA3SBkA3iZIM9sYLJBzQawQQsb2N0geIPrj54bodqWZGNiE917+gHyGVv+7vTdJxliZnjz1tSIaATgAGDOzHu1746IIiJii3YqO7GlLxPRrOLiwqa+3nphMYAAwEjvuAPwAmAMYA4g0/qPAJ4ATOWYM2PmTPHdlPzwWvrGzLwtuzJmPsr5VwBypSsX/2mVr7cPz1ozAJPKA5j5XwMQAWClBWp/XRPkqr6Rra9yjoX4Jq6+vl23SbY6Kc97oR9zp2EtbYpiyWJtbQzgyMxznxd6b5EArNJ0cL1pn0ctfjxwTLEBgO8yjXrr93QYyrPauIAr1z5/dQRHI1+xVwCbC2VAb91aAuDRdJApcwWO4GjkS0QTACEzrzqKtICIFh4TFxnLJYDMpsjSwZU1yT6SJkOpLptkrliq0q7sO4CYiE4ivQQeJo01rWdb6nKnkfK8YfZJBByZK19TImHf1aAw80aRWpYATkQUy2B5c0sCLyU4scpcuj1YgGOhgOPNBZiSQZ47zloFwLbMPBZNbS+yR0pEiWReb2ZNa8TMa1ufMnDltlObgCNSwOEqZbxKJFyNxDPznpmnEjhbADMAByI6CPfzVv2snCr5MnC5ZB8dHLmhgiwj8euPGClmzkRP+4K/KwEhgB0RpZ78//esYgA/ZDXFaZB15XWHd9X1UKPQhgBS7bsZzlX6sMY/BTDpmeK8xLvqfAKwvMB5l9qYdNl2HYxLKGMRlPTFqFHo7w3T4siCxDvrZNcg8Q0yWbGWuZbMtQIQEVEk31sTWc2OMv12XaHmkhg60bQa3bsBjVyzBphUoFyNpFnNmtRoAOtnM/zdTlLcTzyE677g/S/rsqEpc5kIfR2JL1NobXSyq5P4DirM3a1XmJeo5MvAlRpIeVQ1RZR891Amtn4Uib9ghTlRKsxb3WuWtE0CpmrxjHcJOCYO4AgseNqQQFZWYSZSYd6MjNFE02qic+lT26sFOEp1MiHxxz6R+Jbk/wXvuwJGQw6aS2haZXZvkbkCAcfCssLLJKJV32L+Ht9AVI+kklwo9xvJEtOtaFp7AJnrGqx6PDPnpL+gIYOn8q4nAD8A/AbwzVSSEtEO71tfM2Z+IKIEwM+hca0SvvgsFWQhMaxMwSbT5dMVpAhIZbdueZ8p2u3jK2x9X8YriEgn5ZGDznM2LSokfj5QUE0kUxUBs5WxsFWrpwogr2FtA3gO+x0tsQLEtaazZVX6hapVHaAp8QZtJNb8e6XEO2pc6WfVuCzHKIWjQl9knyKNhxJ9LkrxmUI9JBIv3LLYH16o9k3V+U9tVeB6U8C1dQSHvjPicQCAKgqOhQKq1ZA5Yp/BlSlzqSs41Gpz1eeIr6j8Hv17ko0ssAVX3gIcuVIprnsKKr3y24ucsPcYMQZjIIR/qlWVT0SUA/hlIvRL1Gy3sXxZMuwhAZ3gfEtR0sfrHAiBN7UFfYY/IpGISxRxdyOZyr/G1kIkNfXff5JxmUgK95VfCzONm97/B2blaF1rfZyNAAAAAElFTkSuQmCC" alt="$W &gt;= 4$" class="math-inline math-render-png math" style="vertical-align:-0.0436em;height:0.8065em"><span data-line="1098"></span> bits in size,
-<span data-line="1099"></span><img src="data:image/png;base64,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" alt="$t1=2^{W}-5$" class="math-inline math-render-png math" style="vertical-align:-0.0844em;height:0.9366em"><span data-line="1099"></span>, and <span data-line="1099"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG4AAAAdCAYAAABL7VmUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADp0lEQVRo3u1a4XGbUAz+5PMAbkYgG5B0guAN3G4QZwPnMkEPb4AzQYI3wN0gZgOcDYo3UH9E9ORnHjwMtJeC7jhjeMA7fU/SJz0RM2OUfytENAPwBMAD4AO4AvAG4AAgZuad+cykp4kERBQTUU5ELEcu1xYjVCe6CgG8A5gBeAEwB3AHIAHwHUBCRBkRBScPMnNnh3w8AcAAIgBLAIH87uU6A8gBBF1++zMeopMYwMxy31M6YwDLP/ccXh67KhpAJpOxTWRpTGQxYNBC0ZdXM25l6MyrBU6spXhg5QBwZgPNmLCeiD9Q4HKlg6hinG/oK3IBLnRRsHq57+hO9UT2AwTN1AE31VcdOQlULEwrxj0AOAK4FYZkFWY+AtioSz4ReUMiJKKDS8f+cmGVvvzuHACeCSF5rwNP4qCWITLNYrEfAXyrYJ3mok4rgTPoZ1IziSt1PtOWapE34//10FBj5g0zf5FjWzHUBC6ps7i5Ot81BOIwZmidibbGXZGMTzqIb4XZp2L2a4fx5io6jvhYZal09FBcnIpbzEqUqd2mWRdbM/OjAvYA4KbBZL6Wmf8oZ3qPFWg3ouePe8xcBEDPICWhnG8kR9Os5tCEGZVMSC+UAzNfjzCd6MeX2uUCwBrAjzN9t8nfLsxhgq4T8JLqQp9H0mP5Kze+FdsqK9MO4ltTCdX5tqP3pwC2wmj7lGOPbv1OsfOCmT8ByIgoBXB/oisL+r2sLjH9Xlfuf1hhycuKzJOW+VvTPafnwkKYeT5GM6eqyb26FBXbYpOW+VsT+Skr6CBuYRQ38LZGuvRsA67z+EZEkTDVVGjtmLc1k1ddmSKi1bRFfdIVtJUkkbvRPV4smekVJyX5QyFxB6AthEVuRtBOeQQR7aUlYenwiFlCvJ3a3GRbixOSE5tVlpJxHj42X9OW33r4C+kAhA2vW5K0xCAcO10VcQ1+mn4W/SJ5BUWNHGhs0SsROoyNULO77tgG8CkScJzvaNe2cOC85SOx5W9xxQsSx9wjbFAxWAwoN/NKgJs5LO6TpiHbSlhV9En4Dg1DYcMtfG9giXUmuozg1u6RKWxys+TlGSUk0zeHAF6rYhERJRJIk7M+wPKtnbnaXRiSPEr839fFdtGjxub+JMYZJhyUuMjMocvrkpiRDbSctarjAYJJXuYJbcqPlCuLUNEr2UF1PhlwLTJQuwKR1HJ9ua4JV3ZmTBYQCh+cuTC+ku2IJkc4FpOxUAZS6DIXQyolbr8B6kqNkxMG3dsAAAAASUVORK5CYII=" alt="$t2=3$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1099"></span>, then <span data-line="1099"></span><img src="data:image/png;base64,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" alt="$(t2-t1)=8$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1099"></span>.
+timestamp <span data-line="1155"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAdCAYAAAAkXAW5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABaklEQVRIx8WX0W2EMAxAnysGQB2BbsAKpRswAyPcDoxAR+iNcGxQlQ24EdrbwP0JkpWSQBEESxZB8TkPx+fEqCpHK1ACNyCfnU8AcAHUabEJArgCP0C1wjYHCqAGOvc7NVr+GwKojIPLgm3tLfgFNB7IJoh2yYEXhdIP+RqIjLhU00BVh5ihqj6AgQ3ytDBfumfPgRKEEJHKvN5OgQDezLg/C2J1PuwCISKjiKhVkw/4cyLS7gmRmdAXXkJOC727gjXJN3DfHUJV79axiNh86JJsx5n5EINIUh+CECnrQywSyepDDCJpPoQgkubDHwgRKc3r9RQIuxWnRcIk5cMVsLnTtUsViT4A0Hjlfdezw8+Hz4B9C7weGQn7hcNMFFrg44i/bRZb2NuGWlVfNqyRm/Fz6ILq9xjqTs7JQeeu7/nKTmvS2vibdHRtQGXs8lDHNLqr+rjUb3hXft2gjTgHu4iI5DNtQNROVR+/AFw+4vvcN5QAAAAASUVORK5CYII=" alt="$t1$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1155"></span> until timestamp <span data-line="1155"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAdCAYAAADPa766AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB4UlEQVRIx82X4XGjQAyFP3muAE9KIB24hZAOXIPTAT2QDnwlhBJIOkjcAZQQ3IHyI/LN3oZlBdgz2Zkd2LW0PCPpPSGqym8Ym1scKiKliDQiMoiI2hxsbz/qpKpXm8AWaAEFjsABKO36YfsKDED5n6/j8GbMMWHb2QO3id8PARgF9i4g9m8uTpUDcJcCEdjVEZidB0gdOyTsdjmbKHwhkA8PkH9xzdgdLXyH3BsJ7EMwRc7hYtg6ciNMxFx44lypNlMlGCzbTMXeBfdby62p8R6t76d45DG4f515cH9NQisDrjllznkCTsAZeHbYF9H6PBZjz6xXEl9cwqWoKiJSRCh3Zgzw1zjiMj6BXlXPKySgC57Xq+r9Kv5Y+DZKN6F5+WMhkFBzmkmK9/LHAhD71Nmr9GWBMg8hrYdzs5I/5ow3A9MDD9l+5Bb5EWhLukW4dX4AlUuvEnKuwOGKyXnM2ibQK1BciS/qjF0B7OLNS785TMXbAaLwSoHlT5XKj2aij2idZVrPILh9Kj+qhNOQo3wT0HoGtyhQ/ElI82lEqGrgZUriRaQ1nmijxirVCjwahfRjcdUf3xzfIekcXbwumN1Y1TRhudmrO04R0Ui1zZ1titAqi/Ng18oR62EFkFpV+QImDmrl3dzOQAAAAABJRU5ErkJggg==" alt="$t2$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1155"></span> using the expression <span data-line="1155"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAArCAYAAAB8fLoNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFUUlEQVR42u1d7ZHaSBB9TRGAjCMwm4GWi+BEBmwIhgzYcgRXOAPsDIwzYB2BV8oAOYIzyqDvBy3cEvoYfR4rzauagoXZ0WzrqftNz8cSM6MIROQAWDDzCyxGCSLyALwyc1RUb1LSyBzAL2vO0eM3gF9E5NYikxDJB/CP9UrjBjMHAD4C8IsIRVlhTkKbDyBg5idrTgvhxQ7AGsCHrJCX55kOAGbCxl5iMhEdiOhMRCzlLJ+t7G1s1dYuER3FYVT1UM8AQgA/8iokijCPAazS37VdADgAjnK9vVzbk1dfPmcAZwBe1/0ZegGwVTad12zDld/f3XyXcXPPAPwGHT6Y3nwAJyGNk/P9Wv3xvRD8zslQxbYOgDmAlTyo55Qt3Qb9OGYRMl1pJ5W8mhfxVGe3BoY55REpo0+NjfDGiVTFtquUzXx5MM8tkSnuyyGTTMJiBnBqcJGdSWeVq3QNn7CEYUZKpp0pEcRm7o3naIlMKqok2tECfCOv+wb6zksNJ/OwARABWJQJQRk1fFEfuZK2GBtMbQtmjpg5YOaww/48y+unGwGuWOs0YGvM+qMhq2NxXRbq0tppO0LPZGTbkjbObcqFuK2EZ5J0uQMgLEuZl6TcYxxLqs/Ue0c/dTl4Tf38MMLpDFPb9olA+rfWeaY4xDXJdC/V+5eK5Ahh0ZZt+0TclydNpjhF7vcR04W8geimzwb10xopGhmZqti2T/xM98+pGkdTmsek7FocydROXbwRbdSZbTvQTAnuTGuyfpnyFq7ccMjI65CacW4axvSUSjjwiee+bdtkAjgiokhItZiqjocVGgl1fSLSMX3fpisW8amNO+iJ5z5t2xJCIfzjRI2MmuiQLmP6Tr3/fofGHKte0t4RAOYT9dT/btCg28VIQ1YMXNse6XKYTmzbIiJNplkTz9RVDkQy41/jfAYzL8fGojvOL2V5ptlExFMTz9RVDuSH9C0E8LfNL929Z0Jjz9RFTCeivbj3AMBj3ax8TttrtQCvq3IYiV4CgH/jFNNUPJLToLFWYzoRbXGZi3vpKLS9yhB71qHbbysk3bteSmCq3js1brxeXH5ogUgrGb19YeZNR0PvAH+mj+5ZL7Vq2w7xPo5sExXe6jypXlsxXcTmAZfplU1BvXnZlpuhpQTu3DNdNfcEfxJkdUJdHIaivLUzon/KiDSX0PBZFq0X4RnlqwyGJL4b2bYHzLRnClvwTC95Yhe3k7RZKQDfkEgAsMA4Vhk0tm3Pnimc4jKxiKodS4WanznVdgbDel800rPBNR01yhssWrRtH5hrMsVrixwicioMwzX5ggyD7AB8KxrSEtFRvMwxlaDLu95SRPTQPVNj2/4PfT1OmTkgIu1avxs2UkSSNS7bkh4K6hyUK6+igcYQ4hrZ1iAk1ZU1RR70dZLq/F8VhtihIt5THIZEFG4APBZ0YovkshJYMrVjW32jVVllJFL3ksD1VL2qg7BFfE+YOUrv9DzW3CV6wmXh1QkGi/1xuyGwt4V2b3AHbiXb5mwPMy3rGptCr/eEmDkemp9kGPoOFkMQ8U7K20Vl9apOWxHRSTTTIzMH11NQRAx7AJb2CB0Lw9zgSULcA5A8BWWvY7SFRQluNu0mzmdSbutdmzP1FoP0TGcJjVdZNMlh2ydrLouS9ISD1PldNyfHiXZaIOd0MAsL8UohMydSFJOcWOgguZDfwiIm0i7LK2WSSRJmTwDWBlMcFuMikotL7muTNZVDeeeAq8MwH0cwF2ZRTiQHl2O8v+WtN6OiQ+Ulfe/VnAeyGBaZfNFJuakjMvgPBVsA7w3XGlkMk0hGHPgPrsvrttJk/5cAAAAASUVORK5CYII=" alt="$(t2 - t1)$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1155"></span>
+(if more than <span data-line="1156"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1156"></span> ticks have elapsed, there will be aliasing of the
+result).  For example, if timestamps were <span data-line="1157"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAfCAYAAADqfF/MAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEeklEQVR42u1c4XXaMBD+Li8DuN2gZAOzAmwA3SBkA3iZIM9sYLJBzQawQQsb2N0geIPrj54bodqWZGNiE917+gHyGVv+7vTdJxliZnjz1tSIaATgAGDOzHu1746IIiJii3YqO7GlLxPRrOLiwqa+3nphMYAAwEjvuAPwAmAMYA4g0/qPAJ4ATOWYM2PmTPHdlPzwWvrGzLwtuzJmPsr5VwBypSsX/2mVr7cPz1ozAJPKA5j5XwMQAWClBWp/XRPkqr6Rra9yjoX4Jq6+vl23SbY6Kc97oR9zp2EtbYpiyWJtbQzgyMxznxd6b5EArNJ0cL1pn0ctfjxwTLEBgO8yjXrr93QYyrPauIAr1z5/dQRHI1+xVwCbC2VAb91aAuDRdJApcwWO4GjkS0QTACEzrzqKtICIFh4TFxnLJYDMpsjSwZU1yT6SJkOpLptkrliq0q7sO4CYiE4ivQQeJo01rWdb6nKnkfK8YfZJBByZK19TImHf1aAw80aRWpYATkQUy2B5c0sCLyU4scpcuj1YgGOhgOPNBZiSQZ47zloFwLbMPBZNbS+yR0pEiWReb2ZNa8TMa1ufMnDltlObgCNSwOEqZbxKJFyNxDPznpmnEjhbADMAByI6CPfzVv2snCr5MnC5ZB8dHLmhgiwj8euPGClmzkRP+4K/KwEhgB0RpZ78//esYgA/ZDXFaZB15XWHd9X1UKPQhgBS7bsZzlX6sMY/BTDpmeK8xLvqfAKwvMB5l9qYdNl2HYxLKGMRlPTFqFHo7w3T4siCxDvrZNcg8Q0yWbGWuZbMtQIQEVEk31sTWc2OMv12XaHmkhg60bQa3bsBjVyzBphUoFyNpFnNmtRoAOtnM/zdTlLcTzyE677g/S/rsqEpc5kIfR2JL1NobXSyq5P4DirM3a1XmJeo5MvAlRpIeVQ1RZR891Amtn4Uib9ghTlRKsxb3WuWtE0CpmrxjHcJOCYO4AgseNqQQFZWYSZSYd6MjNFE02qic+lT26sFOEp1MiHxxz6R+Jbk/wXvuwJGQw6aS2haZXZvkbkCAcfCssLLJKJV32L+Ht9AVI+kklwo9xvJEtOtaFp7AJnrGqx6PDPnpL+gIYOn8q4nAD8A/AbwzVSSEtEO71tfM2Z+IKIEwM+hca0SvvgsFWQhMaxMwSbT5dMVpAhIZbdueZ8p2u3jK2x9X8YriEgn5ZGDznM2LSokfj5QUE0kUxUBs5WxsFWrpwogr2FtA3gO+x0tsQLEtaazZVX6hapVHaAp8QZtJNb8e6XEO2pc6WfVuCzHKIWjQl9knyKNhxJ9LkrxmUI9JBIv3LLYH16o9k3V+U9tVeB6U8C1dQSHvjPicQCAKgqOhQKq1ZA5Yp/BlSlzqSs41Gpz1eeIr6j8Hv17ko0ssAVX3gIcuVIprnsKKr3y24ucsPcYMQZjIIR/qlWVT0SUA/hlIvRL1Gy3sXxZMuwhAZ3gfEtR0sfrHAiBN7UFfYY/IpGISxRxdyOZyr/G1kIkNfXff5JxmUgK95VfCzONm97/B2blaF1rfZyNAAAAAElFTkSuQmCC" alt="$W &gt;= 4$" class="math-inline math-render-png math" style="vertical-align:-0.0436em;height:0.8065em"><span data-line="1157"></span> bits in size,
+<span data-line="1158"></span><img src="data:image/png;base64,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" alt="$t1=2^{W}-5$" class="math-inline math-render-png math" style="vertical-align:-0.0844em;height:0.9366em"><span data-line="1158"></span>, and <span data-line="1158"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG4AAAAdCAYAAABL7VmUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADp0lEQVRo3u1a4XGbUAz+5PMAbkYgG5B0guAN3G4QZwPnMkEPb4AzQYI3wN0gZgOcDYo3UH9E9ORnHjwMtJeC7jhjeMA7fU/SJz0RM2OUfytENAPwBMAD4AO4AvAG4AAgZuad+cykp4kERBQTUU5ELEcu1xYjVCe6CgG8A5gBeAEwB3AHIAHwHUBCRBkRBScPMnNnh3w8AcAAIgBLAIH87uU6A8gBBF1++zMeopMYwMxy31M6YwDLP/ccXh67KhpAJpOxTWRpTGQxYNBC0ZdXM25l6MyrBU6spXhg5QBwZgPNmLCeiD9Q4HKlg6hinG/oK3IBLnRRsHq57+hO9UT2AwTN1AE31VcdOQlULEwrxj0AOAK4FYZkFWY+AtioSz4ReUMiJKKDS8f+cmGVvvzuHACeCSF5rwNP4qCWITLNYrEfAXyrYJ3mok4rgTPoZ1IziSt1PtOWapE34//10FBj5g0zf5FjWzHUBC6ps7i5Ot81BOIwZmidibbGXZGMTzqIb4XZp2L2a4fx5io6jvhYZal09FBcnIpbzEqUqd2mWRdbM/OjAvYA4KbBZL6Wmf8oZ3qPFWg3ouePe8xcBEDPICWhnG8kR9Os5tCEGZVMSC+UAzNfjzCd6MeX2uUCwBrAjzN9t8nfLsxhgq4T8JLqQp9H0mP5Kze+FdsqK9MO4ltTCdX5tqP3pwC2wmj7lGOPbv1OsfOCmT8ByIgoBXB/oisL+r2sLjH9Xlfuf1hhycuKzJOW+VvTPafnwkKYeT5GM6eqyb26FBXbYpOW+VsT+Skr6CBuYRQ38LZGuvRsA67z+EZEkTDVVGjtmLc1k1ddmSKi1bRFfdIVtJUkkbvRPV4smekVJyX5QyFxB6AthEVuRtBOeQQR7aUlYenwiFlCvJ3a3GRbixOSE5tVlpJxHj42X9OW33r4C+kAhA2vW5K0xCAcO10VcQ1+mn4W/SJ5BUWNHGhs0SsROoyNULO77tgG8CkScJzvaNe2cOC85SOx5W9xxQsSx9wjbFAxWAwoN/NKgJs5LO6TpiHbSlhV9En4Dg1DYcMtfG9giXUmuozg1u6RKWxys+TlGSUk0zeHAF6rYhERJRJIk7M+wPKtnbnaXRiSPEr839fFdtGjxub+JMYZJhyUuMjMocvrkpiRDbSctarjAYJJXuYJbcqPlCuLUNEr2UF1PhlwLTJQuwKR1HJ9ua4JV3ZmTBYQCh+cuTC+ku2IJkc4FpOxUAZS6DIXQyolbr8B6kqNkxMG3dsAAAAASUVORK5CYII=" alt="$t2=3$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1158"></span>, then <span data-line="1158"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAAArCAYAAACOwO+oAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAHJklEQVR42u1d7XHiOhQ9l6EAb7aCJR2QdPCgAzKvgpgOktkKMt4OyFawDzowW8EGOjCp4AU6uO8HV0EoNv6Q7EeQ7oyHJDggjnTutwQxM04JEUUAbpl5iSBeChGNALww8y6g4V56JeAPALwGmLyXNwCvRDQMUHRIQiHgCsBTsIJ+CzOvAdwDWAUituBp5Lmj4oKuAKyZ+S7AFETWRQIgBvAtuKYncYoB3AEYALgCsAHwAmCeZ9CKLOFc/vm+q5iDiOZEtCUilmsrf5uEaXWK9ZCIUlG0dS3ioyyo3wHJQmy3AKbCoSmAGwBPcktKRB+9CWY+ukTTMYCJ+ZzrC0AEIJX3m8l7j+RxJX9nAFsAo7bHc+kXgAcN00HD1xjK/ycB0yNcRmW8Ecuo1vX7es4jxRbAymIw86qkAZDJoKKC52Nt0XSiGM58outgG8mkT0TBbQ0shxbjSG2IfIHzElVdnxrHtmrdmzckJksbagMG8FBhQWVFBMwZk/XiuRBNWwXbiYHZShTa1hEJ1VjmgYQMpeRq3B/r82iaSgaQWQwmqTLJmkszrKFl3heUpxOdVCWQYDY0LZUrEmpejLdKMQfXtIFLnzLzUWJmKo8zi9h0ZKS1i2QKYAfgtixBIFm4Z+1PQymf+CZVsQUz75h5zcybFsfzKI/fPU/GRKL0bmuWfCDJzyMSxvL4bDEmlfVZVlhQkRD+tUKmbmX87mPGtCq2XdUOFx7PRZ5EUpqolEWVH1/eSShtSRGATdP6j7yGkrTk9it98LqWL5AX4/drz7RtHWy7lLVWF/NSDL7MKpbU/tbnsme4ojZadqz9vKxJqg2CuMK2S1Fj8b2hY6H9PJf6dlSgUAdSKlorb6JnuDqrLmIWIf1a4sIfFe43Y0DfujXqYNul/DHH56k85YRLr6ZVFGKmYnT+guEO1sqY4ZAZq3olDjODjUsonyTT1hq2cJgdzclcD0MjRO78pDhkq3Pr4v2GWnZsWKehEEUldubac28O3E1do2wuvKG8a2yt4iEi2mnZwbWvppCZfxDRxpgf5SVslQfIzLmJT8XgrIsalmWR2juN6xJb15ZQXlO1Yc1atihtXGkL86W3puVaRfN/+lqm0SbOajNmSfQA+MxiIp/jQd0a58XtNhnXhVjXNmXXUqZ5IGNf4FCKO7KKRHRkEfsaeG8Wb9xKDUsC2/fX9nRb1VnVBwsWszMSSqjxKcMNIpoL0e6ZeSGJmJ/4WEudEdG17EpBD4eaXRf1wTqvqz4AJJ079o19Z1wfzLOEV77Gg0QUEdFKyHajSg/SuXSHfQnH5NeDqq/2NHPZ1BK2VcP6LWP7kM71SM61PphnCX2WuXgs47xWQSHlNxzXE5VFjKwtYRsxCxHN5EOtRbM4m2giirWNw21dc0/iQQD4Vx4jH9kn1mwk+YrlCTdbWcWp8VTcFwtoA6DTmIWIHrDvY1225IK+YJ/qb8t9enPoOp57PBjk0Mj+VDHmfZZShloj4772fNSAMEPDJLtIxCQAnpl52gZiYlGm5z6zrrFtUb766pZKC9qgrqfCzEsiWkgMOehr4DWxDCNXMYskIebYt7E9lnzwyINShTNsWxbbnELeOph25N6mzPzDwWdv0jDxS0h41ZcXGDb80Mpd3BXtXSOiWZlVE2KlZQTUzH+Gy+/OcIJtB2KbU8j73F1uj7IhoY0BU+t309NYbGMJlyeC1kEJAdXxilUICOzbo3zYdWGNbceW0MmcMPMjM1NH19hyrOozRw02mqv7f/XEqqDuhBoxy5+C2xItcC2SlcSAjxXeUzXCXrQVdIhtFzJwScJPKAttPuqI8mCe+zjs7YuIKKpRDhjkmFZ9ISUA/jkVuxGR2taRGoXpovcbGxroUsUa2/9hrKmnJLwXr2VCRBPtxIFTSjYWl3vKzDvVdFr7SEEcDob6sLUI+xJDVuG0tSZNt5kHTdtW2J54XafbwXA4sIhRcmrehc+XjsNDxQb15OjcURy6vhOufw7mewc9DufGrE5NCuw65VNPJrYRtsbCUNckR+llOBy2rO6Lao4x9kUx1tw9kYl7OtHwT3A4b/TI2JmkSBtuPcnkxbMyTZCzpabulXi2UbQWtgXHRFa94oaKIpzGfaz8ZjjenL0Vdz0XX2JmVSLIJB3+BUEuIbkTGZm8Xdl9ddsDiSgTC3Dj4RYzd3OlvpVJkiQj7JtQQ5tUkDICKsW9YebrgEhz0c8dVYf+hq9CC1InxT4LUDiyhIZ78SV8/1yQEku4FRc2hC8OLaGu3b4HaIKcIGAsyZ/7gIZjS6jFhrcI38Ya5LQV3DDzTUDDvSVU1jBC/TacIH4QMAlWsGUSSkvYHYC4QitZEL8IOMS+djkNJYkW3VFD48XY14DCd0UEAkYAXrHvWZ0GRDogoQA/w77HMNSBAglXEgeGElaXJBTwHwB8rbjXL8hlEjCsgRblP7R6qca1wSKrAAAAAElFTkSuQmCC" alt="$(t2-t1)=8$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1158"></span>.
 </p>
-<p class="p indent" data-line="1101"><span data-line="1101"></span>It is sometimes useful to minimize storage costs by discarding some
+<p class="p indent" data-line="1160"><span data-line="1160"></span>It is sometimes useful to minimize storage costs by discarding some
 bits of a timestamp value in a P4 program for use cases that do not
 need the full wrap time or precision.  For example, an application
 that only needs to detect protocol timeouts with an accuracy of 1
 second can discard the least significant bits of a timestamp that
 change more often than every 1 second.
 </p>
-<p class="p indent" data-line="1108"><span data-line="1108"></span>Another example is an application that needed full precision of the
+<p class="p indent" data-line="1167"><span data-line="1167"></span>Another example is an application that needed full precision of the
 least significant bits of a timestamp, but the combination of the
 control plane and P4 program are designed to examine all entries of a
-<span data-line="1111"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1111"></span> array where these partial timestamps are stored more often
+<span data-line="1170"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1170"></span> array where these partial timestamps are stored more often
 than once every 5 seconds, to prevent wrapping.  In that case, the P4
 program could discard the most significant bits of the timestamp so
 that the remaining bits wrap every 8 seconds, and store those partial
-timestamps in the <span data-line="1115"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1115"></span> instance.
-</p><h2 id="sec-programmable-blocks" class="h1" data-line="1118" data-heading-depth="1" style="display:block"><span data-line="1118"></span><span class="heading-before"><span class="heading-label">4</span>.&#8194;</span><span data-line="1118"></span>Programmable blocks</h2>
-<p class="p noindent" data-line="1120"><span data-line="1120"></span>The following declarations provide a template for the programmable
+timestamps in the <span data-line="1174"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1174"></span> instance.
+</p><h2 id="sec-programmable-blocks" class="h1" data-line="1177" data-heading-depth="1" style="display:block"><span data-line="1177"></span><span class="heading-before"><span class="heading-label">4</span>.&#8194;</span><span data-line="1177"></span>Programmable blocks</h2>
+<p class="p noindent" data-line="1179"><span data-line="1179"></span>The following declarations provide a template for the programmable
 blocks in the PSA. The P4 programmer is responsible for
 implementing controls that match these interfaces and instantiate
 them in a package definition.
 </p>
-<p class="p indent" data-line="1125"><span data-line="1125"></span>The current implementation uses the same user-defined metadata
+<p class="p indent" data-line="1184"><span data-line="1184"></span>The current implementation uses the same user-defined metadata
 structure for all the controls.
 An alternative design is to split the user-defined metadata into an
 input parameter and an output parameter for each block. The
 compiler will have to check that the out parameter of a block
 matches the in parameter of the subsequent block.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1133" data-line-first="1134;psa.p4:431" style="display:block"><code data-line="1134;psa.p4:431"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> Parser&lt;H, M&gt;(packet_in buffer, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1192" data-line-first="1193;psa.p4:431" style="display:block"><code data-line="1193;psa.p4:431"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> Parser&lt;H, M&gt;(packet_in buffer, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_parser_input_metadata_t istd);
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> VerifyChecksum&lt;H, M&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> H hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta);
@@ -1646,23 +1743,23 @@ matches the in parameter of the subsequent block.
 <div class="footnotes madoko">
 <hr >
 
-<div id="fn-p4runtimeapi" class="footnote" data-line="891" style="line-adjust:0">
-<p class="p noindent" data-line="891"><span data-line="891"></span><span class="footnote-before"><sup><span class="footnote-label">1</span>.</sup></span><span data-line="891"></span>The P4Runtime API, defined as a Google Protocol
-Buffer <span data-line="892"></span><code class="code code1 language-p4 lang-p4 p4 colorized">.proto</code><span data-line="892"></span> file, can be found at
-<span data-line="893"></span><a href="https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto" class="texturl monospace">https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto</a><span data-line="893"></span>
-<span data-line="894"></span><span data-line="894"></span><a href="#back-fn-p4runtimeapi" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-int" class="footnote" data-line="977" style="line-adjust:0">
-<p class="p noindent" data-line="977"><span data-line="977"></span><span class="footnote-before"><sup><span class="footnote-label">2</span>.</sup></span><span data-line="977"></span><a href="http://p4.org/p4/inband-network-telemetry" class="texturl monospace">http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry</a><span data-line="977"></span>
-<span data-line="978"></span><span data-line="978"></span><a href="#back-fn-int" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-dynamicfrequencyscaling" class="footnote" data-line="987" style="line-adjust:0">
-<p class="p noindent" data-line="987"><span data-line="987"></span><span class="footnote-before"><sup><span class="footnote-label">3</span>.</sup></span><span data-line="987"></span><a href="https://en.wikipedia.org/wiki/Dynamic_frequency_scaling" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling</a><span data-line="987"></span>
-<span data-line="988"></span><span data-line="988"></span><a href="#back-fn-dynamicfrequencyscaling" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-ptp" class="footnote" data-line="1028" style="line-adjust:0">
-<p class="p noindent" data-line="1028"><span data-line="1028"></span><span class="footnote-before"><sup><span class="footnote-label">4</span>.</sup></span><span data-line="1028"></span><a href="https://en.wikipedia.org/wiki/Precision_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol</a><span data-line="1028"></span>
-<span data-line="1029"></span><span data-line="1029"></span><a href="#back-fn-ptp" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-ntp" class="footnote" data-line="1029" style="line-adjust:0">
-<p class="p noindent" data-line="1029"><span data-line="1029"></span><span class="footnote-before"><sup><span class="footnote-label">5</span>.</sup></span><span data-line="1029"></span><a href="https://en.wikipedia.org/wiki/Network_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol</a><span data-line="1029"></span>
-<span data-line="1030"></span><span data-line="1030"></span><a href="#back-fn-ntp" class="footnote-backref localref">&#8617;</a></p></div></div></div>
+<div id="fn-p4runtimeapi" class="footnote" data-line="950" style="line-adjust:0">
+<p class="p noindent" data-line="950"><span data-line="950"></span><span class="footnote-before"><sup><span class="footnote-label">1</span>.</sup></span><span data-line="950"></span>The P4Runtime API, defined as a Google Protocol
+Buffer <span data-line="951"></span><code class="code code1 language-p4 lang-p4 p4 colorized">.proto</code><span data-line="951"></span> file, can be found at
+<span data-line="952"></span><a href="https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto" class="texturl monospace">https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto</a><span data-line="952"></span>
+<span data-line="953"></span><span data-line="953"></span><a href="#back-fn-p4runtimeapi" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-int" class="footnote" data-line="1036" style="line-adjust:0">
+<p class="p noindent" data-line="1036"><span data-line="1036"></span><span class="footnote-before"><sup><span class="footnote-label">2</span>.</sup></span><span data-line="1036"></span><a href="http://p4.org/p4/inband-network-telemetry" class="texturl monospace">http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry</a><span data-line="1036"></span>
+<span data-line="1037"></span><span data-line="1037"></span><a href="#back-fn-int" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-dynamicfrequencyscaling" class="footnote" data-line="1046" style="line-adjust:0">
+<p class="p noindent" data-line="1046"><span data-line="1046"></span><span class="footnote-before"><sup><span class="footnote-label">3</span>.</sup></span><span data-line="1046"></span><a href="https://en.wikipedia.org/wiki/Dynamic_frequency_scaling" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling</a><span data-line="1046"></span>
+<span data-line="1047"></span><span data-line="1047"></span><a href="#back-fn-dynamicfrequencyscaling" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-ptp" class="footnote" data-line="1087" style="line-adjust:0">
+<p class="p noindent" data-line="1087"><span data-line="1087"></span><span class="footnote-before"><sup><span class="footnote-label">4</span>.</sup></span><span data-line="1087"></span><a href="https://en.wikipedia.org/wiki/Precision_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol</a><span data-line="1087"></span>
+<span data-line="1088"></span><span data-line="1088"></span><a href="#back-fn-ptp" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-ntp" class="footnote" data-line="1088" style="line-adjust:0">
+<p class="p noindent" data-line="1088"><span data-line="1088"></span><span class="footnote-before"><sup><span class="footnote-label">5</span>.</sup></span><span data-line="1088"></span><a href="https://en.wikipedia.org/wiki/Network_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol</a><span data-line="1088"></span>
+<span data-line="1089"></span><span data-line="1089"></span><a href="#back-fn-ntp" class="footnote-backref localref">&#8617;</a></p></div></div></div>
 </body>
 
 </html>
