@@ -679,12 +679,10 @@ conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
 
-TBD: RFC 2698 specifies two options for 3-color meters: color blind
-and color aware.  If this specification is meant to allow either one,
-it should be documented how both are supported.  Otherwise, document
-which of the two options is the only one supported.  It might be true
-that color blind policers can be implemented via a color aware policer
-that one always passes `GREEN` to as the current packet color.
+RFC 2698 describes "color aware" and "color blind" variations of
+meters.  The `Meter` and `DirectMeter` externs implement both.  The
+only difference is in which `execute` method you use when updating
+them.  See the comments on the `extern` definitions below.
 
 Similar to counters, there are two flavors of meters: indexed and
 direct.  (Indexed) meters are addressed by index, while direct meters

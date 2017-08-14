@@ -247,17 +247,16 @@ enum MeterColor_t { RED, GREEN, YELLOW };
 
 extern Meter<S> {
   Meter(bit<32> n_meters, MeterType_t type);
-  // TBD: Either document why there is a 'color' parameter to the
-  // execute() method, and how it can cause the behavior to differ, or
-  // remove that parameter.  If it is there for operating in 'color
-  // aware' mode as described in RFC 2698, then there needs to be a
-  // way to specify either color aware or color blind operation when
-  // constructing meters, and it should be documented that the color
-  // parameter is ignored for color blind meters, or even better,
-  // there should be separate methods, one with the color parameter
-  // for color-aware meters, and another without for color-blind
-  // meters.
+
+  // Use this method call to perform a color aware meter update (see
+  // RFC 2698). The color of the packet before the method call was
+  // made is specified by the color parameter.
   MeterColor_t execute(in S index, in MeterColor_t color);
+
+  // Use this method call to perform a color blind meter update (see
+  // RFC 2698).  It may be implemented via a call to execute(index,
+  // MeterColor_t.GREEN), which has the same behavior.
+  MeterColor_t execute(in S index);
 
   /*
   @ControlPlaneAPI
@@ -273,8 +272,9 @@ extern Meter<S> {
 // BEGIN:DirectMeter_extern
 extern DirectMeter {
   DirectMeter(MeterType_t type);
-  // TBD: Same comment as for direct Meter parameter 'color' above.
+  // See the corresponding methods for extern Meter.
   MeterColor_t execute(in MeterColor_t color);
+  MeterColor_t execute();
 
   /*
   @ControlPlaneAPI
