@@ -1558,7 +1558,7 @@ When used as arguments, `extern` objects can only be passed as
 directionless parameters---e.g., see the packet argument in the
 very simple switch example.
 
-### Justification
+### Justification { #sec-calling-convention-justification }
 
 The main reason for using copy-in/copy-out semantics (instead of the more common
 call-by-reference semantics) is for controlling the side-effects of `extern`
@@ -6422,6 +6422,160 @@ h.ipv4.ttl = h.ipv4.ttl - 1;
 ck16.update( { h.ipv4.ttl, h.ipv4.proto } );
 h.ipv4.hdrChecksum = ck16.get();
 ~ End P4Example
+
+
+# Appendix: Restrictions on compile time and run time calls
+
+This appendix summarizes restrictions on compile time and run time
+calls that can be made.  Many of them are described earlier in this
+document, but are collected here for easy reference.
+
+The stateful types of objects in P4~16~ are packages, parsers,
+controls, externs, and tables.  All other types are referred to as
+"value types" here.
+
+Some guiding principles:
+
+- Packages can be instantiated, but have no run-time behavior, so
+  there is no use in passing them to anything else other than another
+  package.
+- Controls are not allowed to call parsers, and vice versa, so there
+  is no use in passing one type to the other in constructor parameters
+  or run-time parameters.
+- At run time, after a control is called, and before that call is
+  complete, there can be no recursive calls between controls, nor from
+  a control to itself.  Similarly for parsers.  There can be loops
+  among states within a single parser.
+- Externs are not allowed to call parsers or controls, so there is no
+  use in passing objects of those types to them.
+- Tables are always instantiated directly in their enclosing control,
+  and cannot be instantiated at the top level.  There is no type by
+  which a table can be passed as either a constructor or run-time
+  parameter anywhere else.  They are only intended to be used from
+  within the control where they are defined.
+
+A note on recursion: It is expected that some architectures will
+define capabilities for recirculating a packet to be processed again
+as if it were a newly arriving packet, or to make "clones" of packets
+that are then processed by parsers and/or control blocks that the
+original packet has already completed.  This does not change the notes
+above on recursion that apply while a parser or control is executing.
+
+The first table lists restrictions on what types can be passed as
+constructor parameters to other types.
+
+|-------------|-------------------------------------------------|
+|             | can be a constructor parameter for this type ||||
+|             |---------|--------|---------|--------|
+| This type   | package | parser | control | extern |
++-------------+:-------:+:------:+:-------:+:------:+
+| package     | yes     |  no    |  no     |  no    |
+| parser      | yes     | yes    |  no     |  no    |
+| control     | yes     |  no    | yes     |  no    |
+| extern      | yes     | yes    | yes     | yes    |
+| table       |  no     |  no    |  no     |  no    |
+| value types | yes     | yes    | yes     | yes    |
+|-------------|---------|--------|---------|--------|
+
+The next table lists restrictions on what types can be instantiated
+where.  The answer for `package` is always "no" because there is no
+"inside a package" where instantiations can be written in P4~16~.  One
+can definitely make constructor calls and use instances of stateful
+types as parameters when instantiating a package, and restrictions on
+those types are in the table above.
+
+For externs, their implementations are typically written in some other
+language, and so what can be instantiated inside of them is not the
+concern of the P4~16~ language.
+
+The entries for "value types" are yes for parsers and controls,
+because you can define variables of any of those types inside of
+parsers and controls.  Variables of these types may not be defined at
+the top level of your program.
+
+|-------------|-------------------------------------------------|
+|             | can be instantiated in this place |||||
+|             |-----------|---------|---------|---------|--------|
+| This type   | top level | package | parser  | control | extern |
++-------------+:---------:+:-------:+:-------:+:-------:+:------:+
+| package     | yes       |  no     | no      | no      |  no    |
+| parser      |  no       |  no     | yes     | no      |  no    |
+| control     |  no       |  no     | no      | yes     |  no    |
+| extern      | yes       |  no     | yes     | yes     |  no    |
+| table       |  no       |  no     | no      | yes     |  no    |
+| value types |  no       |  no     | yes     | yes     |  no    |
+|-------------|-----------|---------|---------|---------|--------|
+
+The next table lists restrictions on what types can be passed as
+run-time parameters to other callable things that have run-time
+parameters: parsers, controls, extern methods, and actions.
+
+|-------------|-------------------------------------------------|
+|             | can be a run-time parameter to this callable thing ||||
+|             |-----------|---------|---------|---------|
+| This type   | parser    | control | method  | action  |
++-------------+:---------:+:-------:+:-------:+:-------:+
+| package     |  no       |  no     | no      | no      |
+| parser      |  no       |  no     | no      | no      |
+| control     |  no       |  no     | no      | no      |
+| extern      | yes       | yes     | yes     | no      |
+| table       |  no       |  no     | no      | no      |
+| value types | yes       | yes     | yes     | yes     |
+|-------------|-----------|---------|---------|---------|
+
+The restrictions on return types of extern methods is the same as for
+parameters, with the addition that `void` can be a return type for
+methods that return no value.
+
+The next table lists restrictions on what kinds of calls can be made
+from which places in a P4 program.  Calling a parser, control, or
+table means invoking its `apply()` method.  The row for `extern`
+describes where extern method calls can be made from.
+
+|-------------|-------------------------------------------------|
+|             | can be called at run time from this place in a P4 program |||||
+|             |-----------|---------|---------|------------|--------|
+|             |           | control | action  | action not |        |
+|             | parser    | apply   | used by | used by    |        |
+| This type   | state     | block   | table   | any table  | extern |
++-------------+:---------:+:-------:+:-------:+:----------:+:------:+
+| package     | N/A       | N/A     | N/A     | N/A        | N/A    |
+| parser      | yes       |  no     | no      | no         | no     |
+| control     |  no       | yes     | no      | yes        | no     |
+| extern      | yes       | yes     | yes     | yes        | no     |
+| table       |  no       | yes     | no      | yes        | no     |
+| action      |  no       | yes     | yes     | yes        | no     |
+| value types | N/A       | N/A     | N/A     | N/A        | N/A    |
+|-------------|-----------|---------|---------|------------|--------|
+
+There may not be any recursion in calls, neither by a thing calling
+itself directly, nor mutual recursion.
+
+An extern can never cause any other type of P4 program object to be
+called.  See Section [#sec-calling-convention-justification].
+
+An "action used by a table" means an action that is either in the
+`actions` list of a table, or it is possible for the action to be
+called from such an action, perhaps through one or more intermediate
+action calls.
+
+Any action can be called from a control `apply` block.
+
+It is allowed to write actions that are not used by any table.  Such
+"actions not used by any table" have exactly the same restrictions on
+what they can call as a control `apply` block does.  A potential
+convenience of creating such an action is that it can be defined
+within the control that calls it, giving the action access to all
+parameter values and local variables defined earlier within its
+enclosing control.  By contrast, control definitions cannot be nested.
+
+Note that while the extern row shows that extern methods can be called
+from many places, particular externs may have additional restrictions
+not listed in this table.  Any such restrictions should be documented
+in the description for each extern.  In most cases, it is expected
+that the restriction will be "from a parser state only" or "from a
+control apply block or action only".
+
 
 # Appendix: Open Issues
 
