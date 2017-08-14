@@ -451,10 +451,8 @@ sequence numbers in packets, for example, use Registers instead
 
 Direct counters are counters associated with a particular P4 table,
 and are implemented by the extern `DirectCounter`.  There are also
-indirect counters, which are implemented by the extern `Counter` (the
-name 'indirect' does not imply that there is any indirection involved
-in the implementation, only that they are not direct counters).  The
-primary differences between direct counters and indirect counters are:
+indexed counters, which are implemented by the extern `Counter`.  The
+primary differences between direct counters and indexed counters are:
 
 - Number of independently updatable counter values:
   - A single instantiation of a direct counter always contains as many
@@ -462,14 +460,14 @@ primary differences between direct counters and indirect counters are:
     with which it is associated (TBD: see below for what this means
     for tables that use action profiles).
   - You must specify the number of independent counter values for an
-    indirect counter when instantiating it.  This number of counters
+    indexed counter when instantiating it.  This number of counters
     need not be the same as the size of any table.
 - Where counter updates are allowed in the P4 program:
   - For a direct counter, you may only invoke its `count` method from
     inside the actions of the table with which it is associated, and
     this always updates the counter value associated with the matching
     table entry.
-  - For an indirect counter, you may invoke its `count` method
+  - For an indexed counter, you may invoke its `count` method
     anywhere in the P4 program where extern object method invocations
     are permitted (e.g. inside actions, or directly inside a control's
     `apply` block), and every such invocation must specify the index
@@ -663,13 +661,105 @@ updating of `Counter` and `DirectCounter` externs.
 
 ## Meters
 
-Meters (RFC 2698) are a more complex mechanism for keeping statistics about
-the packets that trigger a table. The meters specified in the PSA
-are 3-color meters.
+Meters (RFC 2698) are a more complex mechanism for keeping statistics
+about packets, most often used for dropping
+or "marking" packets that exceed an average packet or bit rate.  To
+mark a packet means to change one or more of its quality of service
+values in packet headers such as the 802.1Q PCP (priority code point)
+or DSCP (differentiated service code point) bits within the IPv4 or
+IPv6 type of service byte.  The meters specified in the PSA are
+3-color meters.
 
-Similar to counters, there are two flavors of meters: indirect and direct.
-(Indirect) meters are addressed by index, while direct meters are addressed
-using P4Runtime table entry as key.
+PSA meters do not require any particular drop or marking actions, nor
+do they automatically implement those behaviors for you.  Meters keep
+enough state, and update their state during `execute()` method calls,
+in such a way that they return a `GREEN` (also known as conform),
+`YELLOW` (exceed), or `RED` (violate) result.  See RFC 2698 for details on the
+conditions under which one of these three results is returned.  The P4
+program is responsible for examining that returned result, and making
+changes to packet forwarding behavior as a result.
+
+RFC 2698 describes "color aware" and "color blind" variations of
+meters.  The `Meter` and `DirectMeter` externs implement both.  The
+only difference is in which `execute` method you use when updating
+them.  See the comments on the `extern` definitions below.
+
+Similar to counters, there are two flavors of meters: indexed and
+direct.  (Indexed) meters are addressed by index, while direct meters
+always update a meter state corresponding to the matched table entry
+or action, and from the control plane API are addressed using
+P4Runtime table entry as key.
+
+There are many other similarities between counters and meters,
+including:
+
+- The number of independently updatable meter values.
+- Where meter updates are allowed in a P4 program.
+- For `bytes` type meters, the packet length used in the update is
+  determined by the PSA implementation, and can vary from one PSA
+  implementation to another.
+
+Further similarities between direct counters and direct meters
+include:
+
+- `DirectMeter` `execute` method calls must be performed within
+  actions invoked by the table that owns the `DirectMeter` instance.
+  It is optional for such an action to call the `execute` method.
+- There must be a meter state associated with a `DirectMeter`
+  instance's owner table, that can be updated when the table result is
+  a miss.  As for a `DirectCounter`, this state only needs to exist if
+  a default action is assigned to the table.
+
+The table attribute to specify that a table owns a `DirectMeter`
+instance is `psa_direct_meters`.  The value of this table attribute is
+a list of meter instances.
+
+As for counters, if you call the `execute(idx)` method on an indexed
+meter and `idx` is at least the number of meter states, so `idx` is
+out of range, no meter state is updated.  The `execute` call still
+returns a value of type `MeterColor_t`, but the value is undefined --
+programs that wish to have predictable behavior across implementations
+must not use the undefined value in a way that affects the output
+packet or other side effects.  The example code below shows one way to
+achieve predictable behavior.  Note that this undefined behavior
+cannot occur if the value of `n_meters` of an indexed meter is $2^W$,
+and the type `S` used to construct the meter is `bit<W>`, since the
+index value could never be out of range.
+
+```
+#define METER1_SIZE 100
+Meter<bit<7>>(METER1_SIZE, MeterType_t.bytes) meter1;
+bit<7> idx;
+MeterColor_t color1;
+
+// ... later ...
+
+if (idx < METER1_SIZE) {
+    color1 = meter1.execute(idx, MeterColor_t.GREEN);
+} else {
+    // If idx is out of range, use a default value for color1.  One
+    // may also choose to store an error flag in some metadata field.
+    color1 = MeterColor_t.RED;
+}
+```
+
+Any implementation will have a finite range that can be specified for
+the Peak Burst Size and Committed Burst Size.  An implementation
+should document the maximum burst sizes they support, and if the
+implementation internally truncates the values that the control plane
+requests to something more coarse than any number of bytes, that
+should also be documented.  It is recommended that the maximum burst
+sizes be allowed as large as the number of bytes that can be
+transmitted across the implementation's maximum speed port in 100
+milliseconds.
+
+Implementations will also have finite ranges and precisions that they
+support for the Peak Information Rate and Committed Information Rate.
+An implementation should document the maximum rate it supports, as
+well as the precision it supports for implementing requested rates.
+It is recommended that the maximum rate supported be at least the rate
+of the implementation's fastest port, and that the actual implemented
+rate should always be within plus or minus 0.1% of the requested rate.
 
 ### Meter types
 

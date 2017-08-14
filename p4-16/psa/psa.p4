@@ -243,9 +243,20 @@ enum MeterColor_t { RED, GREEN, YELLOW };
 // END:MeterColor_defn
 
 // BEGIN:Meter_extern
+// Indexed meter with n_meters independent meter states.
+
 extern Meter<S> {
-  Meter(S n_meters, MeterType_t type);
+  Meter(bit<32> n_meters, MeterType_t type);
+
+  // Use this method call to perform a color aware meter update (see
+  // RFC 2698). The color of the packet before the method call was
+  // made is specified by the color parameter.
   MeterColor_t execute(in S index, in MeterColor_t color);
+
+  // Use this method call to perform a color blind meter update (see
+  // RFC 2698).  It may be implemented via a call to execute(index,
+  // MeterColor_t.GREEN), which has the same behavior.
+  MeterColor_t execute(in S index);
 
   /*
   @ControlPlaneAPI
@@ -261,7 +272,9 @@ extern Meter<S> {
 // BEGIN:DirectMeter_extern
 extern DirectMeter {
   DirectMeter(MeterType_t type);
+  // See the corresponding methods for extern Meter.
   MeterColor_t execute(in MeterColor_t color);
+  MeterColor_t execute();
 
   /*
   @ControlPlaneAPI
