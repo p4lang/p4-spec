@@ -661,7 +661,7 @@ updating of `Counter` and `DirectCounter` externs.
 [INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part2]
 ```
 
-## Meters
+## Meters { #sec-meters }
 
 Meters (RFC 2698) are a more complex mechanism for keeping statistics about
 the packets that trigger a table. The meters specified in the PSA
@@ -697,28 +697,87 @@ using P4Runtime table entry as key.
 
 ## Registers { #sec-registers }
 
-Registers are stateful memories whose values can be read and
-written in actions. Registers are similar to counters, but can be
-used in a more general way to keep state.
+Registers are stateful memories whose values can be read and written
+during packet forwarding under the control of the P4 program.  They
+are similar to counters and meters in that their state can be modified
+as a result of processing packets, but they are far more general in
+the behavior they can implement.
 
-Although registers cannot be used directly in matching,
-register.read may be used as the RHS of an assignment operation,
-allowing the current value of the register to be copied into
-metadata and be available for matching in subsequent tables.
+Although you may not use register contents directly in table match
+keys, you may use the `read()` method call on the right-hand side of
+an assignment statement, which retrieves the current value of the
+register.  You may copy the register value into metadata, and it is
+then available for matching in subsequent tables.
 
-A simple usage example might be to verify that a "first packet" was seen
-for a particular type of flow. A register cell would be allocated to
-the flow, initialized to "clear". When the protocol signaled a "first
-packet", the table would match on this value and update the flow’s
-cell to "marked". Subsequent packets in the flow could would be mapped
-to the same cell; the current cell value would be stored in metadata
-for the packet and a subsequent table could check that the flow was
-marked as active.
-
+A simple usage example might be to verify that a "first packet" was
+seen for a particular type of flow.  A register cell would be
+allocated to the flow, initialized to "clear".  When the protocol
+signaled a "first packet", the table would match on this value and
+update the flow's cell to "marked".  Subsequent packets in the flow
+could would be mapped to the same cell; the current cell value would
+be stored in metadata for the packet and a subsequent table could
+check that the flow was marked as active.
 
 ```
 [INCLUDE=psa.p4:Register_extern]
 ```
+
+Another example using registers is given below.  It implements a
+packet and byte counter, where the byte counter can be updated by a
+packet length specified in the P4 program, rather than one chosen by
+the PSA implementation.
+
+```
+[INCLUDE=examples/psa-example-register2.p4:Register_Example2_Part1]
+
+[INCLUDE=examples/psa-example-register2.p4:Register_Example2_Part2]
+```
+
+Note the use of the `@atomic` annotation in the block enclosing the
+`read()` and `write()` method calls on the `Register` instance.  It is
+expected to be common that register accesses will need the `@atomic`
+annotation around portions of your program in order to behave as you
+desire.  As stated in the P4_16 specification, without the `@atomic`
+annotation in this example, an implementation is allowed to process
+two packets `P1` and `P2` in parallel, and perform the register access
+operations in this order:
+
+```
+    // Possible order of operations for the example program if the
+    // @atomic annotation is _not_ used.
+
+    tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  // for packet P1
+    tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  // for packet P2
+
+    // At this time, if P1 and P2 came from the same ingress_port,
+    // each of their values of tmp are identical.
+
+    update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);    // for packet P1
+    update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);    // for packet P2
+
+    port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  // for packet P1
+    port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  // for packet P2
+    // The write() from packet P1 is lost.
+```
+
+Since different implementations may have different upper limits on the
+complexity of code that they will accept within an `@atomic` block, we
+recommend you keep them as small as possible, subject to maintaining
+your desired correct behavior.
+
+Individual counter and meter method calls need not be enclosed in
+`@atomic` blocks to be safe -- they guarantee atomic behavior of their
+individual method calls, without losing any updates.
+
+As for indexed counters and meters, access to an index of a register
+that is at least the size of the register is out of bounds.  An out of
+bounds write has no effect on the state of the system.  An out of
+bounds read returns an undefined value.  See the example in Section
+[#sec-meters] for one way to write code to guarantee avoiding this
+undefined behavior.  Out of bounds register accesses are impossible
+for a register instance with type `S` declared as `bit<W>` and size
+$2^W$ entries.
+
 
 ## Random
 

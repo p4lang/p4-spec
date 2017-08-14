@@ -276,7 +276,7 @@ extern DirectMeter {
 
 // BEGIN:Register_extern
 extern Register<T, S> {
-  Register(S size);
+  Register(bit<32> size);
   T    read  (in S index);
   void write (in S index, in T value);
 
