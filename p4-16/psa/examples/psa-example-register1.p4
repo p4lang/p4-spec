@@ -120,7 +120,8 @@ control ingress(inout headers hdr,
 control egress(inout headers hdr,
                inout metadata user_meta,
                BufferingQueueingEngine bqe,
-               in  psa_egress_input_metadata_t  istd)
+               in  psa_egress_input_metadata_t  istd,
+               out psa_egress_output_metadata_t ostd)
 {
     apply {
     }
