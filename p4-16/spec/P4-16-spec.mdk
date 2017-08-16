@@ -6530,21 +6530,25 @@ from which places in a P4 program.  Calling a parser, control, or
 table means invoking its `apply()` method.  The row for `extern`
 describes where extern method calls can be made from.
 
+One way that an extern can be called from the top level of a parser or
+control is in an initializer expression for a declared variable,
+e.g. `bit<32> x = rand.get();`.
+
 |-------------|-------------------------------------------------|
-|             | can be called at run time from this place in a P4 program ||||
-|             |-----------|---------|---------|--------|
-|             |           | control |         |        |
-|             | parser    | apply   |         |        |
-| This type   | state     | block   | action  | extern |
-+-------------+:---------:+:-------:+:-------:+:------:+
-| package     | N/A       | N/A     | N/A     | N/A    |
-| parser      | yes       |  no     | no      | no     |
-| control     |  no       | yes     | no      | no     |
-| extern      | yes       | yes     | yes     | no     |
-| table       |  no       | yes     | no      | no     |
-| action      |  no       | yes     | yes     | no     |
-| value types | N/A       | N/A     | N/A     | N/A    |
-|-------------|-----------|---------|---------|--------|
+|             | can be called at run time from this place in a P4 program |||||
+|             |-----------|---------|-----------|---------|--------|
+|             |           | control | parser or |         |        |
+|             | parser    | apply   | control   |         |        |
+| This type   | state     | block   | top level | action  | extern |
++-------------+:---------:+:-------:+:---------:+:-------:+:------:+
+| package     | N/A       | N/A     | N/A       | N/A     | N/A    |
+| parser      | yes       |  no     | no        | no      | no     |
+| control     |  no       | yes     | no        | no      | no     |
+| extern      | yes       | yes     | yes       | yes     | no     |
+| table       |  no       | yes     | no        | no      | no     |
+| action      |  no       | yes     | no        | yes     | no     |
+| value types | N/A       | N/A     | N/A       | N/A     | N/A    |
+|-------------|-----------|---------|-----------|---------|--------|
 
 There may not be any recursion in calls, neither by a thing calling
 itself directly, nor mutual recursion.
