@@ -6436,9 +6436,6 @@ controls, externs, and tables.  All other types are referred to as
 
 Some guiding principles:
 
-- Packages can be instantiated, but have no run-time behavior, so
-  there is no use in passing them to anything else other than another
-  package.
 - Controls are not allowed to call parsers, and vice versa, so there
   is no use in passing one type to the other in constructor parameters
   or run-time parameters.
@@ -6449,10 +6446,9 @@ Some guiding principles:
 - Externs are not allowed to call parsers or controls, so there is no
   use in passing objects of those types to them.
 - Tables are always instantiated directly in their enclosing control,
-  and cannot be instantiated at the top level.  There is no type by
-  which a table can be passed as either a constructor or run-time
-  parameter anywhere else.  They are only intended to be used from
-  within the control where they are defined.
+  and cannot be instantiated at the top level.  There is no syntax for
+  specifying parameters that are tables.  Tables are only intended to
+  be used from within the control where they are defined.
 
 A note on recursion: It is expected that some architectures will
 define capabilities for recirculating a packet to be processed again
@@ -6477,21 +6473,23 @@ constructor parameters to other types.
 | value types | yes     | yes    | yes     | yes    |
 |-------------|---------|--------|---------|--------|
 
-The next table lists restrictions on what types can be instantiated
-where.  The answer for `package` is always "no" because there is no
+The next table lists restrictions on where one may perform
+instantiations (see Section [#sec-instantiations]) of different types.
+The answer for `package` is always "no" because there is no
 "inside a package" where instantiations can be written in P4~16~.  One
 can definitely make constructor calls and use instances of stateful
 types as parameters when instantiating a package, and restrictions on
 those types are in the table above.
 
-For externs, their implementations are typically written in some other
-language, and so what can be instantiated inside of them is not the
-concern of the P4~16~ language.
+For externs, one can only specify their interface in P4~16~, not their
+implementation.  Thus there is no place to instantiate objects within
+an extern.
 
-The entries for "value types" are yes for parsers and controls,
-because you can define variables of any of those types inside of
-parsers and controls.  Variables of these types may not be defined at
-the top level of your program.
+You may declare variables and constants of any of the value types
+within a parser or control.  Declaring a variable or constant is not
+the same as instantiation, hence the answer "no" in those table
+entries.  Variables may not be declared at the top level of your
+program, but constants may.
 
 |-------------|-------------------------------------------------|
 |             | can be instantiated in this place |||||
@@ -6503,7 +6501,7 @@ the top level of your program.
 | control     |  no       |  no     | no      | yes     |  no    |
 | extern      | yes       |  no     | yes     | yes     |  no    |
 | table       |  no       |  no     | no      | yes     |  no    |
-| value types |  no       |  no     | yes     | yes     |  no    |
+| value types |  no       |  no     | no      | no      |  no    |
 |-------------|-----------|---------|---------|---------|--------|
 
 The next table lists restrictions on what types can be passed as
