@@ -79,8 +79,8 @@ struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
   bool                     clone;            // false
-  bool                     resubmit;         // false
   bool                     drop;             // true
+  bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // undefined
 }
@@ -96,8 +96,8 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
-  bool                     recirculate;   // false
   bool                     drop;          // false
+  bool                     recirculate;   // false
 }
 // END:Metadata_egress_output
 // END:Metadata_types
