@@ -6525,19 +6525,19 @@ describes where extern method calls can be made from.
 
 |-------------|-------------------------------------------------|
 |             | can be called at run time from this place in a P4 program |||||
-|             |-----------|---------|---------|------------|--------|
-|             |           | control | action  | action not |        |
-|             | parser    | apply   | used by | used by    |        |
-| This type   | state     | block   | table   | any table  | extern |
-+-------------+:---------:+:-------:+:-------:+:----------:+:------:+
-| package     | N/A       | N/A     | N/A     | N/A        | N/A    |
-| parser      | yes       |  no     | no      | no         | no     |
-| control     |  no       | yes     | no      | yes        | no     |
-| extern      | yes       | yes     | yes     | yes        | no     |
-| table       |  no       | yes     | no      | yes        | no     |
-| action      |  no       | yes     | yes     | yes        | no     |
-| value types | N/A       | N/A     | N/A     | N/A        | N/A    |
-|-------------|-----------|---------|---------|------------|--------|
+|             |-----------|---------|---------|--------|
+|             |           | control |         |        |
+|             | parser    | apply   |         |        |
+| This type   | state     | block   | action  | extern |
++-------------+:---------:+:-------:+:-------:+:------:+
+| package     | N/A       | N/A     | N/A     | N/A    |
+| parser      | yes       |  no     | no      | no     |
+| control     |  no       | yes     | no      | no     |
+| extern      | yes       | yes     | yes     | no     |
+| table       |  no       | yes     | no      | no     |
+| action      |  no       | yes     | yes     | no     |
+| value types | N/A       | N/A     | N/A     | N/A    |
+|-------------|-----------|---------|---------|--------|
 
 There may not be any recursion in calls, neither by a thing calling
 itself directly, nor mutual recursion.
@@ -6545,20 +6545,7 @@ itself directly, nor mutual recursion.
 An extern can never cause any other type of P4 program object to be
 called.  See Section [#sec-calling-convention-justification].
 
-An "action used by a table" means an action that is either in the
-`actions` list of a table, or it is possible for the action to be
-called from such an action, perhaps through one or more intermediate
-action calls.
-
-Any action can be called from a control `apply` block.
-
-It is allowed to write actions that are not used by any table.  Such
-"actions not used by any table" have exactly the same restrictions on
-what they can call as a control `apply` block does.  A potential
-convenience of creating such an action is that it can be defined
-within the control that calls it, giving the action access to all
-parameter values and local variables defined earlier within its
-enclosing control.  By contrast, control definitions cannot be nested.
+Any action can be called directly from a control `apply` block.
 
 Note that while the extern row shows that extern methods can be called
 from many places, particular externs may have additional restrictions
