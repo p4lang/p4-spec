@@ -74,17 +74,32 @@ struct psa_ingress_input_metadata_t {
   ParserErrorLocation_t    parser_error_location;
   timestamp_t              ingress_timestamp;
 }
-
+// BEGIN:Metadata_ingress_output
 struct psa_ingress_output_metadata_t {
-  PortId_t                 egress_port;
+  // The comment after each field specifies its initial value when the
+  // Ingress control block begins executing.
+  bool                     clone;            // false
+  bool                     drop;             // true
+  bool                     resubmit;         // false
+  MulticastGroup_t         multicast_group;  // 0
+  PortId_t                 egress_port;      // undefined
 }
-
+// END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
   InstanceType_t           instance_type;  /// Clone or Normal
   EgressInstance_t         instance;       /// instance coming from PRE
   timestamp_t              egress_timestamp;
 }
+// BEGIN:Metadata_egress_output
+struct psa_egress_output_metadata_t {
+  // The comment after each field specifies its initial value when the
+  // Egress control block begins executing.
+  bool                     clone;         // false
+  bool                     drop;          // false
+  bool                     recirculate;   // false
+}
+// END:Metadata_egress_output
 // END:Metadata_types
 
 // BEGIN:Match_kinds
@@ -416,7 +431,8 @@ control Ingress<H, M>(inout H hdr, inout M user_meta,
 
 control Egress<H, M>(inout H hdr, inout M user_meta,
                      BufferingQueueingEngine bqe,
-                     in  psa_egress_input_metadata_t  istd);
+                     in  psa_egress_input_metadata_t  istd,
+                     out psa_egress_output_metadata_t ostd);
 
 control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
 

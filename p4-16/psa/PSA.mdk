@@ -126,11 +126,8 @@ part of the PSA pipeline.
 
 Even though the PRE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
-intrinsic metadata. In this specification we opt to define the
-operations available in the PRE as method invocations. A target
-backend is responsible for mapping the PRE extern APIs to the
-appropriate mechanisms for performing these operations in the
-hardware.
+intrinsic metadata, and the `psa.p4` include file provides some
+actions to help set these metadata fields for some common use cases.
 
 The PRE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
@@ -148,49 +145,105 @@ of native and non-native operations. Target documentation should highlight such
 implementations, so that application programmers are aware of the
 potentially significant performance penalties.
 
-Semantics of behavior for multiple calls to PRE APIs
+The pseudocode below defines where copies of packets will be made
+after the Ingress control block has completed executing, based upon
+the contents of several metadata fields in the struct
+`psa_ingress_output_metadata_t`.
 
-The semantics of calling the PRE APIs is equivalent to setting
-intrinsic metadata fields/bits and assuming that the PRE looks up the
-fields in the following order: drop, truncate, multicast, clone,
-output_port.
+```
+[INCLUDE=psa.p4:Metadata_ingress_output]
 
- Following this semantics, examples of the behaviors are:
+    psa_ingress_output_metadata_t ostd;
 
-- any call to drop in the pipeline will cause the packet, and all
-   potential clone copies (see below) to drop.
+    if (ostd.clone) {
+        create a copy of the packet to the clone target
+        // TBD: Need a way to specify one (or more?) among multiple
+        // clone targets, if more than one such target exists.  Also
+        // to specify if anything is different about the cloned packet
+        // vs. other copies that might be made below.
+    }
+    // Continue below, regardless of whether a clone was created or not.
+    if (ostd.drop) {
+        drop the packet
+        return;   // Do not continue below.
+    }
+    if (ostd.resubmit) {
+        resubmit the packet, i.e. it will go back to starting with the
+            ingress parser;
+        // TBD: Specify if anything is different about the resubmitted
+        // packet vs. other copies that might be made below.
+    }
+    // Continue below, regardless of whether resubmit occurred or not.
+    if (ostd.multicast_group != 0) {
+        Make 0 or more copies of the packet according to the control
+            plane configuration of multicast group ostd.multicast_group.
+        return;   // Do not continue below.
+    }
+    enqueue one packet for output port ostd.egress_port
+```
 
-- any call to truncate, will cause the packet (and its clones
-   \todo: check) to be truncated.
+TBD: Need text defining, for each possible copy, exactly what the
+contents of the packet will be.
 
-- multiple calls to send_to_port -- the last call in the ingress
-   pipeline sets the output port.
+TBD: If it is planned to be possible at the end of ingress to send a
+packet to be replicated via a multicast_group, and also have a copy go
+to the control CPU, give an example showing this case (after showing
+some simpler common cases).  Ideally it should be possible for the
+copy going to the control CPU to have a software-defined header
+(defined in the P4 program) that is different than any headers on the
+packet copies going to the Egress control block.
 
-- multiple calls to multicast -- the last in the ingress pipeline
-   sets the multicast group
+The pseudocode below defines where copies of packets will be made
+after the Egress control block has completed executing, based upon
+the contents of several metadata fields in the struct
+`psa_egress_output_metadata_t`.
 
-- interleaving send_to_port and multicast -- the semantics of multicast
-   is defined as below (https://github.com/p4lang/tutorials/issues/22):
-     if (multicast_group != 0)
-        multicast_to_group(multicast_group);
-     else
-        send_to_port(output_port);
+```
+[INCLUDE=psa.p4:Metadata_egress_output]
 
-   From this, it follows that if there is a call that sets the
-   multicast_group, the packet will be multicast to the group that
-   last set the multicast group. Otherwise, the packet will be sent
-   to the port set by send_to_port.
+    psa_egress_input_metadata_t  istd;
+    psa_egress_output_metadata_t ostd;
 
-- multiple clone invocations will cause the packet to be cloned to
-   the corresponding port. Any drop call in the pipeline will cause
-   the packet to drop, and no clone will be created (following the
-   analogy with intrinsic metadata bit fields, drop bits are
-   processed before clone bits are looked up).
+    if (ostd.clone) {
+        create a copy of the packet to the clone target
+        // TBD: Need a way to specify one (or more?) among multiple clone
+        // targets, if more than one such target exists.  Also to specify
+        // if anything is different about the cloned packet vs. other
+        // copies that might be made below.
+    }
+    // Continue below, regardless of whether a clone was created or not.
+    if (ostd.drop) {
+        drop the packet
+        return;   // Do not continue below.
+    }
+    if (ostd.recirculate) {
+        recirculate the packet, i.e. it will go back to starting with the
+            ingress parser;
+        // TBD: Specify if anything is different about the recirculated
+        // packet vs. other copies that might be made below.
+    }
+    // Continue below, regardless of whether recirculate occurred or not.
+    // This is the value of istd.egress_port that arrived with
+    // the packet when it began Egress processing.  The Egress control
+    // block is not allowed to change it.
+    enqueue one packet for output port istd.egress_port
+```
 
-- resubmit
-- recirculate
+TBD: Need text defining, for each possible copy, exactly what the
+contents of the packet will be, and any differences between the values
+of the fields in the structs `psa_parser_input_metadata_t` and
+`psa_ingress_input_metadata_t`, in the copy, as compared to the values
+seen for the packet that caused those copies to be made.
 
-\TODO: finalize the semantics of calling multiple of the PRE APIs
+TBD: How does truncate() interact with this?
+
+TBD: After agreeing on the possible behaviors, write 'helper actions'
+for common use cases.  Such actions can take as inout parameters the
+entire `psa_ingress_output_metadata_t` or
+`psa_egress_output_metadata_t` structs, and modify multiple fields
+within them, if desired.  The following subsections should be replaced
+with descriptions of those helper actions.
+
 
 ```
 extern PacketReplicationEngine {

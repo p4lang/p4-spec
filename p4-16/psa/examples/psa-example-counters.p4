@@ -116,6 +116,7 @@ control ingress(inout headers hdr,
     }
     apply {
         port_bytes_in.count(istd.ingress_port);
+        ostd.drop = false;
         ostd.egress_port = 0;
         if (hdr.ipv4.isValid()) {
             ipv4_da_lpm.apply();
@@ -126,7 +127,8 @@ control ingress(inout headers hdr,
 control egress(inout headers hdr,
                inout metadata user_meta,
                BufferingQueueingEngine bqe,
-               in  psa_egress_input_metadata_t  istd)
+               in  psa_egress_input_metadata_t  istd,
+               out psa_egress_output_metadata_t ostd)
 {
     Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.bytes)
         port_bytes_out;
