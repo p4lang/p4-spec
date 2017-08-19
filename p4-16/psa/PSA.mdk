@@ -121,29 +121,27 @@ Additional supported match_kind types
 
 ## Packet Replication Engine { #sec-pre }
 
-The ```PacketReplicationEngine``` extern represents the non-programmable
-part of the PSA pipeline.
+The ```PacketReplicationEngine``` extern (abbreviated PRE) represents
+a part of the PSA pipeline that is not programmable via writing P4
+code.
 
 Even though the PRE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
-intrinsic metadata, and the `psa.p4` include file provides some
-actions to help set these metadata fields for some common use cases.
+intrinsic metadata.  The `psa.p4` include file provides some actions
+to help set these metadata fields for some common use cases, described
+later.
 
 The PRE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
 it exactly once, without requiring the user's P4 program to
 instantiate it.
 The PRE is made available to the Ingress programmable block using the
-same mechanism as packet_in. A corresponding Buffering and Queuing
+same mechanism as `packet_in`.  A corresponding Buffering and Queuing
 Engine (BQE) extern is defined for the Egress pipeline (see
 [#sec-bqe]).
 
-**Note to implementers**: some of these operations may not be
-implemented as native operations on a certain target. However, the
-goal is that all operations should be implementable as a combination
-of native and non-native operations. Target documentation should highlight such
-implementations, so that application programmers are aware of the
-potentially significant performance penalties.
+
+### Behavior of packets after Ingress processing is complete { #sec-after-ingress }
 
 The pseudocode below defines where copies of packets will be made
 after the Ingress control block has completed executing, based upon
@@ -155,8 +153,12 @@ the contents of several metadata fields in the struct
 
     psa_ingress_output_metadata_t ostd;
 
+    if (truncate) {
+        Truncate the payload to at most truncate_payload_bytes long.
+            This affects any copies made below.
+    }
     if (ostd.clone) {
-        create a copy of the packet to the clone target
+        create a copy of the packet to the clone target.
         // TBD: Need a way to specify one (or more?) among multiple
         // clone targets, if more than one such target exists.  Also
         // to specify if anything is different about the cloned packet
@@ -185,6 +187,9 @@ the contents of several metadata fields in the struct
 TBD: Need text defining, for each possible copy, exactly what the
 contents of the packet will be.
 
+TBD: Should it be possible to truncate a cloned or resubmitted packet
+differently than the normal packet that goes out?
+
 TBD: If it is planned to be possible at the end of ingress to send a
 packet to be replicated via a multicast_group, and also have a copy go
 to the control CPU, give an example showing this case (after showing
@@ -192,6 +197,10 @@ some simpler common cases).  Ideally it should be possible for the
 copy going to the control CPU to have a software-defined header
 (defined in the P4 program) that is different than any headers on the
 packet copies going to the Egress control block.
+
+
+### Behavior of packets after Egress processing is complete { #sec-after-egress }
+
 
 The pseudocode below defines where copies of packets will be made
 after the Egress control block has completed executing, based upon
@@ -204,6 +213,10 @@ the contents of several metadata fields in the struct
     psa_egress_input_metadata_t  istd;
     psa_egress_output_metadata_t ostd;
 
+    if (truncate) {
+        Truncate the payload to at most truncate_payload_bytes long.
+            This affects any copies made below.
+    }
     if (ostd.clone) {
         create a copy of the packet to the clone target
         // TBD: Need a way to specify one (or more?) among multiple clone
@@ -223,9 +236,11 @@ the contents of several metadata fields in the struct
         // packet vs. other copies that might be made below.
     }
     // Continue below, regardless of whether recirculate occurred or not.
-    // This is the value of istd.egress_port that arrived with
-    // the packet when it began Egress processing.  The Egress control
-    // block is not allowed to change it.
+
+    // The value istd.egress_port below is the same one that the
+    // packet began its Egress processing with, as decided during
+    // Ingress processing for this packet.  The Egress control block
+    // is not allowed to change it.
     enqueue one packet for output port istd.egress_port
 ```
 
@@ -235,69 +250,64 @@ of the fields in the structs `psa_parser_input_metadata_t` and
 `psa_ingress_input_metadata_t`, in the copy, as compared to the values
 seen for the packet that caused those copies to be made.
 
-TBD: How does truncate() interact with this?
-
-TBD: After agreeing on the possible behaviors, write 'helper actions'
-for common use cases.  Such actions can take as inout parameters the
-entire `psa_ingress_output_metadata_t` or
-`psa_egress_output_metadata_t` structs, and modify multiple fields
-within them, if desired.  The following subsections should be replaced
-with descriptions of those helper actions.
+TBD: Should it be possible to truncate a cloned or recirculated packet
+differently than the normal packet that goes out?
 
 
-```
-extern PacketReplicationEngine {
+### Actions for directing packets during ingress { #sec-ingress-actions }
 
-  // PacketReplicationEngine(); /// No constructor. PRE is instantiated
-                                /// by the architecture.
-```
+All of these actions modify one or more metadata fields in the struct
+with type `psa_ingress_output_metadata_t` that is an `out` parameter
+of the `Ingress` control block.  None of these actions has any other
+immediate effect.  What happens to the packet is determined by the
+value of all fields in that struct when ingress processing is
+complete, not at the time one of these actions is called.  See Section
+[#sec-after-ingress].
 
-### PRE Methods
+These actions are provided for convenience in making changes to these
+metadata fields.  Their effects are expected to be common kinds of
+changes one will want to make in a P4 program.  If they do not suit
+your use cases, you are of course welcome to modify the metadata
+fields directly in your P4 programs however you prefer, perhaps within
+actions you define yourself.
+
 
 #### Unicast operation
 
 Sends packet to a port.
 
-Targets may implement this operation by setting the appropriate
-intrinsic metadata or through some other mechanism of configuring the
-PRE.
-
-The port parameter is the output port. If the port is PORT_CPU the
-packet will be sent to CPU.
-
 ```
-void send_to_port (in PortId_t port);
+[INCLUDE=psa.p4:Action_send_to_port]
 ```
 
 #### Multicast operation
 
 Sends packet to a multicast group or a port.
 
-Targets may implement this operation by setting the appropriate
-intrinsic metadata or through some other mechanism of configuring the
-PRE.
-
 The multicast_group parameter is the multicast group id. The control
 plane must program the multicast groups through a separate mechanism.
 
 ```
-void multicast (in MulticastGroup_t multicast_group);
+[INCLUDE=psa.p4:Action_multicast]
 ```
 
 #### Drop operation
 
-Do not forward the packet.
-
-The PSA implements drop as an operation in the PRE. While the drop operation
-can be invoked anywhere in the pipeline (ingress or egress), the semantics
-supported by the PSA is that the drop will be at the end of the pipeline
-(ingress or egress). Any other operations invoked in the pipeline, whether on
-the packet or any externs (e.g. counter updates, meter updates, register
-writes) will execute, until the packet reaches the end of the pipeline.
-Operations in the egress pipeline will not execute if drop is called in ingress.
+Do not send a copy of the packet for normal egress processing.
 
 ```
-void drop      ();
+[INCLUDE=psa.p4:Action_ingress_drop]
+```
+
+#### Truncate operation
+
+For all copies of the packet made at the end of Ingress processing,
+truncate the payload to be at most the specified number of bytes.
+Specifying 0 is legal, and causes only packet headers to be sent, with
+no payload.
+
+```
+[INCLUDE=psa.p4:Action_ingress_truncate]
 ```
 
 ### Clone/recirculation/resubmit
@@ -457,29 +467,16 @@ extern recirculate {
 }
 ```
 
-#### Truncate operation
-
-Truncate the payload of the outgoing packet to the specified length.
-
-The length parameter represents the desired payload length in bytes.
-To remove the payload one may invoke `truncate(0)`.
-
-```
-void truncate(in bit<32> length);
-```
 
 ## Buffering Queuing Engine { #sec-bqe }
 
-The BufferingQueueingEngine extern represents the the other
-non-programmable part of the PSA pipeline (after Egress).
+The BufferingQueueingEngine extern (abbreviated BQE) represents
+another part of the PSA pipeline, after Egress, that is not
+programmable via writing P4 code.
 
 Even though the BQE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
-intrinsic metadata. In this specification we opt to define the
-operations available in the BQE as method invocations. A target
-backend is responsible for mapping the BQE extern APIs to the
-appropriate mechanisms for performing these operations in the
-hardware.
+intrinsic metadata.
 
 The BQE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
@@ -490,49 +487,29 @@ using the same mechanism as packet_in. A corresponding Packet
 Replication Engine (PRE) extern is defined for the Ingress pipeline
 (see [#sec-pre]).
 
-**Note to implementers**: some of these operations may not be
-implemented as primitive operations on a certain target. However, the
-goal is that all operations should be implementable as a combination
-of other operations. Target documentation should highlight such
-implementations, so that application programmers are aware of the
-potentially significant performance penalties.
 
-The ordering semantics of multiple calls to BQE APIs is identical
-to the semantics ordering of PRE invocations, for the subset of
-functions supported in the BQE.
-
-```
-extern BufferingQueueingEngine {
-
-  // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
-                                /// by the architecture.
-
-```
-
-### BQE Methods
+### Actions for directing packets during egress { #sec-egress-actions }
 
 #### Drop operation { #sec-bqe-drop }
 
-Do not forward the packet.
-
-The PSA implements drop as an operation in the BQE. While the
-drop operation can be invoked anywhere in the ingress pipeline,
-the semantics supported by the PSA is that the drop will be at
-the end of the pipeline (ingress or egress).
+Do not send the packet out of the device after egress processing is
+complete.
 
 ```
-void drop      ();
+[INCLUDE=psa.p4:Action_egress_drop]
 ```
 
-#### Truncate operation { #sec-bqe-truncate }
+#### Truncate operation
 
-Truncate the outgoing packet to the specified length
-
-The length parameter represents the packet length.
+For all copies of the packet made at the end of Eress processing,
+truncate the payload to be at most the specified number of bytes.
+Specifying 0 is legal, and causes only packet headers to be sent, with
+no payload.
 
 ```
-void truncate(in bit<32> length);
+[INCLUDE=psa.p4:Action_egress_truncate]
 ```
+
 
 ## Hashes { #sec-hash-algorithms }
 

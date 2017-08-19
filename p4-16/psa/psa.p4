@@ -34,6 +34,7 @@ typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
 typedef bit<48> timestamp_t;
+typedef bit<16> CloneSpec_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -85,6 +86,8 @@ struct psa_ingress_output_metadata_t {
   bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // undefined
+  bool                     truncate;         // false
+  PacketLength_t           truncate_payload_bytes;  // undefined
 }
 // END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
@@ -101,6 +104,8 @@ struct psa_egress_output_metadata_t {
   CloneSpec_t              clone_spec;    // undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
+  bool                     truncate;      // false
+  PacketLength_t           truncate_payload_bytes;  // undefined
 }
 // END:Metadata_egress_output
 // END:Metadata_types
@@ -122,14 +127,121 @@ enum CloneMethod_t {
 }
 // END:Cloning_methods
 
+// BEGIN:Action_send_to_port
+/// Modify ingress output metadata to cause one packet to be sent to
+/// egress processing, and then to the output port egress_port, unless
+/// it is dropped during egress processing.
+
+/// This action does not change whether a clone or resubmit operation
+/// will occur.
+
+/// The one copy it causes to be sent to egress processing will have
+/// its struct of type psa_egress_input_metadata_t filled in as
+/// follows:
+
+/// egress_port - equal to the egress_port parameter of this action
+/// instance_type - InstanceType_t.NORMAL
+/// instance - undefined
+/// egress_timestamp - the time the packet begins egress processing
+
+action send_to_port(inout psa_ingress_output_metadata_t meta,
+                    in PortId_t egress_port)
+{
+    meta.drop = false;
+    meta.multicast_group = 0;
+    meta.egress_port = egress_port;
+}
+// END:Action_send_to_port
+
+// BEGIN:Action_multicast
+/// Modify ingress output metadata to cause 0 or more copies of the
+/// packet to be sent to egress processing.
+
+/// This action does not change whether a clone or resubmit operation
+/// will occur.
+
+/// The control plane must program each multicast_group to create the
+/// desired copies of the packet.  For a particular multicast group,
+/// the control plane specifies a list of 0 or more copy
+/// specifications:
+
+/// (egress_port[0], instance[0]),
+/// (egress_port[1], instance[1]),
+/// ...,
+/// (egress_port[N-1], instance[N-1])
+
+/// Copy number i sent to egress processing will have its struct of
+/// type psa_egress_input_metadata_t filled in as follows:
+
+/// egress_port - equal to the egress_port[i]
+/// instance_type - InstanceType_t.NORMAL
+/// instance - instance[i]
+/// egress_timestamp - the time the packet begins egress processing
+
+action multicast(inout psa_ingress_output_metadata_t meta,
+                 in MulticastGroup_t multicast_group)
+{
+    meta.drop = false;
+    meta.multicast_group = multicast_group;
+}
+// END:Action_multicast
+
+// BEGIN:Action_ingress_drop
+/// Modify ingress output metadata to cause no packet to be sent for
+/// normal egress processing.
+
+/// This action does not change whether a clone will occur.  It will
+/// prevent a packet from being resubmitted.
+
+action ingress_drop(inout psa_ingress_output_metadata_t meta)
+{
+    meta.drop = true;
+}
+// END:Action_ingress_drop
+
+// BEGIN:Action_ingress_truncate
+/// For any copies made of this packet at the end of Ingress
+/// processing, truncate the payload to at most payload_bytes bytes in
+/// length.
+
+action ingress_truncate(inout psa_ingress_output_metadata_t meta,
+                        in PacketLength_t payload_bytes)
+{
+    meta.truncate = true;
+    meta.truncate_payload_bytes = payload_bytes;
+}
+// END:Action_ingress_truncate
+
+// BEGIN:Action_egress_drop
+/// Modify egress output metadata to cause no packet to be sent out of
+/// the device.
+
+/// This action does not change whether a clone will occur.  It will
+/// prevent a packet from being recirculated.
+
+action egress_drop(inout psa_egress_output_metadata_t meta)
+{
+    meta.drop = true;
+}
+// END:Action_egress_drop
+
+// BEGIN:Action_egress_truncate
+/// For any copies made of this packet at the end of Egress
+/// processing, truncate the payload to at most payload_bytes bytes in
+/// length.
+
+action egress_truncate(inout psa_ingress_output_metadata_t meta,
+                       in PacketLength_t payload_bytes)
+{
+    meta.truncate = true;
+    meta.truncate_payload_bytes = payload_bytes;
+}
+// END:Action_egress_truncate
+
 extern PacketReplicationEngine {
 
   // PacketReplicationEngine(); /// No constructor. PRE is instantiated
                                 /// by the architecture.
-    void send_to_port (in PortId_t port);
-    void multicast (in MulticastGroup_t multicast_group);
-    void drop      ();
-    void truncate(in bit<32> length);
 }
 
 extern BufferingQueueingEngine {
@@ -137,9 +249,6 @@ extern BufferingQueueingEngine {
   // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
                                 /// by the architecture.
 
-    void send_to_port (in PortId_t port);
-    void drop      ();
-    void truncate(in bit<32> length);
 }
 
 // BEGIN:Hash_algorithms
