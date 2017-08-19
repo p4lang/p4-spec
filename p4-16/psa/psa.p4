@@ -50,6 +50,7 @@ typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
 typedef bit<unspecified> timestamp_t;
+typedef bit<unspecified> CloneSpec_t;
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
