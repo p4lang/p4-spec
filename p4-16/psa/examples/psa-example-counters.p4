@@ -96,11 +96,11 @@ control ingress(inout headers hdr,
 
     action next_hop(PortId_t oport) {
         per_prefix_pkt_byte_count.count();
-        ostd.egress_port = oport;
+        send_to_port(ostd, oport);
     }
     action default_route_drop() {
         per_prefix_pkt_byte_count.count();
-        pre.drop();
+        ingress_drop(ostd);
     }
     table ipv4_da_lpm {
         key = { hdr.ipv4.dstAddr: lpm; }
@@ -116,8 +116,6 @@ control ingress(inout headers hdr,
     }
     apply {
         port_bytes_in.count(istd.ingress_port);
-        ostd.drop = false;
-        ostd.egress_port = 0;
         if (hdr.ipv4.isValid()) {
             ipv4_da_lpm.apply();
         }
