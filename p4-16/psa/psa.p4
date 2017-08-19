@@ -50,6 +50,7 @@ typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
 typedef bit<unspecified> timestamp_t;
+typedef bit<unspecified> CloneSpec_t;
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
@@ -59,7 +60,7 @@ const   PortId_t         PORT_CPU = unspecified;
 #endif
 
 // BEGIN:Metadata_types
-enum InstanceType_t { NORMAL_INSTANCE, CLONE_INSTANCE }
+enum InstanceType_t { NORMAL, CLONE, RESUBMIT, RECIRCULATE }
 
 struct psa_parser_input_metadata_t {
   PortId_t                 ingress_port;
@@ -79,6 +80,7 @@ struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
   bool                     clone;            // false
+  CloneSpec_t              clone_spec;       // undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
@@ -96,6 +98,7 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
+  CloneSpec_t              clone_spec;    // undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
 }
@@ -126,10 +129,6 @@ extern PacketReplicationEngine {
     void send_to_port (in PortId_t port);
     void multicast (in MulticastGroup_t multicast_group);
     void drop      ();
-    void clone     (in CloneMethod_t clone_method, in PortId_t port);
-    void clone<T>  (in CloneMethod_t clone_method, in PortId_t port, in T data);
-    void resubmit<T>(in T data, in PortId_t port);
-    void recirculate<T>(in T data, in PortId_t port);
     void truncate(in bit<32> length);
 }
 
