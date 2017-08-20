@@ -33,7 +33,7 @@ typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
-typedef bit<48> timestamp_t;
+typedef bit<48> Timestamp_t;
 typedef bit<16> CloneSpec_t;
 
 const   PortId_t         PORT_CPU = 255;
@@ -50,7 +50,7 @@ typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
-typedef bit<unspecified> timestamp_t;
+typedef bit<unspecified> Timestamp_t;
 typedef bit<unspecified> CloneSpec_t;
 
 const   PortId_t         PORT_CPU = unspecified;
@@ -74,13 +74,14 @@ struct psa_ingress_input_metadata_t {
   /// set by the runtime in the parser, these are not under programmer control
   ParserStatus_t           parser_status;
   ParserErrorLocation_t    parser_error_location;
-  timestamp_t              ingress_timestamp;
+  Timestamp_t              ingress_timestamp;
 }
 // BEGIN:Metadata_ingress_output
 struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
   bool                     clone;            // false
+  CloneType_t              clone_type;       // undefined
   CloneSpec_t              clone_spec;       // undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
@@ -94,13 +95,14 @@ struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
   InstanceType_t           instance_type;  /// Clone or Normal
   EgressInstance_t         instance;       /// instance coming from PRE
-  timestamp_t              egress_timestamp;
+  Timestamp_t              egress_timestamp;
 }
 // BEGIN:Metadata_egress_output
 struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
+  CloneType_t              clone_type;    // undefined
   CloneSpec_t              clone_spec;    // undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
@@ -118,12 +120,14 @@ match_kind {
 // END:Match_kinds
 
 // BEGIN:Cloning_methods
-enum CloneMethod_t {
-  /// Clone method         Packet source             Insertion point
-  Ingress2Ingress,  /// original ingress,            Ingress parser
-  Ingress2Egress,    /// post parse original ingress,  Buffering queue
-  Egress2Ingress,   /// post deparse in egress,      Ingress parser
-  Egress2Egress     /// inout to deparser in egress, Buffering queue
+enum CloneType_t {
+    ORIGINAL,   /// cloned packet contains the original header
+    MODIFIED    /// cloned packet contains the modified header
+}
+enum CloneSpec_t {
+    INGRESS,    /// cloned packet is sent to ingress packet buffer
+    EGRESS,     /// cloned packet is sent to queueing mechanism
+    CPU         /// TBD, should copy-to-cpu be part of CloneSpec_t?
 }
 // END:Cloning_methods
 
