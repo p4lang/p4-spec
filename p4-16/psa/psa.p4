@@ -81,6 +81,7 @@ struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
   bool                     clone;            // false
+  CloneType_t              clone_type;       // undefined
   CloneSpec_t              clone_spec;       // undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
@@ -101,6 +102,7 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
+  CloneType_t              clone_type;    // undefined
   CloneSpec_t              clone_spec;    // undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
@@ -118,12 +120,14 @@ match_kind {
 // END:Match_kinds
 
 // BEGIN:Cloning_methods
-enum CloneMethod_t {
-  /// Clone method         Packet source             Insertion point
-  Ingress2Ingress,  /// original ingress,            Ingress parser
-  Ingress2Egress,    /// post parse original ingress,  Buffering queue
-  Egress2Ingress,   /// post deparse in egress,      Ingress parser
-  Egress2Egress     /// inout to deparser in egress, Buffering queue
+enum CloneType_t {
+    ORIGINAL,   /// cloned packet contains the original header
+    MODIFIED    /// cloned packet contains the modified header
+}
+enum CloneSpec_t {
+    INGRESS,    /// cloned packet is sent to ingress packet buffer
+    EGRESS,     /// cloned packet is sent to queueing mechanism
+    CPU         /// TBD, should copy-to-cpu be part of CloneSpec_t?
 }
 // END:Cloning_methods
 
