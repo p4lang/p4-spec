@@ -520,10 +520,10 @@ the contents of several metadata fields in the struct
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (ostd.resubmit) {
         resubmit the packet, i.e. it will go back to starting with the
             ingress <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span>;
+        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">return</span>;   <span style="color:darkgreen">// Do not continue below.</span>
         <span style="color:darkgreen">// TBD: Specify if anything is different about the resubmitted</span>
         <span style="color:darkgreen">// packet vs. other copies that might be made below.</span>
     }
-    <span style="color:darkgreen">// Continue below, regardless of whether resubmit occurred or not.</span>
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (ostd.multicast_group != <span class="constant" style="color:purple">0</span>) {
         Make <span class="constant" style="color:purple">0</span> or more copies of the packet according to the <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span>
             plane configuration of multicast group ostd.multicast_group.
@@ -733,11 +733,11 @@ P4 program can use it in ingress and egress deparser only. It is an
 error to instantiate the <span data-line="343"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone</code><span data-line="343"></span> extern in the P4 control or parser
 block.
 </p>
-<p class="p indent" data-line="346"><span data-line="346"></span>A PSA implementation provides two configuration metadata, <span data-line="346"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_ena</code><span data-line="346"></span>
+<p class="p indent" data-line="346"><span data-line="346"></span>A PSA implementation provides two configuration metadata, <span data-line="346"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone</code><span data-line="346"></span>
 and <span data-line="347"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_spec</code><span data-line="347"></span>, to the PRE to control the cloning mechanism. The
-<span data-line="348"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_ena</code><span data-line="348"></span> enables/disables the cloning mechanism. If the <span data-line="348"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_ena</code><span data-line="348"></span>
+<span data-line="348"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone</code><span data-line="348"></span> enables/disables the cloning mechanism. If the <span data-line="348"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone</code><span data-line="348"></span>
 bit is set, the clone mechanism generates a cloned packet with the
-optional attached metadata. If the <span data-line="350"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_ena</code><span data-line="350"></span> bit is unset or
+optional attached metadata. If the <span data-line="350"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone</code><span data-line="350"></span> bit is unset or
 unintialized, the clone mechanism is disabled and a cloned packet is
 not generated even if the <span data-line="352"></span><code class="code code1 language-p4 lang-p4 p4 colorized">emit</code><span data-line="352"></span> method is invoked in the deparser.
 The <span data-line="353"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_spec</code><span data-line="353"></span> control the destination of the cloned packet. A
@@ -778,10 +778,10 @@ same resubmitted packet. The PSA architecture instantiates the
 ingress deparser only. It is an error to instantiate the <span data-line="393"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit</code><span data-line="393"></span>
 extern in the P4 control or parser block.
 </p>
-<p class="p indent" data-line="396"><span data-line="396"></span>A PSA implementation provides a configuration bit <span data-line="396"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit_ena</code><span data-line="396"></span> to
-the PRE to enable the resubmit mechanism. If the <span data-line="397"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit_ena</code><span data-line="397"></span> bit is
+<p class="p indent" data-line="396"><span data-line="396"></span>A PSA implementation provides a configuration bit <span data-line="396"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit</code><span data-line="396"></span> to
+the PRE to enable the resubmit mechanism. If the <span data-line="397"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit</code><span data-line="397"></span> bit is
 set, the resubmit mechanism resends the original packet with the
-optional attached metadata. If the <span data-line="399"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit_ena</code><span data-line="399"></span> bit is unset or
+optional attached metadata. If the <span data-line="399"></span><code class="code code1 language-p4 lang-p4 p4 colorized">resubmit</code><span data-line="399"></span> bit is unset or
 unintialized, the resubmit mechanism is disabled and the original
 packet is not resubmitted even if the <span data-line="401"></span><code class="code code1 language-p4 lang-p4 p4 colorized">emit</code><span data-line="401"></span> method is invoked in the
 deparser.
