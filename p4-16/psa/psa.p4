@@ -35,6 +35,7 @@ typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
 typedef bit<48> Timestamp_t;
 typedef bit<16> CloneSpec_t;
+typedef error   ParserError_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -53,6 +54,8 @@ typedef bit<unspecified> ParserErrorLocation_t;
 typedef bit<unspecified> Timestamp_t;
 typedef bit<unspecified> CloneSpec_t;
 
+
+
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
 
@@ -68,13 +71,16 @@ struct psa_parser_input_metadata_t {
   InstanceType_t           instance_type;
 }
 
+struct psa_parser_output_metadata_t {
+  ParserError_t            parser_error;
+}
+
 struct psa_ingress_input_metadata_t {
   PortId_t                 ingress_port;
   InstanceType_t           instance_type;  /// Clone or Normal
-  /// set by the runtime in the parser, these are not under programmer control
-  ParserStatus_t           parser_status;
-  ParserErrorLocation_t    parser_error_location;
+  /// set by the runtime in the parser, these are not under programmer
   Timestamp_t              ingress_timestamp;
+  ParserError_t            parser_error;
 }
 // BEGIN:Metadata_ingress_output
 struct psa_ingress_output_metadata_t {
@@ -96,6 +102,7 @@ struct psa_egress_input_metadata_t {
   InstanceType_t           instance_type;  /// Clone or Normal
   EgressInstance_t         instance;       /// instance coming from PRE
   Timestamp_t              egress_timestamp;
+  ParserError_t            parser_error;
 }
 // BEGIN:Metadata_egress_output
 struct psa_egress_output_metadata_t {
@@ -532,7 +539,8 @@ extern ValueSet<D> {
 
 // BEGIN:Programmable_blocks
 parser Parser<H, M>(packet_in buffer, out H parsed_hdr, inout M user_meta,
-                    in psa_parser_input_metadata_t istd);
+                    in psa_parser_input_metadata_t istd,
+                    out psa_parser_output_metadata_t ostd);
 
 control VerifyChecksum<H, M>(in H hdr, inout M user_meta);
 
