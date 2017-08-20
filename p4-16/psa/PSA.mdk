@@ -435,15 +435,15 @@ recirculated packet. The PSA architecture instantiates the
 in egress deparser only. It is an error to instantiate the
 `recirculate` extern in a P4 control or parser block.
 
-A PSA implementation provides a configuration bit `recirc_ena` to the
-PRE to enable the recirculation mechanism. If the `recirc_ena` bit is
+A PSA implementation provides a configuration bit `recirculate` to the
+PRE to enable the recirculation mechanism. If the `recirculate` bit is
 set, the recirculation mechanism sends back the deparsed packet with
 the optional attached metadata to the ingress parser. If the
-`recirc_ena` bit is unset or unintialized, the recirculation mechanism
+`recirculate` bit is unset or unintialized, the recirculation mechanism
 is disabled and the deparsed packet is not recirculated even if the
 `emit` method is invoked in the deparser.
 
-One possible implementaion of the `recirc_ena` bit is to set the
+One possible implementaion of the `recirculate` bit is to set the
 `egress_port` metadata to a dedicated recirculation port number. A PSA
 implementation sends the deparsed packet to the dedicated
 recirculation port to recirculate the packet.
