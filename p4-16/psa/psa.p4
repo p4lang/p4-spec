@@ -27,6 +27,12 @@ limitations under the License.
  */
 #define PSA_CORE_TYPES
 #ifdef PSA_CORE_TYPES
+/* The bit widths shown below are only examples.  Each PSA
+ * implementation is free to use its own custom width in bits for
+ * those types that are bit<W> for some W.  The only reason that there
+ * are example numerical widths in this file is so that we can easily
+ * compile this file, and example PSA P4 programs that include it. */
+
 typedef bit<10> PortId_t;
 typedef bit<10> MulticastGroup_t;
 typedef bit<14> PacketLength_t;
@@ -34,6 +40,7 @@ typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
 typedef bit<48> Timestamp_t;
+typedef error   ParserError_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -51,8 +58,6 @@ typedef bit<unspecified> ParserStatus_t;
 typedef bit<unspecified> ParserErrorLocation_t;
 typedef bit<unspecified> Timestamp_t;
 
-
-
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
 
@@ -60,8 +65,25 @@ const   PortId_t         PORT_CPU = unspecified;
 // const   InstanceType_t   INSTANCE_NORMAL = unspecified;
 #endif
 
+// BEGIN:Cloning_methods
+enum CloneType_t {
+    ORIGINAL,   /// cloned packet contains the original header
+    MODIFIED    /// cloned packet contains the modified header
+}
+enum CloneMethod_t {
+    INGRESS,    /// cloned packet is sent to ingress packet buffer
+    EGRESS,     /// cloned packet is sent to queueing mechanism
+    CPU         /// TBD, should copy-to-cpu be part of CloneMethod_t?
+}
+// END:Cloning_methods
+
 // BEGIN:Metadata_types
-enum InstanceType_t { NORMAL, CLONE, RESUBMIT, RECIRCULATE }
+enum InstanceType_t {
+    NORMAL,     /// Packet is "normal", i.e. none of the other cases below
+    CLONE,      /// Packet was created via a clone operation
+    RESUBMIT,   /// Packet arrival is the result of a resubmit operation
+    RECIRCULATE /// Packet arrival is the result of a recirculate operation
+}
 
 struct psa_parser_input_metadata_t {
   PortId_t                 ingress_port;
@@ -73,9 +95,10 @@ struct psa_parser_output_metadata_t {
 }
 
 struct psa_ingress_input_metadata_t {
+  // All of these values are initialized by the architecture before
+  // the Ingress control block begins executing.
   PortId_t                 ingress_port;
-  InstanceType_t           instance_type;  /// Clone or Normal
-  /// set by the runtime in the parser, these are not under programmer
+  InstanceType_t           instance_type;
   Timestamp_t              ingress_timestamp;
   ParserError_t            parser_error;
 }
@@ -97,7 +120,7 @@ struct psa_ingress_output_metadata_t {
 // END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
-  InstanceType_t           instance_type;  /// Clone or Normal
+  InstanceType_t           instance_type;
   EgressInstance_t         instance;       /// instance coming from PRE
   Timestamp_t              egress_timestamp;
   ParserError_t            parser_error;
@@ -124,18 +147,6 @@ match_kind {
     selector /// Used for implementing dynamic_action_selection
 }
 // END:Match_kinds
-
-// BEGIN:Cloning_methods
-enum CloneType_t {
-    ORIGINAL,   /// cloned packet contains the original header
-    MODIFIED    /// cloned packet contains the modified header
-}
-enum CloneMethod_t {
-    INGRESS,    /// cloned packet is sent to ingress packet buffer
-    EGRESS,     /// cloned packet is sent to queueing mechanism
-    CPU         /// TBD, should copy-to-cpu be part of CloneMethod_t?
-}
-// END:Cloning_methods
 
 // BEGIN:Action_send_to_port
 /// Modify ingress output metadata to cause one packet to be sent to
