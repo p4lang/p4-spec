@@ -40,6 +40,7 @@ typedef bit<16> EgressInstance_t;
 typedef bit<8> ParserStatus_t;
 typedef bit<16> ParserErrorLocation_t;
 typedef bit<48> Timestamp_t;
+typedef error   ParserError_t;
 
 const   PortId_t         PORT_CPU = 255;
 
