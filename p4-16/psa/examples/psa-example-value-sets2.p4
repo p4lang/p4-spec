@@ -56,7 +56,8 @@ struct headers {
 parser ParserImpl(packet_in buffer,
                   out headers parsed_hdr,
                   inout metadata user_meta,
-                  in psa_parser_input_metadata_t istd)
+                  in psa_parser_input_metadata_t istd,
+                  out psa_parser_output_metadata_t ostd)
 {
     ValueSet<bit<16>>(4) tpid_types;
     ValueSet<bit<16>>(2) trill_types;

@@ -1,6 +1,6 @@
 Title : P4~16~ Portable Switch Architecture (PSA)
 Title Note : (draft)
-Title Footer: May 15, 2017
+Title Footer: August 23, 2017
 Author : The P4.org language consortium
 Heading depth: 4
 
@@ -90,7 +90,9 @@ corresponding to the programmable blocks are passed as arguments.
 
 ## PSA type definitions
 
-These types need to be defined before including the architecture file.
+Each PSA implementation will have specific bit widths for the
+following types.  These widths should be in that PSA implementation's
+custom `psa.p4` file.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -298,7 +300,7 @@ Do not send a copy of the packet for normal egress processing.
 [INCLUDE=psa.p4:Action_ingress_drop]
 ```
 
-#### Truncate operation
+#### Truncate operation { #sec-ingress-truncate }
 
 For all copies of the packet made at the end of Ingress processing,
 truncate the payload to be at most the specified number of bytes.
@@ -498,7 +500,7 @@ complete.
 [INCLUDE=psa.p4:Action_egress_drop]
 ```
 
-#### Truncate operation
+#### Truncate operation { #sec-egress-truncate }
 
 For all copies of the packet made at the end of Egress processing,
 truncate the payload to be at most the specified number of bytes.
