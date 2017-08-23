@@ -69,10 +69,10 @@ enum CloneType_t {
     ORIGINAL,   /// cloned packet contains the original header
     MODIFIED    /// cloned packet contains the modified header
 }
-enum CloneSpec_t {
+enum CloneMethod_t {
     INGRESS,    /// cloned packet is sent to ingress packet buffer
     EGRESS,     /// cloned packet is sent to queueing mechanism
-    CPU         /// TBD, should copy-to-cpu be part of CloneSpec_t?
+    CPU         /// TBD, should copy-to-cpu be part of CloneMethod_t?
 }
 // END:Cloning_methods
 
