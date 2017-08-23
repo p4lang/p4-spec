@@ -61,11 +61,9 @@ struct headers {
 }
 // END:Counter_Example_Part1
 
-parser ParserImpl(packet_in buffer,
-                  out headers parsed_hdr,
-                  inout metadata user_meta,
-                  in psa_parser_input_metadata_t istd,
-                  out psa_parser_output_metadata_t ostd)
+parser CommonParser(packet_in buffer,
+                    out headers parsed_hdr,
+                    inout metadata user_meta)
 {
     state start {
         transition parse_ethernet;
@@ -79,6 +77,34 @@ parser ParserImpl(packet_in buffer,
     }
     state parse_ipv4 {
         buffer.extract(parsed_hdr.ipv4);
+        transition accept;
+    }
+}
+
+parser IngressParserImpl(packet_in buffer,
+                         out headers parsed_hdr,
+                         inout metadata user_meta,
+                         in psa_ingress_parser_input_metadata_t istd,
+                         out psa_parser_output_metadata_t ostd)
+{
+    CommonParser() p;
+
+    state start {
+        p.apply(buffer, parsed_hdr, user_meta);
+        transition accept;
+    }
+}
+
+parser EgressParserImpl(packet_in buffer,
+                        out headers parsed_hdr,
+                        inout metadata user_meta,
+                        in psa_egress_parser_input_metadata_t istd,
+                        out psa_parser_output_metadata_t ostd)
+{
+    CommonParser() p;
+
+    state start {
+        p.apply(buffer, parsed_hdr, user_meta);
         transition accept;
     }
 }
@@ -132,10 +158,10 @@ control egress(inout headers hdr,
     Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.bytes)
         port_bytes_out;
     apply {
-        // By doing these stats updates on egress, as long as IP
-        // multicast replication happens in the packet buffer, this
-        // update will occur once for each copy made, which in this
-        // example is intentional.
+        // By doing these stats updates on egress, then because
+        // multicast replication happens before egress processing,
+        // this update will occur once for each copy made, which in
+        // this example is intentional.
         port_bytes_out.count(istd.egress_port);
     }
 }
@@ -148,17 +174,14 @@ control DeparserImpl(packet_out packet, in headers hdr) {
     }
 }
 
-control verifyChecksum(in headers hdr, inout metadata meta) {
-    apply { }
-}
-
 control computeChecksum(inout headers hdr, inout metadata meta) {
     apply { }
 }
 
-PSA_Switch(ParserImpl(),
-           verifyChecksum(),
+PSA_Switch(IngressParserImpl(),
            ingress(),
+           DeparserImpl(),
+           EgressParserImpl(),
            egress(),
            computeChecksum(),
            DeparserImpl()) main;
