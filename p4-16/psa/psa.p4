@@ -579,13 +579,13 @@ control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
 
 control Deparser<H>(packet_out buffer, in H hdr);
 
-package PSA_Switch<H, M>(IngressParser<H, M> ip,
-                         Ingress<H, M> ig,
-                         Deparser<H> igdep,
-                         EgressParser<H, M> ep,
-                         Egress<H, M> eg,
-                         ComputeChecksum<H, M> ck,
-                         Deparser<H> egdep);
+package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
+                                   Ingress<IH, IM> ig,
+                                   Deparser<IH> id,
+                                   EgressParser<EH, EM> ep,
+                                   Egress<EH, EM> eg,
+                                   ComputeChecksum<EH, EM> ck,
+                                   Deparser<EH> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
