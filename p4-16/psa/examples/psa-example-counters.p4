@@ -64,7 +64,8 @@ struct headers {
 parser ParserImpl(packet_in buffer,
                   out headers parsed_hdr,
                   inout metadata user_meta,
-                  in psa_parser_input_metadata_t istd)
+                  in psa_parser_input_metadata_t istd,
+                  out psa_parser_output_metadata_t ostd)
 {
     state start {
         transition parse_ethernet;
