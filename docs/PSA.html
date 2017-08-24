@@ -402,15 +402,20 @@ custom <span data-line="95"></span><code class="code code1 language-p4 lang-p4 p
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; Timestamp_t;
 
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   PortId_t         PORT_CPU = unspecified;</code></pre><h3 id="sec-psa-supported-metadata-types" class="h2" data-line="101" data-heading-depth="2" style="display:block"><span data-line="101"></span><span class="heading-before"><span class="heading-label">2.2</span>.&#8194;</span><span data-line="101"></span>PSA supported metadata types</h3>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="103" data-line-first="104;psa.p4:142" style="display:block"><code data-line="104;psa.p4:142"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> InstanceType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="103" data-line-first="104;psa.p4:147" style="display:block"><code data-line="104;psa.p4:147"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> InstanceType_t {
     NORMAL,     <span style="color:darkgreen">/// Packet is &quot;normal&quot;, i.e. none of the other cases below</span>
     CLONE,      <span style="color:darkgreen">/// Packet was created via a clone operation</span>
     RESUBMIT,   <span style="color:darkgreen">/// Packet arrival is the result of a resubmit operation</span>
     RECIRCULATE <span style="color:darkgreen">/// Packet arrival is the result of a recirculate operation</span>
 }
 
-<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_parser_input_metadata_t {
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_ingress_parser_input_metadata_t {
   PortId_t                 ingress_port;
+  InstanceType_t           instance_type;
+}
+
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_egress_parser_input_metadata_t {
+  PortId_t                 egress_port;
   InstanceType_t           instance_type;
 }
 
@@ -465,7 +470,7 @@ custom <span data-line="95"></span><code class="code code1 language-p4 lang-p4 p
 </code></pre><h3 id="sec-match-kinds" class="h2" data-line="107" data-heading-depth="2" style="display:block"><span data-line="107"></span><span class="heading-before"><span class="heading-label">2.3</span>.&#8194;</span><span data-line="107"></span>Match kinds</h3>
 <p class="p noindent" data-line="109"><span data-line="109"></span>Additional supported match<span data-line="109"></span>_<span data-line="109"></span>kind types
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="111" data-line-first="112;psa.p4:149" style="display:block"><code data-line="112;psa.p4:149"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">match_kind</span> {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="111" data-line-first="112;psa.p4:154" style="display:block"><code data-line="112;psa.p4:154"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">match_kind</span> {
     range,   <span style="color:darkgreen">/// Used to represent min..max intervals</span>
     selector <span style="color:darkgreen">/// Used for implementing dynamic_action_selection</span>
 }</code></pre><h3 id="sec-cloning-methods" class="h2" data-line="115" data-heading-depth="2" style="display:block"><span data-line="115"></span><span class="heading-before"><span class="heading-label">2.4</span>.&#8194;</span><span data-line="115"></span>Cloning methods</h3>
@@ -502,7 +507,7 @@ after the Ingress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 <span data-line="150"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_ingress_output_metadata_t</code><span data-line="150"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="152" data-line-first="153;psa.p4:120" style="display:block"><code data-line="153;psa.p4:120"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_ingress_output_metadata_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="152" data-line-first="153;psa.p4:125" style="display:block"><code data-line="153;psa.p4:125"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_ingress_output_metadata_t {
   <span style="color:darkgreen">// The comment after each field specifies its initial value when the</span>
   <span style="color:darkgreen">// Ingress control block begins executing.</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span>                     clone;            <span style="color:darkgreen">// false</span>
@@ -567,7 +572,7 @@ after the Egress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 <span data-line="209"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_output_metadata_t</code><span data-line="209"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="211" data-line-first="212;psa.p4:141" style="display:block"><code data-line="212;psa.p4:141"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_egress_output_metadata_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="211" data-line-first="212;psa.p4:146" style="display:block"><code data-line="212;psa.p4:146"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_egress_output_metadata_t {
   <span style="color:darkgreen">// The comment after each field specifies its initial value when the</span>
   <span style="color:darkgreen">// Egress control block begins executing.</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span>                     clone;         <span style="color:darkgreen">// false</span>
@@ -638,7 +643,7 @@ actions you define yourself.
 </p><h5 id="sec-unicast-operation" class="h4" data-line="276" data-heading-depth="4" style="display:block"><span data-line="276"></span><span class="heading-before"><span class="heading-label">3.1.3.1</span>.&#8194;</span><span data-line="276"></span>Unicast operation</h5>
 <p class="p noindent" data-line="278"><span data-line="278"></span>Sends packet to a port.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="280" data-line-first="281;psa.p4:175" style="display:block"><code data-line="281;psa.p4:175"><span style="color:darkgreen">/// Modify ingress output metadata to cause one packet to be sent to</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="280" data-line-first="281;psa.p4:180" style="display:block"><code data-line="281;psa.p4:180"><span style="color:darkgreen">/// Modify ingress output metadata to cause one packet to be sent to</span>
 <span style="color:darkgreen">/// egress processing, and then to the output port egress_port, unless</span>
 <span style="color:darkgreen">/// it is dropped during egress processing.</span>
 
@@ -666,7 +671,7 @@ actions you define yourself.
 <p class="p indent" data-line="288"><span data-line="288"></span>The multicast<span data-line="288"></span>_<span data-line="288"></span>group parameter is the multicast group id. The control
 plane must program the multicast groups through a separate mechanism.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="291" data-line-first="292;psa.p4:208" style="display:block"><code data-line="292;psa.p4:208"><span style="color:darkgreen">/// Modify ingress output metadata to cause 0 or more copies of the</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="291" data-line-first="292;psa.p4:213" style="display:block"><code data-line="292;psa.p4:213"><span style="color:darkgreen">/// Modify ingress output metadata to cause 0 or more copies of the</span>
 <span style="color:darkgreen">/// packet to be sent to egress processing.</span>
 
 <span style="color:darkgreen">/// This action does not change whether a clone or resubmit operation</span>
@@ -698,7 +703,7 @@ plane must program the multicast groups through a separate mechanism.
 }</code></pre><h5 id="sec-drop-operation" class="h4" data-line="295" data-heading-depth="4" style="display:block"><span data-line="295"></span><span class="heading-before"><span class="heading-label">3.1.3.3</span>.&#8194;</span><span data-line="295"></span>Drop operation</h5>
 <p class="p noindent" data-line="297"><span data-line="297"></span>Do not send a copy of the packet for normal egress processing.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="299" data-line-first="300;psa.p4:221" style="display:block"><code data-line="300;psa.p4:221"><span style="color:darkgreen">/// Modify ingress output metadata to cause no packet to be sent for</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="299" data-line-first="300;psa.p4:226" style="display:block"><code data-line="300;psa.p4:226"><span style="color:darkgreen">/// Modify ingress output metadata to cause no packet to be sent for</span>
 <span style="color:darkgreen">/// normal egress processing.</span>
 
 <span style="color:darkgreen">/// This action does not change whether a clone will occur.  It will</span>
@@ -713,7 +718,7 @@ truncate the payload to be at most the specified number of bytes.
 Specifying 0 is legal, and causes only packet headers to be sent, with
 no payload.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="310" data-line-first="311;psa.p4:234" style="display:block"><code data-line="311;psa.p4:234"><span style="color:darkgreen">/// For any copies made of this packet at the end of Ingress</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="310" data-line-first="311;psa.p4:239" style="display:block"><code data-line="311;psa.p4:239"><span style="color:darkgreen">/// For any copies made of this packet at the end of Ingress</span>
 <span style="color:darkgreen">/// processing, truncate the payload to at most payload_bytes bytes in</span>
 <span style="color:darkgreen">/// length.</span>
 
@@ -884,7 +889,7 @@ Replication Engine (PRE) extern is defined for the Ingress pipeline
 <p class="p noindent" data-line="496"><span data-line="496"></span>Do not send the packet out of the device after egress processing is
 complete.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="499" data-line-first="500;psa.p4:247" style="display:block"><code data-line="500;psa.p4:247"><span style="color:darkgreen">/// Modify egress output metadata to cause no packet to be sent out of</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="499" data-line-first="500;psa.p4:252" style="display:block"><code data-line="500;psa.p4:252"><span style="color:darkgreen">/// Modify egress output metadata to cause no packet to be sent out of</span>
 <span style="color:darkgreen">/// the device.</span>
 
 <span style="color:darkgreen">/// This action does not change whether a clone will occur.  It will</span>
@@ -899,7 +904,7 @@ truncate the payload to be at most the specified number of bytes.
 Specifying 0 is legal, and causes only packet headers to be sent, with
 no payload.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="510" data-line-first="511;psa.p4:260" style="display:block"><code data-line="511;psa.p4:260"><span style="color:darkgreen">/// For any copies made of this packet at the end of Egress</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="510" data-line-first="511;psa.p4:265" style="display:block"><code data-line="511;psa.p4:265"><span style="color:darkgreen">/// For any copies made of this packet at the end of Egress</span>
 <span style="color:darkgreen">/// processing, truncate the payload to at most payload_bytes bytes in</span>
 <span style="color:darkgreen">/// length.</span>
 
@@ -911,7 +916,7 @@ no payload.
 }</code></pre><h3 id="sec-hash-algorithms" class="h2" data-line="515" data-heading-depth="2" style="display:block"><span data-line="515"></span><span class="heading-before"><span class="heading-label">3.3</span>.&#8194;</span><span data-line="515"></span>Hashes</h3>
 <p class="p noindent" data-line="517"><span data-line="517"></span>Supported hash algorithms:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="518" data-line-first="519;psa.p4:286" style="display:block"><code data-line="519;psa.p4:286"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> HashAlgorithm {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="518" data-line-first="519;psa.p4:291" style="display:block"><code data-line="519;psa.p4:291"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> HashAlgorithm {
   identity,
   crc32,
   crc32_custom,
@@ -935,7 +940,7 @@ no payload.
 <li class="li ul-li list-dash-li compact-li" data-line="536"><span data-line="536"></span>O    The type of the return value of the hash.
 </li></ul>
 
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="538" data-line-first="539;psa.p4:307" style="display:block"><code data-line="539;psa.p4:307"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Hash&lt;O&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="538" data-line-first="539;psa.p4:312" style="display:block"><code data-line="539;psa.p4:312"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Hash&lt;O&gt; {
   <span style="color:darkgreen">/// Constructor</span>
   Hash(HashAlgorithm algo);
 
@@ -968,7 +973,7 @@ packet-by-packet or flow-by-flow basis.
 <li class="li ul-li list-dash-li compact-li" data-line="556"><span data-line="556"></span>W    The width of the checksum
 </li></ul>
 
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="558" data-line-first="559;psa.p4:317" style="display:block"><code data-line="559;psa.p4:317"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Checksum&lt;W&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="558" data-line-first="559;psa.p4:322" style="display:block"><code data-line="559;psa.p4:322"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Checksum&lt;W&gt; {
   Checksum(HashAlgorithm hash);          <span style="color:darkgreen">/// constructor</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> clear();              <span style="color:darkgreen">/// prepare unit for computation</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> update&lt;T&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data); <span style="color:darkgreen">/// add data to checksum</span>
@@ -1029,12 +1034,12 @@ how it determines the packet length used for byte counter updates.
 precise control over the packet length used in a byte counter, you may
 use Registers to achieve that (Section<span data-line="607"></span>&nbsp;<a href="#sec-registers" title="3.7.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">3.7</span></a><span data-line="607"></span>).
 </p><h4 id="sec-counter-types" class="h3" data-line="610" data-heading-depth="3" style="display:block"><span data-line="610"></span><span class="heading-before"><span class="heading-label">3.5.1</span>.&#8194;</span><span data-line="610"></span>Counter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="612" data-line-first="613;psa.p4:325" style="display:block"><code data-line="613;psa.p4:325"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="612" data-line-first="613;psa.p4:330" style="display:block"><code data-line="613;psa.p4:330"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
     packets,
     bytes,
     packets_and_bytes
 }</code></pre><h4 id="sec-counter" class="h3" data-line="616" data-heading-depth="3" style="display:block"><span data-line="616"></span><span class="heading-before"><span class="heading-label">3.5.2</span>.&#8194;</span><span data-line="616"></span>Counter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="618" data-line-first="619;psa.p4:357" style="display:block"><code data-line="619;psa.p4:357"><span style="color:darkgreen">/// Indirect counter with n_counters independent counter values, where</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="618" data-line-first="619;psa.p4:362" style="display:block"><code data-line="619;psa.p4:362"><span style="color:darkgreen">/// Indirect counter with n_counters independent counter values, where</span>
 <span style="color:darkgreen">/// every counter value has a data plane size specified by type W.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Counter&lt;W, S&gt; {
@@ -1151,7 +1156,7 @@ information to identify which <span data-line="704"></span><code class="code cod
 program had the out-of-range <span data-line="705"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="705"></span> value is also recommended.
 </li></ul>
 <h4 id="sec-direct-counter" class="h3" data-line="708" data-heading-depth="3" style="display:block"><span data-line="708"></span><span class="heading-before"><span class="heading-label">3.5.3</span>.&#8194;</span><span data-line="708"></span>Direct Counter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="710" data-line-first="711;psa.p4:376" style="display:block"><code data-line="711;psa.p4:376"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectCounter&lt;W&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="710" data-line-first="711;psa.p4:381" style="display:block"><code data-line="711;psa.p4:381"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectCounter&lt;W&gt; {
   DirectCounter(CounterType_t type);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> count();
 
@@ -1283,10 +1288,10 @@ updating of <span data-line="772"></span><code class="code code1 language-p4 lan
     Counter&lt;ByteCounter_t, PortId_t&gt;((<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt;) NUM_PORTS, CounterType_t.bytes)
         port_bytes_out;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
-        <span style="color:darkgreen">// By doing these stats updates on egress, as long as IP</span>
-        <span style="color:darkgreen">// multicast replication happens in the packet buffer, this</span>
-        <span style="color:darkgreen">// update will occur once for each copy made, which in this</span>
-        <span style="color:darkgreen">// example is intentional.</span>
+        <span style="color:darkgreen">// By doing these stats updates on egress, then because</span>
+        <span style="color:darkgreen">// multicast replication happens before egress processing,</span>
+        <span style="color:darkgreen">// this update will occur once for each copy made, which in</span>
+        <span style="color:darkgreen">// this example is intentional.</span>
         port_bytes_out.count(istd.egress_port);
     }
 }</code></pre><h3 id="sec-meters" class="h2" data-line="780" data-heading-depth="2" style="display:block"><span data-line="780"></span><span class="heading-before"><span class="heading-label">3.6</span>.&#8194;</span><span data-line="780"></span>Meters</h3>
@@ -1394,12 +1399,12 @@ It is recommended that the maximum rate supported be at least the rate
 of the implementation<span data-line="879"></span>&#39;<span data-line="879"></span>s fastest port, and that the actual implemented
 rate should always be within plus or minus 0.1% of the requested rate.
 </p><h4 id="sec-meter-types" class="h3" data-line="882" data-heading-depth="3" style="display:block"><span data-line="882"></span><span class="heading-before"><span class="heading-label">3.6.1</span>.&#8194;</span><span data-line="882"></span>Meter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="884" data-line-first="885;psa.p4:383" style="display:block"><code data-line="885;psa.p4:383"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="884" data-line-first="885;psa.p4:388" style="display:block"><code data-line="885;psa.p4:388"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
     packets,
     bytes
 }</code></pre><h4 id="sec-meter-colors" class="h3" data-line="888" data-heading-depth="3" style="display:block"><span data-line="888"></span><span class="heading-before"><span class="heading-label">3.6.2</span>.&#8194;</span><span data-line="888"></span>Meter colors</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="890" data-line-first="891;psa.p4:387" style="display:block"><code data-line="891;psa.p4:387"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="894" data-heading-depth="3" style="display:block"><span data-line="894"></span><span class="heading-before"><span class="heading-label">3.6.3</span>.&#8194;</span><span data-line="894"></span>Meter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="896" data-line-first="897;psa.p4:414" style="display:block"><code data-line="897;psa.p4:414"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="890" data-line-first="891;psa.p4:392" style="display:block"><code data-line="891;psa.p4:392"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="894" data-heading-depth="3" style="display:block"><span data-line="894"></span><span class="heading-before"><span class="heading-label">3.6.3</span>.&#8194;</span><span data-line="894"></span>Meter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="896" data-line-first="897;psa.p4:419" style="display:block"><code data-line="897;psa.p4:419"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Meter&lt;S&gt; {
   Meter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_meters, MeterType_t type);
@@ -1423,7 +1428,7 @@ rate should always be within plus or minus 0.1% of the requested rate.
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
 }</code></pre><h4 id="sec-direct-meter" class="h3" data-line="900" data-heading-depth="3" style="display:block"><span data-line="900"></span><span class="heading-before"><span class="heading-label">3.6.4</span>.&#8194;</span><span data-line="900"></span>Direct Meter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="902" data-line-first="903;psa.p4:432" style="display:block"><code data-line="903;psa.p4:432"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectMeter {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="902" data-line-first="903;psa.p4:437" style="display:block"><code data-line="903;psa.p4:437"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectMeter {
   DirectMeter(MeterType_t type);
   <span style="color:darkgreen">// See the corresponding methods for extern Meter.</span>
   MeterColor_t execute(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> MeterColor_t color);
@@ -1459,7 +1464,7 @@ could would be mapped to the same cell; the current cell value would
 be stored in metadata for the packet and a subsequent table could
 check that the flow was marked as active.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="929" data-line-first="930;psa.p4:449" style="display:block"><code data-line="930;psa.p4:449"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="929" data-line-first="930;psa.p4:454" style="display:block"><code data-line="930;psa.p4:454"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
   Register(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
   T    read  (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> write (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T value);
@@ -1574,12 +1579,12 @@ in the min .. max range.
 <span data-line="997"></span>\<span data-line="997"></span>TODO: should this be removed in favor of letting the extern
 return whatever distribution is supported by the target?
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1000" data-line-first="1001;psa.p4:457" style="display:block"><code data-line="1001;psa.p4:457"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1000" data-line-first="1001;psa.p4:462" style="display:block"><code data-line="1001;psa.p4:462"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
   PRNG,
   Binomial,
   Poisson
 }</code></pre>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1004" data-line-first="1005;psa.p4:472" style="display:block"><code data-line="1005;psa.p4:472"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1004" data-line-first="1005;psa.p4:477" style="display:block"><code data-line="1005;psa.p4:477"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
   Random(RandomDistribution dist, T min, T max);
   T read();
 
@@ -1599,7 +1604,7 @@ required is to instantiate this extern. When the control plane adds
 entries (members) into the extern, they are essentially populating
 the corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1018" data-line-first="1019;psa.p4:488" style="display:block"><code data-line="1019;psa.p4:488"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1018" data-line-first="1019;psa.p4:493" style="display:block"><code data-line="1019;psa.p4:493"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
   <span style="color:darkgreen">/// Construct an action profile of &#39;size&#39; entries</span>
   ActionProfile(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
 
@@ -1623,7 +1628,7 @@ instantiate this extern. When the control plane adds entries
 (members) into the extern, they are essentially populating the
 corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1035" data-line-first="1036;psa.p4:511" style="display:block"><code data-line="1036;psa.p4:511"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1035" data-line-first="1036;psa.p4:516" style="display:block"><code data-line="1036;psa.p4:516"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
   <span style="color:darkgreen">/// Construct an action selector of &#39;size&#39; entries</span>
   <span style="color:darkgreen">/// @param algo hash algorithm to select a member in a group</span>
   <span style="color:darkgreen">/// @param size number of entries in the action selector</span>
@@ -1647,7 +1652,7 @@ corresponding table entries.
 it adding a header to the current packet and sending it to the
 stream (copying or redirecting).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1045" data-line-first="1046;psa.p4:527" style="display:block"><code data-line="1046;psa.p4:527"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1045" data-line-first="1046;psa.p4:532" style="display:block"><code data-line="1046;psa.p4:532"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
   Digest(PortId_t receiver); <span style="color:darkgreen">/// define a digest stream to receiver</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> emit(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);      <span style="color:darkgreen">/// emit data into the stream</span>
 
@@ -1669,7 +1674,7 @@ whether a particular value is in the set, returning a Boolean value.
 That Boolean value can then be used in a <span data-line="1058"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1058"></span> statement to control
 parsing (see examples below).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1061" data-line-first="1062;psa.p4:548" style="display:block"><code data-line="1062;psa.p4:548"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1061" data-line-first="1062;psa.p4:553" style="display:block"><code data-line="1062;psa.p4:553"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
     ValueSet(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">int</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_member(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> D data);
 
@@ -1714,11 +1719,11 @@ adding the four separate exact match values 5, 6, 7, and 8.
 <p class="p indent" data-line="1090"><span data-line="1090"></span>The parser definition below shows an example that uses two <span data-line="1090"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1090"></span>
 instances called <span data-line="1091"></span><code class="code code1 language-p4 lang-p4 p4 colorized">tpid_types</code><span data-line="1091"></span> and <span data-line="1091"></span><code class="code code1 language-p4 lang-p4 p4 colorized">trill_types</code><span data-line="1091"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1093" data-line-first="1094;examples/psa-example-value-sets.p4:102" style="display:block"><code data-line="1094;examples/psa-example-value-sets.p4:102"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> ParserImpl(packet_in buffer,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_parser_input_metadata_t istd,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1093" data-line-first="1094;examples/psa-example-value-sets.p4:102" style="display:block"><code data-line="1094;examples/psa-example-value-sets.p4:102"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
 {
     ValueSet&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(<span class="constant" style="color:purple">4</span>) tpid_types;
     ValueSet&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(<span class="constant" style="color:purple">2</span>) trill_types;
@@ -1781,11 +1786,11 @@ containing multiple bit vectors.
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">8</span>&gt;  partialMacAddress;
 }
 
-<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> ParserImpl(packet_in buffer,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_parser_input_metadata_t istd,
-                  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
 {
     ValueSet&lt;CustomValueSet1_t&gt;(<span class="constant" style="color:purple">2</span>) trill_types;
 
@@ -1986,23 +1991,27 @@ blocks in the PSA. The P4 programmer is responsible for
 implementing controls that match these interfaces and instantiate
 them in a package definition.
 </p>
-<p class="p indent" data-line="1302"><span data-line="1302"></span>The current implementation uses the same user-defined metadata
-structure for all the controls.
-An alternative design is to split the user-defined metadata into an
-input parameter and an output parameter for each block. The
-compiler will have to check that the out parameter of a block
-matches the in parameter of the subsequent block.
+<p class="p indent" data-line="1302"><span data-line="1302"></span>It uses the same user-defined metadata type <span data-line="1302"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IM</code><span data-line="1302"></span> and header type <span data-line="1302"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IH</code><span data-line="1302"></span>
+for all ingress parsers and control blocks.  The egress parser and
+control blocks can use the same types for those things, or different
+types, as the P4 program author wishes.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1310" data-line-first="1311;psa.p4:577" style="display:block"><code data-line="1311;psa.p4:577"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> Parser&lt;H, M&gt;(packet_in buffer, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
-                    <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_parser_input_metadata_t istd,
-                    <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd);
-
-<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> VerifyChecksum&lt;H, M&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> H hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta);
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1307" data-line-first="1308;psa.p4:590" style="display:block"><code data-line="1308;psa.p4:590"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd);
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> Ingress&lt;H, M&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> H hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                       PacketReplicationEngine pre,
                       <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>  psa_ingress_input_metadata_t  istd,
                       <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_ingress_output_metadata_t ostd);
+
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> EgressParser&lt;H, M&gt;(packet_in buffer,
+                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr,
+                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
+                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_egress_parser_input_metadata_t istd,
+                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd);
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> Egress&lt;H, M&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> H hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                      BufferingQueueingEngine bqe,
@@ -2013,12 +2022,14 @@ matches the in parameter of the subsequent block.
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> Deparser&lt;H&gt;(packet_out buffer, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> H hdr);
 
-<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">package</span> PSA_Switch&lt;H, M&gt;(Parser&lt;H, M&gt; p,
-                         VerifyChecksum&lt;H, M&gt; vr,
-                         Ingress&lt;H, M&gt; ig,
-                         Egress&lt;H, M&gt; eg,
-                         ComputeChecksum&lt;H, M&gt; ck,
-                         Deparser&lt;H&gt; dep);</code></pre><span data-line=""></span>
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">package</span> PSA_Switch&lt;IH, IM, EH, EM&gt;(IngressParser&lt;IH, IM&gt; ip,
+                                   Ingress&lt;IH, IM&gt; ig,
+                                   ComputeChecksum&lt;IH, IM&gt; ic,
+                                   Deparser&lt;IH&gt; id,
+                                   EgressParser&lt;EH, EM&gt; ep,
+                                   Egress&lt;EH, EM&gt; eg,
+                                   ComputeChecksum&lt;EH, EM&gt; ec,
+                                   Deparser&lt;EH&gt; ed);</code></pre><span data-line=""></span>
 <div class="footnotes madoko">
 <hr >
 
