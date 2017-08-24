@@ -167,15 +167,11 @@ control egress(inout headers hdr,
 }
 // END:Counter_Example_Part2
 
-control DeparserImpl(packet_out packet, in headers hdr) {
+control DeparserImpl(packet_out packet, inout headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
     }
-}
-
-control computeChecksum(inout headers hdr, inout metadata meta) {
-    apply { }
 }
 
 PSA_Switch(IngressParserImpl(),
@@ -183,5 +179,4 @@ PSA_Switch(IngressParserImpl(),
            DeparserImpl(),
            EgressParserImpl(),
            egress(),
-           computeChecksum(),
            DeparserImpl()) main;
