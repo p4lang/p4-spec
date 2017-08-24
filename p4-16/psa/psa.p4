@@ -575,16 +575,17 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
                      in  psa_egress_input_metadata_t  istd,
                      out psa_egress_output_metadata_t ostd);
 
-// The only reason the parameter 'hdr' is direction 'inout' instead of
-// 'in' is to permit code in the Deparser to modify header checksum
-// fields before emitting the headers.
-control Deparser<H>(packet_out buffer, inout H hdr);
+control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
+
+control Deparser<H>(packet_out buffer, in H hdr);
 
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
+                                   ComputeChecksum<IH, IM> ic,
                                    Deparser<IH> id,
                                    EgressParser<EH, EM> ep,
                                    Egress<EH, EM> eg,
+                                   ComputeChecksum<EH, EM> ec,
                                    Deparser<EH> ed);
 // END:Programmable_blocks
 
