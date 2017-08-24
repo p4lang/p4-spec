@@ -132,7 +132,7 @@ including the node for the package `PSA_Switch` described in Section
 parser and control instances passed as parameters to the `PSA_Switch`
 instantiation in your program.  If any of those parsers or controls
 instantiate other parsers, controls, and/or externs, draw an edge from
-every parser or control `X` that instantiates another thing `Y` within
+every parser or control `X` to `Y`, where `Y` is instantiated within
 `X`.
 
 For every instance whose node is a descendant of the `Ingress` node in
@@ -148,9 +148,6 @@ For example, `Counter` being restricted to "Ingress, Egress" means
 that every `Counter` instance must be instantiated within either the
 Ingress control block or the Egress control block, or be a descendant
 of one of those nodes in the instantiation tree.
-
-In particular, note that PSA implementations need not support
-instantiating these externs at the top level.
 
 |-------------------|----------------------------------------------|
 | Extern type       | Where it may be instantiated and called from |
@@ -175,6 +172,14 @@ that use these externs in other places, but they need not.  Thus P4
 programmers wishing to maximize the portability of their programs
 should restrict their use of these externs to the places indicated in
 the table.
+
+`emit` method calls for the type `packet_out` are restricted to be
+within deparser control blocks in PSA, because those are the only
+places where an instance of type `packet_out` is visible.  Similarly
+all methods for type `packet_in`, e.g. `extract` and `advance`, are
+restricted to be within parsers in PSA programs.  P4~16~ restricts all
+`verify` method calls to be within parsers, whether they are for the
+PSA architecture or not.
 
 
 ## Packet Replication Engine { #sec-pre }
