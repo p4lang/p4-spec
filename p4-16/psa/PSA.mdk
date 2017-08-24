@@ -124,16 +124,14 @@ Additional supported match_kind types
 
 All instantiations in a P4~16~ program occur at compile time, and can
 be arranged in a tree structure we will call the instantiation tree.
-Create a root node `T` representing the top level of the program, and
-a node for every instantiation in the program.  Draw an edge from `T`
-to every instantiation performed at the top level of your program,
-including the node for the package `PSA_Switch` described in Section
-[#sec-programmable-blocks].  Draw an edge from `PSA_Switch` to the
-parser and control instances passed as parameters to the `PSA_Switch`
-instantiation in your program.  If any of those parsers or controls
-instantiate other parsers, controls, and/or externs, draw an edge from
-every parser or control `X` to `Y`, where `Y` is instantiated within
-`X`.
+The root of the tree `T` represents the top level of the program.  Its
+children are the node for the package `PSA_Switch` described in
+[#sec-programmable-blocks], plus any externs instantiated at the top
+level of the program.  The children of the `PSA_Switch` node are the
+parsers and controls passed as parameters to the `PSA_Switch`
+instantiation.  If any of those parsers or controls instantiate other
+parsers, controls, and/or externs, create child nodes for them,
+continuing until the instantiation tree is complete.
 
 For every instance whose node is a descendant of the `Ingress` node in
 this tree, call it an `Ingress` instance.  Similarly for the other
@@ -147,7 +145,10 @@ the places mentioned in the table below.
 For example, `Counter` being restricted to "Ingress, Egress" means
 that every `Counter` instance must be instantiated within either the
 Ingress control block or the Egress control block, or be a descendant
-of one of those nodes in the instantiation tree.
+of one of those nodes in the instantiation tree.  If a `Counter`
+instance is instantiated in Ingress, for example, then it cannot be
+named, and thus its methods cannot be called, from any non-Ingress
+control block.
 
 |-------------------|----------------------------------------------|
 | Extern type       | Where it may be instantiated and called from |
@@ -180,6 +181,18 @@ all methods for type `packet_in`, e.g. `extract` and `advance`, are
 restricted to be within parsers in PSA programs.  P4~16~ restricts all
 `verify` method calls to be within parsers, whether they are for the
 PSA architecture or not.
+
+TBD: The rationale for these restrictions is: (1) it is expected that
+the highest performance PSA implementations will not be able to update
+the same extern instance from both ingress and egress, nor from more
+than one of the top level parsers or controls instantiated by the
+`PSA_Switch` package.  (2) In a multi-pipeline device, there are
+effectively multiple instantiations of the ingress pipeline and of the
+egress pipeline.  The primary motivation to create a multi-pipeline
+device is the practical difficulty in allowing the same stateful
+object (e.g. table, counter, etc.) to be accessed at the rate of
+multiple pipelines.  Thus each should be accessed from only a single
+instance on such a device.
 
 
 ## Packet Replication Engine { #sec-pre }
