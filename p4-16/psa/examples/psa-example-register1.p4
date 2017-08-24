@@ -72,11 +72,11 @@ action update_pkt_ip_byte_count (inout PacketByteCountState_t s,
 }
 // END:Register_Example1_Part1
 
-parser ParserImpl(packet_in buffer,
-                  out headers parsed_hdr,
-                  inout metadata user_meta,
-                  in psa_parser_input_metadata_t istd,
-                  out psa_parser_output_metadata_t ostd)
+parser IngressParserImpl(packet_in buffer,
+                         out headers parsed_hdr,
+                         inout metadata user_meta,
+                         in psa_ingress_parser_input_metadata_t istd,
+                         out psa_parser_output_metadata_t ostd)
 {
     state start {
         transition parse_ethernet;
@@ -118,14 +118,28 @@ control ingress(inout headers hdr,
 }
 // END:Register_Example1_Part2
 
+parser EgressParserImpl(packet_in buffer,
+                        out headers parsed_hdr,
+                        inout metadata user_meta,
+                        in psa_egress_parser_input_metadata_t istd,
+                        out psa_parser_output_metadata_t ostd)
+{
+    state start {
+        transition accept;
+    }
+}
+
 control egress(inout headers hdr,
                inout metadata user_meta,
                BufferingQueueingEngine bqe,
                in  psa_egress_input_metadata_t  istd,
                out psa_egress_output_metadata_t ostd)
 {
-    apply {
-    }
+    apply { }
+}
+
+control computeChecksum(inout headers hdr, inout metadata meta) {
+    apply { }
 }
 
 control DeparserImpl(packet_out packet, in headers hdr) {
@@ -135,17 +149,11 @@ control DeparserImpl(packet_out packet, in headers hdr) {
     }
 }
 
-control verifyChecksum(in headers hdr, inout metadata meta) {
-    apply { }
-}
-
-control computeChecksum(inout headers hdr, inout metadata meta) {
-    apply { }
-}
-
-PSA_Switch(ParserImpl(),
-           verifyChecksum(),
+PSA_Switch(IngressParserImpl(),
            ingress(),
+           computeChecksum(),
+           DeparserImpl(),
+           EgressParserImpl(),
            egress(),
            computeChecksum(),
            DeparserImpl()) main;

@@ -85,8 +85,13 @@ enum InstanceType_t {
     RECIRCULATE /// Packet arrival is the result of a recirculate operation
 }
 
-struct psa_parser_input_metadata_t {
+struct psa_ingress_parser_input_metadata_t {
   PortId_t                 ingress_port;
+  InstanceType_t           instance_type;
+}
+
+struct psa_egress_parser_input_metadata_t {
+  PortId_t                 egress_port;
   InstanceType_t           instance_type;
 }
 
@@ -548,16 +553,22 @@ extern ValueSet<D> {
 // END:ValueSet_extern
 
 // BEGIN:Programmable_blocks
-parser Parser<H, M>(packet_in buffer, out H parsed_hdr, inout M user_meta,
-                    in psa_parser_input_metadata_t istd,
-                    out psa_parser_output_metadata_t ostd);
-
-control VerifyChecksum<H, M>(in H hdr, inout M user_meta);
+parser IngressParser<H, M>(packet_in buffer,
+                           out H parsed_hdr,
+                           inout M user_meta,
+                           in psa_ingress_parser_input_metadata_t istd,
+                           out psa_parser_output_metadata_t ostd);
 
 control Ingress<H, M>(inout H hdr, inout M user_meta,
                       PacketReplicationEngine pre,
                       in  psa_ingress_input_metadata_t  istd,
                       out psa_ingress_output_metadata_t ostd);
+
+parser EgressParser<H, M>(packet_in buffer,
+                          out H parsed_hdr,
+                          inout M user_meta,
+                          in psa_egress_parser_input_metadata_t istd,
+                          out psa_parser_output_metadata_t ostd);
 
 control Egress<H, M>(inout H hdr, inout M user_meta,
                      BufferingQueueingEngine bqe,
@@ -568,12 +579,14 @@ control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
 
 control Deparser<H>(packet_out buffer, in H hdr);
 
-package PSA_Switch<H, M>(Parser<H, M> p,
-                         VerifyChecksum<H, M> vr,
-                         Ingress<H, M> ig,
-                         Egress<H, M> eg,
-                         ComputeChecksum<H, M> ck,
-                         Deparser<H> dep);
+package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
+                                   Ingress<IH, IM> ig,
+                                   ComputeChecksum<IH, IM> ic,
+                                   Deparser<IH> id,
+                                   EgressParser<EH, EM> ep,
+                                   Egress<EH, EM> eg,
+                                   ComputeChecksum<EH, EM> ec,
+                                   Deparser<EH> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
