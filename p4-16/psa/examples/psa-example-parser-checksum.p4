@@ -82,38 +82,6 @@ typedef bit<8>  ErrorIndex_t;
 
 const bit<9> NUM_ERRORS = 256;
 
-// Action convert_error_to_idx returns a unique ErrorIndex_t value (a
-// bit vector) for each possible value of the error type.  The error
-// type cannot be directly put into packet headers or used as an index
-// into counter, meter, or register arrays, so such a conversion
-// 'function' is necessary to get a value that can be used for these
-// purposes.
-
-action convert_error_to_idx (in ParserError_t err,
-                             out ErrorIndex_t idx)
-{
-    if (err == error.NoError) {
-        idx = 1;
-    } else if (err == error.PacketTooShort) {
-        idx = 2;
-    } else if (err == error.NoMatch) {
-        idx = 3;
-    } else if (err == error.StackOutOfBounds) {
-        idx = 4;
-    } else if (err == error.HeaderTooShort) {
-        idx = 5;
-    } else if (err == error.ParserTimeout) {
-        idx = 6;
-    } else if (err == error.BadIPv4HeaderChecksum) {
-        idx = 7;
-    } else if (err == error.UnhandledIPv4Options) {
-        idx = 8;
-    } else {
-        // Unknown error value
-        idx = 0;
-    }
-}
-
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
                          inout metadata user_meta,
@@ -175,15 +143,45 @@ control ingress(inout headers hdr,
                 in  psa_ingress_input_metadata_t  istd,
                 out psa_ingress_output_metadata_t ostd)
 {
-    Counter<PacketCounter_t, ErrorIndex_t>
-        ((bit<32>) NUM_ERRORS, CounterType_t.packets) parser_error_counts;
+    // Table parser_error_count_and_convert below shows one way to
+    // count the number of times each parser error was encountered.
+    // Although it is not used in this example program, it also shows
+    // how to convert the error value into a unique bit vector value
+    // 'error_idx', which can be useful if you wish to put a bit
+    // vector encoding of an error into a packet header, e.g. for a
+    // packet sent to the control CPU.
+
+    DirectCounter<PacketCounter_t>(CounterType_t.packets) parser_error_counts;
+    ErrorIndex_t error_idx;
+
+    action set_error_idx (ErrorIndex_t idx) {
+        error_idx = idx;
+        parser_error_counts.count();
+    }
+    table parser_error_count_and_convert {
+        key = {
+            istd.parser_error : exact;
+        }
+        actions = {
+            set_error_idx;
+        }
+        default_action = set_error_idx(0);
+        const entries = {
+            error.NoError               : set_error_idx(1);
+            error.PacketTooShort        : set_error_idx(2);
+            error.NoMatch               : set_error_idx(3);
+            error.StackOutOfBounds      : set_error_idx(4);
+            error.HeaderTooShort        : set_error_idx(5);
+            error.ParserTimeout         : set_error_idx(6);
+            error.BadIPv4HeaderChecksum : set_error_idx(7);
+            error.UnhandledIPv4Options  : set_error_idx(8);
+        }
+    }
     apply {
         if (istd.parser_error != error.NoError) {
             // Example code showing how to count number of times each
             // kind of parser error was seen.
-            ErrorIndex_t error_idx;
-            convert_error_to_idx(istd.parser_error, error_idx);
-            parser_error_counts.count(error_idx);
+            parser_error_count_and_convert.apply();
             ingress_drop(ostd);
             exit;
         }
