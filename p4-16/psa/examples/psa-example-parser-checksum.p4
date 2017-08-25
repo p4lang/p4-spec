@@ -176,6 +176,9 @@ control ingress(inout headers hdr,
             error.BadIPv4HeaderChecksum : set_error_idx(7);
             error.UnhandledIPv4Options  : set_error_idx(8);
         }
+#ifdef P4C_HANDLES_DIRECT_COUNTERS_TABLE_PROPERTY
+        psa_direct_counters = { parser_error_counts; }
+#endif
     }
     apply {
         if (istd.parser_error != error.NoError) {
