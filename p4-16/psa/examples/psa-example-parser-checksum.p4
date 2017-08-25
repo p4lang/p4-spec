@@ -148,7 +148,7 @@ parser IngressParserImpl(packet_in buffer,
                 parsed_hdr.ipv4.fragOffset,
                 parsed_hdr.ipv4.ttl,
                 parsed_hdr.ipv4.protocol,
-                parsed_hdr.ipv4.hdrChecksum,
+                //parsed_hdr.ipv4.hdrChecksum, // intentionally leave this out
                 parsed_hdr.ipv4.srcAddr,
                 parsed_hdr.ipv4.dstAddr });
         // The verify statement below will cause the parser to enter
@@ -156,7 +156,8 @@ parser IngressParserImpl(packet_in buffer,
         // if the IPv4 header checksum is wrong.  It will also record
         // the error error.BadIPv4HeaderChecksum, which will be
         // available in a metadata field in the ingress control block.
-        verify(ck.get() == 0, error.BadIPv4HeaderChecksum);
+        verify(ck.get() == parsed_hdr.ipv4.hdrChecksum,
+               error.BadIPv4HeaderChecksum);
         transition select(parsed_hdr.ipv4.protocol) {
             6: parse_tcp;
             default: accept;
