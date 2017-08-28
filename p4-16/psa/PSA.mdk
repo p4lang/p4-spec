@@ -576,10 +576,11 @@ choose and write the desired behavior.
 
 The partial program below demonstrates one way to use the `Checksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
-the `computeChecksum` control block, just before the deparser.  A P4
-program that could parse multiple such headers (e.g. an outer and
-inner IPv4 header, for some kinds of IP tunneled packets) could repeat
-this for each such IPv4 header.
+the `computeChecksum` control block, just before the deparser.  In
+this example, the checksum is calculated fresh, so the outgoing
+checksum will be correct regardless of what changes might have been
+made to the IPv4 header fields in the ingress (or egress) control
+block that precedes it.
 
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
