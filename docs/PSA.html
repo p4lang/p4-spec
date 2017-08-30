@@ -395,15 +395,14 @@ corresponding to the programmable blocks are passed as arguments.
 following types.  These widths should be in that PSA implementation<span data-line="94"></span>&#39;<span data-line="94"></span>s
 custom <span data-line="95"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="95"></span> file.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="97" data-line-first="98;psa.p4:60" style="display:block"><code data-line="98;psa.p4:60"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; PortId_t;
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="97" data-line-first="98;psa.p4:58" style="display:block"><code data-line="98;psa.p4:58"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; PortId_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; MulticastGroup_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; PacketLength_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; EgressInstance_t;
-<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; ParserErrorLocation_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; Timestamp_t;
 
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   PortId_t         PORT_CPU = unspecified;</code></pre><h3 id="sec-psa-supported-metadata-types" class="h2" data-line="101" data-heading-depth="2" style="display:block"><span data-line="101"></span><span class="heading-before"><span class="heading-label">2.2</span>.&#8194;</span><span data-line="101"></span>PSA supported metadata types</h3>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="103" data-line-first="104;psa.p4:145" style="display:block"><code data-line="104;psa.p4:145"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> InstanceType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="103" data-line-first="104;psa.p4:143" style="display:block"><code data-line="104;psa.p4:143"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> InstanceType_t {
     NORMAL,     <span style="color:darkgreen">/// Packet is &quot;normal&quot;, i.e. none of the other cases below</span>
     CLONE,      <span style="color:darkgreen">/// Packet was created via a clone operation</span>
     RESUBMIT,   <span style="color:darkgreen">/// Packet arrival is the result of a resubmit operation</span>
@@ -471,11 +470,11 @@ custom <span data-line="95"></span><code class="code code1 language-p4 lang-p4 p
 </code></pre><h3 id="sec-match-kinds" class="h2" data-line="107" data-heading-depth="2" style="display:block"><span data-line="107"></span><span class="heading-before"><span class="heading-label">2.3</span>.&#8194;</span><span data-line="107"></span>Match kinds</h3>
 <p class="p noindent" data-line="109"><span data-line="109"></span>Additional supported match<span data-line="109"></span>_<span data-line="109"></span>kind types
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="111" data-line-first="112;psa.p4:152" style="display:block"><code data-line="112;psa.p4:152"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">match_kind</span> {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="111" data-line-first="112;psa.p4:150" style="display:block"><code data-line="112;psa.p4:150"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">match_kind</span> {
     range,   <span style="color:darkgreen">/// Used to represent min..max intervals</span>
     selector <span style="color:darkgreen">/// Used for implementing dynamic_action_selection</span>
 }</code></pre><h3 id="sec-cloning-methods" class="h2" data-line="115" data-heading-depth="2" style="display:block"><span data-line="115"></span><span class="heading-before"><span class="heading-label">2.4</span>.&#8194;</span><span data-line="115"></span>Cloning methods</h3>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="117" data-line-first="118;psa.p4:76" style="display:block"><code data-line="118;psa.p4:76"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CloneType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="117" data-line-first="118;psa.p4:74" style="display:block"><code data-line="118;psa.p4:74"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CloneType_t {
     ORIGINAL,   <span style="color:darkgreen">/// cloned packet contains the original header</span>
     MODIFIED    <span style="color:darkgreen">/// cloned packet contains the modified header</span>
 }
@@ -508,7 +507,7 @@ after the Ingress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 <span data-line="150"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_ingress_output_metadata_t</code><span data-line="150"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="152" data-line-first="153;psa.p4:123" style="display:block"><code data-line="153;psa.p4:123"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_ingress_output_metadata_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="152" data-line-first="153;psa.p4:121" style="display:block"><code data-line="153;psa.p4:121"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_ingress_output_metadata_t {
   <span style="color:darkgreen">// The comment after each field specifies its initial value when the</span>
   <span style="color:darkgreen">// Ingress control block begins executing.</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span>                     clone;            <span style="color:darkgreen">// false</span>
@@ -573,7 +572,7 @@ after the Egress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 <span data-line="209"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_output_metadata_t</code><span data-line="209"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="211" data-line-first="212;psa.p4:144" style="display:block"><code data-line="212;psa.p4:144"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_egress_output_metadata_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="211" data-line-first="212;psa.p4:142" style="display:block"><code data-line="212;psa.p4:142"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> psa_egress_output_metadata_t {
   <span style="color:darkgreen">// The comment after each field specifies its initial value when the</span>
   <span style="color:darkgreen">// Egress control block begins executing.</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span>                     clone;         <span style="color:darkgreen">// false</span>
@@ -644,7 +643,7 @@ actions you define yourself.
 </p><h5 id="sec-unicast-operation" class="h4" data-line="276" data-heading-depth="4" style="display:block"><span data-line="276"></span><span class="heading-before"><span class="heading-label">3.1.3.1</span>.&#8194;</span><span data-line="276"></span>Unicast operation</h5>
 <p class="p noindent" data-line="278"><span data-line="278"></span>Sends packet to a port.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="280" data-line-first="281;psa.p4:178" style="display:block"><code data-line="281;psa.p4:178"><span style="color:darkgreen">/// Modify ingress output metadata to cause one packet to be sent to</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="280" data-line-first="281;psa.p4:176" style="display:block"><code data-line="281;psa.p4:176"><span style="color:darkgreen">/// Modify ingress output metadata to cause one packet to be sent to</span>
 <span style="color:darkgreen">/// egress processing, and then to the output port egress_port, unless</span>
 <span style="color:darkgreen">/// it is dropped during egress processing.</span>
 
@@ -672,7 +671,7 @@ actions you define yourself.
 <p class="p indent" data-line="288"><span data-line="288"></span>The multicast<span data-line="288"></span>_<span data-line="288"></span>group parameter is the multicast group id. The control
 plane must program the multicast groups through a separate mechanism.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="291" data-line-first="292;psa.p4:211" style="display:block"><code data-line="292;psa.p4:211"><span style="color:darkgreen">/// Modify ingress output metadata to cause 0 or more copies of the</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="291" data-line-first="292;psa.p4:209" style="display:block"><code data-line="292;psa.p4:209"><span style="color:darkgreen">/// Modify ingress output metadata to cause 0 or more copies of the</span>
 <span style="color:darkgreen">/// packet to be sent to egress processing.</span>
 
 <span style="color:darkgreen">/// This action does not change whether a clone or resubmit operation</span>
@@ -704,7 +703,7 @@ plane must program the multicast groups through a separate mechanism.
 }</code></pre><h5 id="sec-drop-operation" class="h4" data-line="295" data-heading-depth="4" style="display:block"><span data-line="295"></span><span class="heading-before"><span class="heading-label">3.1.3.3</span>.&#8194;</span><span data-line="295"></span>Drop operation</h5>
 <p class="p noindent" data-line="297"><span data-line="297"></span>Do not send a copy of the packet for normal egress processing.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="299" data-line-first="300;psa.p4:224" style="display:block"><code data-line="300;psa.p4:224"><span style="color:darkgreen">/// Modify ingress output metadata to cause no packet to be sent for</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="299" data-line-first="300;psa.p4:222" style="display:block"><code data-line="300;psa.p4:222"><span style="color:darkgreen">/// Modify ingress output metadata to cause no packet to be sent for</span>
 <span style="color:darkgreen">/// normal egress processing.</span>
 
 <span style="color:darkgreen">/// This action does not change whether a clone will occur.  It will</span>
@@ -719,7 +718,7 @@ truncate the payload to be at most the specified number of bytes.
 Specifying 0 is legal, and causes only packet headers to be sent, with
 no payload.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="310" data-line-first="311;psa.p4:237" style="display:block"><code data-line="311;psa.p4:237"><span style="color:darkgreen">/// For any copies made of this packet at the end of Ingress</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="310" data-line-first="311;psa.p4:235" style="display:block"><code data-line="311;psa.p4:235"><span style="color:darkgreen">/// For any copies made of this packet at the end of Ingress</span>
 <span style="color:darkgreen">/// processing, truncate the payload to at most payload_bytes bytes in</span>
 <span style="color:darkgreen">/// length.</span>
 
@@ -890,7 +889,7 @@ Replication Engine (PRE) extern is defined for the Ingress pipeline
 <p class="p noindent" data-line="496"><span data-line="496"></span>Do not send the packet out of the device after egress processing is
 complete.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="499" data-line-first="500;psa.p4:250" style="display:block"><code data-line="500;psa.p4:250"><span style="color:darkgreen">/// Modify egress output metadata to cause no packet to be sent out of</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="499" data-line-first="500;psa.p4:248" style="display:block"><code data-line="500;psa.p4:248"><span style="color:darkgreen">/// Modify egress output metadata to cause no packet to be sent out of</span>
 <span style="color:darkgreen">/// the device.</span>
 
 <span style="color:darkgreen">/// This action does not change whether a clone will occur.  It will</span>
@@ -905,7 +904,7 @@ truncate the payload to be at most the specified number of bytes.
 Specifying 0 is legal, and causes only packet headers to be sent, with
 no payload.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="510" data-line-first="511;psa.p4:263" style="display:block"><code data-line="511;psa.p4:263"><span style="color:darkgreen">/// For any copies made of this packet at the end of Egress</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="510" data-line-first="511;psa.p4:261" style="display:block"><code data-line="511;psa.p4:261"><span style="color:darkgreen">/// For any copies made of this packet at the end of Egress</span>
 <span style="color:darkgreen">/// processing, truncate the payload to at most payload_bytes bytes in</span>
 <span style="color:darkgreen">/// length.</span>
 
@@ -917,7 +916,7 @@ no payload.
 }</code></pre><h3 id="sec-hash-algorithms" class="h2" data-line="515" data-heading-depth="2" style="display:block"><span data-line="515"></span><span class="heading-before"><span class="heading-label">3.3</span>.&#8194;</span><span data-line="515"></span>Hashes</h3>
 <p class="p noindent" data-line="517"><span data-line="517"></span>Supported hash algorithms:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="518" data-line-first="519;psa.p4:289" style="display:block"><code data-line="519;psa.p4:289"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> HashAlgorithm {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="518" data-line-first="519;psa.p4:287" style="display:block"><code data-line="519;psa.p4:287"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> HashAlgorithm {
   identity,
   crc32,
   crc32_custom,
@@ -941,7 +940,7 @@ no payload.
 <li class="li ul-li list-dash-li compact-li" data-line="536"><span data-line="536"></span>O    The type of the return value of the hash.
 </li></ul>
 
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="538" data-line-first="539;psa.p4:310" style="display:block"><code data-line="539;psa.p4:310"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Hash&lt;O&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="538" data-line-first="539;psa.p4:308" style="display:block"><code data-line="539;psa.p4:308"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Hash&lt;O&gt; {
   <span style="color:darkgreen">/// Constructor</span>
   Hash(HashAlgorithm algo);
 
@@ -974,7 +973,7 @@ packet-by-packet or flow-by-flow basis.
 <li class="li ul-li list-dash-li compact-li" data-line="556"><span data-line="556"></span>W    The width of the checksum
 </li></ul>
 
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="558" data-line-first="559;psa.p4:320" style="display:block"><code data-line="559;psa.p4:320"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Checksum&lt;W&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="558" data-line-first="559;psa.p4:318" style="display:block"><code data-line="559;psa.p4:318"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Checksum&lt;W&gt; {
   Checksum(HashAlgorithm hash);          <span style="color:darkgreen">/// constructor</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> clear();              <span style="color:darkgreen">/// prepare unit for computation</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> update&lt;T&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data); <span style="color:darkgreen">/// add data to checksum</span>
@@ -990,7 +989,15 @@ programs may choose to handle packets with parser errors in other ways
 than shown in this example<span data-line="570"></span> <span data-line="570"></span>&#8211;<span data-line="570"></span> it is up to the P4 program author to
 choose and write the desired behavior.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="573" data-line-first="574;examples/psa-example-parser-checksum.p4:192" style="display:block"><code data-line="574;examples/psa-example-parser-checksum.p4:192"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
+<p class="p indent" data-line="573"><span data-line="573"></span>Neither P4<span data-line="573"></span><sub>16</sub><span data-line="573"></span> nor the PSA provide any special mechanisms to record
+the location within a packet that a parser error occurred.  A P4
+program author can choose to record such location information
+explicitly.  For example, one may define metadata fields specifically
+for that purpose, e.g. to hold an encoded value representing the last
+parser state reached, or the number of bytes extracted so far.  Then,
+assign values to those fields within parser state code.
+</p>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="581" data-line-first="582;examples/psa-example-parser-checksum.p4:192" style="display:block"><code data-line="582;examples/psa-example-parser-checksum.p4:192"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
 <span style="color:darkgreen">// incorrect IPv4 header checksums.</span>
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span> {
     UnhandledIPv4Options,
@@ -1109,15 +1116,15 @@ choose and write the desired behavior.
         <span style="color:darkgreen">// Do normal packet processing here.</span>
     }
 }</code></pre>
-<p class="p noindent para-continued" data-line="577"><span data-line="577"></span>The partial program below demonstrates one way to use the <span data-line="577"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Checksum</code><span data-line="577"></span>
+<p class="p noindent para-continued" data-line="585"><span data-line="585"></span>The partial program below demonstrates one way to use the <span data-line="585"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Checksum</code><span data-line="585"></span>
 extern to calculate and then fill in a correct IPv4 header checksum in
-the <span data-line="579"></span><code class="code code1 language-p4 lang-p4 p4 colorized">computeChecksum</code><span data-line="579"></span> control block, just before the deparser.  In
+the <span data-line="587"></span><code class="code code1 language-p4 lang-p4 p4 colorized">computeChecksum</code><span data-line="587"></span> control block, just before the deparser.  In
 this example, the checksum is calculated fresh, so the outgoing
 checksum will be correct regardless of what changes might have been
 made to the IPv4 header fields in the ingress (or egress) control
 block that precedes it.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="585" data-line-first="586;examples/psa-example-parser-checksum.p4:237" style="display:block"><code data-line="586;examples/psa-example-parser-checksum.p4:237"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> computeChecksum(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata meta) {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="593" data-line-first="594;examples/psa-example-parser-checksum.p4:237" style="display:block"><code data-line="594;examples/psa-example-parser-checksum.p4:237"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> computeChecksum(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata meta) {
     Checksum&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(HashAlgorithm.ones_complement16) ck;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         <span style="color:darkgreen">// TBD: Update the code below for checking the IPv4 header</span>
@@ -1138,48 +1145,61 @@ block that precedes it.
                 hdr.ipv4.dstAddr });
         hdr.ipv4.hdrChecksum = ck.get();
     }
-}</code></pre><h3 id="sec-counters" class="h2" data-line="590" data-heading-depth="2" style="display:block"><span data-line="590"></span><span class="heading-before"><span class="heading-label">3.5</span>.&#8194;</span><span data-line="590"></span>Counters</h3>
-<p class="p noindent" data-line="592"><span data-line="592"></span>Counters are a mechanism for keeping statistics.  The control plane
+}</code></pre>
+<p class="p noindent para-continued" data-line="597"><span data-line="597"></span>TBD: It would be good if the Checksum extern can handle a case of
+doing a <span data-line="598"></span>&#8216;delta&#8217;<span data-line="598"></span> correction of a TCP header checksum when an IPv4 or
+IPv6 source or destination address is changed, e.g. due to
+implementing a feature like NAT.  This should be possible without
+having to redo the TCP checksum over the entire TCP payload, by
+assuming that the incoming TCP header checksum was correct.  With the
+proposed <span data-line="603"></span><code class="code code1 language-p4 lang-p4 p4 colorized">remove</code><span data-line="603"></span> and <span data-line="603"></span><code class="code code1 language-p4 lang-p4 p4 colorized">update</code><span data-line="603"></span> methods, this should be possible by
+calling <span data-line="604"></span><code class="code code1 language-p4 lang-p4 p4 colorized">remove</code><span data-line="604"></span> on the old source/destination addresses, and then
+<span data-line="605"></span><code class="code code1 language-p4 lang-p4 p4 colorized">update</code><span data-line="605"></span> on the new source/destination addresses.  It would also be
+good to have a short example program demonstrating one way to do this,
+ideally with a one-packet test case to verify it works when it is
+implemented.
+</p><h3 id="sec-counters" class="h2" data-line="611" data-heading-depth="2" style="display:block"><span data-line="611"></span><span class="heading-before"><span class="heading-label">3.5</span>.&#8194;</span><span data-line="611"></span>Counters</h3>
+<p class="p noindent" data-line="613"><span data-line="613"></span>Counters are a mechanism for keeping statistics.  The control plane
 can read counter values.  A P4 program cannot read counter values,
 only update them.  If you wish to implement a feature involving
 sequence numbers in packets, for example, use Registers instead
-(Section<span data-line="596"></span>&nbsp;<a href="#sec-registers" title="3.7.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">3.7</span></a><span data-line="596"></span>).
+(Section<span data-line="617"></span>&nbsp;<a href="#sec-registers" title="3.7.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">3.7</span></a><span data-line="617"></span>).
 </p>
-<p class="p indent" data-line="598"><span data-line="598"></span>Direct counters are counters associated with a particular P4 table,
-and are implemented by the extern <span data-line="599"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="599"></span>.  There are also
-indexed counters, which are implemented by the extern <span data-line="600"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Counter</code><span data-line="600"></span>.  The
+<p class="p indent" data-line="619"><span data-line="619"></span>Direct counters are counters associated with a particular P4 table,
+and are implemented by the extern <span data-line="620"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="620"></span>.  There are also
+indexed counters, which are implemented by the extern <span data-line="621"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Counter</code><span data-line="621"></span>.  The
 primary differences between direct counters and indexed counters are:
 </p>
-<ul class="ul list-dash compact" data-line="603">
-<li class="li ul-li list-dash-li compact-li" data-line="603"><span data-line="603"></span>Number of independently updatable counter values:
+<ul class="ul list-dash compact" data-line="624">
+<li class="li ul-li list-dash-li compact-li" data-line="624"><span data-line="624"></span>Number of independently updatable counter values:
 
-<ul class="ul list-dash compact" data-line="604">
-<li class="li ul-li list-dash-li compact-li" data-line="604"><span data-line="604"></span>A single instantiation of a direct counter always contains as many
+<ul class="ul list-dash compact" data-line="625">
+<li class="li ul-li list-dash-li compact-li" data-line="625"><span data-line="625"></span>A single instantiation of a direct counter always contains as many
 independent counter values as the number of entries in the table
 with which it is associated (TBD: see below for what this means
 for tables that use action profiles).
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="608"><span data-line="608"></span>You must specify the number of independent counter values for an
+<li class="li ul-li list-dash-li compact-li" data-line="629"><span data-line="629"></span>You must specify the number of independent counter values for an
 indexed counter when instantiating it.  This number of counters
 need not be the same as the size of any table.
 </li></ul></li>
-<li class="li ul-li list-dash-li compact-li" data-line="611"><span data-line="611"></span>Where counter updates are allowed in the P4 program:
+<li class="li ul-li list-dash-li compact-li" data-line="632"><span data-line="632"></span>Where counter updates are allowed in the P4 program:
 
-<ul class="ul list-dash compact" data-line="612">
-<li class="li ul-li list-dash-li compact-li" data-line="612"><span data-line="612"></span>For a direct counter, you may only invoke its <span data-line="612"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="612"></span> method from
+<ul class="ul list-dash compact" data-line="633">
+<li class="li ul-li list-dash-li compact-li" data-line="633"><span data-line="633"></span>For a direct counter, you may only invoke its <span data-line="633"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="633"></span> method from
 inside the actions of the table with which it is associated, and
 this always updates the counter value associated with the matching
 table entry.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="616"><span data-line="616"></span>For an indexed counter, you may invoke its <span data-line="616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="616"></span> method
+<li class="li ul-li list-dash-li compact-li" data-line="637"><span data-line="637"></span>For an indexed counter, you may invoke its <span data-line="637"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="637"></span> method
 anywhere in the P4 program where extern object method invocations
-are permitted (e.g. inside actions, or directly inside a control<span data-line="618"></span>&#39;<span data-line="618"></span>s
-<span data-line="619"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span></code><span data-line="619"></span> block), and every such invocation must specify the index
+are permitted (e.g. inside actions, or directly inside a control<span data-line="639"></span>&#39;<span data-line="639"></span>s
+<span data-line="640"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span></code><span data-line="640"></span> block), and every such invocation must specify the index
 of the counter value to be updated.
 </li></ul></li></ul>
 
-<p class="p noindent" data-line="622"><span data-line="622"></span>Counters are only intended to support packet counters and byte
-counters, or a combination of both called <span data-line="623"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packets_and_bytes</code><span data-line="623"></span>.  The
+<p class="p noindent" data-line="643"><span data-line="643"></span>Counters are only intended to support packet counters and byte
+counters, or a combination of both called <span data-line="644"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packets_and_bytes</code><span data-line="644"></span>.  The
 byte counts are always increased by some measure of the packet length,
 where the packet length used might vary from one PSA implementation to
 another.  For example, one implementation might use the Ethernet frame
@@ -1189,16 +1209,16 @@ in its definition of the packet length.  Another might only include
 the Ethernet payload length.  Each PSA implementation should document
 how it determines the packet length used for byte counter updates.
 </p>
-<p class="p indent" data-line="633"><span data-line="633"></span>If you wish to keep counts of other quantities, or to have more
+<p class="p indent" data-line="654"><span data-line="654"></span>If you wish to keep counts of other quantities, or to have more
 precise control over the packet length used in a byte counter, you may
-use Registers to achieve that (Section<span data-line="635"></span>&nbsp;<a href="#sec-registers" title="3.7.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">3.7</span></a><span data-line="635"></span>).
-</p><h4 id="sec-counter-types" class="h3" data-line="638" data-heading-depth="3" style="display:block"><span data-line="638"></span><span class="heading-before"><span class="heading-label">3.5.1</span>.&#8194;</span><span data-line="638"></span>Counter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="640" data-line-first="641;psa.p4:328" style="display:block"><code data-line="641;psa.p4:328"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
+use Registers to achieve that (Section<span data-line="656"></span>&nbsp;<a href="#sec-registers" title="3.7.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">3.7</span></a><span data-line="656"></span>).
+</p><h4 id="sec-counter-types" class="h3" data-line="659" data-heading-depth="3" style="display:block"><span data-line="659"></span><span class="heading-before"><span class="heading-label">3.5.1</span>.&#8194;</span><span data-line="659"></span>Counter types</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="661" data-line-first="662;psa.p4:326" style="display:block"><code data-line="662;psa.p4:326"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
     packets,
     bytes,
     packets_and_bytes
-}</code></pre><h4 id="sec-counter" class="h3" data-line="644" data-heading-depth="3" style="display:block"><span data-line="644"></span><span class="heading-before"><span class="heading-label">3.5.2</span>.&#8194;</span><span data-line="644"></span>Counter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="646" data-line-first="647;psa.p4:360" style="display:block"><code data-line="647;psa.p4:360"><span style="color:darkgreen">/// Indirect counter with n_counters independent counter values, where</span>
+}</code></pre><h4 id="sec-counter" class="h3" data-line="665" data-heading-depth="3" style="display:block"><span data-line="665"></span><span class="heading-before"><span class="heading-label">3.5.2</span>.&#8194;</span><span data-line="665"></span>Counter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="667" data-line-first="668;psa.p4:358" style="display:block"><code data-line="668;psa.p4:358"><span style="color:darkgreen">/// Indirect counter with n_counters independent counter values, where</span>
 <span style="color:darkgreen">/// every counter value has a data plane size specified by type W.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Counter&lt;W, S&gt; {
@@ -1227,35 +1247,35 @@ use Registers to achieve that (Section<span data-line="635"></span>&nbsp;<a href
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
 }</code></pre>
-<p class="p noindent para-continued" data-line="650"><span data-line="650"></span>See below for pseudocode of an example implementation for the Counter
+<p class="p noindent para-continued" data-line="671"><span data-line="671"></span>See below for pseudocode of an example implementation for the Counter
 extern.
 </p>
-<p class="p indent" data-line="653"><span data-line="653"></span>The example implementation for <span data-line="653"></span><code class="code code1 language-p4 lang-p4 p4 colorized">next_counter_value</code><span data-line="653"></span> is not intended to
+<p class="p indent" data-line="674"><span data-line="674"></span>The example implementation for <span data-line="674"></span><code class="code code1 language-p4 lang-p4 p4 colorized">next_counter_value</code><span data-line="674"></span> is not intended to
 restrict PSA implementations.  In particular, the storage format for
-<span data-line="655"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packets_and_bytes</code><span data-line="655"></span> type counters is just one example of how it could
+<span data-line="676"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packets_and_bytes</code><span data-line="676"></span> type counters is just one example of how it could
 be done.  Implementations are free to store state in other ways, as
 long as the control plane API returns the correct packet and byte
 count values.
 </p>
-<p class="p indent" data-line="660"><span data-line="660"></span>Two common techniques for counter implementations in the data plane are:
+<p class="p indent" data-line="681"><span data-line="681"></span>Two common techniques for counter implementations in the data plane are:
 </p>
-<ul class="ul list-dash compact" data-line="662">
-<li class="li ul-li list-dash-li compact-li" data-line="662"><span data-line="662"></span>wrap around counters
+<ul class="ul list-dash compact" data-line="683">
+<li class="li ul-li list-dash-li compact-li" data-line="683"><span data-line="683"></span>wrap around counters
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="663"><span data-line="663"></span>saturating counters, that <span data-line="663"></span>&#8216;stick&#8217;<span data-line="663"></span> at their maximum possible value,
+<li class="li ul-li list-dash-li compact-li" data-line="684"><span data-line="684"></span>saturating counters, that <span data-line="684"></span>&#8216;stick&#8217;<span data-line="684"></span> at their maximum possible value,
 without wrapping around.
 </li></ul>
 
-<p class="p noindent" data-line="666"><span data-line="666"></span>This specification does not mandate any particular approach in the
+<p class="p noindent" data-line="687"><span data-line="687"></span>This specification does not mandate any particular approach in the
 data plane.  Implementations should strive to avoid losing information
 in counters.  One common implementation technique is to implement an
-atomic <span data-line="669"></span>&#8220;read and clear&#8221;<span data-line="669"></span> operation in the data plane that can be
+atomic <span data-line="690"></span>&#8220;read and clear&#8221;<span data-line="690"></span> operation in the data plane that can be
 invoked by the control plane software.  The control plane software
 invokes this operation frequently enough to prevent counters from ever
 wrapping or saturating, and adds the values read to larger counters in
 driver memory.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="675" data-line-first="676" style="display:block"><code data-line="676">Counter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_counters, CounterType_t type) {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="696" data-line-first="697" style="display:block"><code data-line="697">Counter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_counters, CounterType_t type) {
     this.num_counters = n_counters;
     this.counter_vals = new array of size n_counters, each element with type W;
     this.type = type;
@@ -1303,19 +1323,19 @@ W next_counter_value(W cur_value, CounterType_t type) {
         <span style="color:darkgreen">// See below for optional debug information to record.</span>
     }
 }</code></pre>
-<p class="p noindent para-continued" data-line="726"><span data-line="726"></span>Optional debugging information that may be kept if an <span data-line="726"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="726"></span> value is
+<p class="p noindent para-continued" data-line="747"><span data-line="747"></span>Optional debugging information that may be kept if an <span data-line="747"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="747"></span> value is
 out of range includes:
 </p>
-<ul class="ul list-dash compact" data-line="729">
-<li class="li ul-li list-dash-li compact-li" data-line="729"><span data-line="729"></span>Number of times this occurs.
+<ul class="ul list-dash compact" data-line="750">
+<li class="li ul-li list-dash-li compact-li" data-line="750"><span data-line="750"></span>Number of times this occurs.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="730"><span data-line="730"></span>A FIFO of the first N out-of-range index values that occur, where N
+<li class="li ul-li list-dash-li compact-li" data-line="751"><span data-line="751"></span>A FIFO of the first N out-of-range index values that occur, where N
 is implementation-defined (e.g. it might only be 1).  Extra
-information to identify which <span data-line="732"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count()</code><span data-line="732"></span> method call in the P4
-program had the out-of-range <span data-line="733"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="733"></span> value is also recommended.
+information to identify which <span data-line="753"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count()</code><span data-line="753"></span> method call in the P4
+program had the out-of-range <span data-line="754"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="754"></span> value is also recommended.
 </li></ul>
-<h4 id="sec-direct-counter" class="h3" data-line="736" data-heading-depth="3" style="display:block"><span data-line="736"></span><span class="heading-before"><span class="heading-label">3.5.3</span>.&#8194;</span><span data-line="736"></span>Direct Counter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="738" data-line-first="739;psa.p4:379" style="display:block"><code data-line="739;psa.p4:379"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectCounter&lt;W&gt; {
+<h4 id="sec-direct-counter" class="h3" data-line="757" data-heading-depth="3" style="display:block"><span data-line="757"></span><span class="heading-before"><span class="heading-label">3.5.3</span>.&#8194;</span><span data-line="757"></span>Direct Counter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="759" data-line-first="760;psa.p4:377" style="display:block"><code data-line="760;psa.p4:377"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectCounter&lt;W&gt; {
   DirectCounter(CounterType_t type);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> count();
 
@@ -1331,64 +1351,64 @@ program had the out-of-range <span data-line="733"></span><code class="code code
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
 }</code></pre>
-<p class="p noindent para-continued" data-line="742"><span data-line="742"></span>A <span data-line="742"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="742"></span> instance must appear in the list of values of the
-<span data-line="743"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_direct_counters</code><span data-line="743"></span> table attribute for exactly one table.  We call
-this table the <span data-line="744"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="744"></span> instance<span data-line="744"></span>&#39;<span data-line="744"></span>s <span data-line="744"></span>&#8220;owner&#8221;<span data-line="744"></span>.  It is an error to
-call the <span data-line="745"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="745"></span> method for a <span data-line="745"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="745"></span> instance anywhere except
+<p class="p noindent para-continued" data-line="763"><span data-line="763"></span>A <span data-line="763"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="763"></span> instance must appear in the list of values of the
+<span data-line="764"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_direct_counters</code><span data-line="764"></span> table attribute for exactly one table.  We call
+this table the <span data-line="765"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="765"></span> instance<span data-line="765"></span>&#39;<span data-line="765"></span>s <span data-line="765"></span>&#8220;owner&#8221;<span data-line="765"></span>.  It is an error to
+call the <span data-line="766"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="766"></span> method for a <span data-line="766"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="766"></span> instance anywhere except
 inside an action of its owner table.
 </p>
-<p class="p indent" data-line="748"><span data-line="748"></span>The counter value updated by an invocation of <span data-line="748"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="748"></span> is always the
+<p class="p indent" data-line="769"><span data-line="769"></span>The counter value updated by an invocation of <span data-line="769"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="769"></span> is always the
 one associated with the table entry that matched.
 </p>
-<p class="p indent" data-line="751"><span data-line="751"></span>TBD: How to describe which counter value is updated for tables with
+<p class="p indent" data-line="772"><span data-line="772"></span>TBD: How to describe which counter value is updated for tables with
 action profiles and direct counters?  Or should this combination even
 be allowed?
 </p>
-<p class="p indent" data-line="755"><span data-line="755"></span>An action of an owner table need not have <span data-line="755"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="755"></span> method calls for all
-of the <span data-line="756"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="756"></span> instances that the table owns.  You must use an
-explicit <span data-line="757"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count()</code><span data-line="757"></span> method call on a <span data-line="757"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="757"></span> to update it,
+<p class="p indent" data-line="776"><span data-line="776"></span>An action of an owner table need not have <span data-line="776"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="776"></span> method calls for all
+of the <span data-line="777"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="777"></span> instances that the table owns.  You must use an
+explicit <span data-line="778"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count()</code><span data-line="778"></span> method call on a <span data-line="778"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="778"></span> to update it,
 otherwise its state will not change.
 </p>
-<p class="p indent" data-line="760"><span data-line="760"></span>An example implementation for the <span data-line="760"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="760"></span> extern is
-essentially the same as the one for <span data-line="761"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Counter</code><span data-line="761"></span>.  Since there is no
-<span data-line="762"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="762"></span> parameter to the <span data-line="762"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="762"></span> method, there is no need to check for
+<p class="p indent" data-line="781"><span data-line="781"></span>An example implementation for the <span data-line="781"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="781"></span> extern is
+essentially the same as the one for <span data-line="782"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Counter</code><span data-line="782"></span>.  Since there is no
+<span data-line="783"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="783"></span> parameter to the <span data-line="783"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="783"></span> method, there is no need to check for
 whether it is in range.
 </p>
-<p class="p indent" data-line="765"><span data-line="765"></span>The rules here mean that an action that calls <span data-line="765"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="765"></span> on a
-<span data-line="766"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="766"></span> instance may only be an action of that instance<span data-line="766"></span>&#39;<span data-line="766"></span>s one
-owner table.  If you want to have a single action <span data-line="767"></span><code class="code code1 language-p4 lang-p4 p4 colorized">A</code><span data-line="767"></span> that can be
+<p class="p indent" data-line="786"><span data-line="786"></span>The rules here mean that an action that calls <span data-line="786"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="786"></span> on a
+<span data-line="787"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="787"></span> instance may only be an action of that instance<span data-line="787"></span>&#39;<span data-line="787"></span>s one
+owner table.  If you want to have a single action <span data-line="788"></span><code class="code code1 language-p4 lang-p4 p4 colorized">A</code><span data-line="788"></span> that can be
 invoked by multiple tables, you can still do so by having a unique
-action for each such table with a <span data-line="769"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="769"></span>, where each such
-action in turn calls action <span data-line="770"></span><code class="code code1 language-p4 lang-p4 p4 colorized">A</code><span data-line="770"></span>, in addition to any <span data-line="770"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="770"></span>
+action for each such table with a <span data-line="790"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="790"></span>, where each such
+action in turn calls action <span data-line="791"></span><code class="code code1 language-p4 lang-p4 p4 colorized">A</code><span data-line="791"></span>, in addition to any <span data-line="791"></span><code class="code code1 language-p4 lang-p4 p4 colorized">count</code><span data-line="791"></span>
 invocations they have.
 </p>
-<p class="p indent" data-line="773"><span data-line="773"></span>A <span data-line="773"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="773"></span> instance must have a counter value associated with
+<p class="p indent" data-line="794"><span data-line="794"></span>A <span data-line="794"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="794"></span> instance must have a counter value associated with
 its owner table that is updated when there is a default action
 assigned to the table, and a search of the table results in a miss.
 If there is no default action assigned to the table, then there need
 not be any counter updated when a search of the table results in a
 miss.
 </p>
-<p class="p indent" data-line="780"><span data-line="780"></span>By <span data-line="780"></span>&#8220;a default action is assigned to a table&#8221;<span data-line="780"></span>, we mean that either the
-table has a <span data-line="781"></span><code class="code code1 language-p4 lang-p4 p4 colorized">default_action</code><span data-line="781"></span> table property with an action assigned to
+<p class="p indent" data-line="801"><span data-line="801"></span>By <span data-line="801"></span>&#8220;a default action is assigned to a table&#8221;<span data-line="801"></span>, we mean that either the
+table has a <span data-line="802"></span><code class="code code1 language-p4 lang-p4 p4 colorized">default_action</code><span data-line="802"></span> table property with an action assigned to
 it in the P4 program, or the control plane has made an explicit call
 to assign the table a default action.  If neither of these is true,
 then there is no default action assigned to the table.
 </p>
-<p class="p indent" data-line="786"><span data-line="786"></span>TBD: Verify that the method of reading this default action counter
+<p class="p indent" data-line="807"><span data-line="807"></span>TBD: Verify that the method of reading this default action counter
 state is documented for the control plane API.  I believe that Antonin
 Bas said that it can be accessed using the same API call used to read
-a <span data-line="789"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="789"></span> value associated with a table entry, except that the
+a <span data-line="810"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="810"></span> value associated with a table entry, except that the
 key in the API call should be empty.
 </p>
-<p class="p indent" data-line="792"><span data-line="792"></span>TBD: Should a single table be restricted to have at most one
+<p class="p indent" data-line="813"><span data-line="813"></span>TBD: Should a single table be restricted to have at most one
 DirectCounter associated with it, or should it be allowed to have more
 than one?
-</p><h4 id="sec-example-program-using-counters" class="h3" data-line="797" data-heading-depth="3" style="display:block"><span data-line="797"></span><span class="heading-before"><span class="heading-label">3.5.4</span>.&#8194;</span><span data-line="797"></span>Example program using counters</h4>
-<p class="p noindent" data-line="799"><span data-line="799"></span>The following partial P4 program demonstrates the instantiation and
-updating of <span data-line="800"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Counter</code><span data-line="800"></span> and <span data-line="800"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="800"></span> externs.
+</p><h4 id="sec-example-program-using-counters" class="h3" data-line="818" data-heading-depth="3" style="display:block"><span data-line="818"></span><span class="heading-before"><span class="heading-label">3.5.4</span>.&#8194;</span><span data-line="818"></span>Example program using counters</h4>
+<p class="p noindent" data-line="820"><span data-line="820"></span>The following partial P4 program demonstrates the instantiation and
+updating of <span data-line="821"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Counter</code><span data-line="821"></span> and <span data-line="821"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="821"></span> externs.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="802" data-line-first="803;examples/psa-example-counters.p4:62" style="display:block"><code data-line="803;examples/psa-example-counters.p4:62"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">48</span>&gt; ByteCounter_t;
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="823" data-line-first="824;examples/psa-example-counters.p4:62" style="display:block"><code data-line="824;examples/psa-example-counters.p4:62"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">48</span>&gt; ByteCounter_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; PacketCounter_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">80</span>&gt; PacketByteCounter_t;
 
@@ -1453,80 +1473,80 @@ updating of <span data-line="800"></span><code class="code code1 language-p4 lan
         <span style="color:darkgreen">// this example is intentional.</span>
         port_bytes_out.count(istd.egress_port);
     }
-}</code></pre><h3 id="sec-meters" class="h2" data-line="808" data-heading-depth="2" style="display:block"><span data-line="808"></span><span class="heading-before"><span class="heading-label">3.6</span>.&#8194;</span><span data-line="808"></span>Meters</h3>
-<p class="p noindent" data-line="810"><span data-line="810"></span>Meters (RFC 2698) are a more complex mechanism for keeping statistics
+}</code></pre><h3 id="sec-meters" class="h2" data-line="829" data-heading-depth="2" style="display:block"><span data-line="829"></span><span class="heading-before"><span class="heading-label">3.6</span>.&#8194;</span><span data-line="829"></span>Meters</h3>
+<p class="p noindent" data-line="831"><span data-line="831"></span>Meters (RFC 2698) are a more complex mechanism for keeping statistics
 about packets, most often used for dropping
-or <span data-line="812"></span>&#8220;marking&#8221;<span data-line="812"></span> packets that exceed an average packet or bit rate.  To
+or <span data-line="833"></span>&#8220;marking&#8221;<span data-line="833"></span> packets that exceed an average packet or bit rate.  To
 mark a packet means to change one or more of its quality of service
 values in packet headers such as the 802.1Q PCP (priority code point)
 or DSCP (differentiated service code point) bits within the IPv4 or
 IPv6 type of service byte.  The meters specified in the PSA are
 3-color meters.
 </p>
-<p class="p indent" data-line="819"><span data-line="819"></span>PSA meters do not require any particular drop or marking actions, nor
+<p class="p indent" data-line="840"><span data-line="840"></span>PSA meters do not require any particular drop or marking actions, nor
 do they automatically implement those behaviors for you.  Meters keep
-enough state, and update their state during <span data-line="821"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute()</code><span data-line="821"></span> method calls,
-in such a way that they return a <span data-line="822"></span><code class="code code1 language-p4 lang-p4 p4 colorized">GREEN</code><span data-line="822"></span> (also known as conform),
-<span data-line="823"></span><code class="code code1 language-p4 lang-p4 p4 colorized">YELLOW</code><span data-line="823"></span> (exceed), or <span data-line="823"></span><code class="code code1 language-p4 lang-p4 p4 colorized">RED</code><span data-line="823"></span> (violate) result.  See RFC 2698 for details on the
+enough state, and update their state during <span data-line="842"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute()</code><span data-line="842"></span> method calls,
+in such a way that they return a <span data-line="843"></span><code class="code code1 language-p4 lang-p4 p4 colorized">GREEN</code><span data-line="843"></span> (also known as conform),
+<span data-line="844"></span><code class="code code1 language-p4 lang-p4 p4 colorized">YELLOW</code><span data-line="844"></span> (exceed), or <span data-line="844"></span><code class="code code1 language-p4 lang-p4 p4 colorized">RED</code><span data-line="844"></span> (violate) result.  See RFC 2698 for details on the
 conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
 </p>
-<p class="p indent" data-line="828"><span data-line="828"></span>RFC 2698 describes <span data-line="828"></span>&#8220;color aware&#8221;<span data-line="828"></span> and <span data-line="828"></span>&#8220;color blind&#8221;<span data-line="828"></span> variations of
-meters.  The <span data-line="829"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Meter</code><span data-line="829"></span> and <span data-line="829"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="829"></span> externs implement both.  The
-only difference is in which <span data-line="830"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="830"></span> method you use when updating
-them.  See the comments on the <span data-line="831"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span></code><span data-line="831"></span> definitions below.
+<p class="p indent" data-line="849"><span data-line="849"></span>RFC 2698 describes <span data-line="849"></span>&#8220;color aware&#8221;<span data-line="849"></span> and <span data-line="849"></span>&#8220;color blind&#8221;<span data-line="849"></span> variations of
+meters.  The <span data-line="850"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Meter</code><span data-line="850"></span> and <span data-line="850"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="850"></span> externs implement both.  The
+only difference is in which <span data-line="851"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="851"></span> method you use when updating
+them.  See the comments on the <span data-line="852"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span></code><span data-line="852"></span> definitions below.
 </p>
-<p class="p indent" data-line="833"><span data-line="833"></span>Similar to counters, there are two flavors of meters: indexed and
+<p class="p indent" data-line="854"><span data-line="854"></span>Similar to counters, there are two flavors of meters: indexed and
 direct.  (Indexed) meters are addressed by index, while direct meters
 always update a meter state corresponding to the matched table entry
 or action, and from the control plane API are addressed using
 P4Runtime table entry as key.
 </p>
-<p class="p indent" data-line="839"><span data-line="839"></span>There are many other similarities between counters and meters,
+<p class="p indent" data-line="860"><span data-line="860"></span>There are many other similarities between counters and meters,
 including:
 </p>
-<ul class="ul list-dash compact" data-line="842">
-<li class="li ul-li list-dash-li compact-li" data-line="842"><span data-line="842"></span>The number of independently updatable meter values.
+<ul class="ul list-dash compact" data-line="863">
+<li class="li ul-li list-dash-li compact-li" data-line="863"><span data-line="863"></span>The number of independently updatable meter values.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="843"><span data-line="843"></span>Where meter updates are allowed in a P4 program.
+<li class="li ul-li list-dash-li compact-li" data-line="864"><span data-line="864"></span>Where meter updates are allowed in a P4 program.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="844"><span data-line="844"></span>For <span data-line="844"></span><code class="code code1 language-p4 lang-p4 p4 colorized">bytes</code><span data-line="844"></span> type meters, the packet length used in the update is
+<li class="li ul-li list-dash-li compact-li" data-line="865"><span data-line="865"></span>For <span data-line="865"></span><code class="code code1 language-p4 lang-p4 p4 colorized">bytes</code><span data-line="865"></span> type meters, the packet length used in the update is
 determined by the PSA implementation, and can vary from one PSA
 implementation to another.
 </li></ul>
 
-<p class="p noindent" data-line="848"><span data-line="848"></span>Further similarities between direct counters and direct meters
+<p class="p noindent" data-line="869"><span data-line="869"></span>Further similarities between direct counters and direct meters
 include:
 </p>
-<ul class="ul list-dash compact" data-line="851">
-<li class="li ul-li list-dash-li compact-li" data-line="851"><span data-line="851"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="851"></span> <span data-line="851"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="851"></span> method calls must be performed within
-actions invoked by the table that owns the <span data-line="852"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="852"></span> instance.
-It is optional for such an action to call the <span data-line="853"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="853"></span> method.
+<ul class="ul list-dash compact" data-line="872">
+<li class="li ul-li list-dash-li compact-li" data-line="872"><span data-line="872"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="872"></span> <span data-line="872"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="872"></span> method calls must be performed within
+actions invoked by the table that owns the <span data-line="873"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="873"></span> instance.
+It is optional for such an action to call the <span data-line="874"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="874"></span> method.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="854"><span data-line="854"></span>There must be a meter state associated with a <span data-line="854"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="854"></span>
-instance<span data-line="855"></span>&#39;<span data-line="855"></span>s owner table, that can be updated when the table result is
-a miss.  As for a <span data-line="856"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="856"></span>, this state only needs to exist if
+<li class="li ul-li list-dash-li compact-li" data-line="875"><span data-line="875"></span>There must be a meter state associated with a <span data-line="875"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="875"></span>
+instance<span data-line="876"></span>&#39;<span data-line="876"></span>s owner table, that can be updated when the table result is
+a miss.  As for a <span data-line="877"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectCounter</code><span data-line="877"></span>, this state only needs to exist if
 a default action is assigned to the table.
 </li></ul>
 
-<p class="p noindent" data-line="859"><span data-line="859"></span>The table attribute to specify that a table owns a <span data-line="859"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="859"></span>
-instance is <span data-line="860"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_direct_meters</code><span data-line="860"></span>.  The value of this table attribute is
+<p class="p noindent" data-line="880"><span data-line="880"></span>The table attribute to specify that a table owns a <span data-line="880"></span><code class="code code1 language-p4 lang-p4 p4 colorized">DirectMeter</code><span data-line="880"></span>
+instance is <span data-line="881"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_direct_meters</code><span data-line="881"></span>.  The value of this table attribute is
 a list of meter instances.
 </p>
-<p class="p indent" data-line="863"><span data-line="863"></span>As for counters, if you call the <span data-line="863"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute(idx)</code><span data-line="863"></span> method on an indexed
-meter and <span data-line="864"></span><code class="code code1 language-p4 lang-p4 p4 colorized">idx</code><span data-line="864"></span> is at least the number of meter states, so <span data-line="864"></span><code class="code code1 language-p4 lang-p4 p4 colorized">idx</code><span data-line="864"></span> is
-out of range, no meter state is updated.  The <span data-line="865"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="865"></span> call still
-returns a value of type <span data-line="866"></span><code class="code code1 language-p4 lang-p4 p4 colorized">MeterColor_t</code><span data-line="866"></span>, but the value is undefined<span data-line="866"></span> <span data-line="866"></span>&#8211;<span data-line="866"></span>
+<p class="p indent" data-line="884"><span data-line="884"></span>As for counters, if you call the <span data-line="884"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute(idx)</code><span data-line="884"></span> method on an indexed
+meter and <span data-line="885"></span><code class="code code1 language-p4 lang-p4 p4 colorized">idx</code><span data-line="885"></span> is at least the number of meter states, so <span data-line="885"></span><code class="code code1 language-p4 lang-p4 p4 colorized">idx</code><span data-line="885"></span> is
+out of range, no meter state is updated.  The <span data-line="886"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="886"></span> call still
+returns a value of type <span data-line="887"></span><code class="code code1 language-p4 lang-p4 p4 colorized">MeterColor_t</code><span data-line="887"></span>, but the value is undefined<span data-line="887"></span> <span data-line="887"></span>&#8211;<span data-line="887"></span>
 programs that wish to have predictable behavior across implementations
 must not use the undefined value in a way that affects the output
 packet or other side effects.  The example code below shows one way to
 achieve predictable behavior.  Note that this undefined behavior
-cannot occur if the value of <span data-line="871"></span><code class="code code1 language-p4 lang-p4 p4 colorized">n_meters</code><span data-line="871"></span> of an indexed meter is <span data-line="871"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="871"></span>,
-and the type <span data-line="872"></span><code class="code code1 language-p4 lang-p4 p4 colorized">S</code><span data-line="872"></span> used to construct the meter is <span data-line="872"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="872"></span>, since the
+cannot occur if the value of <span data-line="892"></span><code class="code code1 language-p4 lang-p4 p4 colorized">n_meters</code><span data-line="892"></span> of an indexed meter is <span data-line="892"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="892"></span>,
+and the type <span data-line="893"></span><code class="code code1 language-p4 lang-p4 p4 colorized">S</code><span data-line="893"></span> used to construct the meter is <span data-line="893"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="893"></span>, since the
 index value could never be out of range.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="875" data-line-first="876" style="display:block"><code data-line="876"><span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> METER1_SIZE 100</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="896" data-line-first="897" style="display:block"><code data-line="897"><span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> METER1_SIZE 100</span>
 Meter&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">7</span>&gt;&gt;(METER<span class="constant" style="color:purple">1</span>_SIZE, MeterType_t.bytes) meter1;
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">7</span>&gt; idx;
 MeterColor_t color1;
@@ -1540,30 +1560,30 @@ MeterColor_t color1;
     <span style="color:darkgreen">// may also choose to store an error flag in some metadata field.</span>
     color1 = MeterColor_t.RED;
 }</code></pre>
-<p class="p noindent para-continued" data-line="892"><span data-line="892"></span>Any implementation will have a finite range that can be specified for
+<p class="p noindent para-continued" data-line="913"><span data-line="913"></span>Any implementation will have a finite range that can be specified for
 the Peak Burst Size and Committed Burst Size.  An implementation
 should document the maximum burst sizes they support, and if the
 implementation internally truncates the values that the control plane
 requests to something more coarse than any number of bytes, that
 should also be documented.  It is recommended that the maximum burst
 sizes be allowed as large as the number of bytes that can be
-transmitted across the implementation<span data-line="899"></span>&#39;<span data-line="899"></span>s maximum speed port in 100
+transmitted across the implementation<span data-line="920"></span>&#39;<span data-line="920"></span>s maximum speed port in 100
 milliseconds.
 </p>
-<p class="p indent" data-line="902"><span data-line="902"></span>Implementations will also have finite ranges and precisions that they
+<p class="p indent" data-line="923"><span data-line="923"></span>Implementations will also have finite ranges and precisions that they
 support for the Peak Information Rate and Committed Information Rate.
 An implementation should document the maximum rate it supports, as
 well as the precision it supports for implementing requested rates.
 It is recommended that the maximum rate supported be at least the rate
-of the implementation<span data-line="907"></span>&#39;<span data-line="907"></span>s fastest port, and that the actual implemented
+of the implementation<span data-line="928"></span>&#39;<span data-line="928"></span>s fastest port, and that the actual implemented
 rate should always be within plus or minus 0.1% of the requested rate.
-</p><h4 id="sec-meter-types" class="h3" data-line="910" data-heading-depth="3" style="display:block"><span data-line="910"></span><span class="heading-before"><span class="heading-label">3.6.1</span>.&#8194;</span><span data-line="910"></span>Meter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="912" data-line-first="913;psa.p4:386" style="display:block"><code data-line="913;psa.p4:386"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
+</p><h4 id="sec-meter-types" class="h3" data-line="931" data-heading-depth="3" style="display:block"><span data-line="931"></span><span class="heading-before"><span class="heading-label">3.6.1</span>.&#8194;</span><span data-line="931"></span>Meter types</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="933" data-line-first="934;psa.p4:384" style="display:block"><code data-line="934;psa.p4:384"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
     packets,
     bytes
-}</code></pre><h4 id="sec-meter-colors" class="h3" data-line="916" data-heading-depth="3" style="display:block"><span data-line="916"></span><span class="heading-before"><span class="heading-label">3.6.2</span>.&#8194;</span><span data-line="916"></span>Meter colors</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="918" data-line-first="919;psa.p4:390" style="display:block"><code data-line="919;psa.p4:390"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="922" data-heading-depth="3" style="display:block"><span data-line="922"></span><span class="heading-before"><span class="heading-label">3.6.3</span>.&#8194;</span><span data-line="922"></span>Meter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="924" data-line-first="925;psa.p4:417" style="display:block"><code data-line="925;psa.p4:417"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
+}</code></pre><h4 id="sec-meter-colors" class="h3" data-line="937" data-heading-depth="3" style="display:block"><span data-line="937"></span><span class="heading-before"><span class="heading-label">3.6.2</span>.&#8194;</span><span data-line="937"></span>Meter colors</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="939" data-line-first="940;psa.p4:388" style="display:block"><code data-line="940;psa.p4:388"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="943" data-heading-depth="3" style="display:block"><span data-line="943"></span><span class="heading-before"><span class="heading-label">3.6.3</span>.&#8194;</span><span data-line="943"></span>Meter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="945" data-line-first="946;psa.p4:415" style="display:block"><code data-line="946;psa.p4:415"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Meter&lt;S&gt; {
   Meter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_meters, MeterType_t type);
@@ -1586,8 +1606,8 @@ rate should always be within plus or minus 0.1% of the requested rate.
 <span style="color:darkgreen">    getParams(in S index, out MeterConfig config);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h4 id="sec-direct-meter" class="h3" data-line="928" data-heading-depth="3" style="display:block"><span data-line="928"></span><span class="heading-before"><span class="heading-label">3.6.4</span>.&#8194;</span><span data-line="928"></span>Direct Meter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="930" data-line-first="931;psa.p4:435" style="display:block"><code data-line="931;psa.p4:435"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectMeter {
+}</code></pre><h4 id="sec-direct-meter" class="h3" data-line="949" data-heading-depth="3" style="display:block"><span data-line="949"></span><span class="heading-before"><span class="heading-label">3.6.4</span>.&#8194;</span><span data-line="949"></span>Direct Meter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="951" data-line-first="952;psa.p4:433" style="display:block"><code data-line="952;psa.p4:433"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectMeter {
   DirectMeter(MeterType_t type);
   <span style="color:darkgreen">// See the corresponding methods for extern Meter.</span>
   MeterColor_t execute(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> MeterColor_t color);
@@ -1601,29 +1621,29 @@ rate should always be within plus or minus 0.1% of the requested rate.
 <span style="color:darkgreen">    void getConfig(in TableEntry entry, out MeterConfig config);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-registers" class="h2" data-line="934" data-heading-depth="2" style="display:block"><span data-line="934"></span><span class="heading-before"><span class="heading-label">3.7</span>.&#8194;</span><span data-line="934"></span>Registers</h3>
-<p class="p noindent" data-line="936"><span data-line="936"></span>Registers are stateful memories whose values can be read and written
+}</code></pre><h3 id="sec-registers" class="h2" data-line="955" data-heading-depth="2" style="display:block"><span data-line="955"></span><span class="heading-before"><span class="heading-label">3.7</span>.&#8194;</span><span data-line="955"></span>Registers</h3>
+<p class="p noindent" data-line="957"><span data-line="957"></span>Registers are stateful memories whose values can be read and written
 during packet forwarding under the control of the P4 program.  They
 are similar to counters and meters in that their state can be modified
 as a result of processing packets, but they are far more general in
 the behavior they can implement.
 </p>
-<p class="p indent" data-line="942"><span data-line="942"></span>Although you may not use register contents directly in table match
-keys, you may use the <span data-line="943"></span><code class="code code1 language-p4 lang-p4 p4 colorized">read()</code><span data-line="943"></span> method call on the right-hand side of
+<p class="p indent" data-line="963"><span data-line="963"></span>Although you may not use register contents directly in table match
+keys, you may use the <span data-line="964"></span><code class="code code1 language-p4 lang-p4 p4 colorized">read()</code><span data-line="964"></span> method call on the right-hand side of
 an assignment statement, which retrieves the current value of the
 register.  You may copy the register value into metadata, and it is
 then available for matching in subsequent tables.
 </p>
-<p class="p indent" data-line="948"><span data-line="948"></span>A simple usage example might be to verify that a <span data-line="948"></span>&#8220;first packet&#8221;<span data-line="948"></span> was
+<p class="p indent" data-line="969"><span data-line="969"></span>A simple usage example might be to verify that a <span data-line="969"></span>&#8220;first packet&#8221;<span data-line="969"></span> was
 seen for a particular type of flow.  A register cell would be
-allocated to the flow, initialized to <span data-line="950"></span>&#8220;clear&#8221;<span data-line="950"></span>.  When the protocol
-signaled a <span data-line="951"></span>&#8220;first packet&#8221;<span data-line="951"></span>, the table would match on this value and
-update the flow<span data-line="952"></span>&#39;<span data-line="952"></span>s cell to <span data-line="952"></span>&#8220;marked&#8221;<span data-line="952"></span>.  Subsequent packets in the flow
+allocated to the flow, initialized to <span data-line="971"></span>&#8220;clear&#8221;<span data-line="971"></span>.  When the protocol
+signaled a <span data-line="972"></span>&#8220;first packet&#8221;<span data-line="972"></span>, the table would match on this value and
+update the flow<span data-line="973"></span>&#39;<span data-line="973"></span>s cell to <span data-line="973"></span>&#8220;marked&#8221;<span data-line="973"></span>.  Subsequent packets in the flow
 could would be mapped to the same cell; the current cell value would
 be stored in metadata for the packet and a subsequent table could
 check that the flow was marked as active.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="957" data-line-first="958;psa.p4:452" style="display:block"><code data-line="958;psa.p4:452"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="978" data-line-first="979;psa.p4:450" style="display:block"><code data-line="979;psa.p4:450"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
   Register(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
   T    read  (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> write (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T value);
@@ -1637,12 +1657,12 @@ check that the flow was marked as active.
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
 }</code></pre>
-<p class="p noindent para-continued" data-line="961"><span data-line="961"></span>Another example using registers is given below.  It implements a
+<p class="p noindent para-continued" data-line="982"><span data-line="982"></span>Another example using registers is given below.  It implements a
 packet and byte counter, where the byte counter can be updated by a
 packet length specified in the P4 program, rather than one chosen by
 the PSA implementation.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="966" data-line-first="967;examples/psa-example-register2.p4:82" style="display:block"><code data-line="967;examples/psa-example-register2.p4:82"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span> PortId_t NUM_PORTS = <span class="constant" style="color:purple">512</span>;
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="987" data-line-first="988;examples/psa-example-register2.p4:82" style="display:block"><code data-line="988;examples/psa-example-register2.p4:82"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span> PortId_t NUM_PORTS = <span class="constant" style="color:purple">512</span>;
 
 <span style="color:darkgreen">// It would be more convenient to use a struct type to represent the</span>
 <span style="color:darkgreen">// state of a combined packet and byte count, and many other compound</span>
@@ -1689,16 +1709,16 @@ the PSA implementation.
         }
     }
 }</code></pre>
-<p class="p noindent para-continued" data-line="972"><span data-line="972"></span>Note the use of the <span data-line="972"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="972"></span> annotation in the block enclosing the
-<span data-line="973"></span><code class="code code1 language-p4 lang-p4 p4 colorized">read()</code><span data-line="973"></span> and <span data-line="973"></span><code class="code code1 language-p4 lang-p4 p4 colorized">write()</code><span data-line="973"></span> method calls on the <span data-line="973"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="973"></span> instance.  It is
-expected to be common that register accesses will need the <span data-line="974"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="974"></span>
+<p class="p noindent para-continued" data-line="993"><span data-line="993"></span>Note the use of the <span data-line="993"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="993"></span> annotation in the block enclosing the
+<span data-line="994"></span><code class="code code1 language-p4 lang-p4 p4 colorized">read()</code><span data-line="994"></span> and <span data-line="994"></span><code class="code code1 language-p4 lang-p4 p4 colorized">write()</code><span data-line="994"></span> method calls on the <span data-line="994"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="994"></span> instance.  It is
+expected to be common that register accesses will need the <span data-line="995"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="995"></span>
 annotation around portions of your program in order to behave as you
-desire.  As stated in the P4<span data-line="976"></span>_<span data-line="976"></span>16 specification, without the <span data-line="976"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="976"></span>
+desire.  As stated in the P4<span data-line="997"></span>_<span data-line="997"></span>16 specification, without the <span data-line="997"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="997"></span>
 annotation in this example, an implementation is allowed to process
-two packets <span data-line="978"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P<span class="constant" style="color:purple">1</span></code><span data-line="978"></span> and <span data-line="978"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P<span class="constant" style="color:purple">2</span></code><span data-line="978"></span> in parallel, and perform the register access
+two packets <span data-line="999"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P<span class="constant" style="color:purple">1</span></code><span data-line="999"></span> and <span data-line="999"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P<span class="constant" style="color:purple">2</span></code><span data-line="999"></span> in parallel, and perform the register access
 operations in this order:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="981" data-line-first="982" style="display:block"><code data-line="982">    <span style="color:darkgreen">// Possible order of operations for the example program if the</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1002" data-line-first="1003" style="display:block"><code data-line="1003">    <span style="color:darkgreen">// Possible order of operations for the example program if the</span>
     <span style="color:darkgreen">// @atomic annotation is _not_ used.</span>
 
     tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  <span style="color:darkgreen">// for packet P1</span>
@@ -1713,37 +1733,37 @@ operations in this order:
     port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  <span style="color:darkgreen">// for packet P1</span>
     port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  <span style="color:darkgreen">// for packet P2</span>
     <span style="color:darkgreen">// The write() from packet P1 is lost.</span></code></pre>
-<p class="p noindent para-continued" data-line="999"><span data-line="999"></span>Since different implementations may have different upper limits on the
-complexity of code that they will accept within an <span data-line="1000"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="1000"></span> block, we
+<p class="p noindent para-continued" data-line="1020"><span data-line="1020"></span>Since different implementations may have different upper limits on the
+complexity of code that they will accept within an <span data-line="1021"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="1021"></span> block, we
 recommend you keep them as small as possible, subject to maintaining
 your desired correct behavior.
 </p>
-<p class="p indent" data-line="1004"><span data-line="1004"></span>Individual counter and meter method calls need not be enclosed in
-<span data-line="1005"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="1005"></span> blocks to be safe<span data-line="1005"></span> <span data-line="1005"></span>&#8211;<span data-line="1005"></span> they guarantee atomic behavior of their
+<p class="p indent" data-line="1025"><span data-line="1025"></span>Individual counter and meter method calls need not be enclosed in
+<span data-line="1026"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">@</span><span style="color:navy">atomic</span></code><span data-line="1026"></span> blocks to be safe<span data-line="1026"></span> <span data-line="1026"></span>&#8211;<span data-line="1026"></span> they guarantee atomic behavior of their
 individual method calls, without losing any updates.
 </p>
-<p class="p indent" data-line="1008"><span data-line="1008"></span>As for indexed counters and meters, access to an index of a register
+<p class="p indent" data-line="1029"><span data-line="1029"></span>As for indexed counters and meters, access to an index of a register
 that is at least the size of the register is out of bounds.  An out of
 bounds write has no effect on the state of the system.  An out of
 bounds read returns an undefined value.  See the example in Section
-<span data-line="1012"></span><a href="#sec-meters" title="3.6.&#8194;Meters" class="localref" style="target-element:h2"><span class="heading-label">3.6</span></a><span data-line="1012"></span> for one way to write code to guarantee avoiding this
+<span data-line="1033"></span><a href="#sec-meters" title="3.6.&#8194;Meters" class="localref" style="target-element:h2"><span class="heading-label">3.6</span></a><span data-line="1033"></span> for one way to write code to guarantee avoiding this
 undefined behavior.  Out of bounds register accesses are impossible
-for a register instance with type <span data-line="1014"></span><code class="code code1 language-p4 lang-p4 p4 colorized">S</code><span data-line="1014"></span> declared as <span data-line="1014"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1014"></span> and size
-<span data-line="1015"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1015"></span> entries.
-</p><h3 id="sec-random" class="h2" data-line="1018" data-heading-depth="2" style="display:block"><span data-line="1018"></span><span class="heading-before"><span class="heading-label">3.8</span>.&#8194;</span><span data-line="1018"></span>Random</h3>
-<p class="p noindent" data-line="1020"><span data-line="1020"></span>The random extern provides a reliable, target specific number generator
+for a register instance with type <span data-line="1035"></span><code class="code code1 language-p4 lang-p4 p4 colorized">S</code><span data-line="1035"></span> declared as <span data-line="1035"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1035"></span> and size
+<span data-line="1036"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1036"></span> entries.
+</p><h3 id="sec-random" class="h2" data-line="1039" data-heading-depth="2" style="display:block"><span data-line="1039"></span><span class="heading-before"><span class="heading-label">3.8</span>.&#8194;</span><span data-line="1039"></span>Random</h3>
+<p class="p noindent" data-line="1041"><span data-line="1041"></span>The random extern provides a reliable, target specific number generator
 in the min .. max range.
 </p>
-<p class="p indent" data-line="1024"><span data-line="1024"></span>The set of distributions supported by the Random extern.
-<span data-line="1025"></span>\<span data-line="1025"></span>TODO: should this be removed in favor of letting the extern
+<p class="p indent" data-line="1045"><span data-line="1045"></span>The set of distributions supported by the Random extern.
+<span data-line="1046"></span>\<span data-line="1046"></span>TODO: should this be removed in favor of letting the extern
 return whatever distribution is supported by the target?
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1028" data-line-first="1029;psa.p4:460" style="display:block"><code data-line="1029;psa.p4:460"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1049" data-line-first="1050;psa.p4:458" style="display:block"><code data-line="1050;psa.p4:458"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
   PRNG,
   Binomial,
   Poisson
 }</code></pre>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1032" data-line-first="1033;psa.p4:475" style="display:block"><code data-line="1033;psa.p4:475"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1053" data-line-first="1054;psa.p4:473" style="display:block"><code data-line="1054;psa.p4:473"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
   Random(RandomDistribution dist, T min, T max);
   T read();
 
@@ -1754,16 +1774,16 @@ return whatever distribution is supported by the target?
 <span style="color:darkgreen">    void setSeed(in T seed);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-action-profile" class="h2" data-line="1036" data-heading-depth="2" style="display:block"><span data-line="1036"></span><span class="heading-before"><span class="heading-label">3.9</span>.&#8194;</span><span data-line="1036"></span>Action Profile</h3>
-<p class="p noindent" data-line="1038"><span data-line="1038"></span>Action profiles are used as table implementation attributes.
+}</code></pre><h3 id="sec-action-profile" class="h2" data-line="1057" data-heading-depth="2" style="display:block"><span data-line="1057"></span><span class="heading-before"><span class="heading-label">3.9</span>.&#8194;</span><span data-line="1057"></span>Action Profile</h3>
+<p class="p noindent" data-line="1059"><span data-line="1059"></span>Action profiles are used as table implementation attributes.
 </p>
-<p class="p indent" data-line="1040"><span data-line="1040"></span>Action profiles implement a mechanism to populate table entries
+<p class="p indent" data-line="1061"><span data-line="1061"></span>Action profiles implement a mechanism to populate table entries
 with actions and action data. The only data plane operation
 required is to instantiate this extern. When the control plane adds
 entries (members) into the extern, they are essentially populating
 the corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1046" data-line-first="1047;psa.p4:491" style="display:block"><code data-line="1047;psa.p4:491"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1067" data-line-first="1068;psa.p4:489" style="display:block"><code data-line="1068;psa.p4:489"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
   <span style="color:darkgreen">/// Construct an action profile of &#39;size&#39; entries</span>
   ActionProfile(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
 
@@ -1775,10 +1795,10 @@ the corresponding table entries.
 <span style="color:darkgreen">     entry_handle modify_member (entry_handle, action_ref, action_data);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-action-selector" class="h2" data-line="1050" data-heading-depth="2" style="display:block"><span data-line="1050"></span><span class="heading-before"><span class="heading-label">3.10</span>.&#8194;</span><span data-line="1050"></span>Action Selector</h3>
-<p class="p noindent" data-line="1052"><span data-line="1052"></span>Action selectors are used as table implementation attributes.
+}</code></pre><h3 id="sec-action-selector" class="h2" data-line="1071" data-heading-depth="2" style="display:block"><span data-line="1071"></span><span class="heading-before"><span class="heading-label">3.10</span>.&#8194;</span><span data-line="1071"></span>Action Selector</h3>
+<p class="p noindent" data-line="1073"><span data-line="1073"></span>Action selectors are used as table implementation attributes.
 </p>
-<p class="p indent" data-line="1054"><span data-line="1054"></span>Action selectors implement another mechanism to populate table
+<p class="p indent" data-line="1075"><span data-line="1075"></span>Action selectors implement another mechanism to populate table
 entries with actions and action data. They are similar to action
 profiles, with additional support to define groups of
 entries. Action selectors require a hash algorithm to select
@@ -1787,7 +1807,7 @@ instantiate this extern. When the control plane adds entries
 (members) into the extern, they are essentially populating the
 corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1063" data-line-first="1064;psa.p4:514" style="display:block"><code data-line="1064;psa.p4:514"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1084" data-line-first="1085;psa.p4:512" style="display:block"><code data-line="1085;psa.p4:512"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
   <span style="color:darkgreen">/// Construct an action selector of &#39;size&#39; entries</span>
   <span style="color:darkgreen">/// @param algo hash algorithm to select a member in a group</span>
   <span style="color:darkgreen">/// @param size number of entries in the action selector</span>
@@ -1806,12 +1826,12 @@ corresponding table entries.
 <span style="color:darkgreen">     void         delete_from_group (group_handle, entry_handle);</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-packet-generation" class="h2" data-line="1067" data-heading-depth="2" style="display:block"><span data-line="1067"></span><span class="heading-before"><span class="heading-label">3.11</span>.&#8194;</span><span data-line="1067"></span>Packet Generation</h3>
-<p class="p noindent" data-line="1069"><span data-line="1069"></span>\<span data-line="1069"></span>TODO: is generating a new packet and sending it to the stream or is
+}</code></pre><h3 id="sec-packet-generation" class="h2" data-line="1088" data-heading-depth="2" style="display:block"><span data-line="1088"></span><span class="heading-before"><span class="heading-label">3.11</span>.&#8194;</span><span data-line="1088"></span>Packet Generation</h3>
+<p class="p noindent" data-line="1090"><span data-line="1090"></span>\<span data-line="1090"></span>TODO: is generating a new packet and sending it to the stream or is
 it adding a header to the current packet and sending it to the
 stream (copying or redirecting).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1073" data-line-first="1074;psa.p4:530" style="display:block"><code data-line="1074;psa.p4:530"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1094" data-line-first="1095;psa.p4:528" style="display:block"><code data-line="1095;psa.p4:528"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
   Digest(PortId_t receiver); <span style="color:darkgreen">/// define a digest stream to receiver</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> emit(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);      <span style="color:darkgreen">/// emit data into the stream</span>
 
@@ -1823,17 +1843,17 @@ stream (copying or redirecting).
 <span style="color:darkgreen">  </span><span style="color:darkgreen">/</span><span style="color:darkgreen">/</span><span style="color:darkgreen"> to generate the control-plane API.</span>
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
-}</code></pre><h3 id="sec-parser-value-sets" class="h2" data-line="1078" data-heading-depth="2" style="display:block"><span data-line="1078"></span><span class="heading-before"><span class="heading-label">3.12</span>.&#8194;</span><span data-line="1078"></span>Parser Value Sets</h3>
-<p class="p noindent" data-line="1080"><span data-line="1080"></span>A parser value set is a named set of values that may be used during
+}</code></pre><h3 id="sec-parser-value-sets" class="h2" data-line="1099" data-heading-depth="2" style="display:block"><span data-line="1099"></span><span class="heading-before"><span class="heading-label">3.12</span>.&#8194;</span><span data-line="1099"></span>Parser Value Sets</h3>
+<p class="p noindent" data-line="1101"><span data-line="1101"></span>A parser value set is a named set of values that may be used during
 packet header parsing time to make decisions.  You may use control
 plane API calls to add values to a set, and remove values from a set,
 at run time, much like P4 tables.  Unlike tables, they may not have
 actions associated with them.  They may only be used to determine
 whether a particular value is in the set, returning a Boolean value.
-That Boolean value can then be used in a <span data-line="1086"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1086"></span> statement to control
+That Boolean value can then be used in a <span data-line="1107"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1107"></span> statement to control
 parsing (see examples below).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1089" data-line-first="1090;psa.p4:551" style="display:block"><code data-line="1090;psa.p4:551"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1110" data-line-first="1111;psa.p4:549" style="display:block"><code data-line="1111;psa.p4:549"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
     ValueSet(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">int</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_member(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> D data);
 
@@ -1851,34 +1871,34 @@ parsing (see examples below).
 <span style="color:darkgreen">    </span><span style="color:darkgreen">/</span><span style="color:darkgreen">/</span><span style="color:darkgreen"> definition, inside its &#39;oneof Entity&#39; list of possibilities.</span>
 <span style="color:darkgreen">    </span><span style="color:darkgreen">*/</span>
 }</code></pre>
-<p class="p noindent para-continued" data-line="1093"><span data-line="1093"></span>The control plane API excerpt above is intended to be added as part of
-the P4Runtime API<span data-line="1094"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
+<p class="p noindent para-continued" data-line="1114"><span data-line="1114"></span>The control plane API excerpt above is intended to be added as part of
+the P4Runtime API<span data-line="1115"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
 Buffer .proto file, can be found at
 https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="1094"></span>.
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="1115"></span>.
 </p>
-<p class="p indent" data-line="1100"><span data-line="1100"></span>The control plane API for a <span data-line="1100"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1100"></span> is similar to that of a table,
+<p class="p indent" data-line="1121"><span data-line="1121"></span>The control plane API for a <span data-line="1121"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1121"></span> is similar to that of a table,
 except only match fields may be specified, with no actions.  This
 includes API calls that specify ternary or range matching, although
-for <span data-line="1103"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1103"></span>s these do not require specifying any priority values,
-since the only result of a <span data-line="1104"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1104"></span> <span data-line="1104"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="1104"></span> call is <span data-line="1104"></span>&#8220;in the set&#8221;<span data-line="1104"></span>
-or <span data-line="1105"></span>&#8220;not in the set&#8221;<span data-line="1105"></span>.
+for <span data-line="1124"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1124"></span>s these do not require specifying any priority values,
+since the only result of a <span data-line="1125"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1125"></span> <span data-line="1125"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="1125"></span> call is <span data-line="1125"></span>&#8220;in the set&#8221;<span data-line="1125"></span>
+or <span data-line="1126"></span>&#8220;not in the set&#8221;<span data-line="1126"></span>.
 </p>
-<p class="p indent" data-line="1107"><span data-line="1107"></span>If a PSA target can do so, it should implement control plane API calls
+<p class="p indent" data-line="1128"><span data-line="1128"></span>If a PSA target can do so, it should implement control plane API calls
 involving ternary or range matching using ternary or range matching
 capabilities in the target, consuming the minimal table entries
 possible.
 </p>
-<p class="p indent" data-line="1112"><span data-line="1112"></span>However, a PSA target is allowed to implement such control plane API
-calls by <span data-line="1113"></span>&#8220;expanding&#8221;<span data-line="1113"></span> them into as many exact match entries as needed
+<p class="p indent" data-line="1133"><span data-line="1133"></span>However, a PSA target is allowed to implement such control plane API
+calls by <span data-line="1134"></span>&#8220;expanding&#8221;<span data-line="1134"></span> them into as many exact match entries as needed
 to have the same behavior.  For example, a control plane API call
 adding all values in the range 5 through 8 may be implemented as
 adding the four separate exact match values 5, 6, 7, and 8.
 </p>
-<p class="p indent" data-line="1118"><span data-line="1118"></span>The parser definition below shows an example that uses two <span data-line="1118"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1118"></span>
-instances called <span data-line="1119"></span><code class="code code1 language-p4 lang-p4 p4 colorized">tpid_types</code><span data-line="1119"></span> and <span data-line="1119"></span><code class="code code1 language-p4 lang-p4 p4 colorized">trill_types</code><span data-line="1119"></span>.
+<p class="p indent" data-line="1139"><span data-line="1139"></span>The parser definition below shows an example that uses two <span data-line="1139"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1139"></span>
+instances called <span data-line="1140"></span><code class="code code1 language-p4 lang-p4 p4 colorized">tpid_types</code><span data-line="1140"></span> and <span data-line="1140"></span><code class="code code1 language-p4 lang-p4 p4 colorized">trill_types</code><span data-line="1140"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1121" data-line-first="1122;examples/psa-example-value-sets.p4:102" style="display:block"><code data-line="1122;examples/psa-example-value-sets.p4:102"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1142" data-line-first="1143;examples/psa-example-value-sets.p4:102" style="display:block"><code data-line="1143;examples/psa-example-value-sets.p4:102"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
@@ -1923,11 +1943,11 @@ instances called <span data-line="1119"></span><code class="code code1 language-
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> accept;
     }
 }</code></pre>
-<p class="p noindent para-continued" data-line="1125"><span data-line="1125"></span>The second example (below) has the same parsing behavior as the
+<p class="p noindent para-continued" data-line="1146"><span data-line="1146"></span>The second example (below) has the same parsing behavior as the
 example above, but combines the two parse states
-<span data-line="1127"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_tpid_value_set</code><span data-line="1127"></span> and <span data-line="1127"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_trill_value_set</code><span data-line="1127"></span> into one.
+<span data-line="1148"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_tpid_value_set</code><span data-line="1148"></span> and <span data-line="1148"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_trill_value_set</code><span data-line="1148"></span> into one.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1129" data-line-first="1130;examples/psa-example-value-sets2.p4:82" style="display:block"><code data-line="1130;examples/psa-example-value-sets2.p4:82">    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> dispatch_tpid_value_set {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1150" data-line-first="1151;examples/psa-example-value-sets2.p4:82" style="display:block"><code data-line="1151;examples/psa-example-value-sets2.p4:82">    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> dispatch_tpid_value_set {
         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_trill = trill_types.is_member(parsed_hdr.ethernet.etherType);
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(is_tpid, is_trill) {
@@ -1936,11 +1956,11 @@ example above, but combines the two parse states
             <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">default</span>: accept;
         }
     }</code></pre>
-<p class="p noindent para-continued" data-line="1133"><span data-line="1133"></span>The third example (below) demonstrates one way to have a <span data-line="1133"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1133"></span>
-that matches on multiple fields, by making the type <span data-line="1134"></span><code class="code code1 language-p4 lang-p4 p4 colorized">D</code><span data-line="1134"></span> a <span data-line="1134"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="1134"></span>
+<p class="p noindent para-continued" data-line="1154"><span data-line="1154"></span>The third example (below) demonstrates one way to have a <span data-line="1154"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1154"></span>
+that matches on multiple fields, by making the type <span data-line="1155"></span><code class="code code1 language-p4 lang-p4 p4 colorized">D</code><span data-line="1155"></span> a <span data-line="1155"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="1155"></span>
 containing multiple bit vectors.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1137" data-line-first="1138;examples/psa-example-value-sets3.p4:81" style="display:block"><code data-line="1138;examples/psa-example-value-sets3.p4:81"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> CustomValueSet1_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1158" data-line-first="1159;examples/psa-example-value-sets3.p4:81" style="display:block"><code data-line="1159;examples/psa-example-value-sets3.p4:81"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> CustomValueSet1_t {
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; etherType;
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">8</span>&gt;  partialMacAddress;
 }
@@ -1964,65 +1984,65 @@ containing multiple bit vectors.
     }
 
     <span style="color:darkgreen">// ... etc.</span></code></pre>
-<p class="p noindent para-continued" data-line="1141"><span data-line="1141"></span>A PSA compliant implementation is not required to support any use of a
-<span data-line="1142"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1142"></span> <span data-line="1142"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="1142"></span> method call return value, other than directly
-inside of a <span data-line="1143"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1143"></span> expression.  For example, a program fragment like
+<p class="p noindent para-continued" data-line="1162"><span data-line="1162"></span>A PSA compliant implementation is not required to support any use of a
+<span data-line="1163"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1163"></span> <span data-line="1163"></span><code class="code code1 language-p4 lang-p4 p4 colorized">is_member</code><span data-line="1163"></span> method call return value, other than directly
+inside of a <span data-line="1164"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1164"></span> expression.  For example, a program fragment like
 the one shown below may be rejected, and thus P4 programmers striving
 for maximum portability should avoid writing such code.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1146" data-line-first="1147" style="display:block"><code data-line="1147">    <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1167" data-line-first="1168" style="display:block"><code data-line="1168">    <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
 
     is_tpid = is_tpid &amp;&amp; (parsed_hdr.ethernet.dstAddr[<span class="constant" style="color:purple">47</span>:<span class="constant" style="color:purple">40</span>] == <span class="constant" style="color:purple">0xfe</span>);
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(is_tpid) {
-        <span style="color:darkgreen">// ...</span></code></pre><h3 id="sec-timestamps" class="h2" data-line="1155" data-heading-depth="2" style="display:block"><span data-line="1155"></span><span class="heading-before"><span class="heading-label">3.13</span>.&#8194;</span><span data-line="1155"></span>Timestamps</h3>
-<p class="p noindent" data-line="1157"><span data-line="1157"></span>A PSA implementation provides an <span data-line="1157"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1157"></span> value for every
+        <span style="color:darkgreen">// ...</span></code></pre><h3 id="sec-timestamps" class="h2" data-line="1176" data-heading-depth="2" style="display:block"><span data-line="1176"></span><span class="heading-before"><span class="heading-label">3.13</span>.&#8194;</span><span data-line="1176"></span>Timestamps</h3>
+<p class="p noindent" data-line="1178"><span data-line="1178"></span>A PSA implementation provides an <span data-line="1178"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1178"></span> value for every
 packet in the ingress control block, as a field in the struct with
-type <span data-line="1159"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_ingress_input_metadata_t</code><span data-line="1159"></span>.  This timestamp should be close
+type <span data-line="1180"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_ingress_input_metadata_t</code><span data-line="1180"></span>.  This timestamp should be close
 to the time that the first bit of the packet arrived to the device, or
 alternately, to the time that the device began parsing the packet.
-This timestamp is <span data-line="1162"></span><em class="em-low1">not</em><span data-line="1162"></span> automatically included with the packet in the
+This timestamp is <span data-line="1183"></span><em class="em-low1">not</em><span data-line="1183"></span> automatically included with the packet in the
 egress control block.  A P4 program wishing to use the value of
-<span data-line="1164"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1164"></span> in egress code must copy it to a user-defined
+<span data-line="1185"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1185"></span> in egress code must copy it to a user-defined
 metadata field that reaches egress.
 </p>
-<p class="p indent" data-line="1167"><span data-line="1167"></span>A PSA implementation also provides an <span data-line="1167"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1167"></span> value for
+<p class="p indent" data-line="1188"><span data-line="1188"></span>A PSA implementation also provides an <span data-line="1188"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1188"></span> value for
 every packet in the egress control block, as a field of the struct
-with type <span data-line="1169"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_input_metadata_t</code><span data-line="1169"></span>.
+with type <span data-line="1190"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_input_metadata_t</code><span data-line="1190"></span>.
 </p>
-<p class="p indent" data-line="1171"><span data-line="1171"></span>One expected use case for timestamps is to store them in tables or
-<span data-line="1172"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1172"></span> instances to implement checking for timeout events for
+<p class="p indent" data-line="1192"><span data-line="1192"></span>One expected use case for timestamps is to store them in tables or
+<span data-line="1193"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1193"></span> instances to implement checking for timeout events for
 protocols, where precision on the order of milliseconds is sufficient
 for most protocols.
 </p>
-<p class="p indent" data-line="1176"><span data-line="1176"></span>Another expected use case is INT (Inband Network Telemetry<span data-line="1176"></span><sup id="back-fn-int" ><a href="#fn-int" title="2.http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">2</span></a></sup><span data-line="1176"></span>),
+<p class="p indent" data-line="1197"><span data-line="1197"></span>Another expected use case is INT (Inband Network Telemetry<span data-line="1197"></span><sup id="back-fn-int" ><a href="#fn-int" title="2.http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">2</span></a></sup><span data-line="1197"></span>),
 where precision on the order of microseconds or smaller is necessary
 to measure queueing latencies that differ by those amounts.  It takes
 only 0.74 microseconds to transmit a 9 Kbyte Ethernet jumbo frame on a
 100 gigabit per second link.
 </p>
-<p class="p indent" data-line="1184"><span data-line="1184"></span>For these applications, it is recommended that an implementation<span data-line="1184"></span>&#39;<span data-line="1184"></span>s
+<p class="p indent" data-line="1205"><span data-line="1205"></span>For these applications, it is recommended that an implementation<span data-line="1205"></span>&#39;<span data-line="1205"></span>s
 timestamp increments at least once every microsecond.  Incrementing
 once per clock cycle in an ASIC or FPGA implementation would be a
 reasonable choice.  The timestamp should increment at a constant rate
 over time.  For example, it should not be a simple count of clock
 cycles in a device that implements dynamic frequency
-scaling<span data-line="1190"></span><sup id="back-fn-dynamicfrequencyscaling" ><a href="#fn-dynamicfrequencyscaling" title="3.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">3</span></a></sup><span data-line="1190"></span>.
+scaling<span data-line="1211"></span><sup id="back-fn-dynamicfrequencyscaling" ><a href="#fn-dynamicfrequencyscaling" title="3.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">3</span></a></sup><span data-line="1211"></span>.
 </p>
-<p class="p indent" data-line="1194"><span data-line="1194"></span>Timestamps are of type <span data-line="1194"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Timestamp_t</code><span data-line="1194"></span>, which is type <span data-line="1194"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1194"></span> for a
-value of <span data-line="1195"></span><code class="code code1 language-p4 lang-p4 p4 colorized">W</code><span data-line="1195"></span> defined by the implementation.  Timestamps are expected
+<p class="p indent" data-line="1215"><span data-line="1215"></span>Timestamps are of type <span data-line="1215"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Timestamp_t</code><span data-line="1215"></span>, which is type <span data-line="1215"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1215"></span> for a
+value of <span data-line="1216"></span><code class="code code1 language-p4 lang-p4 p4 colorized">W</code><span data-line="1216"></span> defined by the implementation.  Timestamps are expected
 to wrap around during the normal passage of time.  It is recommended
 that an implementation pick a rate of advance and a bit width such
 that wrapping around occurs at most once every hour.  Making the wrap
 time this long (or longer) makes timestamps more useful for several
 use cases.
 </p>
-<ul class="ul list-dash compact" data-line="1202">
-<li class="li ul-li list-dash-li compact-li" data-line="1202"><span data-line="1202"></span>Checking for timeouts of protocol hello / keep-alive traffic that is
+<ul class="ul list-dash compact" data-line="1223">
+<li class="li ul-li list-dash-li compact-li" data-line="1223"><span data-line="1223"></span>Checking for timeouts of protocol hello / keep-alive traffic that is
 on the order of seconds or minutes.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1204"><span data-line="1204"></span>If timestamps are placed into packets without converting them to
+<li class="li ul-li list-dash-li compact-li" data-line="1225"><span data-line="1225"></span>If timestamps are placed into packets without converting them to
 other formats, then external data analysis systems using those
 timestamps will in many cases need to do so, e.g. to compare
 timestamps stored in packets by different PSA devices.  These
@@ -2032,51 +2052,51 @@ references to the recorded data.  The extra data required for
 accurate conversion is lower, and the likelihood of conversion
 mistakes is lower, if the timestamp values wrap less often.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1213"><span data-line="1213"></span>If timestamps are converted to other formats within a P4 program, it
+<li class="li ul-li list-dash-li compact-li" data-line="1234"><span data-line="1234"></span>If timestamps are converted to other formats within a P4 program, it
 will need access to parameters that are likely to change every wrap
-time, e.g. at least a <span data-line="1215"></span>&#8220;base value&#8221;<span data-line="1215"></span> to add some calculated value to.
+time, e.g. at least a <span data-line="1236"></span>&#8220;base value&#8221;<span data-line="1236"></span> to add some calculated value to.
 A straightforward way to do this requires the control plane to
 update these values at least once or twice per timestamp wrap time.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1218"><span data-line="1218"></span>Programs that wish to use <span data-line="1218"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1218"></span>
+<li class="li ul-li list-dash-li compact-li" data-line="1239"><span data-line="1239"></span>Programs that wish to use <span data-line="1239"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1239"></span>
 to calculate the queueing latency experienced by a packet need the
 wrap time to exceed the maximum queueing latency.
 </li></ul>
 
-<p class="p noindent" data-line="1222"><span data-line="1222"></span>Examples of the number of bits required for wrap times of at least one
+<p class="p noindent" data-line="1243"><span data-line="1243"></span>Examples of the number of bits required for wrap times of at least one
 hour:
 </p>
-<ul class="ul list-dash compact" data-line="1225">
-<li class="li ul-li list-dash-li compact-li" data-line="1225"><span data-line="1225"></span>A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
+<ul class="ul list-dash compact" data-line="1246">
+<li class="li ul-li list-dash-li compact-li" data-line="1246"><span data-line="1246"></span>A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
 to wrap.
 </li>
-<li class="li ul-li list-dash-li compact-li" data-line="1227"><span data-line="1227"></span>A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
+<li class="li ul-li list-dash-li compact-li" data-line="1248"><span data-line="1248"></span>A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
 wrap.
 </li></ul>
 
-<p class="p noindent" data-line="1230"><span data-line="1230"></span>A PSA implementation is not required to implement time
-synchronization, e.g. via PTP<span data-line="1231"></span><sup id="back-fn-ptp" ><a href="#fn-ptp" title="4.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">4</span></a></sup><span data-line="1231"></span> or NTP<span data-line="1231"></span><sup id="back-fn-ntp" ><a href="#fn-ntp" title="5.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">5</span></a></sup><span data-line="1231"></span>.
+<p class="p noindent" data-line="1251"><span data-line="1251"></span>A PSA implementation is not required to implement time
+synchronization, e.g. via PTP<span data-line="1252"></span><sup id="back-fn-ptp" ><a href="#fn-ptp" title="4.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">4</span></a></sup><span data-line="1252"></span> or NTP<span data-line="1252"></span><sup id="back-fn-ntp" ><a href="#fn-ntp" title="5.https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">5</span></a></sup><span data-line="1252"></span>.
 </p>
-<p class="p indent" data-line="1236"><span data-line="1236"></span>TBD: This text has been written assuming that it is more important for
-timestamps to be increasing at a constant rate, with no sudden <span data-line="1237"></span>&#8220;jumps&#8221;<span data-line="1237"></span>
+<p class="p indent" data-line="1257"><span data-line="1257"></span>TBD: This text has been written assuming that it is more important for
+timestamps to be increasing at a constant rate, with no sudden <span data-line="1258"></span>&#8220;jumps&#8221;<span data-line="1258"></span>
 due to time synchronization events.  Is this what people want from
 timestamps?
 </p>
-<p class="p indent" data-line="1241"><span data-line="1241"></span>TBD: Some time synchronization methods avoid sudden <span data-line="1241"></span>&#8220;jumps&#8221;<span data-line="1241"></span> by
+<p class="p indent" data-line="1262"><span data-line="1262"></span>TBD: Some time synchronization methods avoid sudden <span data-line="1262"></span>&#8220;jumps&#8221;<span data-line="1262"></span> by
 temporarily speeding up or slowing down the rate of increase by a
 small percentage, until the desired synchronization is achieved.
 (TBD: which ones?  citation?).  Would anyone mind if PSA
 implementations were allowed to do this with their timestamp values?
 </p>
-<p class="p indent" data-line="1247"><span data-line="1247"></span>The control plane API excerpt below is intended to be added as part of
-the P4Runtime API<span data-line="1248"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
+<p class="p indent" data-line="1268"><span data-line="1268"></span>The control plane API excerpt below is intended to be added as part of
+the P4Runtime API<span data-line="1269"></span><sup id="back-fn-p4runtimeapi" ><a href="#fn-p4runtimeapi" title="1.The P4Runtime API, defined as a Google Protocol
 Buffer .proto file, can be found at
 https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto
-&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="1248"></span>.
+&#8617;" class="footnote-ref localref" ><span class="footnote-label">1</span></a></sup><span data-line="1269"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1250" data-line-first="1251" style="display:block"><code data-line="1251"><span style="color:darkgreen">// The TimestampInfo and Timestamp messages should be added to the</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1271" data-line-first="1272" style="display:block"><code data-line="1272"><span style="color:darkgreen">// The TimestampInfo and Timestamp messages should be added to the</span>
 <span style="color:darkgreen">// &quot;oneof&quot; inside of message &quot;Entity&quot;.</span>
 
 <span style="color:darkgreen">// TimestampInfo is only intended to be read.  Attempts to update this</span>
@@ -2101,61 +2121,61 @@ message TimestampInfo {
 message Timestamp {
   bytes value = <span class="constant" style="color:purple">1</span>;
 }</code></pre>
-<p class="p noindent para-continued" data-line="1278"><span data-line="1278"></span>For every packet <span data-line="1278"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P</code><span data-line="1278"></span> that is processed by ingress and then egress,
+<p class="p noindent para-continued" data-line="1299"><span data-line="1299"></span>For every packet <span data-line="1299"></span><code class="code code1 language-p4 lang-p4 p4 colorized">P</code><span data-line="1299"></span> that is processed by ingress and then egress,
 with the minimum possible latency in the packet buffer, it is
-guaranteed that the <span data-line="1280"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1280"></span> value for that packet will be
-the same as, or slightly larger than, the <span data-line="1281"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1281"></span> value
-that the packet was assigned on ingress.  By <span data-line="1282"></span>&#8220;slightly larger than&#8221;<span data-line="1282"></span>,
-we mean that the difference <span data-line="1283"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1283"></span>
+guaranteed that the <span data-line="1301"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1301"></span> value for that packet will be
+the same as, or slightly larger than, the <span data-line="1302"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1302"></span> value
+that the packet was assigned on ingress.  By <span data-line="1303"></span>&#8220;slightly larger than&#8221;<span data-line="1303"></span>,
+we mean that the difference <span data-line="1304"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_timestamp - ingress_timestamp)</code><span data-line="1304"></span>
 should be a reasonably accurate estimate of this minimum possible
 latency through the packet buffer, perhaps truncated down to 0 if
 timestamps advance more slowly than this minimum latency.
 </p>
-<p class="p indent" data-line="1288"><span data-line="1288"></span>Consider two packets such that at the same time (e.g. the same clock
-cycle), one is assigned its value of <span data-line="1289"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1289"></span> near the time
+<p class="p indent" data-line="1309"><span data-line="1309"></span>Consider two packets such that at the same time (e.g. the same clock
+cycle), one is assigned its value of <span data-line="1310"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_timestamp</code><span data-line="1310"></span> near the time
 it begins parsing, and the other is assigned its value of
-<span data-line="1291"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1291"></span> near the time that it begins its egress processing.
+<span data-line="1312"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_timestamp</code><span data-line="1312"></span> near the time that it begins its egress processing.
 It is allowed that these timestamps differ by a few tens of
-nanoseconds (or by one <span data-line="1293"></span>&#8220;tick&#8221;<span data-line="1293"></span> of the timestamp, if one tick is larger
+nanoseconds (or by one <span data-line="1314"></span>&#8220;tick&#8221;<span data-line="1314"></span> of the timestamp, if one tick is larger
 than that time), due to practical difficulties in making them always
 equal.
 </p>
-<p class="p indent" data-line="1297"><span data-line="1297"></span>Recall that the binary operators <span data-line="1297"></span><code class="code code1 language-p4 lang-p4 p4 colorized">+</code><span data-line="1297"></span> and <span data-line="1297"></span><code class="code code1 language-p4 lang-p4 p4 colorized">-</code><span data-line="1297"></span> on the <span data-line="1297"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1297"></span> type in
+<p class="p indent" data-line="1318"><span data-line="1318"></span>Recall that the binary operators <span data-line="1318"></span><code class="code code1 language-p4 lang-p4 p4 colorized">+</code><span data-line="1318"></span> and <span data-line="1318"></span><code class="code code1 language-p4 lang-p4 p4 colorized">-</code><span data-line="1318"></span> on the <span data-line="1318"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1318"></span> type in
 P4 are defined to perform wrap-around unsigned arithmetic.  Thus even
 if a timestamp value wraps around from its maximum value back to 0,
 you can always calculate the number of ticks that have elapsed from
-timestamp <span data-line="1301"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAdCAYAAAAkXAW5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABaklEQVRIx8WX0W2EMAxAnysGQB2BbsAKpRswAyPcDoxAR+iNcGxQlQ24EdrbwP0JkpWSQBEESxZB8TkPx+fEqCpHK1ACNyCfnU8AcAHUabEJArgCP0C1wjYHCqAGOvc7NVr+GwKojIPLgm3tLfgFNB7IJoh2yYEXhdIP+RqIjLhU00BVh5ihqj6AgQ3ytDBfumfPgRKEEJHKvN5OgQDezLg/C2J1PuwCISKjiKhVkw/4cyLS7gmRmdAXXkJOC727gjXJN3DfHUJV79axiNh86JJsx5n5EINIUh+CECnrQywSyepDDCJpPoQgkubDHwgRKc3r9RQIuxWnRcIk5cMVsLnTtUsViT4A0Hjlfdezw8+Hz4B9C7weGQn7hcNMFFrg44i/bRZb2NuGWlVfNqyRm/Fz6ILq9xjqTs7JQeeu7/nKTmvS2vibdHRtQGXs8lDHNLqr+rjUb3hXft2gjTgHu4iI5DNtQNROVR+/AFw+4vvcN5QAAAAASUVORK5CYII=" alt="$t1$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1301"></span> until timestamp <span data-line="1301"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAdCAYAAADPa766AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB4UlEQVRIx82X4XGjQAyFP3muAE9KIB24hZAOXIPTAT2QDnwlhBJIOkjcAZQQ3IHyI/LN3oZlBdgz2Zkd2LW0PCPpPSGqym8Ym1scKiKliDQiMoiI2hxsbz/qpKpXm8AWaAEFjsABKO36YfsKDED5n6/j8GbMMWHb2QO3id8PARgF9i4g9m8uTpUDcJcCEdjVEZidB0gdOyTsdjmbKHwhkA8PkH9xzdgdLXyH3BsJ7EMwRc7hYtg6ciNMxFx44lypNlMlGCzbTMXeBfdby62p8R6t76d45DG4f515cH9NQisDrjllznkCTsAZeHbYF9H6PBZjz6xXEl9cwqWoKiJSRCh3Zgzw1zjiMj6BXlXPKySgC57Xq+r9Kv5Y+DZKN6F5+WMhkFBzmkmK9/LHAhD71Nmr9GWBMg8hrYdzs5I/5ow3A9MDD9l+5Bb5EWhLukW4dX4AlUuvEnKuwOGKyXnM2ibQK1BciS/qjF0B7OLNS785TMXbAaLwSoHlT5XKj2aij2idZVrPILh9Kj+qhNOQo3wT0HoGtyhQ/ElI82lEqGrgZUriRaQ1nmijxirVCjwahfRjcdUf3xzfIekcXbwumN1Y1TRhudmrO04R0Ui1zZ1titAqi/Ng18oR62EFkFpV+QImDmrl3dzOQAAAAABJRU5ErkJggg==" alt="$t2$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1301"></span> using the expression <span data-line="1301"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAArCAYAAAB8fLoNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFUUlEQVR42u1d7ZHaSBB9TRGAjCMwm4GWi+BEBmwIhgzYcgRXOAPsDIwzYB2BV8oAOYIzyqDvBy3cEvoYfR4rzauagoXZ0WzrqftNz8cSM6MIROQAWDDzCyxGCSLyALwyc1RUb1LSyBzAL2vO0eM3gF9E5NYikxDJB/CP9UrjBjMHAD4C8IsIRVlhTkKbDyBg5idrTgvhxQ7AGsCHrJCX55kOAGbCxl5iMhEdiOhMRCzlLJ+t7G1s1dYuER3FYVT1UM8AQgA/8iokijCPAazS37VdADgAjnK9vVzbk1dfPmcAZwBe1/0ZegGwVTad12zDld/f3XyXcXPPAPwGHT6Y3nwAJyGNk/P9Wv3xvRD8zslQxbYOgDmAlTyo55Qt3Qb9OGYRMl1pJ5W8mhfxVGe3BoY55REpo0+NjfDGiVTFtquUzXx5MM8tkSnuyyGTTMJiBnBqcJGdSWeVq3QNn7CEYUZKpp0pEcRm7o3naIlMKqok2tECfCOv+wb6zksNJ/OwARABWJQJQRk1fFEfuZK2GBtMbQtmjpg5YOaww/48y+unGwGuWOs0YGvM+qMhq2NxXRbq0tppO0LPZGTbkjbObcqFuK2EZ5J0uQMgLEuZl6TcYxxLqs/Ue0c/dTl4Tf38MMLpDFPb9olA+rfWeaY4xDXJdC/V+5eK5Ahh0ZZt+0TclydNpjhF7vcR04W8geimzwb10xopGhmZqti2T/xM98+pGkdTmsek7FocydROXbwRbdSZbTvQTAnuTGuyfpnyFq7ccMjI65CacW4axvSUSjjwiee+bdtkAjgiokhItZiqjocVGgl1fSLSMX3fpisW8amNO+iJ5z5t2xJCIfzjRI2MmuiQLmP6Tr3/fofGHKte0t4RAOYT9dT/btCg28VIQ1YMXNse6XKYTmzbIiJNplkTz9RVDkQy41/jfAYzL8fGojvOL2V5ptlExFMTz9RVDuSH9C0E8LfNL929Z0Jjz9RFTCeivbj3AMBj3ax8TttrtQCvq3IYiV4CgH/jFNNUPJLToLFWYzoRbXGZi3vpKLS9yhB71qHbbysk3bteSmCq3js1brxeXH5ogUgrGb19YeZNR0PvAH+mj+5ZL7Vq2w7xPo5sExXe6jypXlsxXcTmAZfplU1BvXnZlpuhpQTu3DNdNfcEfxJkdUJdHIaivLUzon/KiDSX0PBZFq0X4RnlqwyGJL4b2bYHzLRnClvwTC95Yhe3k7RZKQDfkEgAsMA4Vhk0tm3Pnimc4jKxiKodS4WanznVdgbDel800rPBNR01yhssWrRtH5hrMsVrixwicioMwzX5ggyD7AB8KxrSEtFRvMwxlaDLu95SRPTQPVNj2/4PfT1OmTkgIu1avxs2UkSSNS7bkh4K6hyUK6+igcYQ4hrZ1iAk1ZU1RR70dZLq/F8VhtihIt5THIZEFG4APBZ0YovkshJYMrVjW32jVVllJFL3ksD1VL2qg7BFfE+YOUrv9DzW3CV6wmXh1QkGi/1xuyGwt4V2b3AHbiXb5mwPMy3rGptCr/eEmDkemp9kGPoOFkMQ8U7K20Vl9apOWxHRSTTTIzMH11NQRAx7AJb2CB0Lw9zgSULcA5A8BWWvY7SFRQluNu0mzmdSbutdmzP1FoP0TGcJjVdZNMlh2ydrLouS9ISD1PldNyfHiXZaIOd0MAsL8UohMydSFJOcWOgguZDfwiIm0i7LK2WSSRJmTwDWBlMcFuMikotL7muTNZVDeeeAq8MwH0cwF2ZRTiQHl2O8v+WtN6OiQ+Ulfe/VnAeyGBaZfNFJuakjMvgPBVsA7w3XGlkMk0hGHPgPrsvrttJk/5cAAAAASUVORK5CYII=" alt="$(t2 - t1)$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1301"></span>
-(if more than <span data-line="1302"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1302"></span> ticks have elapsed, there will be aliasing of the
-result).  For example, if timestamps were <span data-line="1303"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAfCAYAAADqfF/MAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEeklEQVR42u1c4XXaMBD+Li8DuN2gZAOzAmwA3SBkA3iZIM9sYLJBzQawQQsb2N0geIPrj54bodqWZGNiE917+gHyGVv+7vTdJxliZnjz1tSIaATgAGDOzHu1746IIiJii3YqO7GlLxPRrOLiwqa+3nphMYAAwEjvuAPwAmAMYA4g0/qPAJ4ATOWYM2PmTPHdlPzwWvrGzLwtuzJmPsr5VwBypSsX/2mVr7cPz1ozAJPKA5j5XwMQAWClBWp/XRPkqr6Rra9yjoX4Jq6+vl23SbY6Kc97oR9zp2EtbYpiyWJtbQzgyMxznxd6b5EArNJ0cL1pn0ctfjxwTLEBgO8yjXrr93QYyrPauIAr1z5/dQRHI1+xVwCbC2VAb91aAuDRdJApcwWO4GjkS0QTACEzrzqKtICIFh4TFxnLJYDMpsjSwZU1yT6SJkOpLptkrliq0q7sO4CYiE4ivQQeJo01rWdb6nKnkfK8YfZJBByZK19TImHf1aAw80aRWpYATkQUy2B5c0sCLyU4scpcuj1YgGOhgOPNBZiSQZ47zloFwLbMPBZNbS+yR0pEiWReb2ZNa8TMa1ufMnDltlObgCNSwOEqZbxKJFyNxDPznpmnEjhbADMAByI6CPfzVv2snCr5MnC5ZB8dHLmhgiwj8euPGClmzkRP+4K/KwEhgB0RpZ78//esYgA/ZDXFaZB15XWHd9X1UKPQhgBS7bsZzlX6sMY/BTDpmeK8xLvqfAKwvMB5l9qYdNl2HYxLKGMRlPTFqFHo7w3T4siCxDvrZNcg8Q0yWbGWuZbMtQIQEVEk31sTWc2OMv12XaHmkhg60bQa3bsBjVyzBphUoFyNpFnNmtRoAOtnM/zdTlLcTzyE677g/S/rsqEpc5kIfR2JL1NobXSyq5P4DirM3a1XmJeo5MvAlRpIeVQ1RZR891Amtn4Uib9ghTlRKsxb3WuWtE0CpmrxjHcJOCYO4AgseNqQQFZWYSZSYd6MjNFE02qic+lT26sFOEp1MiHxxz6R+Jbk/wXvuwJGQw6aS2haZXZvkbkCAcfCssLLJKJV32L+Ht9AVI+kklwo9xvJEtOtaFp7AJnrGqx6PDPnpL+gIYOn8q4nAD8A/AbwzVSSEtEO71tfM2Z+IKIEwM+hca0SvvgsFWQhMaxMwSbT5dMVpAhIZbdueZ8p2u3jK2x9X8YriEgn5ZGDznM2LSokfj5QUE0kUxUBs5WxsFWrpwogr2FtA3gO+x0tsQLEtaazZVX6hapVHaAp8QZtJNb8e6XEO2pc6WfVuCzHKIWjQl9knyKNhxJ9LkrxmUI9JBIv3LLYH16o9k3V+U9tVeB6U8C1dQSHvjPicQCAKgqOhQKq1ZA5Yp/BlSlzqSs41Gpz1eeIr6j8Hv17ko0ssAVX3gIcuVIprnsKKr3y24ucsPcYMQZjIIR/qlWVT0SUA/hlIvRL1Gy3sXxZMuwhAZ3gfEtR0sfrHAiBN7UFfYY/IpGISxRxdyOZyr/G1kIkNfXff5JxmUgK95VfCzONm97/B2blaF1rfZyNAAAAAElFTkSuQmCC" alt="$W &gt;= 4$" class="math-inline math-render-png math" style="vertical-align:-0.0436em;height:0.8065em"><span data-line="1303"></span> bits in size,
-<span data-line="1304"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANsAAAAkCAYAAAAAR0+MAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAGNElEQVR42u1d/3HiSgz+lKEAkqvgoAPIq+CgA2dSQaADXMIb0wFJBRfoAK6CC+4Avw7AHej9YTlZNv6xJgYC1jfjObDX67Cy9pO00h4xMxSXDyKaARjlXWdmstpPAAQFXXaZObLu8QDMM9rGzHyrUijGjQ7BdYCZxwC6AFbG6YWcu81oP5VrU+P0CkAfwK2taHJP2t9CToUAhqpoqmxNVLjIYp7fzBwxc1zQfmmcCpk5zGtv3BNJ2z4zr3Tk3dDSIbg6mIzUcWi/rdKeiNoAPGFAhTJbo2EqT9eh/Yvxue3QPgAwK2I/hSpbE5ntroSlPGkfuzAbEfUADMTfU1QEaTTyCoVKxIYP1i8wB9diDq5TRbOjltY9awBPzBw2eGyXMomtxN+NAGyZOZYxvZOx7AEYArh7lwEzH/2QBy8BtE/xvEs7AAwksLEDwHLs5Jx3QH+btI+CNjMAE/m8TJ9b0H4EYK6yeh9bl2MHoJfee3OCmWAiM+egzKxp4CzZlplyKb6WL7PhWGZMD8CciHZENKjQdVzkg2WYg5FxrZPDgj6AJ5VaJXO+v2cFOGhyOuMOHNq2hUI9mTl3lqb3lMk+zZLrPMYXNjHHz3Psd27c0864vjblCWBitB/k9DdSmTkx2yZPTq2SmXcgipOagqsSZ9tc4wllNgwco1xNY7V0rH4VrIM9E1FXlAHCcn0Hn8kO/4fGc0cAImt9LM4L/wsLdpj5WaX2Dl904d54t2MAq6xkgBRl62xD43PZ4mWafRCbDySiQGWTacZ5YmaUhdD/NZQtDdWXrXFtspTNMAf7BcppT4xzAA8qtU8TYWhOYnWE/gdW50UPjyX7IFJRlGIsM+G9KEDhuAIwWaWX5VdZyFuozlsjM2XWtfztVZOjj3WiTNl6jqymqIaBMMgMwH9lCic+lgmvghn5IycoUqic8jeNhQkVx1Q2K/q11KGqFXeW2VYWaXyzvncrKFvHMD8fCtgzq32gmSKnYbYq/pqiGt4KlKMOf2JPeSQo8lZiDqZ/w51MtBoUqRmtOvw1xUE+21xY5NlhfG0fzYVtYnwsxQQAfjqwYccwbzUocgxmI6INEbF5GP4a7GsaYfwy80RSnnLLzC4+0T/WdxezPjLMVN/BHDSva1DEAUQ0IKI06YDl37VYErnMNrRmzx4+qnifsb9+tq3b7FGUwgyIRI41ZJHIMXQ0B1OZxlKIqsjHDyNH0keSLxpLlHgMYEZEPoCH0gwSUbRasj6wn0XSO9KqvpkBcexjeYa8ycpZOIYMXdun2SqeZoo4ZZCMHMZ+b/xbV+KvhUhK9Y+dqRLj9JFZ02RfVJDHDMDfCu1fRd4LJa7Sdy0oshaY2ZeMqg6AP0T0k5njzBIbo0RjxczDL9q1O0MJ+uoLVBo7MwXuy7JQnFR2AT4yf6bM7N9kOX0VHXHFcYTVxkcVdaiKdnEwdWfyHo20oOtr3wN/xCKIAPzS4bg42NsADm6uwF+7RlabpZFEuCUrX8NvHmUsMdV9zM/4E3tZARLNhzzvSzdBEhlsmo/2hmSZ6VgFxtuvuEWSW/oiQQ/fYTlla33vtjI6TDHXV/8sAZEASVZJo9a6xIr6zr/5xSCiGRG9VrU4Wnkm5CUxmwR1xjhNkeryGLtLyW+YQyJXBe06SKqv1cQ/Laq+WzZDb1o5wZE4ry6NiGbfcNYdorzspE5Ma1a0jpg4U4f0LR/Jwqoq2+kDHmmW1dSB1ex81lUes63ynFi47bJ7ahPEx4XWXRlbyk0d8yTvoUsy50CIJKnhydF8NF2yiJnDmxx/7W9OBwG0mLBurMVH8x0Vs6esdhbMKlpPj5Y1suezdSwttgUdAHhVX6FWVks3+Vw6bFXXSc183XriLNZTRETPSNY/+yVy9QxmW6QpcK0iBbPMR4+Zuwf8ne0Cp7HJijY3zPYqe0Kqop1P4cZSjrZEktEfZ8g1DXQByfLNe11gy9LchVDlA4CVmC2B+Al9hxeoZ83EjzYVC0NG+FiHiJpWei9raYcGdFTZzou+KNNOmG5pBE8eDbn6n6LWOeUqGySlMRvIFtWOG7QeUrIyamCZxg6Hl/gEWuryLbeM34n/PUHOpru1/sca9i5ReYxlttMNZRRNwf8U40pYh7r5zwAAAABJRU5ErkJggg==" alt="$t1=2^{W}-5$" class="math-inline math-render-png math" style="vertical-align:-0.0844em;height:0.9366em"><span data-line="1304"></span>, and <span data-line="1304"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG4AAAAdCAYAAABL7VmUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADp0lEQVRo3u1a4XGbUAz+5PMAbkYgG5B0guAN3G4QZwPnMkEPb4AzQYI3wN0gZgOcDYo3UH9E9ORnHjwMtJeC7jhjeMA7fU/SJz0RM2OUfytENAPwBMAD4AO4AvAG4AAgZuad+cykp4kERBQTUU5ELEcu1xYjVCe6CgG8A5gBeAEwB3AHIAHwHUBCRBkRBScPMnNnh3w8AcAAIgBLAIH87uU6A8gBBF1++zMeopMYwMxy31M6YwDLP/ccXh67KhpAJpOxTWRpTGQxYNBC0ZdXM25l6MyrBU6spXhg5QBwZgPNmLCeiD9Q4HKlg6hinG/oK3IBLnRRsHq57+hO9UT2AwTN1AE31VcdOQlULEwrxj0AOAK4FYZkFWY+AtioSz4ReUMiJKKDS8f+cmGVvvzuHACeCSF5rwNP4qCWITLNYrEfAXyrYJ3mok4rgTPoZ1IziSt1PtOWapE34//10FBj5g0zf5FjWzHUBC6ps7i5Ot81BOIwZmidibbGXZGMTzqIb4XZp2L2a4fx5io6jvhYZal09FBcnIpbzEqUqd2mWRdbM/OjAvYA4KbBZL6Wmf8oZ3qPFWg3ouePe8xcBEDPICWhnG8kR9Os5tCEGZVMSC+UAzNfjzCd6MeX2uUCwBrAjzN9t8nfLsxhgq4T8JLqQp9H0mP5Kze+FdsqK9MO4ltTCdX5tqP3pwC2wmj7lGOPbv1OsfOCmT8ByIgoBXB/oisL+r2sLjH9Xlfuf1hhycuKzJOW+VvTPafnwkKYeT5GM6eqyb26FBXbYpOW+VsT+Skr6CBuYRQ38LZGuvRsA67z+EZEkTDVVGjtmLc1k1ddmSKi1bRFfdIVtJUkkbvRPV4smekVJyX5QyFxB6AthEVuRtBOeQQR7aUlYenwiFlCvJ3a3GRbixOSE5tVlpJxHj42X9OW33r4C+kAhA2vW5K0xCAcO10VcQ1+mn4W/SJ5BUWNHGhs0SsROoyNULO77tgG8CkScJzvaNe2cOC85SOx5W9xxQsSx9wjbFAxWAwoN/NKgJs5LO6TpiHbSlhV9En4Dg1DYcMtfG9giXUmuozg1u6RKWxys+TlGSUk0zeHAF6rYhERJRJIk7M+wPKtnbnaXRiSPEr839fFdtGjxub+JMYZJhyUuMjMocvrkpiRDbSctarjAYJJXuYJbcqPlCuLUNEr2UF1PhlwLTJQuwKR1HJ9ua4JV3ZmTBYQCh+cuTC+ku2IJkc4FpOxUAZS6DIXQyolbr8B6kqNkxMG3dsAAAAASUVORK5CYII=" alt="$t2=3$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1304"></span>, then <span data-line="1304"></span><img src="data:image/png;base64,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" alt="$(t2-t1)=8$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1304"></span>.
+timestamp <span data-line="1322"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAdCAYAAAAkXAW5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABaklEQVRIx8WX0W2EMAxAnysGQB2BbsAKpRswAyPcDoxAR+iNcGxQlQ24EdrbwP0JkpWSQBEESxZB8TkPx+fEqCpHK1ACNyCfnU8AcAHUabEJArgCP0C1wjYHCqAGOvc7NVr+GwKojIPLgm3tLfgFNB7IJoh2yYEXhdIP+RqIjLhU00BVh5ihqj6AgQ3ytDBfumfPgRKEEJHKvN5OgQDezLg/C2J1PuwCISKjiKhVkw/4cyLS7gmRmdAXXkJOC727gjXJN3DfHUJV79axiNh86JJsx5n5EINIUh+CECnrQywSyepDDCJpPoQgkubDHwgRKc3r9RQIuxWnRcIk5cMVsLnTtUsViT4A0Hjlfdezw8+Hz4B9C7weGQn7hcNMFFrg44i/bRZb2NuGWlVfNqyRm/Fz6ILq9xjqTs7JQeeu7/nKTmvS2vibdHRtQGXs8lDHNLqr+rjUb3hXft2gjTgHu4iI5DNtQNROVR+/AFw+4vvcN5QAAAAASUVORK5CYII=" alt="$t1$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1322"></span> until timestamp <span data-line="1322"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAdCAYAAADPa766AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB4UlEQVRIx82X4XGjQAyFP3muAE9KIB24hZAOXIPTAT2QDnwlhBJIOkjcAZQQ3IHyI/LN3oZlBdgz2Zkd2LW0PCPpPSGqym8Ym1scKiKliDQiMoiI2hxsbz/qpKpXm8AWaAEFjsABKO36YfsKDED5n6/j8GbMMWHb2QO3id8PARgF9i4g9m8uTpUDcJcCEdjVEZidB0gdOyTsdjmbKHwhkA8PkH9xzdgdLXyH3BsJ7EMwRc7hYtg6ciNMxFx44lypNlMlGCzbTMXeBfdby62p8R6t76d45DG4f515cH9NQisDrjllznkCTsAZeHbYF9H6PBZjz6xXEl9cwqWoKiJSRCh3Zgzw1zjiMj6BXlXPKySgC57Xq+r9Kv5Y+DZKN6F5+WMhkFBzmkmK9/LHAhD71Nmr9GWBMg8hrYdzs5I/5ow3A9MDD9l+5Bb5EWhLukW4dX4AlUuvEnKuwOGKyXnM2ibQK1BciS/qjF0B7OLNS785TMXbAaLwSoHlT5XKj2aij2idZVrPILh9Kj+qhNOQo3wT0HoGtyhQ/ElI82lEqGrgZUriRaQ1nmijxirVCjwahfRjcdUf3xzfIekcXbwumN1Y1TRhudmrO04R0Ui1zZ1titAqi/Ng18oR62EFkFpV+QImDmrl3dzOQAAAAABJRU5ErkJggg==" alt="$t2$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1322"></span> using the expression <span data-line="1322"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAArCAYAAAB8fLoNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFUUlEQVR42u1d7ZHaSBB9TRGAjCMwm4GWi+BEBmwIhgzYcgRXOAPsDIwzYB2BV8oAOYIzyqDvBy3cEvoYfR4rzauagoXZ0WzrqftNz8cSM6MIROQAWDDzCyxGCSLyALwyc1RUb1LSyBzAL2vO0eM3gF9E5NYikxDJB/CP9UrjBjMHAD4C8IsIRVlhTkKbDyBg5idrTgvhxQ7AGsCHrJCX55kOAGbCxl5iMhEdiOhMRCzlLJ+t7G1s1dYuER3FYVT1UM8AQgA/8iokijCPAazS37VdADgAjnK9vVzbk1dfPmcAZwBe1/0ZegGwVTad12zDld/f3XyXcXPPAPwGHT6Y3nwAJyGNk/P9Wv3xvRD8zslQxbYOgDmAlTyo55Qt3Qb9OGYRMl1pJ5W8mhfxVGe3BoY55REpo0+NjfDGiVTFtquUzXx5MM8tkSnuyyGTTMJiBnBqcJGdSWeVq3QNn7CEYUZKpp0pEcRm7o3naIlMKqok2tECfCOv+wb6zksNJ/OwARABWJQJQRk1fFEfuZK2GBtMbQtmjpg5YOaww/48y+unGwGuWOs0YGvM+qMhq2NxXRbq0tppO0LPZGTbkjbObcqFuK2EZ5J0uQMgLEuZl6TcYxxLqs/Ue0c/dTl4Tf38MMLpDFPb9olA+rfWeaY4xDXJdC/V+5eK5Ahh0ZZt+0TclydNpjhF7vcR04W8geimzwb10xopGhmZqti2T/xM98+pGkdTmsek7FocydROXbwRbdSZbTvQTAnuTGuyfpnyFq7ccMjI65CacW4axvSUSjjwiee+bdtkAjgiokhItZiqjocVGgl1fSLSMX3fpisW8amNO+iJ5z5t2xJCIfzjRI2MmuiQLmP6Tr3/fofGHKte0t4RAOYT9dT/btCg28VIQ1YMXNse6XKYTmzbIiJNplkTz9RVDkQy41/jfAYzL8fGojvOL2V5ptlExFMTz9RVDuSH9C0E8LfNL929Z0Jjz9RFTCeivbj3AMBj3ax8TttrtQCvq3IYiV4CgH/jFNNUPJLToLFWYzoRbXGZi3vpKLS9yhB71qHbbysk3bteSmCq3js1brxeXH5ogUgrGb19YeZNR0PvAH+mj+5ZL7Vq2w7xPo5sExXe6jypXlsxXcTmAZfplU1BvXnZlpuhpQTu3DNdNfcEfxJkdUJdHIaivLUzon/KiDSX0PBZFq0X4RnlqwyGJL4b2bYHzLRnClvwTC95Yhe3k7RZKQDfkEgAsMA4Vhk0tm3Pnimc4jKxiKodS4WanznVdgbDel800rPBNR01yhssWrRtH5hrMsVrixwicioMwzX5ggyD7AB8KxrSEtFRvMwxlaDLu95SRPTQPVNj2/4PfT1OmTkgIu1avxs2UkSSNS7bkh4K6hyUK6+igcYQ4hrZ1iAk1ZU1RR70dZLq/F8VhtihIt5THIZEFG4APBZ0YovkshJYMrVjW32jVVllJFL3ksD1VL2qg7BFfE+YOUrv9DzW3CV6wmXh1QkGi/1xuyGwt4V2b3AHbiXb5mwPMy3rGptCr/eEmDkemp9kGPoOFkMQ8U7K20Vl9apOWxHRSTTTIzMH11NQRAx7AJb2CB0Lw9zgSULcA5A8BWWvY7SFRQluNu0mzmdSbutdmzP1FoP0TGcJjVdZNMlh2ydrLouS9ISD1PldNyfHiXZaIOd0MAsL8UohMydSFJOcWOgguZDfwiIm0i7LK2WSSRJmTwDWBlMcFuMikotL7muTNZVDeeeAq8MwH0cwF2ZRTiQHl2O8v+WtN6OiQ+Ulfe/VnAeyGBaZfNFJuakjMvgPBVsA7w3XGlkMk0hGHPgPrsvrttJk/5cAAAAASUVORK5CYII=" alt="$(t2 - t1)$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1322"></span>
+(if more than <span data-line="1323"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1323"></span> ticks have elapsed, there will be aliasing of the
+result).  For example, if timestamps were <span data-line="1324"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAAAfCAYAAADqfF/MAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEeklEQVR42u1c4XXaMBD+Li8DuN2gZAOzAmwA3SBkA3iZIM9sYLJBzQawQQsb2N0geIPrj54bodqWZGNiE917+gHyGVv+7vTdJxliZnjz1tSIaATgAGDOzHu1746IIiJii3YqO7GlLxPRrOLiwqa+3nphMYAAwEjvuAPwAmAMYA4g0/qPAJ4ATOWYM2PmTPHdlPzwWvrGzLwtuzJmPsr5VwBypSsX/2mVr7cPz1ozAJPKA5j5XwMQAWClBWp/XRPkqr6Rra9yjoX4Jq6+vl23SbY6Kc97oR9zp2EtbYpiyWJtbQzgyMxznxd6b5EArNJ0cL1pn0ctfjxwTLEBgO8yjXrr93QYyrPauIAr1z5/dQRHI1+xVwCbC2VAb91aAuDRdJApcwWO4GjkS0QTACEzrzqKtICIFh4TFxnLJYDMpsjSwZU1yT6SJkOpLptkrliq0q7sO4CYiE4ivQQeJo01rWdb6nKnkfK8YfZJBByZK19TImHf1aAw80aRWpYATkQUy2B5c0sCLyU4scpcuj1YgGOhgOPNBZiSQZ47zloFwLbMPBZNbS+yR0pEiWReb2ZNa8TMa1ufMnDltlObgCNSwOEqZbxKJFyNxDPznpmnEjhbADMAByI6CPfzVv2snCr5MnC5ZB8dHLmhgiwj8euPGClmzkRP+4K/KwEhgB0RpZ78//esYgA/ZDXFaZB15XWHd9X1UKPQhgBS7bsZzlX6sMY/BTDpmeK8xLvqfAKwvMB5l9qYdNl2HYxLKGMRlPTFqFHo7w3T4siCxDvrZNcg8Q0yWbGWuZbMtQIQEVEk31sTWc2OMv12XaHmkhg60bQa3bsBjVyzBphUoFyNpFnNmtRoAOtnM/zdTlLcTzyE677g/S/rsqEpc5kIfR2JL1NobXSyq5P4DirM3a1XmJeo5MvAlRpIeVQ1RZR891Amtn4Uib9ghTlRKsxb3WuWtE0CpmrxjHcJOCYO4AgseNqQQFZWYSZSYd6MjNFE02qic+lT26sFOEp1MiHxxz6R+Jbk/wXvuwJGQw6aS2haZXZvkbkCAcfCssLLJKJV32L+Ht9AVI+kklwo9xvJEtOtaFp7AJnrGqx6PDPnpL+gIYOn8q4nAD8A/AbwzVSSEtEO71tfM2Z+IKIEwM+hca0SvvgsFWQhMaxMwSbT5dMVpAhIZbdueZ8p2u3jK2x9X8YriEgn5ZGDznM2LSokfj5QUE0kUxUBs5WxsFWrpwogr2FtA3gO+x0tsQLEtaazZVX6hapVHaAp8QZtJNb8e6XEO2pc6WfVuCzHKIWjQl9knyKNhxJ9LkrxmUI9JBIv3LLYH16o9k3V+U9tVeB6U8C1dQSHvjPicQCAKgqOhQKq1ZA5Yp/BlSlzqSs41Gpz1eeIr6j8Hv17ko0ssAVX3gIcuVIprnsKKr3y24ucsPcYMQZjIIR/qlWVT0SUA/hlIvRL1Gy3sXxZMuwhAZ3gfEtR0sfrHAiBN7UFfYY/IpGISxRxdyOZyr/G1kIkNfXff5JxmUgK95VfCzONm97/B2blaF1rfZyNAAAAAElFTkSuQmCC" alt="$W &gt;= 4$" class="math-inline math-render-png math" style="vertical-align:-0.0436em;height:0.8065em"><span data-line="1324"></span> bits in size,
+<span data-line="1325"></span><img src="data:image/png;base64,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" alt="$t1=2^{W}-5$" class="math-inline math-render-png math" style="vertical-align:-0.0844em;height:0.9366em"><span data-line="1325"></span>, and <span data-line="1325"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG4AAAAdCAYAAABL7VmUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADp0lEQVRo3u1a4XGbUAz+5PMAbkYgG5B0guAN3G4QZwPnMkEPb4AzQYI3wN0gZgOcDYo3UH9E9ORnHjwMtJeC7jhjeMA7fU/SJz0RM2OUfytENAPwBMAD4AO4AvAG4AAgZuad+cykp4kERBQTUU5ELEcu1xYjVCe6CgG8A5gBeAEwB3AHIAHwHUBCRBkRBScPMnNnh3w8AcAAIgBLAIH87uU6A8gBBF1++zMeopMYwMxy31M6YwDLP/ccXh67KhpAJpOxTWRpTGQxYNBC0ZdXM25l6MyrBU6spXhg5QBwZgPNmLCeiD9Q4HKlg6hinG/oK3IBLnRRsHq57+hO9UT2AwTN1AE31VcdOQlULEwrxj0AOAK4FYZkFWY+AtioSz4ReUMiJKKDS8f+cmGVvvzuHACeCSF5rwNP4qCWITLNYrEfAXyrYJ3mok4rgTPoZ1IziSt1PtOWapE34//10FBj5g0zf5FjWzHUBC6ps7i5Ot81BOIwZmidibbGXZGMTzqIb4XZp2L2a4fx5io6jvhYZal09FBcnIpbzEqUqd2mWRdbM/OjAvYA4KbBZL6Wmf8oZ3qPFWg3ouePe8xcBEDPICWhnG8kR9Os5tCEGZVMSC+UAzNfjzCd6MeX2uUCwBrAjzN9t8nfLsxhgq4T8JLqQp9H0mP5Kze+FdsqK9MO4ltTCdX5tqP3pwC2wmj7lGOPbv1OsfOCmT8ByIgoBXB/oisL+r2sLjH9Xlfuf1hhycuKzJOW+VvTPafnwkKYeT5GM6eqyb26FBXbYpOW+VsT+Skr6CBuYRQ38LZGuvRsA67z+EZEkTDVVGjtmLc1k1ddmSKi1bRFfdIVtJUkkbvRPV4smekVJyX5QyFxB6AthEVuRtBOeQQR7aUlYenwiFlCvJ3a3GRbixOSE5tVlpJxHj42X9OW33r4C+kAhA2vW5K0xCAcO10VcQ1+mn4W/SJ5BUWNHGhs0SsROoyNULO77tgG8CkScJzvaNe2cOC85SOx5W9xxQsSx9wjbFAxWAwoN/NKgJs5LO6TpiHbSlhV9En4Dg1DYcMtfG9giXUmuozg1u6RKWxys+TlGSUk0zeHAF6rYhERJRJIk7M+wPKtnbnaXRiSPEr839fFdtGjxub+JMYZJhyUuMjMocvrkpiRDbSctarjAYJJXuYJbcqPlCuLUNEr2UF1PhlwLTJQuwKR1HJ9ua4JV3ZmTBYQCh+cuTC+ku2IJkc4FpOxUAZS6DIXQyolbr8B6kqNkxMG3dsAAAAASUVORK5CYII=" alt="$t2=3$" class="math-inline math-render-png math" style="height:0.7545em"><span data-line="1325"></span>, then <span data-line="1325"></span><img src="data:image/png;base64,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" alt="$(t2-t1)=8$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="1325"></span>.
 </p>
-<p class="p indent" data-line="1306"><span data-line="1306"></span>It is sometimes useful to minimize storage costs by discarding some
+<p class="p indent" data-line="1327"><span data-line="1327"></span>It is sometimes useful to minimize storage costs by discarding some
 bits of a timestamp value in a P4 program for use cases that do not
 need the full wrap time or precision.  For example, an application
 that only needs to detect protocol timeouts with an accuracy of 1
 second can discard the least significant bits of a timestamp that
 change more often than every 1 second.
 </p>
-<p class="p indent" data-line="1313"><span data-line="1313"></span>Another example is an application that needed full precision of the
+<p class="p indent" data-line="1334"><span data-line="1334"></span>Another example is an application that needed full precision of the
 least significant bits of a timestamp, but the combination of the
 control plane and P4 program are designed to examine all entries of a
-<span data-line="1316"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1316"></span> array where these partial timestamps are stored more often
+<span data-line="1337"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1337"></span> array where these partial timestamps are stored more often
 than once every 5 seconds, to prevent wrapping.  In that case, the P4
 program could discard the most significant bits of the timestamp so
 that the remaining bits wrap every 8 seconds, and store those partial
-timestamps in the <span data-line="1320"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1320"></span> instance.
-</p><h2 id="sec-programmable-blocks" class="h1" data-line="1323" data-heading-depth="1" style="display:block"><span data-line="1323"></span><span class="heading-before"><span class="heading-label">4</span>.&#8194;</span><span data-line="1323"></span>Programmable blocks</h2>
-<p class="p noindent" data-line="1325"><span data-line="1325"></span>The following declarations provide a template for the programmable
+timestamps in the <span data-line="1341"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Register</code><span data-line="1341"></span> instance.
+</p><h2 id="sec-programmable-blocks" class="h1" data-line="1344" data-heading-depth="1" style="display:block"><span data-line="1344"></span><span class="heading-before"><span class="heading-label">4</span>.&#8194;</span><span data-line="1344"></span>Programmable blocks</h2>
+<p class="p noindent" data-line="1346"><span data-line="1346"></span>The following declarations provide a template for the programmable
 blocks in the PSA. The P4 programmer is responsible for
 implementing controls that match these interfaces and instantiate
 them in a package definition.
 </p>
-<p class="p indent" data-line="1330"><span data-line="1330"></span>It uses the same user-defined metadata type <span data-line="1330"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IM</code><span data-line="1330"></span> and header type <span data-line="1330"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IH</code><span data-line="1330"></span>
+<p class="p indent" data-line="1351"><span data-line="1351"></span>It uses the same user-defined metadata type <span data-line="1351"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IM</code><span data-line="1351"></span> and header type <span data-line="1351"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IH</code><span data-line="1351"></span>
 for all ingress parsers and control blocks.  The egress parser and
 control blocks can use the same types for those things, or different
 types, as the P4 program author wishes.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1335" data-line-first="1336;psa.p4:588" style="display:block"><code data-line="1336;psa.p4:588"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1356" data-line-first="1357;psa.p4:586" style="display:block"><code data-line="1357;psa.p4:586"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
@@ -2192,23 +2212,23 @@ types, as the P4 program author wishes.
 <div class="footnotes madoko">
 <hr >
 
-<div id="fn-p4runtimeapi" class="footnote" data-line="1096" style="line-adjust:0">
-<p class="p noindent" data-line="1096"><span data-line="1096"></span><span class="footnote-before"><sup><span class="footnote-label">1</span>.</sup></span><span data-line="1096"></span>The P4Runtime API, defined as a Google Protocol
-Buffer <span data-line="1097"></span><code class="code code1 language-p4 lang-p4 p4 colorized">.proto</code><span data-line="1097"></span> file, can be found at
-<span data-line="1098"></span><a href="https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto" class="texturl monospace">https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto</a><span data-line="1098"></span>
-<span data-line="1099"></span><span data-line="1099"></span><a href="#back-fn-p4runtimeapi" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-int" class="footnote" data-line="1182" style="line-adjust:0">
-<p class="p noindent" data-line="1182"><span data-line="1182"></span><span class="footnote-before"><sup><span class="footnote-label">2</span>.</sup></span><span data-line="1182"></span><a href="http://p4.org/p4/inband-network-telemetry" class="texturl monospace">http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry</a><span data-line="1182"></span>
-<span data-line="1183"></span><span data-line="1183"></span><a href="#back-fn-int" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-dynamicfrequencyscaling" class="footnote" data-line="1192" style="line-adjust:0">
-<p class="p noindent" data-line="1192"><span data-line="1192"></span><span class="footnote-before"><sup><span class="footnote-label">3</span>.</sup></span><span data-line="1192"></span><a href="https://en.wikipedia.org/wiki/Dynamic_frequency_scaling" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling</a><span data-line="1192"></span>
-<span data-line="1193"></span><span data-line="1193"></span><a href="#back-fn-dynamicfrequencyscaling" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-ptp" class="footnote" data-line="1233" style="line-adjust:0">
-<p class="p noindent" data-line="1233"><span data-line="1233"></span><span class="footnote-before"><sup><span class="footnote-label">4</span>.</sup></span><span data-line="1233"></span><a href="https://en.wikipedia.org/wiki/Precision_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol</a><span data-line="1233"></span>
-<span data-line="1234"></span><span data-line="1234"></span><a href="#back-fn-ptp" class="footnote-backref localref">&#8617;</a></p></div>
-<div id="fn-ntp" class="footnote" data-line="1234" style="line-adjust:0">
-<p class="p noindent" data-line="1234"><span data-line="1234"></span><span class="footnote-before"><sup><span class="footnote-label">5</span>.</sup></span><span data-line="1234"></span><a href="https://en.wikipedia.org/wiki/Network_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol</a><span data-line="1234"></span>
-<span data-line="1235"></span><span data-line="1235"></span><a href="#back-fn-ntp" class="footnote-backref localref">&#8617;</a></p></div></div></div>
+<div id="fn-p4runtimeapi" class="footnote" data-line="1117" style="line-adjust:0">
+<p class="p noindent" data-line="1117"><span data-line="1117"></span><span class="footnote-before"><sup><span class="footnote-label">1</span>.</sup></span><span data-line="1117"></span>The P4Runtime API, defined as a Google Protocol
+Buffer <span data-line="1118"></span><code class="code code1 language-p4 lang-p4 p4 colorized">.proto</code><span data-line="1118"></span> file, can be found at
+<span data-line="1119"></span><a href="https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto" class="texturl monospace">https://&#8203;github.&#8203;com/&#8203;p4lang/&#8203;PI/&#8203;blob/&#8203;master/&#8203;proto/&#8203;p4/&#8203;p4runtime.&#8203;proto</a><span data-line="1119"></span>
+<span data-line="1120"></span><span data-line="1120"></span><a href="#back-fn-p4runtimeapi" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-int" class="footnote" data-line="1203" style="line-adjust:0">
+<p class="p noindent" data-line="1203"><span data-line="1203"></span><span class="footnote-before"><sup><span class="footnote-label">2</span>.</sup></span><span data-line="1203"></span><a href="http://p4.org/p4/inband-network-telemetry" class="texturl monospace">http://&#8203;p4.&#8203;org/&#8203;p4/&#8203;inband-&#8203;network-&#8203;telemetry</a><span data-line="1203"></span>
+<span data-line="1204"></span><span data-line="1204"></span><a href="#back-fn-int" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-dynamicfrequencyscaling" class="footnote" data-line="1213" style="line-adjust:0">
+<p class="p noindent" data-line="1213"><span data-line="1213"></span><span class="footnote-before"><sup><span class="footnote-label">3</span>.</sup></span><span data-line="1213"></span><a href="https://en.wikipedia.org/wiki/Dynamic_frequency_scaling" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Dynamic_&#8203;frequency_&#8203;scaling</a><span data-line="1213"></span>
+<span data-line="1214"></span><span data-line="1214"></span><a href="#back-fn-dynamicfrequencyscaling" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-ptp" class="footnote" data-line="1254" style="line-adjust:0">
+<p class="p noindent" data-line="1254"><span data-line="1254"></span><span class="footnote-before"><sup><span class="footnote-label">4</span>.</sup></span><span data-line="1254"></span><a href="https://en.wikipedia.org/wiki/Precision_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Precision_&#8203;Time_&#8203;Protocol</a><span data-line="1254"></span>
+<span data-line="1255"></span><span data-line="1255"></span><a href="#back-fn-ptp" class="footnote-backref localref">&#8617;</a></p></div>
+<div id="fn-ntp" class="footnote" data-line="1255" style="line-adjust:0">
+<p class="p noindent" data-line="1255"><span data-line="1255"></span><span class="footnote-before"><sup><span class="footnote-label">5</span>.</sup></span><span data-line="1255"></span><a href="https://en.wikipedia.org/wiki/Network_Time_Protocol" class="texturl monospace">https://&#8203;en.&#8203;wikipedia.&#8203;org/&#8203;wiki/&#8203;Network_&#8203;Time_&#8203;Protocol</a><span data-line="1255"></span>
+<span data-line="1256"></span><span data-line="1256"></span><a href="#back-fn-ntp" class="footnote-backref localref">&#8617;</a></p></div></div></div>
 </body>
 
 </html>
