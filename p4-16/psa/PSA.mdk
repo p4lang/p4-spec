@@ -570,6 +570,14 @@ programs may choose to handle packets with parser errors in other ways
 than shown in this example -- it is up to the P4 program author to
 choose and write the desired behavior.
 
+Neither P4~16~ nor the PSA provide any special mechanisms to record
+the location within a packet that a parser error occurred.  A P4
+program author can choose to record such location information
+explicitly.  For example, one may define metadata fields specifically
+for that purpose, e.g. to hold an encoded value representing the last
+parser state reached, or the number of bytes extracted so far.  Then,
+assign values to those fields within parser state code.
+
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Parse_Error_Example]
 ```
@@ -585,6 +593,19 @@ block that precedes it.
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
 ```
+
+TBD: It would be good if the Checksum extern can handle a case of
+doing a 'delta' correction of a TCP header checksum when an IPv4 or
+IPv6 source or destination address is changed, e.g. due to
+implementing a feature like NAT.  This should be possible without
+having to redo the TCP checksum over the entire TCP payload, by
+assuming that the incoming TCP header checksum was correct.  With the
+proposed `remove` and `update` methods, this should be possible by
+calling `remove` on the old source/destination addresses, and then
+`update` on the new source/destination addresses.  It would also be
+good to have a short example program demonstrating one way to do this,
+ideally with a one-packet test case to verify it works when it is
+implemented.
 
 
 ## Counters

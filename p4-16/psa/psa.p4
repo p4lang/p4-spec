@@ -37,7 +37,6 @@ typedef bit<10> PortId_t;
 typedef bit<10> MulticastGroup_t;
 typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
-typedef bit<16> ParserErrorLocation_t;
 typedef bit<48> Timestamp_t;
 typedef error   ParserError_t;
 
@@ -53,7 +52,6 @@ typedef bit<unspecified> PortId_t;
 typedef bit<unspecified> MulticastGroup_t;
 typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
-typedef bit<unspecified> ParserErrorLocation_t;
 typedef bit<unspecified> Timestamp_t;
 
 const   PortId_t         PORT_CPU = unspecified;
