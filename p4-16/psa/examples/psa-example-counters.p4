@@ -136,12 +136,10 @@ control ingress(inout headers hdr,
             default_route_drop;
         }
         default_action = default_route_drop;
-#ifdef P4C_HANDLES_DIRECT_COUNTERS_TABLE_PROPERTY
         psa_direct_counters = {
             // table ipv4_da_lpm owns this DirectCounter instance
-            per_prefix_pkt_byte_count;
-        }
-#endif
+            per_prefix_pkt_byte_count
+        };
     }
     apply {
         port_bytes_in.count(istd.ingress_port);
