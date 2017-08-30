@@ -990,7 +990,7 @@ programs may choose to handle packets with parser errors in other ways
 than shown in this example<span data-line="570"></span> <span data-line="570"></span>&#8211;<span data-line="570"></span> it is up to the P4 program author to
 choose and write the desired behavior.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="573" data-line-first="574;examples/psa-example-parser-checksum.p4:194" style="display:block"><code data-line="574;examples/psa-example-parser-checksum.p4:194"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="573" data-line-first="574;examples/psa-example-parser-checksum.p4:192" style="display:block"><code data-line="574;examples/psa-example-parser-checksum.p4:192"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
 <span style="color:darkgreen">// incorrect IPv4 header checksums.</span>
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span> {
     UnhandledIPv4Options,
@@ -1096,9 +1096,7 @@ choose and write the desired behavior.
             <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.BadIPv4HeaderChecksum : set_error_idx(<span class="constant" style="color:purple">7</span>);
             <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.UnhandledIPv4Options  : set_error_idx(<span class="constant" style="color:purple">8</span>);
         }
-<span style="color:navy">#</span><span style="color:navy">ifdef</span><span style="color:maroon"> P4C_HANDLES_DIRECT_COUNTERS_TABLE_PROPERTY</span>
-        psa_direct_counters = { parser_error_counts; }
-<span style="color:navy">#</span><span style="color:navy">endif</span>
+        psa_direct_counters = { parser_error_counts };
     }
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (istd.parser_error != <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.NoError) {
@@ -1119,7 +1117,7 @@ checksum will be correct regardless of what changes might have been
 made to the IPv4 header fields in the ingress (or egress) control
 block that precedes it.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="585" data-line-first="586;examples/psa-example-parser-checksum.p4:239" style="display:block"><code data-line="586;examples/psa-example-parser-checksum.p4:239"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> computeChecksum(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata meta) {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="585" data-line-first="586;examples/psa-example-parser-checksum.p4:237" style="display:block"><code data-line="586;examples/psa-example-parser-checksum.p4:237"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> computeChecksum(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata meta) {
     Checksum&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(HashAlgorithm.ones_complement16) ck;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         <span style="color:darkgreen">// TBD: Update the code below for checking the IPv4 header</span>
@@ -1427,12 +1425,10 @@ updating of <span data-line="800"></span><code class="code code1 language-p4 lan
             default_route_drop;
         }
         default_action = default_route_drop;
-<span style="color:navy">#</span><span style="color:navy">ifdef</span><span style="color:maroon"> P4C_HANDLES_DIRECT_COUNTERS_TABLE_PROPERTY</span>
         psa_direct_counters = {
             <span style="color:darkgreen">// table ipv4_da_lpm owns this DirectCounter instance</span>
-            per_prefix_pkt_byte_count;
-        }
-<span style="color:navy">#</span><span style="color:navy">endif</span>
+            per_prefix_pkt_byte_count
+        };
     }
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         port_bytes_in.count(istd.ingress_port);
