@@ -120,6 +120,82 @@ Additional supported match_kind types
 
 # PSA Externs
 
+## Restrictions on where externs may be used { #sec-extern-restrictions }
+
+All instantiations in a P4~16~ program occur at compile time, and can
+be arranged in a tree structure we will call the instantiation tree.
+The root of the tree `T` represents the top level of the program.  Its
+children are the node for the package `PSA_Switch` described in
+[#sec-programmable-blocks], and any externs instantiated at the top
+level of the program.  The children of the `PSA_Switch` node are the
+parsers and controls passed as parameters to the `PSA_Switch`
+instantiation.  If any of those parsers or controls instantiate other
+parsers, controls, and/or externs, the instantiation tree contains
+child nodes for them, continuing until the instantiation tree is
+complete.
+
+For every instance whose node is a descendant of the `Ingress` node in
+this tree, call it an `Ingress` instance.  Similarly for the other
+parameters of package `PSA_Switch`.  All other instances are top level
+instances.
+
+A PSA implementation is allowed to reject programs that instantiate
+externs, or attempt to call their methods, from anywhere other than
+the places mentioned in the table below.
+
+For example, `Counter` being restricted to "Ingress, Egress" means
+that every `Counter` instance must be instantiated within either the
+Ingress control block or the Egress control block, or be a descendant
+of one of those nodes in the instantiation tree.  If a `Counter`
+instance is instantiated in Ingress, for example, then it cannot be
+referenced, and thus its methods cannot be called, from any
+non-Ingress control block.
+
+|-------------------|----------------------------------------------|
+| Extern type       | Where it may be instantiated and called from |
++:------------------+:---------------------------------------------+
+| `ActionProfile`   | Ingress, Egress |
+| `ActionSelector`  | Ingress, Egress |
+| `Checksum`        | IngressParser, EgressParser, Deparser |
+| `Counter`         | Ingress, Egress |
+| `Digest`          | Ingress, Egress |
+| `Hash`            | Ingress, Egress |
+| `Meter`           | Ingress, Egress |
+| `DirectCounter`   | Ingress, Egress |
+| `DirectMeter`     | Ingress, Egress |
+| `Random`          | Ingress, Egress |
+| `Register`        | Ingress, Egress |
+| `ValueSet`        | IngressParser, EgressParser |
+|-------------------|----------------------------------------------|
+
+PSA implementations need not support instantiating these externs at
+the top level.  PSA implementations are allowed to accept programs
+that use these externs in other places, but they need not.  Thus P4
+programmers wishing to maximize the portability of their programs
+should restrict their use of these externs to the places indicated in
+the table.
+
+`emit` method calls for the type `packet_out` are restricted to be
+within deparser control blocks in PSA, because those are the only
+places where an instance of type `packet_out` is visible.  Similarly
+all methods for type `packet_in`, e.g. `extract` and `advance`, are
+restricted to be within parsers in PSA programs.  P4~16~ restricts all
+`verify` method calls to be within parsers, whether they are for the
+PSA architecture or not.
+
+TBD: The rationale for these restrictions is: (1) it is expected that
+the highest performance PSA implementations will not be able to update
+the same extern instance from both ingress and egress, nor from more
+than one of the top level parsers or controls instantiated by the
+`PSA_Switch` package.  (2) In a multi-pipeline device, there are
+effectively multiple instantiations of the ingress pipeline and of the
+egress pipeline.  The primary motivation to create a multi-pipeline
+device is the practical difficulty in allowing the same stateful
+object (e.g. table, counter, etc.) to be accessed at a packet rate
+higher than that of a single pipeline.  Thus each stateful object
+should be accessed from only a single pipeline on such a device.
+
+
 ## Packet Replication Engine { #sec-pre }
 
 The ```PacketReplicationEngine``` extern (abbreviated PRE) represents
@@ -1341,7 +1417,7 @@ that the remaining bits wrap every 8 seconds, and store those partial
 timestamps in the `Register` instance.
 
 
-# Programmable blocks
+# Programmable blocks { #sec-programmable-blocks }
 
 The following declarations provide a template for the programmable
 blocks in the PSA. The P4 programmer is responsible for
