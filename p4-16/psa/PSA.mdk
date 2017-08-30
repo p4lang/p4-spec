@@ -126,12 +126,13 @@ All instantiations in a P4~16~ program occur at compile time, and can
 be arranged in a tree structure we will call the instantiation tree.
 The root of the tree `T` represents the top level of the program.  Its
 children are the node for the package `PSA_Switch` described in
-[#sec-programmable-blocks], plus any externs instantiated at the top
+[#sec-programmable-blocks], and any externs instantiated at the top
 level of the program.  The children of the `PSA_Switch` node are the
 parsers and controls passed as parameters to the `PSA_Switch`
 instantiation.  If any of those parsers or controls instantiate other
-parsers, controls, and/or externs, create child nodes for them,
-continuing until the instantiation tree is complete.
+parsers, controls, and/or externs, the instantiation tree contains
+child nodes for them, continuing until the instantiation tree is
+complete.
 
 For every instance whose node is a descendant of the `Ingress` node in
 this tree, call it an `Ingress` instance.  Similarly for the other
@@ -147,8 +148,8 @@ that every `Counter` instance must be instantiated within either the
 Ingress control block or the Egress control block, or be a descendant
 of one of those nodes in the instantiation tree.  If a `Counter`
 instance is instantiated in Ingress, for example, then it cannot be
-named, and thus its methods cannot be called, from any non-Ingress
-control block.
+referenced, and thus its methods cannot be called, from any
+non-Ingress control block.
 
 |-------------------|----------------------------------------------|
 | Extern type       | Where it may be instantiated and called from |
