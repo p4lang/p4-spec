@@ -35,6 +35,7 @@ limitations under the License.
 
 typedef bit<10> PortId_t;
 typedef bit<10> MulticastGroup_t;
+typedef bit<3>  ClassOfService_t;
 typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<48> Timestamp_t;
@@ -50,6 +51,7 @@ const   PortId_t         PORT_CPU = 255;
 // BEGIN:Type_defns
 typedef bit<unspecified> PortId_t;
 typedef bit<unspecified> MulticastGroup_t;
+typedef bit<unspecified> ClassOfService_t;
 typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> Timestamp_t;
@@ -95,6 +97,7 @@ struct psa_ingress_input_metadata_t {
 struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
+  ClassOfService_t         class_of_service; // 0
   bool                     clone;            // false
   PortId_t                 clone_port;       // undefined
   bool                     drop;             // true
@@ -106,6 +109,7 @@ struct psa_ingress_output_metadata_t {
 }
 // END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
+  ClassOfService_t         class_of_service;
   PortId_t                 egress_port;
   InstanceType_t           instance_type;
   EgressInstance_t         instance;       /// instance coming from PRE

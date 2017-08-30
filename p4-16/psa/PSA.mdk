@@ -280,9 +280,12 @@ the contents of several metadata fields in the struct
     if (ostd.multicast_group != 0) {
         Make 0 or more copies of the packet according to the control
             plane configuration of multicast group ostd.multicast_group.
+            Every copy will have the same value of ostd.class_of_service
         return;   // Do not continue below.
     }
-    enqueue one packet for output port ostd.egress_port
+    enqueue one packet for output port ostd.egress_port with class of
+        service specified by ostd.class_of_service
+
 ```
 
 TBD: Need text defining, for each possible copy, exactly what the
@@ -298,6 +301,41 @@ some simpler common cases).  Ideally it should be possible for the
 copy going to the control CPU to have a software-defined header
 (defined in the P4 program) that is different than any headers on the
 packet copies going to the Egress control block.
+
+A PSA implementation may choose to implement multiple class-of-service
+queues for each output port, but it may also choose to implement only
+1 queue for each output port.  The Ingress control block may choose to
+assign a value to the `ostd.class_of_service` field to change the
+packet's class of service to a value other than the default of 0.
+
+PSA only specifies how the Ingress control block can choose among
+multiple class-of-service queues for an output port, if more than one
+exists.  It does not mandate a scheduling policy among these queues.
+Something at least as flexible as weighted fair queuing, with an
+optional strict high priority queue, is recommended.
+
+The control plane API excerpt below is intended to be added as part of
+the P4Runtime API[^P4RuntimeAPI].
+
+```
+// The ClassOfServiceInfo message should be added to the "oneof"
+// inside of message "Entity".
+
+// ClassOfServiceInfo is only intended to be read.  Attempts to update
+// this entity have no effect, and should return an error status that
+// the entity is read only.
+
+message ClassOfServiceInfo {
+  // The number of class of service queues per output port that are
+  // available in this PSA implementation.
+  uint32 class_of_service_queues_per_output_port = 1;
+  // The list of values of type ClassOfService_t that are supported by
+  // this PSA implementation.  It is recommended that they be a
+  // contiguous range from 0 up to
+  // (class_of_service_queues_per_output_port - 1).
+  repeated uint32 class_of_service_id = 2;
+}
+```
 
 
 ### Behavior of packets after Egress processing is complete { #sec-after-egress }
