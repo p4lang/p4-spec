@@ -112,11 +112,6 @@ Additional supported match_kind types
 [INCLUDE=psa.p4:Match_kinds]
 ```
 
-## Cloning methods { #sec-cloning-methods }
-
-```
-[INCLUDE=psa.p4:Cloning_methods]
-```
 
 # PSA Externs
 
@@ -235,11 +230,14 @@ the contents of several metadata fields in the struct
             This affects any copies made below.
     }
     if (ostd.clone) {
-        create a copy of the packet to the clone target.
-        // TBD: Need a way to specify one (or more?) among multiple
-        // clone targets, if more than one such target exists.  Also
-        // to specify if anything is different about the cloned packet
-        // vs. other copies that might be made below.
+        create a copy of the packet and send it to the packet buffer,
+            after which it will start egress processing with
+            egress_port=ostd.clone_port (which might be PORT_CPU to
+            send the packet to the control CPU).
+        The contents of the packet will be the same as the packet as
+           it began ingress parsing, prepended with any headers
+           created by clone.emit() calls in the ingress deparser apply
+           block.
     }
     // Continue below, regardless of whether a clone was created or not.
     if (ostd.drop) {
