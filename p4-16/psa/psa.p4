@@ -61,18 +61,6 @@ const   PortId_t         PORT_CPU = unspecified;
 // const   InstanceType_t   INSTANCE_NORMAL = unspecified;
 #endif
 
-// BEGIN:Cloning_methods
-enum CloneType_t {
-    ORIGINAL,   /// cloned packet contains the original header
-    MODIFIED    /// cloned packet contains the modified header
-}
-enum CloneMethod_t {
-    INGRESS,    /// cloned packet is sent to ingress packet buffer
-    EGRESS,     /// cloned packet is sent to queueing mechanism
-    CPU         /// TBD, should copy-to-cpu be part of CloneMethod_t?
-}
-// END:Cloning_methods
-
 // BEGIN:Metadata_types
 enum InstanceType_t {
     NORMAL,     /// Packet is "normal", i.e. none of the other cases below
@@ -108,8 +96,6 @@ struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
   bool                     clone;            // false
-  CloneType_t              clone_type;       // undefined
-  CloneMethod_t            clone_method;     // undefined
   PortId_t                 clone_port;       // undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
@@ -131,9 +117,6 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
-  CloneType_t              clone_type;    // undefined
-  CloneMethod_t            clone_method;  // undefined
-  PortId_t                 clone_port;    // undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
   bool                     truncate;      // false
