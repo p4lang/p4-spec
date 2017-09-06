@@ -480,9 +480,9 @@ extern ActionProfile {
   /*
   @ControlPlaneAPI
   {
-     entry_handle add_member    (action_ref, action_data);
-     void         delete_member (entry_handle);
-     entry_handle modify_member (entry_handle, action_ref, action_data);
+     void add_member	(action_profile_id, member_id, action_id, action_params);
+     void delete_member (action_profile_id, member_id);
+     void modify_member (action_profile_id, member_id, action_id, action_params);
   }
   */
 }
@@ -492,20 +492,19 @@ extern ActionProfile {
 extern ActionSelector {
   /// Construct an action selector of 'size' entries
   /// @param algo hash algorithm to select a member in a group
-  /// @param size number of entries in the action selector
+  /// @param size number of member entries in the action selector
   /// @param outputWidth size of the key
   ActionSelector(HashAlgorithm algo, bit<32> size, bit<32> outputWidth);
 
   /*
   @ControlPlaneAPI
   {
-     entry_handle add_member        (action_ref, action_data);
-     void         delete_member     (entry_handle);
-     entry_handle modify_member     (entry_handle, action_ref, action_data);
-     group_handle create_group      ();
-     void         delete_group      (group_handle);
-     void         add_to_group      (group_handle, entry_handle);
-     void         delete_from_group (group_handle, entry_handle);
+     void add_member	(action_profile_id, member_id, action_id, action_params);
+     void delete_member (action_profile_id, member_id);
+     void modify_member (action_profile_id, member_id, action_id, action_params);
+     void add_group 	(action_profile_id, group_id, member_data);
+     void delete_group  (action_profile_id, group_id);
+     void modify_group  (action_profile_id, group_id, member_data);
   }
   */
 }

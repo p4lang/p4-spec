@@ -1130,36 +1130,165 @@ return whatever distribution is supported by the target?
 [INCLUDE=psa.p4:Random_extern]
 ```
 
+
 ## Action Profile
 
 Action profiles are used as table implementation attributes.
 
-Action profiles implement a mechanism to populate table entries
-with actions and action data. The only data plane operation
-required is to instantiate this extern. When the control plane adds
-entries (members) into the extern, they are essentially populating
-the corresponding table entries.
+Action profiles provide a mechanism to populate table entries
+with action specifications that have been defined outside the table entry
+specification. An action profile extern can be instantiated as
+a resource in the P4 program. A table that uses this action profile
+must specify its implementation attribute as the action profile 
+instance.
+
+An action profile instance contains member entries consisting of action
+specifications. Member entries are indexed by controller-assigned integer ids.
+Action profile members may only specify action types defined in the `actions`
+attribute of the implemented table. An action profile instance may be shared
+across multiple tables only if all such tables define the same set of actions
+in their `actions` attribute.
+
+When a packet matches a table entry at runtime, the controller-assigned
+id of the action profile member is read. This id is used as an index to look-up
+the action specification in the action profile extern. The action specification
+is applied to the packet.
+
+The control plane can add, modify or delete member entries for a
+given action profile instance. When adding a member entry, the control
+plane must assign an integer id to the member entry. The controller-assigned
+id must be unique in the scope of the action profile instance. An
+action profile instance may hold at most `size` entries as defined in the
+constructor parameter. Table entries must specify the action using the
+controller-assigned id for the desired member entry. Directly specifying
+the action as part of the table entry is not allowed for tables with an
+action profile implementation.
 
 ```
 [INCLUDE=psa.p4:ActionProfile_extern]
 ```
+
+### Action Profile Example
+The P4 control block `Ctrl` in the example below instantiates an
+action profile `ap` that can contain at most 128 member entries. Table
+`indirect` uses this instance by specifying the implementation attribute.
+The control plane can add member entries to `ap`, where each member can
+specify either a `foo` or `NoAction` action. Table entries for `indirect`
+table must specify the action using the controller assigned member id.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+    action foo() { meta.foo = 1; }
+
+    action_profile ap(32w128);
+
+    table indirect {
+        key = {hdr.ipv4.dst_address: exact}
+        actions = { foo; NoAction; }
+        const default_action = NoAction();
+        implementation = ap;
+    }
+
+    apply {
+        indirect.apply();
+    }
+};
+```
+
 
 ## Action Selector
 
 Action selectors are used as table implementation attributes.
 
 Action selectors implement another mechanism to populate table
-entries with actions and action data. They are similar to action
-profiles, with additional support to define groups of
-entries. Action selectors require a hash algorithm to select
-members in a group. The only data plane operation required is to
-instantiate this extern. When the control plane adds entries
-(members) into the extern, they are essentially populating the
-corresponding table entries.
+entries with action specifications that have been defined outside the
+table entry. They are more powerful than action profiles because they also
+provide the ability to dynamically select the action specification to apply
+upon maching a table entry. An action selector extern can be instantiated as
+a resource in the P4 program, similar to action profiles. Furthermore,
+a table that uses this action selector must specify its implementation attribute
+as the action selector instance.
+
+An action selector instance contains member entries consisting of action
+specifications. Additionally, it may contain group entries that are defined
+as a collection of member entries. Both action selector member and group entries
+are indexed by controller-assigned integer ids. Member and group entries share
+the id space. Action selector members may only specify action types defined
+in the `actions` attribute of the implemented table. An action selector instance
+may be shared across multiple tables only if all such tables define the same
+set of actions in their `actions` attribute.
+
+When a packet matches a table entry at runtime, the controller-assigned
+id of the action profile member or group is read. The id is used to look-up
+the member or group entry in the action selector. If the id belongs to a member,
+then the corresponding action specification is applied. However, if the id
+belongs to a group, a dynamic selection algorithm is used to
+determine the id of the member from the group, and the action specification
+corresponding to that member is applied. The dynamic selection algorithm is passed
+as a parameter to the action selector constructor.
+
+The dynamic selection algorithm requires a field list as an input for generating
+the index to a member entry in a group. This field list is created by using the
+match type `selector` when defining the table match key. The match fields of type
+`selector` are composed into a field list in the order they are specified. The
+composed field list is passed as an input to the action selector implementation.
+It is illegal to define a `selector` type match field if the table does not have
+an action selector implemenation.  
+
+The control plane can add, modify or delete member and group entries for a
+given action selector instance. When adding a member or group entry, the control
+plane must assign an integer id to the entry. The controller-assigned
+id must be unique in the scope of the action selector instance. An
+action selector instance may hold at most `size` member entries as defined in the
+constructor parameter. There is no limit of the number of groups. Table entries 
+must specify the action using the controller-assigned id for the desired member
+or group entry. Directly specifying the action as part of the table entry is not
+allowed for tables with an action selector implementation.
 
 ```
 [INCLUDE=psa.p4:ActionSelector_extern]
 ```
+### Action Selector Example
+The P4 control block `Ctrl` in the example below instantiates an
+action selector `as` that can contain at most 128 member entries. The
+action selector uses a crc16 algorithm with output width of 10 bits
+to select a member entry within a group.
+
+Table `indirect_with_selection` uses this instance by specifying the implementation
+attribute as shown. The control plane can add member and group entries to `as`.
+Each member can specify either a `foo` or `NoAction` action. When programming the
+table entries, the control plane *does not* include the fields of match type
+`selector` in the match key. The selector match fields are instead used to compose a
+list that is passed to the action selector instance. In the example below, the list
+{hdr.ipv4.src_address, hdr.ipv4.protocol} is passed as input to the crc16 hash
+algorithm used by action selector `as`. Table entries must specify the table action
+using the controller-assigned member or group id.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+    action foo() { meta.foo = 1; }
+
+    action_selector as(HashAlgorithm.crc16, 32w128, 32w10);
+
+    table indirect_with_selection {
+        key = {
+		hdr.ipv4.dst_address: exact,
+		hdr.ipv4.src_address: selector,
+		hdr.ipv4.protocol: selector,
+	}
+        actions = { foo; NoAction; }
+        const default_action = NoAction();
+        implementation = as;
+    }
+
+    apply {
+        indirect_with_selection.apply();
+    }
+};
+```
+
 
 ## Packet Generation
 
