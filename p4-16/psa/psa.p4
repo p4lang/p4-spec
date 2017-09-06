@@ -27,13 +27,18 @@ limitations under the License.
  */
 #define PSA_CORE_TYPES
 #ifdef PSA_CORE_TYPES
+/* The bit widths shown below are only examples.  Each PSA
+ * implementation is free to use its own custom width in bits for
+ * those types that are bit<W> for some W.  The only reason that there
+ * are example numerical widths in this file is so that we can easily
+ * compile this file, and example PSA P4 programs that include it. */
+
 typedef bit<10> PortId_t;
 typedef bit<10> MulticastGroup_t;
 typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
-typedef bit<8> ParserStatus_t;
-typedef bit<16> ParserErrorLocation_t;
-typedef bit<32> entry_key;           /// for DirectCounters
+typedef bit<48> Timestamp_t;
+typedef error   ParserError_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -47,9 +52,7 @@ typedef bit<unspecified> PortId_t;
 typedef bit<unspecified> MulticastGroup_t;
 typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
-typedef bit<unspecified> ParserStatus_t;
-typedef bit<unspecified> ParserErrorLocation_t;
-typedef bit<unspecified> entry_key;           /// for DirectCounters
+typedef bit<unspecified> Timestamp_t;
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
@@ -58,31 +61,85 @@ const   PortId_t         PORT_CPU = unspecified;
 // const   InstanceType_t   INSTANCE_NORMAL = unspecified;
 #endif
 
-// BEGIN:Metadata_types
-enum InstanceType_t { NORMAL_INSTANCE, CLONE_INSTANCE }
+// BEGIN:Cloning_methods
+enum CloneType_t {
+    ORIGINAL,   /// cloned packet contains the original header
+    MODIFIED    /// cloned packet contains the modified header
+}
+enum CloneMethod_t {
+    INGRESS,    /// cloned packet is sent to ingress packet buffer
+    EGRESS,     /// cloned packet is sent to queueing mechanism
+    CPU         /// TBD, should copy-to-cpu be part of CloneMethod_t?
+}
+// END:Cloning_methods
 
-struct psa_parser_input_metadata_t {
+// BEGIN:Metadata_types
+enum InstanceType_t {
+    NORMAL,     /// Packet is "normal", i.e. none of the other cases below
+    CLONE,      /// Packet was created via a clone operation
+    RESUBMIT,   /// Packet arrival is the result of a resubmit operation
+    RECIRCULATE /// Packet arrival is the result of a recirculate operation
+}
+
+struct psa_ingress_parser_input_metadata_t {
   PortId_t                 ingress_port;
   InstanceType_t           instance_type;
 }
 
-struct psa_ingress_input_metadata_t {
-  PortId_t                 ingress_port;
-  InstanceType_t           instance_type;  /// Clone or Normal
-  /// set by the runtime in the parser, these are not under programmer control
-  ParserStatus_t           parser_status;
-  ParserErrorLocation_t    parser_error_location;
-}
-
-struct psa_ingress_output_metadata_t {
+struct psa_egress_parser_input_metadata_t {
   PortId_t                 egress_port;
+  InstanceType_t           instance_type;
 }
 
+struct psa_parser_output_metadata_t {
+  ParserError_t            parser_error;
+}
+
+struct psa_ingress_input_metadata_t {
+  // All of these values are initialized by the architecture before
+  // the Ingress control block begins executing.
+  PortId_t                 ingress_port;
+  InstanceType_t           instance_type;
+  Timestamp_t              ingress_timestamp;
+  ParserError_t            parser_error;
+}
+// BEGIN:Metadata_ingress_output
+struct psa_ingress_output_metadata_t {
+  // The comment after each field specifies its initial value when the
+  // Ingress control block begins executing.
+  bool                     clone;            // false
+  CloneType_t              clone_type;       // undefined
+  CloneMethod_t            clone_method;     // undefined
+  PortId_t                 clone_port;       // undefined
+  bool                     drop;             // true
+  bool                     resubmit;         // false
+  MulticastGroup_t         multicast_group;  // 0
+  PortId_t                 egress_port;      // undefined
+  bool                     truncate;         // false
+  PacketLength_t           truncate_payload_bytes;  // undefined
+}
+// END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
-  InstanceType_t           instance_type;  /// Clone or Normal
+  InstanceType_t           instance_type;
   EgressInstance_t         instance;       /// instance coming from PRE
+  Timestamp_t              egress_timestamp;
+  ParserError_t            parser_error;
 }
+// BEGIN:Metadata_egress_output
+struct psa_egress_output_metadata_t {
+  // The comment after each field specifies its initial value when the
+  // Egress control block begins executing.
+  bool                     clone;         // false
+  CloneType_t              clone_type;    // undefined
+  CloneMethod_t            clone_method;  // undefined
+  PortId_t                 clone_port;    // undefined
+  bool                     drop;          // false
+  bool                     recirculate;   // false
+  bool                     truncate;      // false
+  PacketLength_t           truncate_payload_bytes;  // undefined
+}
+// END:Metadata_egress_output
 // END:Metadata_types
 
 // BEGIN:Match_kinds
@@ -92,28 +149,121 @@ match_kind {
 }
 // END:Match_kinds
 
-// BEGIN:Cloning_methods
-enum CloneMethod_t {
-  /// Clone method         Packet source             Insertion point
-  Ingress2Ingress,  /// original ingress,            Ingress parser
-  Ingress2Egress,    /// post parse original ingress,  Buffering queue
-  Egress2Ingress,   /// post deparse in egress,      Ingress parser
-  Egress2Egress     /// inout to deparser in egress, Buffering queue
+// BEGIN:Action_send_to_port
+/// Modify ingress output metadata to cause one packet to be sent to
+/// egress processing, and then to the output port egress_port, unless
+/// it is dropped during egress processing.
+
+/// This action does not change whether a clone or resubmit operation
+/// will occur.
+
+/// The one copy it causes to be sent to egress processing will have
+/// its struct of type psa_egress_input_metadata_t filled in as
+/// follows:
+
+/// egress_port - equal to the egress_port parameter of this action
+/// instance_type - InstanceType_t.NORMAL
+/// instance - undefined
+/// egress_timestamp - the time the packet begins egress processing
+
+action send_to_port(inout psa_ingress_output_metadata_t meta,
+                    in PortId_t egress_port)
+{
+    meta.drop = false;
+    meta.multicast_group = 0;
+    meta.egress_port = egress_port;
 }
-// END:Cloning_methods
+// END:Action_send_to_port
+
+// BEGIN:Action_multicast
+/// Modify ingress output metadata to cause 0 or more copies of the
+/// packet to be sent to egress processing.
+
+/// This action does not change whether a clone or resubmit operation
+/// will occur.
+
+/// The control plane must program each multicast_group to create the
+/// desired copies of the packet.  For a particular multicast group,
+/// the control plane specifies a list of 0 or more copy
+/// specifications:
+
+/// (egress_port[0], instance[0]),
+/// (egress_port[1], instance[1]),
+/// ...,
+/// (egress_port[N-1], instance[N-1])
+
+/// Copy number i sent to egress processing will have its struct of
+/// type psa_egress_input_metadata_t filled in as follows:
+
+/// egress_port - equal to the egress_port[i]
+/// instance_type - InstanceType_t.NORMAL
+/// instance - instance[i]
+/// egress_timestamp - the time the packet begins egress processing
+
+action multicast(inout psa_ingress_output_metadata_t meta,
+                 in MulticastGroup_t multicast_group)
+{
+    meta.drop = false;
+    meta.multicast_group = multicast_group;
+}
+// END:Action_multicast
+
+// BEGIN:Action_ingress_drop
+/// Modify ingress output metadata to cause no packet to be sent for
+/// normal egress processing.
+
+/// This action does not change whether a clone will occur.  It will
+/// prevent a packet from being resubmitted.
+
+action ingress_drop(inout psa_ingress_output_metadata_t meta)
+{
+    meta.drop = true;
+}
+// END:Action_ingress_drop
+
+// BEGIN:Action_ingress_truncate
+/// For any copies made of this packet at the end of Ingress
+/// processing, truncate the payload to at most payload_bytes bytes in
+/// length.
+
+action ingress_truncate(inout psa_ingress_output_metadata_t meta,
+                        in PacketLength_t payload_bytes)
+{
+    meta.truncate = true;
+    meta.truncate_payload_bytes = payload_bytes;
+}
+// END:Action_ingress_truncate
+
+// BEGIN:Action_egress_drop
+/// Modify egress output metadata to cause no packet to be sent out of
+/// the device.
+
+/// This action does not change whether a clone will occur.  It will
+/// prevent a packet from being recirculated.
+
+action egress_drop(inout psa_egress_output_metadata_t meta)
+{
+    meta.drop = true;
+}
+// END:Action_egress_drop
+
+// BEGIN:Action_egress_truncate
+/// For any copies made of this packet at the end of Egress
+/// processing, truncate the payload to at most payload_bytes bytes in
+/// length.
+
+action egress_truncate(inout psa_ingress_output_metadata_t meta,
+                       in PacketLength_t payload_bytes)
+{
+    meta.truncate = true;
+    meta.truncate_payload_bytes = payload_bytes;
+}
+// END:Action_egress_truncate
 
 extern PacketReplicationEngine {
 
   // PacketReplicationEngine(); /// No constructor. PRE is instantiated
                                 /// by the architecture.
-    void send_to_port (in PortId_t port);
-    void multicast (in MulticastGroup_t multicast_group);
-    void drop      ();
-    void clone     (in CloneMethod_t clone_method, in PortId_t port);
-    void clone<T>  (in CloneMethod_t clone_method, in PortId_t port, in T data);
-    void resubmit<T>(in T data, in PortId_t port);
-    void recirculate<T>(in T data, in PortId_t port);
-    void truncate(in bit<32> length);
 }
 
 extern BufferingQueueingEngine {
@@ -121,9 +271,6 @@ extern BufferingQueueingEngine {
   // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
                                 /// by the architecture.
 
-    void send_to_port (in PortId_t port);
-    void drop      ();
-    void truncate(in bit<32> length);
 }
 
 // BEGIN:Hash_algorithms
@@ -135,7 +282,7 @@ enum HashAlgorithm {
   crc16_custom,
   ones_complement16,  /// One's complement 16-bit sum used for IPv4 headers,
                       /// TCP, and UDP.
-  random              /// are random hash algorithms useful?
+  target_default      /// target implementation defined
 }
 // END:Hash_algorithms
 
@@ -179,16 +326,29 @@ enum CounterType_t {
 // END:CounterType_defn
 
 // BEGIN:Counter_extern
+/// Indirect counter with n_counters independent counter values, where
+/// every counter value has a data plane size specified by type W.
+
 extern Counter<W, S> {
-  Counter(S n_counters, W size_in_bits, CounterType_t counter_type);
-  void count(in S index, in W increment);
+  Counter(bit<32> n_counters, CounterType_t type);
+  void count(in S index);
 
   /*
+  /// The control plane API uses 64-bit wide counter values.  It is
+  /// not intended to represent the size of counters as they are
+  /// stored in the data plane.  It is expected that control plane
+  /// software will periodically read the data plane counter values,
+  /// and accumulate them into larger counters that are large enough
+  /// to avoid reaching their maximum values for a suitably long
+  /// operational time.  A 64-bit byte counter increased at maximum
+  /// line rate for a 100 gigabit port would take over 46 years to
+  /// wrap.
+
   @ControlPlaneAPI
   {
-    W    read<W>      (in S index);
-    W    sync_read<W> (in S index);
-    void set          (in S index, in W seed);
+    bit<64> read      (in S index);
+    bit<64> sync_read (in S index);
+    void set          (in S index, in bit<64> seed);
     void reset        (in S index);
     void start        (in S index);
     void stop         (in S index);
@@ -199,18 +359,18 @@ extern Counter<W, S> {
 
 // BEGIN:DirectCounter_extern
 extern DirectCounter<W> {
-  DirectCounter(CounterType_t counter_type);
+  DirectCounter(CounterType_t type);
   void count();
 
   /*
   @ControlPlaneAPI
   {
-    W    read<W>      (in entry_key key);
-    W    sync_read<W> (in entry_key key);
+    W    read<W>      (in TableEntry key);
+    W    sync_read<W> (in TableEntry key);
     void set          (in W seed);
-    void reset        (in entry_key key);
-    void start        (in entry_key key);
-    void stop         (in entry_key key);
+    void reset        (in TableEntry key);
+    void start        (in TableEntry key);
+    void stop         (in TableEntry key);
   }
   */
 }
@@ -228,18 +388,27 @@ enum MeterColor_t { RED, GREEN, YELLOW };
 // END:MeterColor_defn
 
 // BEGIN:Meter_extern
+// Indexed meter with n_meters independent meter states.
+
 extern Meter<S> {
-  Meter(S n_meters, MeterType_t type);
+  Meter(bit<32> n_meters, MeterType_t type);
+
+  // Use this method call to perform a color aware meter update (see
+  // RFC 2698). The color of the packet before the method call was
+  // made is specified by the color parameter.
   MeterColor_t execute(in S index, in MeterColor_t color);
+
+  // Use this method call to perform a color blind meter update (see
+  // RFC 2698).  It may be implemented via a call to execute(index,
+  // MeterColor_t.GREEN), which has the same behavior.
+  MeterColor_t execute(in S index);
 
   /*
   @ControlPlaneAPI
   {
     reset(in MeterColor_t color);
-    setParams(in S committedRate, in S committedBurstSize
-              in S peakRate, in S peakBurstSize);
-    getParams(out S committedRate, out S committedBurstSize
-              out S peakRate, out S peakBurstSize);
+    setParams(in S index, in MeterConfig config);
+    getParams(in S index, out MeterConfig config);
   }
   */
 }
@@ -248,18 +417,16 @@ extern Meter<S> {
 // BEGIN:DirectMeter_extern
 extern DirectMeter {
   DirectMeter(MeterType_t type);
+  // See the corresponding methods for extern Meter.
   MeterColor_t execute(in MeterColor_t color);
+  MeterColor_t execute();
 
   /*
   @ControlPlaneAPI
   {
-    reset(in entry_key entry, in MeterColor_t color);
-    void setParams<S>(in entry_key entry,
-                      in S committedRate, in S committedBurstSize
-                      in S peakRate, in S peakBurstSize);
-    void getParams<S>(in entry_key entry,
-                      out S committedRate, out S committedBurstSize
-                      out S peakRate, out S peakBurstSize);
+    reset(in TableEntry entry, in MeterColor_t color);
+    void setConfig(in TableEntry entry, in MeterConfig config);
+    void getConfig(in TableEntry entry, out MeterConfig config);
   }
   */
 }
@@ -267,7 +434,7 @@ extern DirectMeter {
 
 // BEGIN:Register_extern
 extern Register<T, S> {
-  Register(S size);
+  Register(bit<32> size);
   T    read  (in S index);
   void write (in S index, in T value);
 
@@ -313,9 +480,9 @@ extern ActionProfile {
   /*
   @ControlPlaneAPI
   {
-     entry_handle add_member    (action_ref, action_data);
-     void         delete_member (entry_handle);
-     entry_handle modify_member (entry_handle, action_ref, action_data);
+     void add_member	(action_profile_id, member_id, action_id, action_params);
+     void delete_member (action_profile_id, member_id);
+     void modify_member (action_profile_id, member_id, action_id, action_params);
   }
   */
 }
@@ -325,20 +492,19 @@ extern ActionProfile {
 extern ActionSelector {
   /// Construct an action selector of 'size' entries
   /// @param algo hash algorithm to select a member in a group
-  /// @param size number of entries in the action selector
+  /// @param size number of member entries in the action selector
   /// @param outputWidth size of the key
   ActionSelector(HashAlgorithm algo, bit<32> size, bit<32> outputWidth);
 
   /*
   @ControlPlaneAPI
   {
-     entry_handle add_member        (action_ref, action_data);
-     void         delete_member     (entry_handle);
-     entry_handle modify_member     (entry_handle, action_ref, action_data);
-     group_handle create_group      ();
-     void         delete_group      (group_handle);
-     void         add_to_group      (group_handle, entry_handle);
-     void         delete_from_group (group_handle, entry_handle);
+     void add_member	(action_profile_id, member_id, action_id, action_params);
+     void delete_member (action_profile_id, member_id);
+     void modify_member (action_profile_id, member_id, action_id, action_params);
+     void add_group 	(action_profile_id, group_id, member_data);
+     void delete_group  (action_profile_id, group_id);
+     void modify_group  (action_profile_id, group_id, member_data);
   }
   */
 }
@@ -382,30 +548,40 @@ extern ValueSet<D> {
 // END:ValueSet_extern
 
 // BEGIN:Programmable_blocks
-parser Parser<H, M>(packet_in buffer, out H parsed_hdr, inout M user_meta,
-                    in psa_parser_input_metadata_t istd);
-
-control VerifyChecksum<H, M>(in H hdr, inout M user_meta);
+parser IngressParser<H, M>(packet_in buffer,
+                           out H parsed_hdr,
+                           inout M user_meta,
+                           in psa_ingress_parser_input_metadata_t istd,
+                           out psa_parser_output_metadata_t ostd);
 
 control Ingress<H, M>(inout H hdr, inout M user_meta,
                       PacketReplicationEngine pre,
                       in  psa_ingress_input_metadata_t  istd,
                       out psa_ingress_output_metadata_t ostd);
 
+parser EgressParser<H, M>(packet_in buffer,
+                          out H parsed_hdr,
+                          inout M user_meta,
+                          in psa_egress_parser_input_metadata_t istd,
+                          out psa_parser_output_metadata_t ostd);
+
 control Egress<H, M>(inout H hdr, inout M user_meta,
                      BufferingQueueingEngine bqe,
-                     in  psa_egress_input_metadata_t  istd);
+                     in  psa_egress_input_metadata_t  istd,
+                     out psa_egress_output_metadata_t ostd);
 
 control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
 
 control Deparser<H>(packet_out buffer, in H hdr);
 
-package PSA_Switch<H, M>(Parser<H, M> p,
-                         VerifyChecksum<H, M> vr,
-                         Ingress<H, M> ig,
-                         Egress<H, M> eg,
-                         ComputeChecksum<H, M> ck,
-                         Deparser<H> dep);
+package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
+                                   Ingress<IH, IM> ig,
+                                   ComputeChecksum<IH, IM> ic,
+                                   Deparser<IH> id,
+                                   EgressParser<EH, EM> ep,
+                                   Egress<EH, EM> eg,
+                                   ComputeChecksum<EH, EM> ec,
+                                   Deparser<EH> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */

@@ -1,6 +1,6 @@
 Title : P4~16~ Portable Switch Architecture (PSA)
 Title Note : (draft)
-Title Footer: May 15, 2017
+Title Footer: August 23, 2017
 Author : The P4.org language consortium
 Heading depth: 4
 
@@ -51,6 +51,8 @@ interface ports.
 
 ~ End Abstract
 
+[TOC]
+
 # Target Architecture Model
 
 
@@ -88,8 +90,9 @@ corresponding to the programmable blocks are passed as arguments.
 
 ## PSA type definitions
 
-These types need to be defined before including the architecture file
-and the macro protecting them should be defined.
+Each PSA implementation will have specific bit widths for the
+following types.  These widths should be in that PSA implementation's
+custom `psa.p4` file.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -117,289 +120,473 @@ Additional supported match_kind types
 
 # PSA Externs
 
+## Restrictions on where externs may be used { #sec-extern-restrictions }
+
+All instantiations in a P4~16~ program occur at compile time, and can
+be arranged in a tree structure we will call the instantiation tree.
+The root of the tree `T` represents the top level of the program.  Its
+children are the node for the package `PSA_Switch` described in
+[#sec-programmable-blocks], and any externs instantiated at the top
+level of the program.  The children of the `PSA_Switch` node are the
+parsers and controls passed as parameters to the `PSA_Switch`
+instantiation.  If any of those parsers or controls instantiate other
+parsers, controls, and/or externs, the instantiation tree contains
+child nodes for them, continuing until the instantiation tree is
+complete.
+
+For every instance whose node is a descendant of the `Ingress` node in
+this tree, call it an `Ingress` instance.  Similarly for the other
+parameters of package `PSA_Switch`.  All other instances are top level
+instances.
+
+A PSA implementation is allowed to reject programs that instantiate
+externs, or attempt to call their methods, from anywhere other than
+the places mentioned in the table below.
+
+For example, `Counter` being restricted to "Ingress, Egress" means
+that every `Counter` instance must be instantiated within either the
+Ingress control block or the Egress control block, or be a descendant
+of one of those nodes in the instantiation tree.  If a `Counter`
+instance is instantiated in Ingress, for example, then it cannot be
+referenced, and thus its methods cannot be called, from any
+non-Ingress control block.
+
+|-------------------|----------------------------------------------|
+| Extern type       | Where it may be instantiated and called from |
++:------------------+:---------------------------------------------+
+| `ActionProfile`   | Ingress, Egress |
+| `ActionSelector`  | Ingress, Egress |
+| `Checksum`        | IngressParser, EgressParser, Deparser |
+| `Counter`         | Ingress, Egress |
+| `Digest`          | Ingress, Egress |
+| `Hash`            | Ingress, Egress |
+| `Meter`           | Ingress, Egress |
+| `DirectCounter`   | Ingress, Egress |
+| `DirectMeter`     | Ingress, Egress |
+| `Random`          | Ingress, Egress |
+| `Register`        | Ingress, Egress |
+| `ValueSet`        | IngressParser, EgressParser |
+|-------------------|----------------------------------------------|
+
+PSA implementations need not support instantiating these externs at
+the top level.  PSA implementations are allowed to accept programs
+that use these externs in other places, but they need not.  Thus P4
+programmers wishing to maximize the portability of their programs
+should restrict their use of these externs to the places indicated in
+the table.
+
+`emit` method calls for the type `packet_out` are restricted to be
+within deparser control blocks in PSA, because those are the only
+places where an instance of type `packet_out` is visible.  Similarly
+all methods for type `packet_in`, e.g. `extract` and `advance`, are
+restricted to be within parsers in PSA programs.  P4~16~ restricts all
+`verify` method calls to be within parsers, whether they are for the
+PSA architecture or not.
+
+TBD: The rationale for these restrictions is: (1) it is expected that
+the highest performance PSA implementations will not be able to update
+the same extern instance from both ingress and egress, nor from more
+than one of the top level parsers or controls instantiated by the
+`PSA_Switch` package.  (2) In a multi-pipeline device, there are
+effectively multiple instantiations of the ingress pipeline and of the
+egress pipeline.  The primary motivation to create a multi-pipeline
+device is the practical difficulty in allowing the same stateful
+object (e.g. table, counter, etc.) to be accessed at a packet rate
+higher than that of a single pipeline.  Thus each stateful object
+should be accessed from only a single pipeline on such a device.
+
+
 ## Packet Replication Engine { #sec-pre }
 
-The ```PacketReplicationEngine``` extern represents the non-programmable
-part of the PSA pipeline.
+The ```PacketReplicationEngine``` extern (abbreviated PRE) represents
+a part of the PSA pipeline that is not programmable via writing P4
+code.
 
 Even though the PRE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
-intrinsic metadata. In this specification we opt to define the
-operations available in the PRE as method invocations. A target
-backend is responsible for mapping the PRE extern APIs to the
-appropriate mechanisms for performing these operations in the
-hardware.
+intrinsic metadata.  The `psa.p4` include file provides some actions
+to help set these metadata fields for some common use cases, described
+later.
 
-The PRE is instantiated by the architecture and a P4 program can use
-it directly. It is an error to instantiate the PRE multiple times.
+The PRE extern object has no constructor, and thus it cannot be
+instantiated in the user's P4 program. The architecture instantiates
+it exactly once, without requiring the user's P4 program to
+instantiate it.
 The PRE is made available to the Ingress programmable block using the
-same mechanism as packet_in. A corresponding Buffering and Queuing
+same mechanism as `packet_in`.  A corresponding Buffering and Queuing
 Engine (BQE) extern is defined for the Egress pipeline (see
 [#sec-bqe]).
 
-Note: some of these operations may not be implemented as primitive
-operations on a certain target. However, All of the operations can be
-implemented as a combination of other operations. Applications that
-rely on non-primitive operations may incur significant performance
-penalties, however, they should be functionally correct.
 
-Semantics of behavior for multiple calls to PRE APIs
+### Behavior of packets after Ingress processing is complete { #sec-after-ingress }
 
-The semantics of calling the PRE APIs is equivalent to setting
-intrinsic metadata fields/bits and assuming that the PRE looks up the
-fields in the following order: drop, truncate, multicast, clone,
-output_port.
-
- Following this semantics, examples of the behaviors are:
-
-- any call to drop in the pipeline will cause the packet, and all
-   potential clone copies (see below) to drop.
-
-- any call to truncate, will cause the packet (and its clones
-   \todo: check) to be truncated.
-
-- multiple calls to send_to_port -- the last call in the ingress
-   pipeline sets the output port.
-
-- multiple calls to multicast -- the last in the ingress pipeline
-   sets the multicast group
-
-- interleaving send_to_port and multicast -- the semantics of multicast
-   is defined as below (https://github.com/p4lang/tutorials/issues/22):
-     if (multicast_group != 0)
-        multicast_to_group(multicast_group);
-     else
-        send_to_port(output_port);
-
-   From this, it follows that if there is a call that sets the
-   multicast_group, the packet will be multicast to the group that
-   last set the multicast group. Otherwise, the packet will be sent
-   to the port set by send_to_port.
-
-- multiple clone invocations will cause the packet to be cloned to
-   the corresponding port. Any drop call in the pipeline will cause
-   the packet to drop, and no clone will be created (following the
-   analogy with intrinsic metadata bit fields, drop bits are
-   processed before clone bits are looked up).
-
-- resubmit
-- recirculate
-
-\TODO: finalize the semantics of calling multiple of the PRE APIs
+The pseudocode below defines where copies of packets will be made
+after the Ingress control block has completed executing, based upon
+the contents of several metadata fields in the struct
+`psa_ingress_output_metadata_t`.
 
 ```
-extern PacketReplicationEngine {
+[INCLUDE=psa.p4:Metadata_ingress_output]
 
-  // PacketReplicationEngine(); /// No constructor. PRE is instantiated
-                                /// by the architecture.
+    psa_ingress_output_metadata_t ostd;
+
+    if (truncate) {
+        Truncate the payload to at most truncate_payload_bytes long.
+            This affects any copies made below.
+    }
+    if (ostd.clone) {
+        create a copy of the packet to the clone target.
+        // TBD: Need a way to specify one (or more?) among multiple
+        // clone targets, if more than one such target exists.  Also
+        // to specify if anything is different about the cloned packet
+        // vs. other copies that might be made below.
+    }
+    // Continue below, regardless of whether a clone was created or not.
+    if (ostd.drop) {
+        drop the packet
+        return;   // Do not continue below.
+    }
+    if (ostd.resubmit) {
+        resubmit the packet, i.e. it will go back to starting with the
+            ingress parser;
+        // TBD: Specify if anything is different about the resubmitted
+        // packet vs. other copies that might be made below.
+        return;   // Do not continue below.
+    }
+    if (ostd.multicast_group != 0) {
+        Make 0 or more copies of the packet according to the control
+            plane configuration of multicast group ostd.multicast_group.
+        return;   // Do not continue below.
+    }
+    enqueue one packet for output port ostd.egress_port
 ```
 
-### PRE Methods
+TBD: Need text defining, for each possible copy, exactly what the
+contents of the packet will be.
+
+TBD: Should it be possible to truncate a cloned or resubmitted packet
+differently than the normal packet that goes out?
+
+TBD: If it is planned to be possible at the end of ingress to send a
+packet to be replicated via a multicast_group, and also have a copy go
+to the control CPU, give an example showing this case (after showing
+some simpler common cases).  Ideally it should be possible for the
+copy going to the control CPU to have a software-defined header
+(defined in the P4 program) that is different than any headers on the
+packet copies going to the Egress control block.
+
+
+### Behavior of packets after Egress processing is complete { #sec-after-egress }
+
+
+The pseudocode below defines where copies of packets will be made
+after the Egress control block has completed executing, based upon
+the contents of several metadata fields in the struct
+`psa_egress_output_metadata_t`.
+
+```
+[INCLUDE=psa.p4:Metadata_egress_output]
+
+    psa_egress_input_metadata_t  istd;
+    psa_egress_output_metadata_t ostd;
+
+    if (truncate) {
+        Truncate the payload to at most truncate_payload_bytes long.
+            This affects any copies made below.
+    }
+    if (ostd.clone) {
+        create a copy of the packet to the clone target
+        // TBD: Need a way to specify one (or more?) among multiple clone
+        // targets, if more than one such target exists.  Also to specify
+        // if anything is different about the cloned packet vs. other
+        // copies that might be made below.
+    }
+    // Continue below, regardless of whether a clone was created or not.
+    if (ostd.drop) {
+        drop the packet
+        return;   // Do not continue below.
+    }
+    if (ostd.recirculate) {
+        recirculate the packet, i.e. it will go back to starting with the
+            ingress parser;
+        // TBD: Specify if anything is different about the recirculated
+        // packet vs. other copies that might be made below.
+        return;   // Do not continue below.
+    }
+
+    // The value istd.egress_port below is the same one that the
+    // packet began its Egress processing with, as decided during
+    // Ingress processing for this packet.  The Egress control block
+    // is not allowed to change it.
+    enqueue one packet for output port istd.egress_port
+```
+
+TBD: Need text defining, for each possible copy, exactly what the
+contents of the packet will be, and any differences between the values
+of the fields in the structs `psa_parser_input_metadata_t` and
+`psa_ingress_input_metadata_t`, in the copy, as compared to the values
+seen for the packet that caused those copies to be made.
+
+TBD: Should it be possible to truncate a cloned or recirculated packet
+differently than the normal packet that goes out?
+
+
+### Actions for directing packets during ingress { #sec-ingress-actions }
+
+All of these actions modify one or more metadata fields in the struct
+with type `psa_ingress_output_metadata_t` that is an `out` parameter
+of the `Ingress` control block.  None of these actions has any other
+immediate effect.  What happens to the packet is determined by the
+value of all fields in that struct when ingress processing is
+complete, not at the time one of these actions is called.  See Section
+[#sec-after-ingress].
+
+These actions are provided for convenience in making changes to these
+metadata fields.  Their effects are expected to be common kinds of
+changes one will want to make in a P4 program.  If they do not suit
+your use cases, you are of course welcome to modify the metadata
+fields directly in your P4 programs however you prefer, perhaps within
+actions you define yourself.
+
 
 #### Unicast operation
 
 Sends packet to a port.
 
-Targets may implement this operation by setting the appropriate
-intrinsic metadata or through some other mechanism of configuring the
-PRE.
-
-The port parameter is the output port. If the port is PORT_CPU the
-packet will be sent to CPU.
-
 ```
-void send_to_port (in PortId_t port);
+[INCLUDE=psa.p4:Action_send_to_port]
 ```
 
 #### Multicast operation
 
 Sends packet to a multicast group or a port.
 
-Targets may implement this operation by setting the appropriate
-intrinsic metadata or through some other mechanism of configuring the
-PRE.
-
 The multicast_group parameter is the multicast group id. The control
 plane must program the multicast groups through a separate mechanism.
 
 ```
-void multicast (in MulticastGroup_t multicast_group);
+[INCLUDE=psa.p4:Action_multicast]
 ```
 
 #### Drop operation
 
-Do not forward the packet.
-
-The PSA implements drop as an operation in the PRE. While the drop
-operation can be invoked anywhere in the ingress pipeline, the
-semantics supported by the PSA is that the drop will be at the end of
-the pipeline (ingress or egress).
+Do not send a copy of the packet for normal egress processing.
 
 ```
-void drop      ();
+[INCLUDE=psa.p4:Action_ingress_drop]
 ```
 
-#### Clone operation
+#### Truncate operation { #sec-ingress-truncate }
 
-Create a copy of the packet and send it to the specified port.
-
-The PSA specifies four types of cloning, with the packet sourced
-from different points in the pipeline and sent back to ingress
-or to the buffering queue in the egress (see [#sec-cloning-methods]).
-\TODO: needs both source and destination data
-
-Parameters:
-
-- clone_method  The type of cloning.
-- port          The port to send the cloned packet to.
+For all copies of the packet made at the end of Ingress processing,
+truncate the payload to be at most the specified number of bytes.
+Specifying 0 is legal, and causes only packet headers to be sent, with
+no payload.
 
 ```
-void clone     (in CloneMethod_t clone_method, in PortId_t port);
+[INCLUDE=psa.p4:Action_ingress_truncate]
 ```
 
-#### Clone with extra data operation { #sec-pre-clone-with-data }
+### Clone/recirculation/resubmit
 
-Create a copy of the packet with additional data and send it to the
-specified port.
+~ Figure { #fig-clone; caption: "Clone/recirculate/resubmit in PSA"; page-align: here; }
+![clone]
+~
+[clone]: clone_recirc_resubmit.png { width: 90%; }
 
-The PSA specifies four types of cloning, with the packet sourced
-from different points in the pipeline and sent back to ingress
-or to the buffering queue in the egress (see [#sec-cloning-methods]).
-\TODO: needs both source and destination data
+Figure [#fig-clone] show two proposed architectures for clone/recirculate/resubmit in PSA.
 
-Parameters:
+#### Clone
 
-- clone_method  The type of cloning.
-- port          The port to send the cloned packet to.
-- data additional header data attached to the packet
+A PSA implementation provides a clone mechanism to create a copy of
+the original packet as an independent packet instance. The cloned
+packet can be a duplicate of the original packet or a copy of the
+deparsed packet after egress pipeline. The clone mechanism can submit
+the cloned packet to ingress parser or buffering mechanism. In a PSA
+implementation, the clone mechanism is implemented in PRE.
 
-```
-void clone<T>  (in CloneMethod_t clone_method, in PortId_t port, in T data);
-```
+The clone mechanism can optionally attach metadata to the cloned
+packet. A PSA implementation provides the `clone` extern to specify
+the attached metadata. The `clone` extern provides a `emit` method
+which accepts the attached metadata of generic type `T`. In a PSA
+implementation, the metadata is prepended to the cloned packet. It is
+the responsibility of the programmer to parse the cloned packet
+correctly to extract the attached metadata. The attached metadata can
+be of type `header`, `header stack`, `header union` or `struct` of the
+above types. Invoking the `emit` method multiple times will attach all
+specified metadata to the same cloned packet. The PSA architecture
+instantiates the `clone` extern in the ingress and egress deparser. A
+P4 program can use it in ingress and egress deparser only. It is an
+error to instantiate the `clone` extern in the P4 control or parser
+block.
 
-#### Resubmit operation
+A PSA implementation provides two configuration metadata, `clone`
+and `clone_spec`, to the PRE to control the cloning mechanism. The
+`clone` enables/disables the cloning mechanism. If the `clone`
+bit is set, the clone mechanism generates a cloned packet with the
+optional attached metadata. If the `clone` bit is unset or
+uninitialized, the clone mechanism is disabled and a cloned packet is
+not generated even if the `emit` method is invoked in the deparser.
+The `clone_spec` control the destination of the cloned packet. A
+common use case is to the send the cloned packet to the control CPU,
+in which case the `clone_spec` should be set to the value that
+represents the control CPU port.
 
-Send a packet to the ingress port with additional data appended.
-
-This operation is intended for recursive packet processing.
-\TODO: needs both source and destination data
-
-Parameters:
-
-- data A header definition that can be added to the set of
-  packet headers.
-- port The input port at which the packet will be resubmitted.
-
-```
-void resubmit<T>(in T data, in PortId_t port);
-```
-
-#### Recirculate operation
-
-Send a post deparse packet to the ingress port with additional data
-appended.
-
-This operation is intended for recursive packet processing.
-\TODO: needs both source and destination data
-
-Parameters:
-
-- data A header definition that can be added to the set of packet headers.
-- port The input port at which the packet will be resubmitted.
-
-```
-void recirculate<T>(in T data, in PortId_t port);
-```
-
-#### Truncate operation
-
-Truncate the outgoing packet to the specified length.
-
-The length parameter represents the packet length.
+The PSA specifies four types of cloning, with the packet sourced from
+different points in the pipeline and sent back to ingress or to the
+buffering queue in the egress. 
 
 ```
-void truncate(in bit<32> length);
+extern clone {
+  /// Write @hdr into the ingress/egress clone engine.
+  /// @T can be a header type, a header stack, a header union, or a struct
+  /// containing fields with such types.
+  void emit<T>(in T hdr);
+}
 ```
+
+#### Resubmit
+
+A PSA implementation provides a resubmit mechanism to resend the
+original packet to ingress parser for recursive processing. The
+resubmitted packet is the original packet as seen on the ingress
+pipeline. The resubmit mechanism sends the original packet to the
+ingress parser. The resubmit mechanism does not make copies of
+the original packet. In a PSA implementation, the resubmit mechanism is
+implemented in PRE.
+
+The resubmit mechanism can optionally attach metadata to the
+resubmitted packet. A PSA implementation provides the `resubmit`
+extern to specify the attached metadata. The `resubmit` extern
+provides a `emit` method which accepts the attached metadata of
+generic type `T`. In a PSA implementation, the metadata is prepended
+to the resubmitted packet. It is the responsibility of the programmer
+to parse the resubmitted packet correctly to extract the attached
+metadata. The attached metadata can be of type `header`, `header
+stack`, `header union` or `struct` of the above types. Invoking the
+`emit` method multiple times will attach all specified metadata to the
+same resubmitted packet. The PSA architecture instantiates the
+`resubmit` extern in the ingress deparser. A P4 program can use it in
+ingress deparser only. It is an error to instantiate the `resubmit`
+extern in the P4 control or parser block.
+
+A PSA implementation provides a configuration bit `resubmit` to
+the PRE to enable the resubmit mechanism. If the `resubmit` bit is
+set, the resubmit mechanism resends the original packet with the
+optional attached metadata. If the `resubmit` bit is unset or
+uninitialized, the resubmit mechanism is disabled and the original
+packet is not resubmitted even if the `emit` method is invoked in the
+deparser.
+
+```
+extern resubmit {
+  /// Write @hdr into the ingress packet buffer.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void emit<T>(in T hdr);
+}
+```
+
+#### Recirculate
+
+A PSA implementation provides a recirculation mechanism to send a
+deparsed packet from egress pipeline to ingress parser for recursive
+processing. The recirculated packet is the deparsed packet after the
+egress pipeline. The recirculation mechanism does not make copies of
+the original packet. It sends the deparsed packet from egress back to
+the ingress parser. In a PSA implementation, the recirculation
+mechanism is implemented in PRE.
+
+The recirculation mechanism can optionally attach metadata to the
+recirculated packet. A PSA implementation provides the `recirculate`
+extern to specify the attached metadata. The `emit` method in the
+`recirculate` extern accepts an attached metadata of generic type `T`.
+In a PSA implementation, the metadata is prepended to the recirculated
+packet. It is the responsibility of the programmer to parse the
+recirculated packet correctly to extract the attached metadata. The
+attached metadata can be of type `header`, `header stack`, `header
+union` or `struct` of the above types. Invoking the `emit` method
+multiple times will attach all specified metadata to the same
+recirculated packet. The PSA architecture instantiates the
+`recirculate` extern in the ingress deparser. A P4 program can use it
+in egress deparser only. It is an error to instantiate the
+`recirculate` extern in a P4 control or parser block.
+
+A PSA implementation provides a configuration bit `recirculate` to the
+PRE to enable the recirculation mechanism. If the `recirculate` bit is
+set, the recirculation mechanism sends back the deparsed packet with
+the optional attached metadata to the ingress parser. If the
+`recirculate` bit is unset or uninitialized, the recirculation mechanism
+is disabled and the deparsed packet is not recirculated even if the
+`emit` method is invoked in the deparser.
+
+One possible implementation of the `recirculate` bit is to set the
+`egress_port` metadata to a dedicated recirculation port number. A PSA
+implementation sends the deparsed packet to the dedicated
+recirculation port to recirculate the packet.
+
+A PSA implementation provides a metadata bit `is_recirc` as the input
+metadata to the parser to indicate if a packet is a recirculation
+packet. The `is_recirc` bit is true if the packet is a recirculation
+packet.
+
+One possible implementation of the `is_recirc` bit is to set the bit
+based on the `ingress_port` metadata of the received packet. If the
+`ingress_port` metadata is equal to the dedicated recirculation port
+number, then the `is_recirc` bit is set.
+
+```
+extern recirculate {
+  /// Write @hdr into the egress packet.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void emit(in T hdr);
+}
+```
+
 
 ## Buffering Queuing Engine { #sec-bqe }
 
-The BufferingQueueingEngine extern represents the the other
-non-programmable part of the PSA pipeline (after Egress).
+The BufferingQueueingEngine extern (abbreviated BQE) represents
+another part of the PSA pipeline, after Egress, that is not
+programmable via writing P4 code.
 
 Even though the BQE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
-intrinsic metadata. In this specification we opt to define the
-operations available in the BQE as method invocations. A target
-backend is responsible for mapping the BQE extern APIs to the
-appropriate mechanisms for performing these operations in the
-hardware.
+intrinsic metadata.
 
-The BQE is instantiated by the architecture and a P4 program can
-use it directly. It is an error to instantiate the BQE multiple
-times.  The BQE is made available to the Egress programmable block
+The BQE extern object has no constructor, and thus it cannot be
+instantiated in the user's P4 program. The architecture instantiates
+it exactly once, without requiring the user's P4 program to
+instantiate it.
+The BQE is made available to the Egress programmable block
 using the same mechanism as packet_in. A corresponding Packet
 Replication Engine (PRE) extern is defined for the Ingress pipeline
 (see [#sec-pre]).
 
-Note: some of these operations may not be implemented as primitive
-operations on a certain target. However, All of the operations can
-be implemented as a combination of other operations. Applications
-that rely on non-primitive operations may incur significant
-performance penalties, however, they should be functionally
-correct.
 
-The ordering semantics of multiple calls to BQE APIs is identical
-to the semantics ordering of PRE invocations, for the subset of
-functions supported in the BQE.
-
-```
-extern BufferingQueueingEngine {
-
-  // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
-                                /// by the architecture.
-
-```
-
-### BQE Methods
-
-
-#### Unicast operation { #sec-bqe-unicast }
-
-Sends packet to port.
-
-Targets may implement this operation by setting the appropriate
-intrinsic metadata or through some other mechanism of configuring the
-BQE.
-
-The port parameter is the output port. If the port is PORT_CPU the
-packet will be sent to CPU.
-
-```
-void send_to_port (in PortId_t port);
-```
+### Actions for directing packets during egress { #sec-egress-actions }
 
 #### Drop operation { #sec-bqe-drop }
 
-Do not forward the packet.
-
-The PSA implements drop as an operation in the BQE. While the
-drop operation can be invoked anywhere in the ingress pipeline,
-the semantics supported by the PSA is that the drop will be at
-the end of the pipeline (ingress or egress).
+Do not send the packet out of the device after egress processing is
+complete.
 
 ```
-void drop      ();
+[INCLUDE=psa.p4:Action_egress_drop]
 ```
 
-#### Truncate operation { #sec-bqe-truncate }
+#### Truncate operation { #sec-egress-truncate }
 
-Truncate the outgoing packet to the specified length
-
-The length parameter represents the packet length.
+For all copies of the packet made at the end of Egress processing,
+truncate the payload to be at most the specified number of bytes.
+Specifying 0 is legal, and causes only packet headers to be sent, with
+no payload.
 
 ```
-void truncate(in bit<32> length);
+[INCLUDE=psa.p4:Action_egress_truncate]
 ```
+
 
 ## Hashes { #sec-hash-algorithms }
 
@@ -448,13 +635,101 @@ Parameters:
 [INCLUDE=psa.p4:Checksum_extern]
 ```
 
+### Checksum example
+
+The partial P4 program below demonstrates one way to use the
+`Checksum` extern to verify whether the checksum field in a parsed
+IPv4 header is correct, and set a parser error if it is wrong.  It
+also demonstrates checking for parser errors in the ingress control
+block, dropping the packet if any errors occurred during parsing.  PSA
+programs may choose to handle packets with parser errors in other ways
+than shown in this example -- it is up to the P4 program author to
+choose and write the desired behavior.
+
+Neither P4~16~ nor the PSA provide any special mechanisms to record
+the location within a packet that a parser error occurred.  A P4
+program author can choose to record such location information
+explicitly.  For example, one may define metadata fields specifically
+for that purpose, e.g. to hold an encoded value representing the last
+parser state reached, or the number of bytes extracted so far.  Then,
+assign values to those fields within parser state code.
+
+```
+[INCLUDE=examples/psa-example-parser-checksum.p4:Parse_Error_Example]
+```
+
+The partial program below demonstrates one way to use the `Checksum`
+extern to calculate and then fill in a correct IPv4 header checksum in
+the `computeChecksum` control block, just before the deparser.  In
+this example, the checksum is calculated fresh, so the outgoing
+checksum will be correct regardless of what changes might have been
+made to the IPv4 header fields in the ingress (or egress) control
+block that precedes it.
+
+```
+[INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
+```
+
+TBD: It would be good if the Checksum extern can handle a case of
+doing a 'delta' correction of a TCP header checksum when an IPv4 or
+IPv6 source or destination address is changed, e.g. due to
+implementing a feature like NAT.  This should be possible without
+having to redo the TCP checksum over the entire TCP payload, by
+assuming that the incoming TCP header checksum was correct.  With the
+proposed `remove` and `update` methods, this should be possible by
+calling `remove` on the old source/destination addresses, and then
+`update` on the new source/destination addresses.  It would also be
+good to have a short example program demonstrating one way to do this,
+ideally with a one-packet test case to verify it works when it is
+implemented.
+
+
 ## Counters
 
-Counters are a simple mechanism for keeping statistics about the
-packets that trigger a table in a Match Action unit.
+Counters are a mechanism for keeping statistics.  The control plane
+can read counter values.  A P4 program cannot read counter values,
+only update them.  If you wish to implement a feature involving
+sequence numbers in packets, for example, use Registers instead
+(Section [#sec-registers]).
 
-Direct counters fire when the count method is invoked in an action, and
-have an instance for each entry in the table.
+Direct counters are counters associated with a particular P4 table,
+and are implemented by the extern `DirectCounter`.  There are also
+indexed counters, which are implemented by the extern `Counter`.  The
+primary differences between direct counters and indexed counters are:
+
+- Number of independently updatable counter values:
+  - A single instantiation of a direct counter always contains as many
+    independent counter values as the number of entries in the table
+    with which it is associated (TBD: see below for what this means
+    for tables that use action profiles).
+  - You must specify the number of independent counter values for an
+    indexed counter when instantiating it.  This number of counters
+    need not be the same as the size of any table.
+- Where counter updates are allowed in the P4 program:
+  - For a direct counter, you may only invoke its `count` method from
+    inside the actions of the table with which it is associated, and
+    this always updates the counter value associated with the matching
+    table entry.
+  - For an indexed counter, you may invoke its `count` method
+    anywhere in the P4 program where extern object method invocations
+    are permitted (e.g. inside actions, or directly inside a control's
+    `apply` block), and every such invocation must specify the index
+    of the counter value to be updated.
+
+Counters are only intended to support packet counters and byte
+counters, or a combination of both called `packets_and_bytes`.  The
+byte counts are always increased by some measure of the packet length,
+where the packet length used might vary from one PSA implementation to
+another.  For example, one implementation might use the Ethernet frame
+length, including the Ethernet header and FCS bytes, as the packet
+arrived on a physical port.  Another might not include the FCS bytes
+in its definition of the packet length.  Another might only include
+the Ethernet payload length.  Each PSA implementation should document
+how it determines the packet length used for byte counter updates.
+
+If you wish to keep counts of other quantities, or to have more
+precise control over the packet length used in a byte counter, you may
+use Registers to achieve that (Section [#sec-registers]).
 
 
 ### Counter types
@@ -469,18 +744,265 @@ have an instance for each entry in the table.
 [INCLUDE=psa.p4:Counter_extern]
 ```
 
+See below for pseudocode of an example implementation for the Counter
+extern.
+
+The example implementation for `next_counter_value` is not intended to
+restrict PSA implementations.  In particular, the storage format for
+`packets_and_bytes` type counters is just one example of how it could
+be done.  Implementations are free to store state in other ways, as
+long as the control plane API returns the correct packet and byte
+count values.
+
+Two common techniques for counter implementations in the data plane are:
+
+- wrap around counters
+- saturating counters, that 'stick' at their maximum possible value,
+  without wrapping around.
+
+This specification does not mandate any particular approach in the
+data plane.  Implementations should strive to avoid losing information
+in counters.  One common implementation technique is to implement an
+atomic "read and clear" operation in the data plane that can be
+invoked by the control plane software.  The control plane software
+invokes this operation frequently enough to prevent counters from ever
+wrapping or saturating, and adds the values read to larger counters in
+driver memory.
+
+```
+Counter(bit<32> n_counters, CounterType_t type) {
+    this.num_counters = n_counters;
+    this.counter_vals = new array of size n_counters, each element with type W;
+    this.type = type;
+    if (this.type == CounterType_t.packets_and_bytes) {
+        // Packet and byte counts share storage in the same counter
+        // state.  Should we have a separate constructor with an
+        // additional argument indicating how many of the bits to use
+        // for the byte counter?
+        W shift_amount = TBD;
+        this.shifted_packet_count = ((W) 1) << shift_amount;
+        this.packet_count_mask = (~((W) 0)) << shift_amount;
+        this.byte_count_mask = ~this.packet_count_mask;
+    }
+}
+
+W next_counter_value(W cur_value, CounterType_t type) {
+    if (type == CounterType_t.packets) {
+        return (cur_value + 1);
+    }
+    // Exactly which packet bytes are included in packet_len is
+    // implementation-specific.
+    PacketLength_t packet_len = <packet length in bytes>;
+    if (type == CounterType_t.bytes) {
+        return (cur_value + packet_len);
+    }
+    // type must be CounterType_t.packets_and_bytes
+    // In type W, the least significant bits contain the byte
+    // count, and most significant bits contain the packet count.
+    // This is merely one example storage format.  Implementations
+    // are free to store packets_and_byte state in other ways, as
+    // long as the control plane API returns the correct separate
+    // packet and byte count values.
+    W next_packet_count = ((cur_value + this.shifted_packet_count) &
+                           this.packet_count_mask);
+    W next_byte_count = (cur_value + packet_len) & this.byte_count_mask;
+    return (next_packet_count | next_byte_count);
+}
+
+void count(in S index) {
+    if (index < this.num_counters) {
+        this.counter_vals[index] = next_counter_value(this.counter_vals[index],
+                                                      this.type);
+    } else {
+        // No counter_vals updated if index is out of range.
+        // See below for optional debug information to record.
+    }
+}
+```
+
+Optional debugging information that may be kept if an `index` value is
+out of range includes:
+
+- Number of times this occurs.
+- A FIFO of the first N out-of-range index values that occur, where N
+  is implementation-defined (e.g. it might only be 1).  Extra
+  information to identify which `count()` method call in the P4
+  program had the out-of-range `index` value is also recommended.
+
+
 ### Direct Counter
 
 ```
 [INCLUDE=psa.p4:DirectCounter_extern]
 ```
 
-## Meters
+A `DirectCounter` instance must appear in the list of values of the
+`psa_direct_counters` table attribute for exactly one table.  We call
+this table the `DirectCounter` instance's "owner".  It is an error to
+call the `count` method for a `DirectCounter` instance anywhere except
+inside an action of its owner table.
 
-Meters (RFC 2698) are a more complex mechanism for keeping statistics about
-the packets that trigger a table. The meters specified in the PSA
-are 3-color meters.
+The counter value updated by an invocation of `count` is always the
+one associated with the table entry that matched.
 
+TBD: How to describe which counter value is updated for tables with
+action profiles and direct counters?  Or should this combination even
+be allowed?
+
+An action of an owner table need not have `count` method calls for all
+of the `DirectCounter` instances that the table owns.  You must use an
+explicit `count()` method call on a `DirectCounter` to update it,
+otherwise its state will not change.
+
+An example implementation for the `DirectCounter` extern is
+essentially the same as the one for `Counter`.  Since there is no
+`index` parameter to the `count` method, there is no need to check for
+whether it is in range.
+
+The rules here mean that an action that calls `count` on a
+`DirectCounter` instance may only be an action of that instance's one
+owner table.  If you want to have a single action `A` that can be
+invoked by multiple tables, you can still do so by having a unique
+action for each such table with a `DirectCounter`, where each such
+action in turn calls action `A`, in addition to any `count`
+invocations they have.
+
+A `DirectCounter` instance must have a counter value associated with
+its owner table that is updated when there is a default action
+assigned to the table, and a search of the table results in a miss.
+If there is no default action assigned to the table, then there need
+not be any counter updated when a search of the table results in a
+miss.
+
+By "a default action is assigned to a table", we mean that either the
+table has a `default_action` table property with an action assigned to
+it in the P4 program, or the control plane has made an explicit call
+to assign the table a default action.  If neither of these is true,
+then there is no default action assigned to the table.
+
+TBD: Verify that the method of reading this default action counter
+state is documented for the control plane API.  I believe that Antonin
+Bas said that it can be accessed using the same API call used to read
+a `DirectCounter` value associated with a table entry, except that the
+key in the API call should be empty.
+
+TBD: Should a single table be restricted to have at most one
+DirectCounter associated with it, or should it be allowed to have more
+than one?
+
+
+### Example program using counters
+
+The following partial P4 program demonstrates the instantiation and
+updating of `Counter` and `DirectCounter` externs.
+
+```
+[INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part1]
+
+[INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part2]
+```
+
+## Meters { #sec-meters }
+
+Meters (RFC 2698) are a more complex mechanism for keeping statistics
+about packets, most often used for dropping
+or "marking" packets that exceed an average packet or bit rate.  To
+mark a packet means to change one or more of its quality of service
+values in packet headers such as the 802.1Q PCP (priority code point)
+or DSCP (differentiated service code point) bits within the IPv4 or
+IPv6 type of service byte.  The meters specified in the PSA are
+3-color meters.
+
+PSA meters do not require any particular drop or marking actions, nor
+do they automatically implement those behaviors for you.  Meters keep
+enough state, and update their state during `execute()` method calls,
+in such a way that they return a `GREEN` (also known as conform),
+`YELLOW` (exceed), or `RED` (violate) result.  See RFC 2698 for details on the
+conditions under which one of these three results is returned.  The P4
+program is responsible for examining that returned result, and making
+changes to packet forwarding behavior as a result.
+
+RFC 2698 describes "color aware" and "color blind" variations of
+meters.  The `Meter` and `DirectMeter` externs implement both.  The
+only difference is in which `execute` method you use when updating
+them.  See the comments on the `extern` definitions below.
+
+Similar to counters, there are two flavors of meters: indexed and
+direct.  (Indexed) meters are addressed by index, while direct meters
+always update a meter state corresponding to the matched table entry
+or action, and from the control plane API are addressed using
+P4Runtime table entry as key.
+
+There are many other similarities between counters and meters,
+including:
+
+- The number of independently updatable meter values.
+- Where meter updates are allowed in a P4 program.
+- For `bytes` type meters, the packet length used in the update is
+  determined by the PSA implementation, and can vary from one PSA
+  implementation to another.
+
+Further similarities between direct counters and direct meters
+include:
+
+- `DirectMeter` `execute` method calls must be performed within
+  actions invoked by the table that owns the `DirectMeter` instance.
+  It is optional for such an action to call the `execute` method.
+- There must be a meter state associated with a `DirectMeter`
+  instance's owner table, that can be updated when the table result is
+  a miss.  As for a `DirectCounter`, this state only needs to exist if
+  a default action is assigned to the table.
+
+The table attribute to specify that a table owns a `DirectMeter`
+instance is `psa_direct_meters`.  The value of this table attribute is
+a list of meter instances.
+
+As for counters, if you call the `execute(idx)` method on an indexed
+meter and `idx` is at least the number of meter states, so `idx` is
+out of range, no meter state is updated.  The `execute` call still
+returns a value of type `MeterColor_t`, but the value is undefined --
+programs that wish to have predictable behavior across implementations
+must not use the undefined value in a way that affects the output
+packet or other side effects.  The example code below shows one way to
+achieve predictable behavior.  Note that this undefined behavior
+cannot occur if the value of `n_meters` of an indexed meter is $2^W$,
+and the type `S` used to construct the meter is `bit<W>`, since the
+index value could never be out of range.
+
+```
+#define METER1_SIZE 100
+Meter<bit<7>>(METER1_SIZE, MeterType_t.bytes) meter1;
+bit<7> idx;
+MeterColor_t color1;
+
+// ... later ...
+
+if (idx < METER1_SIZE) {
+    color1 = meter1.execute(idx, MeterColor_t.GREEN);
+} else {
+    // If idx is out of range, use a default value for color1.  One
+    // may also choose to store an error flag in some metadata field.
+    color1 = MeterColor_t.RED;
+}
+```
+
+Any implementation will have a finite range that can be specified for
+the Peak Burst Size and Committed Burst Size.  An implementation
+should document the maximum burst sizes they support, and if the
+implementation internally truncates the values that the control plane
+requests to something more coarse than any number of bytes, that
+should also be documented.  It is recommended that the maximum burst
+sizes be allowed as large as the number of bytes that can be
+transmitted across the implementation's maximum speed port in 100
+milliseconds.
+
+Implementations will also have finite ranges and precisions that they
+support for the Peak Information Rate and Committed Information Rate.
+An implementation should document the maximum rate it supports, as
+well as the precision it supports for implementing requested rates.
+It is recommended that the maximum rate supported be at least the rate
+of the implementation's fastest port, and that the actual implemented
+rate should always be within plus or minus 0.1% of the requested rate.
 
 ### Meter types
 
@@ -506,30 +1028,89 @@ are 3-color meters.
 [INCLUDE=psa.p4:DirectMeter_extern]
 ```
 
-## Registers
+## Registers { #sec-registers }
 
-Registers are stateful memories whose values can be read and
-written in actions. Registers are similar to counters, but can be
-used in a more general way to keep state.
+Registers are stateful memories whose values can be read and written
+during packet forwarding under the control of the P4 program.  They
+are similar to counters and meters in that their state can be modified
+as a result of processing packets, but they are far more general in
+the behavior they can implement.
 
-Although registers cannot be used directly in matching,
-register.read may be used as the RHS of an assignment operation,
-allowing the current value of the register to be copied into
-metadata and be available for matching in subsequent tables.
+Although you may not use register contents directly in table match
+keys, you may use the `read()` method call on the right-hand side of
+an assignment statement, which retrieves the current value of the
+register.  You may copy the register value into metadata, and it is
+then available for matching in subsequent tables.
 
-A simple usage example might be to verify that a "first packet" was seen
-for a particular type of flow. A register cell would be allocated to
-the flow, initialized to "clear". When the protocol signaled a "first
-packet", the table would match on this value and update the flow’s
-cell to "marked". Subsequent packets in the flow could would be mapped
-to the same cell; the current cell value would be stored in metadata
-for the packet and a subsequent table could check that the flow was
-marked as active.
-
+A simple usage example might be to verify that a "first packet" was
+seen for a particular type of flow.  A register cell would be
+allocated to the flow, initialized to "clear".  When the protocol
+signaled a "first packet", the table would match on this value and
+update the flow's cell to "marked".  Subsequent packets in the flow
+could would be mapped to the same cell; the current cell value would
+be stored in metadata for the packet and a subsequent table could
+check that the flow was marked as active.
 
 ```
 [INCLUDE=psa.p4:Register_extern]
 ```
+
+Another example using registers is given below.  It implements a
+packet and byte counter, where the byte counter can be updated by a
+packet length specified in the P4 program, rather than one chosen by
+the PSA implementation.
+
+```
+[INCLUDE=examples/psa-example-register2.p4:Register_Example2_Part1]
+
+[INCLUDE=examples/psa-example-register2.p4:Register_Example2_Part2]
+```
+
+Note the use of the `@atomic` annotation in the block enclosing the
+`read()` and `write()` method calls on the `Register` instance.  It is
+expected to be common that register accesses will need the `@atomic`
+annotation around portions of your program in order to behave as you
+desire.  As stated in the P4_16 specification, without the `@atomic`
+annotation in this example, an implementation is allowed to process
+two packets `P1` and `P2` in parallel, and perform the register access
+operations in this order:
+
+```
+    // Possible order of operations for the example program if the
+    // @atomic annotation is _not_ used.
+
+    tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  // for packet P1
+    tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);  // for packet P2
+
+    // At this time, if P1 and P2 came from the same ingress_port,
+    // each of their values of tmp are identical.
+
+    update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);    // for packet P1
+    update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);    // for packet P2
+
+    port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  // for packet P1
+    port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  // for packet P2
+    // The write() from packet P1 is lost.
+```
+
+Since different implementations may have different upper limits on the
+complexity of code that they will accept within an `@atomic` block, we
+recommend you keep them as small as possible, subject to maintaining
+your desired correct behavior.
+
+Individual counter and meter method calls need not be enclosed in
+`@atomic` blocks to be safe -- they guarantee atomic behavior of their
+individual method calls, without losing any updates.
+
+As for indexed counters and meters, access to an index of a register
+that is at least the size of the register is out of bounds.  An out of
+bounds write has no effect on the state of the system.  An out of
+bounds read returns an undefined value.  See the example in Section
+[#sec-meters] for one way to write code to guarantee avoiding this
+undefined behavior.  Out of bounds register accesses are impossible
+for a register instance with type `S` declared as `bit<W>` and size
+$2^W$ entries.
+
 
 ## Random
 
@@ -553,31 +1134,156 @@ return whatever distribution is supported by the target?
 
 Action profiles are used as table implementation attributes.
 
-Action profiles implement a mechanism to populate table entries
-with actions and action data. The only data plane operation
-required is to instantiate this extern. When the control plane adds
-entries (members) into the extern, they are essentially populating
-the corresponding table entries.
+Action profiles provide a mechanism to populate table entries
+with action specifications that have been defined outside the table entry
+specification. An action profile extern can be instantiated as
+a resource in the P4 program. A table that uses this action profile
+must specify its implementation attribute as the action profile 
+instance.
+
+An action profile instance contains member entries consisting of action
+specifications. Member entries are indexed by controller-assigned integer ids.
+Action profile members may only specify action types defined in the `actions`
+attribute of the implemented table. An action profile instance may be shared
+across multiple tables only if all such tables define the same set of actions
+in their `actions` attribute.
+
+When a packet matches a table entry at runtime, the controller-assigned
+id of the action profile member is read. This id is used as an index to look-up
+the action specification in the action profile extern. The action specification
+is applied to the packet.
+
+The control plane can add, modify or delete member entries for a
+given action profile instance. When adding a member entry, the control
+plane must assign an integer id to the member entry. The controller-assigned
+id must be unique in the scope of the action profile instance. An
+action profile instance may hold at most `size` entries as defined in the
+constructor parameter. Table entries must specify the action using the
+controller-assigned id for the desired member entry. Directly specifying
+the action as part of the table entry is not allowed for tables with an
+action profile implementation.
 
 ```
 [INCLUDE=psa.p4:ActionProfile_extern]
 ```
 
+### Action Profile Example
+The P4 control block `Ctrl` in the example below instantiates an
+action profile `ap` that can contain at most 128 member entries. Table
+`indirect` uses this instance by specifying the implementation attribute.
+The control plane can add member entries to `ap`, where each member can
+specify either a `foo` or `NoAction` action. Table entries for `indirect`
+table must specify the action using the controller assigned member id.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+    action foo() { meta.foo = 1; }
+
+    action_profile ap(32w128);
+
+    table indirect {
+        key = {hdr.ipv4.dst_address: exact}
+        actions = { foo; NoAction; }
+        const default_action = NoAction();
+        implementation = ap;
+    }
+
+    apply {
+        indirect.apply();
+    }
+};
+```
 ## Action Selector
 
 Action selectors are used as table implementation attributes.
 
 Action selectors implement another mechanism to populate table
-entries with actions and action data. They are similar to action
-profiles, with additional support to define groups of
-entries. Action selectors require a hash algorithm to select
-members in a group. The only data plane operation required is to
-instantiate this extern. When the control plane adds entries
-(members) into the extern, they are essentially populating the
-corresponding table entries.
+entries with action specifications that have been defined outside the
+table entry. They are more powerful than action profiles because they also
+provide the ability to dynamically select the action specification to apply
+upon maching a table entry. An action selector extern can be instantiated as
+a resource in the P4 program, similar to action profiles. Furthermore,
+a table that uses this action selector must specify its implementation attribute
+as the action selector instance.
+
+An action selector instance contains member entries consisting of action
+specifications. Additionally, it may contain group entries that are defined
+as a collection of member entries. Both action selector member and group entries
+are indexed by controller-assigned integer ids. Member and group entries share
+the id space. Action selector members may only specify action types defined
+in the `actions` attribute of the implemented table. An action selector instance
+may be shared across multiple tables only if all such tables define the same
+set of actions in their `actions` attribute.
+
+When a packet matches a table entry at runtime, the controller-assigned
+id of the action profile member or group is read. The id is used to look-up
+the member or group entry in the action selector. If the id belongs to a member,
+then the corresponding action specification is applied. However, if the id
+belongs to a group, a dynamic selection algorithm is used to
+determine the id of the member from the group, and the action specification
+corresponding to that member is applied. The dynamic selection algorithm is passed
+as a parameter to the action selector constructor.
+
+The dynamic selection algorithm requires a field list as an input for generating
+the index to a member entry in a group. This field list is created by using the
+match type `selector` when defining the table match key. The match fields of type
+`selector` are composed into a field list in the order they are specified. The
+composed field list is passed as an input to the action selector implementation.
+It is illegal to define a `selector` type match field if the table does not have
+an action selector implemenation.  
+
+The control plane can add, modify or delete member and group entries for a
+given action selector instance. When adding a member or group entry, the control
+plane must assign an integer id to the entry. The controller-assigned
+id must be unique in the scope of the action selector instance. An
+action selector instance may hold at most `size` member entries as defined in the
+constructor parameter. There is no limit of the number of groups. Table entries 
+must specify the action using the controller-assigned id for the desired member
+or group entry. Directly specifying the action as part of the table entry is not
+allowed for tables with an action selector implementation.
 
 ```
 [INCLUDE=psa.p4:ActionSelector_extern]
+```
+### Action Selector Example
+The P4 control block `Ctrl` in the example below instantiates an
+action selector `as` that can contain at most 128 member entries. The
+action selector uses a crc16 algorithm with output width of 10 bits
+to select a member entry within a group.
+
+Table `indirect_with_selection` uses this instance by specifying the implementation
+attribute as shown. The control plane can add member and group entries to `as`.
+Each member can specify either a `foo` or `NoAction` action. When programming the
+table entries, the control plane *does not* include the fields of match type
+`selector` in the match key. The selector match fields are instead used to compose a
+list that is passed to the action selector instance. In the example below, the list
+{hdr.ipv4.src_address, hdr.ipv4.protocol} is passed as input to the crc16 hash
+algorithm used by action selector `as`. Table entries must specify the table action
+using the controller-assigned member or group id.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+    action foo() { meta.foo = 1; }
+
+    action_selector as(HashAlgorithm.crc16, 32w128, 32w10);
+
+    table indirect_with_selection {
+        key = {
+		hdr.ipv4.dst_address: exact,
+		hdr.ipv4.src_address: selector,
+		hdr.ipv4.protocol: selector,
+	}
+        actions = { foo; NoAction; }
+        const default_action = NoAction();
+        implementation = as;
+    }
+
+    apply {
+        indirect_with_selection.apply();
+    }
+};
 ```
 
 ## Packet Generation
@@ -668,20 +1374,185 @@ for maximum portability should avoid writing such code.
 ```
 
 
-# Programmable blocks
+## Timestamps
+
+A PSA implementation provides an `ingress_timestamp` value for every
+packet in the ingress control block, as a field in the struct with
+type `psa_ingress_input_metadata_t`.  This timestamp should be close
+to the time that the first bit of the packet arrived to the device, or
+alternately, to the time that the device began parsing the packet.
+This timestamp is _not_ automatically included with the packet in the
+egress control block.  A P4 program wishing to use the value of
+`ingress_timestamp` in egress code must copy it to a user-defined
+metadata field that reaches egress.
+
+A PSA implementation also provides an `egress_timestamp` value for
+every packet in the egress control block, as a field of the struct
+with type `psa_egress_input_metadata_t`.
+
+One expected use case for timestamps is to store them in tables or
+`Register` instances to implement checking for timeout events for
+protocols, where precision on the order of milliseconds is sufficient
+for most protocols.
+
+Another expected use case is INT (Inband Network Telemetry[^INT]),
+where precision on the order of microseconds or smaller is necessary
+to measure queueing latencies that differ by those amounts.  It takes
+only 0.74 microseconds to transmit a 9 Kbyte Ethernet jumbo frame on a
+100 gigabit per second link.
+
+[^INT]: <http://p4.org/p4/inband-network-telemetry>
+
+For these applications, it is recommended that an implementation's
+timestamp increments at least once every microsecond.  Incrementing
+once per clock cycle in an ASIC or FPGA implementation would be a
+reasonable choice.  The timestamp should increment at a constant rate
+over time.  For example, it should not be a simple count of clock
+cycles in a device that implements dynamic frequency
+scaling[^DynamicFrequencyScaling].
+
+[^DynamicFrequencyScaling]: <https://en.wikipedia.org/wiki/Dynamic_frequency_scaling>
+
+Timestamps are of type `Timestamp_t`, which is type `bit<W>` for a
+value of `W` defined by the implementation.  Timestamps are expected
+to wrap around during the normal passage of time.  It is recommended
+that an implementation pick a rate of advance and a bit width such
+that wrapping around occurs at most once every hour.  Making the wrap
+time this long (or longer) makes timestamps more useful for several
+use cases.
+
+- Checking for timeouts of protocol hello / keep-alive traffic that is
+  on the order of seconds or minutes.
+- If timestamps are placed into packets without converting them to
+  other formats, then external data analysis systems using those
+  timestamps will in many cases need to do so, e.g. to compare
+  timestamps stored in packets by different PSA devices.  These
+  systems will need different formulas and/or parameters to perform
+  this conversion for each wrap period, or to add extra external time
+  references to the recorded data.  The extra data required for
+  accurate conversion is lower, and the likelihood of conversion
+  mistakes is lower, if the timestamp values wrap less often.
+- If timestamps are converted to other formats within a P4 program, it
+  will need access to parameters that are likely to change every wrap
+  time, e.g. at least a "base value" to add some calculated value to.
+  A straightforward way to do this requires the control plane to
+  update these values at least once or twice per timestamp wrap time.
+- Programs that wish to use `(egress_timestamp - ingress_timestamp)`
+  to calculate the queueing latency experienced by a packet need the
+  wrap time to exceed the maximum queueing latency.
+
+Examples of the number of bits required for wrap times of at least one
+hour:
+
+- A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
+  to wrap.
+- A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
+  wrap.
+
+A PSA implementation is not required to implement time
+synchronization, e.g. via PTP[^PTP] or NTP[^NTP].
+
+[^PTP]: <https://en.wikipedia.org/wiki/Precision_Time_Protocol>
+[^NTP]: <https://en.wikipedia.org/wiki/Network_Time_Protocol>
+
+TBD: This text has been written assuming that it is more important for
+timestamps to be increasing at a constant rate, with no sudden "jumps"
+due to time synchronization events.  Is this what people want from
+timestamps?
+
+TBD: Some time synchronization methods avoid sudden "jumps" by
+temporarily speeding up or slowing down the rate of increase by a
+small percentage, until the desired synchronization is achieved.
+(TBD: which ones?  citation?).  Would anyone mind if PSA
+implementations were allowed to do this with their timestamp values?
+
+The control plane API excerpt below is intended to be added as part of
+the P4Runtime API[^P4RuntimeAPI].
+
+```
+// The TimestampInfo and Timestamp messages should be added to the
+// "oneof" inside of message "Entity".
+
+// TimestampInfo is only intended to be read.  Attempts to update this
+// entity have no effect, and should return an error status that the
+// entity is read only.
+
+message TimestampInfo {
+  // The number of bits in the device's `Timestamp_t` type.
+  uint32 size_in_bits = 1;
+  // The timestamp value of this device increments
+  // `increments_per_period` times every `period_in_seconds` seconds.
+  uint64 increments_per_period = 2;
+  uint64 period_in_seconds = 3;
+}
+
+// The timestamp value can be read or written.  Note that if there are
+// already timestamp values stored in tables or `Register` instances,
+// they will not be updated as a result of writing this timestamp
+// value.  Writing the device timestamp is intended only for
+// initialization and testing.
+
+message Timestamp {
+  bytes value = 1;
+}
+```
+
+For every packet `P` that is processed by ingress and then egress,
+with the minimum possible latency in the packet buffer, it is
+guaranteed that the `egress_timestamp` value for that packet will be
+the same as, or slightly larger than, the `ingress_timestamp` value
+that the packet was assigned on ingress.  By "slightly larger than",
+we mean that the difference `(egress_timestamp - ingress_timestamp)`
+should be a reasonably accurate estimate of this minimum possible
+latency through the packet buffer, perhaps truncated down to 0 if
+timestamps advance more slowly than this minimum latency.
+
+Consider two packets such that at the same time (e.g. the same clock
+cycle), one is assigned its value of `ingress_timestamp` near the time
+it begins parsing, and the other is assigned its value of
+`egress_timestamp` near the time that it begins its egress processing.
+It is allowed that these timestamps differ by a few tens of
+nanoseconds (or by one "tick" of the timestamp, if one tick is larger
+than that time), due to practical difficulties in making them always
+equal.
+
+Recall that the binary operators `+` and `-` on the `bit<W>` type in
+P4 are defined to perform wrap-around unsigned arithmetic.  Thus even
+if a timestamp value wraps around from its maximum value back to 0,
+you can always calculate the number of ticks that have elapsed from
+timestamp $t1$ until timestamp $t2$ using the expression $(t2 - t1)$
+(if more than $2^W$ ticks have elapsed, there will be aliasing of the
+result).  For example, if timestamps were $W >= 4$ bits in size,
+$t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.
+
+It is sometimes useful to minimize storage costs by discarding some
+bits of a timestamp value in a P4 program for use cases that do not
+need the full wrap time or precision.  For example, an application
+that only needs to detect protocol timeouts with an accuracy of 1
+second can discard the least significant bits of a timestamp that
+change more often than every 1 second.
+
+Another example is an application that needed full precision of the
+least significant bits of a timestamp, but the combination of the
+control plane and P4 program are designed to examine all entries of a
+`Register` array where these partial timestamps are stored more often
+than once every 5 seconds, to prevent wrapping.  In that case, the P4
+program could discard the most significant bits of the timestamp so
+that the remaining bits wrap every 8 seconds, and store those partial
+timestamps in the `Register` instance.
+
+
+# Programmable blocks { #sec-programmable-blocks }
 
 The following declarations provide a template for the programmable
 blocks in the PSA. The P4 programmer is responsible for
 implementing controls that match these interfaces and instantiate
 them in a package definition.
 
-The current implementation uses the same user-defined metadata
-structure for all the controls.
-An alternative design is to split the user-defined metadata into an
-input parameter and an output parameter for each block. The
-compiler will have to check that the out parameter of a block
-matches the in parameter of the subsequent block.
-
+It uses the same user-defined metadata type `IM` and header type `IH`
+for all ingress parsers and control blocks.  The egress parser and
+control blocks can use the same types for those things, or different
+types, as the P4 program author wishes.
 
 ```
 [INCLUDE=psa.p4:Programmable_blocks]
