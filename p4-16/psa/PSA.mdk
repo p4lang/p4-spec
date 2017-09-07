@@ -251,6 +251,14 @@ the contents of several metadata fields in the struct
 
     psa_ingress_output_metadata_t ostd;
 
+    if (ostd.class_of_service value is not supported) {
+        drop the packet;
+        Optional: Record error status, e.g. update a count of packets
+            dropped for this reason, and record the bad value of
+            ostd.class_of_service in a small queue, dropping a new
+            value if the queue is full.
+        return;   // Do not continue below.
+    }
     if (truncate) {
         Truncate the payload to at most truncate_payload_bytes long.
             This affects any copies made below.
