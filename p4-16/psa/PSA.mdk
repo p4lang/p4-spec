@@ -225,6 +225,11 @@ after the Ingress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 `psa_ingress_output_metadata_t`.
 
+Note that if at the end of Ingress control block the egress_port is
+not set, or it is set to a value that is not supported by the target,
+the PSA specifies that the packet is dropped. A target implementation
+may optionally chose to count such packets.
+
 ```
 [INCLUDE=psa.p4:Metadata_ingress_output]
 
@@ -258,7 +263,11 @@ the contents of several metadata fields in the struct
             plane configuration of multicast group ostd.multicast_group.
         return;   // Do not continue below.
     }
-    enqueue one packet for output port ostd.egress_port
+    if (ostd.egress_port undefined)
+        Drop the packet and optionally count the packets that are
+        dropped because of it.
+    else
+        enqueue one packet for output port ostd.egress_port
 ```
 
 TBD: Need text defining, for each possible copy, exactly what the
@@ -434,7 +443,7 @@ represents the control CPU port.
 
 The PSA specifies four types of cloning, with the packet sourced from
 different points in the pipeline and sent back to ingress or to the
-buffering queue in the egress. 
+buffering queue in the egress.
 
 ```
 extern clone {
