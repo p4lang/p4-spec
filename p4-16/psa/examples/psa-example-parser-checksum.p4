@@ -88,7 +88,7 @@ parser IngressParserImpl(packet_in buffer,
                          in psa_ingress_parser_input_metadata_t istd,
                          out psa_parser_output_metadata_t ostd)
 {
-    Checksum<bit<16>>(HashAlgorithm.ones_complement16) ck;
+    Checksum<bit<16>>(HashAlgorithm_t.ONES_COMPLEMENT16) ck;
     state start {
         buffer.extract(parsed_hdr.ethernet);
         transition select(parsed_hdr.ethernet.etherType) {
@@ -151,7 +151,7 @@ control ingress(inout headers hdr,
     // vector encoding of an error into a packet header, e.g. for a
     // packet sent to the control CPU.
 
-    DirectCounter<PacketCounter_t>(CounterType_t.packets) parser_error_counts;
+    DirectCounter<PacketCounter_t>(CounterType_t.PACKETS) parser_error_counts;
     ErrorIndex_t error_idx;
 
     action set_error_idx (ErrorIndex_t idx) {
@@ -213,7 +213,7 @@ control egress(inout headers hdr,
 
 // BEGIN:Compute_New_IPv4_Checksum_Example
 control computeChecksum(inout headers hdr, inout metadata meta) {
-    Checksum<bit<16>>(HashAlgorithm.ones_complement16) ck;
+    Checksum<bit<16>>(HashAlgorithm_t.ONES_COMPLEMENT16) ck;
     apply {
         // TBD: Update the code below for checking the IPv4 header
         // checksum with whatever the API we decide upon for a PSA

@@ -1,6 +1,6 @@
 Title : P4~16~ Portable Switch Architecture (PSA)
 Title Note : (draft)
-Title Footer: August 23, 2017
+Title Footer: &date;
 Author : The P4.org language consortium
 Heading depth: 4
 
@@ -38,6 +38,7 @@ Tex Header:
 []{tex-cmd: "\fancyfoot[C]{P$4_{16}$ Portable Switch Architecture}"}
 []{tex-cmd: "\fancyfoot[R]{\thepage}"}
 []{tex-cmd: "\pagestyle{fancy}"}
+[]{tex-cmd: "\sloppy"}
 
 ~ Begin Abstract
 
@@ -70,7 +71,11 @@ on where the packets should go. After the ingress pipeline, the packet
 may be buffered and/or replicated (sent to multiple egress ports). For
 each such egress port, the packet passes through an egress match
 action pipeline and a checksum update calculation before it is
-deparsed and queued to leave the pipeline..
+deparsed and queued to leave the pipeline. Note: the checksum
+operations are available -- validation in the parser,
+and checksum computation and update in deparser (see also Table [])
+however, they need to be explicitly invoked though the checksum extern
+in order to be executed.
 
 ~ Figure { #fig-switch; caption: "Portable Switch Pipeline"; page-align: here; }
 ![switch]
@@ -86,13 +91,30 @@ controls.
 When instantiating the `main` `package` object, the instances
 corresponding to the programmable blocks are passed as arguments.
 
+# Naming conventions
+
+In this document we use the following naming conventions:
+
+- Types are named using CamelCase followed by `_t`. For example, `PortId_t`.
+- Control types and extern object types are named using CamelCase. For
+  example `IngressParser`.
+- Struct types are named using lower case words separated by `_`
+  followed by `_t`. For example `psa_ingress_input_metadata_t`.
+- Actions, extern methods, extern functions, headers, structs, and
+  instances of controls and externs start with lower case and words
+  are separated using `_`. For example `send_to_port`.
+- Enum members, const definitions, and #define constants are all
+  caps, with words separated by `_`. For example 'PORT_CPU'.
+
+Architecture specific metadata (e.g. structs) are prefixed by `psa_`.
+
 # PSA Data types
 
 ## PSA type definitions
 
 Each PSA implementation will have specific bit widths for the
-following types.  These widths should be in that PSA implementation's
-custom `psa.p4` file.
+following types.  These widths should be defined in the target
+specific implementation of the PSA file.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -121,7 +143,7 @@ All instantiations in a P4~16~ program occur at compile time, and can
 be arranged in a tree structure we will call the instantiation tree.
 The root of the tree `T` represents the top level of the program.  Its
 children are the node for the package `PSA_Switch` described in
-[#sec-programmable-blocks], and any externs instantiated at the top
+Section [#sec-programmable-blocks], and any externs instantiated at the top
 level of the program.  The children of the `PSA_Switch` node are the
 parsers and controls passed as parameters to the `PSA_Switch`
 instantiation.  If any of those parsers or controls instantiate other
@@ -325,12 +347,11 @@ the contents of several metadata fields in the struct
 TBD: Need text defining, for each possible copy, exactly what the
 contents of the packet will be, and any differences between the values
 of the fields in the structs `psa_parser_input_metadata_t` and
-`psa_ingress_input_metadata_t`, in the copy, as compared to the values
+`psa_egress_input_metadata_t`, in the copy, as compared to the values
 seen for the packet that caused those copies to be made.
 
 TBD: Should it be possible to truncate a cloned or recirculated packet
 differently than the normal packet that goes out?
-
 
 ### Actions for directing packets during ingress { #sec-ingress-actions }
 
@@ -388,31 +409,36 @@ no payload.
 [INCLUDE=psa.p4:Action_ingress_truncate]
 ```
 
-### Clone/recirculation/resubmit
+### Clone, Recirculate, Resubmit
 
-~ Figure { #fig-clone; caption: "Clone/recirculate/resubmit in PSA"; page-align: here; }
+~ Figure { #fig-clone; caption: "Clone, recirculate, and resubmit in PSA"; page-align: here; }
 ![clone]
 ~
 [clone]: clone_recirc_resubmit.png { width: 90%; }
 
-Figure [#fig-clone] show two proposed architectures for clone/recirculate/resubmit in PSA.
+Figure [#fig-clone] shows the proposed architectures for clone,
+recirculate, and resubmit in PSA.
 
 #### Clone
 
-A PSA implementation provides a clone mechanism to create a copy of
-the original packet as an independent packet instance. The cloned
-packet can be a duplicate of the original packet or a copy of the
-deparsed packet after egress pipeline. The clone mechanism can submit
-the cloned packet to ingress parser or buffering mechanism. In a PSA
-implementation, the clone mechanism is implemented in PRE.
+A PSA implementation provides a cloning mechanism to create copies of
+the original packet as independent packet instances. A cloned
+packet may be a duplicate of the original packet or a copy of the
+deparsed packet after egress pipeline. The cloning may mechanism submit
+the cloned packet to either the ingress parser or the buffering mechanism.
+In a PSA implementation, the cloning mechanism is logically implemented in
+the PRE, that is, even if targets chose to implement it as part of other
+controls, the observable behavior should follow the semantics of cloning in
+the PRE.
 
-The clone mechanism can optionally attach metadata to the cloned
+The cloning mechanism can optionally attach metadata to the cloned
 packet. A PSA implementation provides the `clone` extern to specify
 the attached metadata. The `clone` extern provides a `emit` method
-which accepts the attached metadata of generic type `T`. In a PSA
-implementation, the metadata is prepended to the cloned packet. It is
+which accepts the attached metadata of generic type `T`. In PSA,
+the metadata is prepended to the cloned packet. It is
 the responsibility of the programmer to parse the cloned packet
-correctly to extract the attached metadata. The attached metadata can
+such that it correctly extracts the attached metadata.
+The attached metadata may
 be of type `header`, `header stack`, `header union` or `struct` of the
 above types. Invoking the `emit` method multiple times will attach all
 specified metadata to the same cloned packet. The PSA architecture
@@ -422,41 +448,40 @@ error to instantiate the `clone` extern in the P4 control or parser
 block.
 
 A PSA implementation provides two configuration metadata, `clone`
-and `clone_spec`, to the PRE to control the cloning mechanism. The
-`clone` enables/disables the cloning mechanism. If the `clone`
-bit is set, the clone mechanism generates a cloned packet with the
-optional attached metadata. If the `clone` bit is unset or
-uninitialized, the clone mechanism is disabled and a cloned packet is
+and `clone_port`, to the PRE to control the cloning mechanism. When
+the `clone` bit is set, the clone mechanism generates a cloned packet with the
+optional attached metadata. When the `clone` bit is unset or
+uninitialized, cloning is disabled and a cloned packet is
 not generated even if the `emit` method is invoked in the deparser.
-The `clone_spec` control the destination of the cloned packet. A
+The `clone_port` controls the destination of the cloned packet. A
 common use case is to the send the cloned packet to the control CPU,
-in which case the `clone_spec` should be set to the value that
+in which case the `clone_port` should be set to the value that
 represents the control CPU port.
 
 The PSA specifies four types of cloning, with the packet sourced from
 different points in the pipeline and sent back to ingress or to the
-buffering queue in the egress. 
+buffering queue in the egress. (TBD: Which are the four??)
 
 ```
-extern clone {
-  /// Write @hdr into the ingress/egress clone engine.
-  /// @T can be a header type, a header stack, a header union, or a struct
-  /// containing fields with such types.
-  void emit<T>(in T hdr);
-}
+[INCLUDE=psa.p4:Cloning_methods]
+
+[INCLUDE=psa.p4:Clone_extern]
 ```
 
 #### Resubmit
 
-A PSA implementation provides a resubmit mechanism to resend the
+A PSA implementation provides a resubmission mechanism to resend the
 original packet to ingress parser for recursive processing. The
 resubmitted packet is the original packet as seen on the ingress
-pipeline. The resubmit mechanism sends the original packet to the
-ingress parser. The resubmit mechanism does not make copies of
-the original packet. In a PSA implementation, the resubmit mechanism is
-implemented in PRE.
+pipeline. The resubmission mechanism sends the original packet to the
+ingress parser. The resubmission mechanism does not make copies of
+the original packet. In a PSA implementation, the resubmission mechanism is
+logically implemented in
+the PRE, that is, even if targets chose to implement it as part of other
+controls, the observable behavior should follow the semantics of resubmitting
+in the PRE.
 
-The resubmit mechanism can optionally attach metadata to the
+The resubmission mechanism can optionally attach metadata to the
 resubmitted packet. A PSA implementation provides the `resubmit`
 extern to specify the attached metadata. The `resubmit` extern
 provides a `emit` method which accepts the attached metadata of
@@ -472,20 +497,15 @@ ingress deparser only. It is an error to instantiate the `resubmit`
 extern in the P4 control or parser block.
 
 A PSA implementation provides a configuration bit `resubmit` to
-the PRE to enable the resubmit mechanism. If the `resubmit` bit is
-set, the resubmit mechanism resends the original packet with the
+the PRE to enable the resubmission mechanism. If the `resubmit` bit is
+set, the resubmission mechanism resends the original packet with the
 optional attached metadata. If the `resubmit` bit is unset or
-uninitialized, the resubmit mechanism is disabled and the original
+uninitialized, the resubmission mechanism is disabled and the original
 packet is not resubmitted even if the `emit` method is invoked in the
 deparser.
 
 ```
-extern resubmit {
-  /// Write @hdr into the ingress packet buffer.
-  /// @T can be a header type, a header stack, a header union or a struct
-  /// containing fields with such types.
-  void emit<T>(in T hdr);
-}
+[INCLUDE=psa.p4:Resubmit_extern]
 ```
 
 #### Recirculate
@@ -496,7 +516,11 @@ processing. The recirculated packet is the deparsed packet after the
 egress pipeline. The recirculation mechanism does not make copies of
 the original packet. It sends the deparsed packet from egress back to
 the ingress parser. In a PSA implementation, the recirculation
-mechanism is implemented in PRE.
+mechanism is logically implemented in
+the PRE, that is, even if targets chose to implement it as part of other
+controls, the observable behavior should follow the semantics of recirculating
+in the PRE.
+
 
 The recirculation mechanism can optionally attach metadata to the
 recirculated packet. A PSA implementation provides the `recirculate`
@@ -537,12 +561,7 @@ based on the `ingress_port` metadata of the received packet. If the
 number, then the `is_recirc` bit is set.
 
 ```
-extern recirculate {
-  /// Write @hdr into the egress packet.
-  /// @T can be a header type, a header stack, a header union or a struct
-  /// containing fields with such types.
-  void emit(in T hdr);
-}
+[INCLUDE=psa.p4:Recirculate_extern]
 ```
 
 
@@ -602,8 +621,8 @@ Example usage:
 
 ```
 parser P() {
-  Hash<bit<16>>(HashAlgorithm.crc16) h;
-  bit<16> hash_value = h.getHash(buffer);
+  Hash<bit<16>>(HashAlgorithm_t.CRC16) h;
+  bit<16> hash_value = h.get_hash(buffer);
 }
 ```
 
@@ -718,7 +737,7 @@ primary differences between direct counters and indexed counters are:
     of the counter value to be updated.
 
 Counters are only intended to support packet counters and byte
-counters, or a combination of both called `packets_and_bytes`.  The
+counters, or a combination of both called `PACKETS_AND_BYTES`.  The
 byte counts are always increased by some measure of the packet length,
 where the packet length used might vary from one PSA implementation to
 another.  For example, one implementation might use the Ethernet frame
@@ -750,7 +769,7 @@ extern.
 
 The example implementation for `next_counter_value` is not intended to
 restrict PSA implementations.  In particular, the storage format for
-`packets_and_bytes` type counters is just one example of how it could
+`PACKETS_AND_BYTES` type counters is just one example of how it could
 be done.  Implementations are free to store state in other ways, as
 long as the control plane API returns the correct packet and byte
 count values.
@@ -775,7 +794,7 @@ Counter(bit<32> n_counters, CounterType_t type) {
     this.num_counters = n_counters;
     this.counter_vals = new array of size n_counters, each element with type W;
     this.type = type;
-    if (this.type == CounterType_t.packets_and_bytes) {
+    if (this.type == CounterType_t.PACKETS_AND_BYTES) {
         // Packet and byte counts share storage in the same counter
         // state.  Should we have a separate constructor with an
         // additional argument indicating how many of the bits to use
@@ -788,16 +807,16 @@ Counter(bit<32> n_counters, CounterType_t type) {
 }
 
 W next_counter_value(W cur_value, CounterType_t type) {
-    if (type == CounterType_t.packets) {
+    if (type == CounterType_t.PACKETS) {
         return (cur_value + 1);
     }
     // Exactly which packet bytes are included in packet_len is
     // implementation-specific.
     PacketLength_t packet_len = <packet length in bytes>;
-    if (type == CounterType_t.bytes) {
+    if (type == CounterType_t.BYTES) {
         return (cur_value + packet_len);
     }
-    // type must be CounterType_t.packets_and_bytes
+    // type must be CounterType_t.PACKETS_AND_BYTES
     // In type W, the least significant bits contain the byte
     // count, and most significant bits contain the packet count.
     // This is merely one example storage format.  Implementations
@@ -939,7 +958,7 @@ including:
 
 - The number of independently updatable meter values.
 - Where meter updates are allowed in a P4 program.
-- For `bytes` type meters, the packet length used in the update is
+- For `BYTES` type meters, the packet length used in the update is
   determined by the PSA implementation, and can vary from one PSA
   implementation to another.
 
@@ -972,7 +991,7 @@ index value could never be out of range.
 
 ```
 #define METER1_SIZE 100
-Meter<bit<7>>(METER1_SIZE, MeterType_t.bytes) meter1;
+Meter<bit<7>>(METER1_SIZE, MeterType_t.BYTES) meter1;
 bit<7> idx;
 MeterColor_t color1;
 
