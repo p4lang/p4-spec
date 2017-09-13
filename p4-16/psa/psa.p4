@@ -256,28 +256,56 @@ extern BufferingQueueingEngine {
 
 }
 
+// BEGIN:Clone_extern
+extern clone {
+  /// Write @hdr into the ingress/egress clone engine.
+  /// @T can be a header type, a header stack, a header union, or a struct
+  /// containing fields with such types.
+  void emit<T>(in T hdr);
+}
+// END:Clone_extern
+
+
+// BEGIN:Resubmit_extern
+extern resubmit {
+  /// Write @hdr into the ingress packet buffer.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void emit<T>(in T hdr);
+}
+// END:Resubmit_extern
+
+// BEGIN:Recirculate_extern
+extern recirculate {
+  /// Write @hdr into the egress packet.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void emit(in T hdr);
+}
+// END:Recirculate_extern
+
 // BEGIN:Hash_algorithms
-enum HashAlgorithm {
-  identity,
-  crc32,
-  crc32_custom,
-  crc16,
-  crc16_custom,
-  ones_complement16,  /// One's complement 16-bit sum used for IPv4 headers,
+enum HashAlgorithm_t {
+  IDENTITY,
+  CRC32,
+  CRC32_CUSTOM,
+  CRC16,
+  CRC16_CUSTOM,
+  ONES_COMPLEMENT16,  /// One's complement 16-bit sum used for IPv4 headers,
                       /// TCP, and UDP.
-  target_default      /// target implementation defined
+  TARGET_DEFAULT      /// target implementation defined
 }
 // END:Hash_algorithms
 
 // BEGIN:Hash_extern
 extern Hash<O> {
   /// Constructor
-  Hash(HashAlgorithm algo);
+  Hash(HashAlgorithm_t algo);
 
   /// Compute the hash for data.
   /// @param data The data over which to calculate the hash.
   /// @return The hash value.
-  O getHash<D>(in D data);
+  O get_hash<D>(in D data);
 
   /// Compute the hash for data, with modulo by max, then add base.
   /// @param base Minimum return value.
@@ -286,13 +314,13 @@ extern Hash<O> {
   ///        An implementation may limit the largest value supported,
   ///        e.g. to a value like 32, or 256.
   /// @return (base + (h % max)) where h is the hash value.
-  O getHash<T, D>(in T base, in D data, in T max);
+  O get_hash<T, D>(in T base, in D data, in T max);
 }
 // END:Hash_extern
 
 // BEGIN:Checksum_extern
 extern Checksum<W> {
-  Checksum(HashAlgorithm hash);          /// constructor
+  Checksum(HashAlgorithm_t hash);          /// constructor
   void clear();              /// prepare unit for computation
   void update<T>(in T data); /// add data to checksum
   void remove<T>(in T data); /// remove data from existing checksum
@@ -302,9 +330,9 @@ extern Checksum<W> {
 
 // BEGIN:CounterType_defn
 enum CounterType_t {
-    packets,
-    bytes,
-    packets_and_bytes
+    PACKETS,
+    BYTES,
+    PACKETS_AND_BYTES
 }
 // END:CounterType_defn
 
@@ -361,8 +389,8 @@ extern DirectCounter<W> {
 
 // BEGIN:MeterType_defn
 enum MeterType_t {
-    packets,
-    bytes
+    PACKETS,
+    BYTES
 }
 // END:MeterType_defn
 
@@ -477,7 +505,7 @@ extern ActionSelector {
   /// @param algo hash algorithm to select a member in a group
   /// @param size number of entries in the action selector
   /// @param outputWidth size of the key
-  ActionSelector(HashAlgorithm algo, bit<32> size, bit<32> outputWidth);
+  ActionSelector(HashAlgorithm_t algo, bit<32> size, bit<32> outputWidth);
 
   /*
   @ControlPlaneAPI
