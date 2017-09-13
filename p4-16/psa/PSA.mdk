@@ -787,9 +787,9 @@ algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
 RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
 
 ```
-[INCLUDE=psa.p4:InternetChecksum_extern]    
-```            
-    
+[INCLUDE=psa.p4:InternetChecksum_extern]
+```
+
 ### Checksum examples { #sec-checksum-examples }
 
 The partial program below demonstrates one way to use the `Checksum`
@@ -806,7 +806,7 @@ the location within a packet that a parser error occurred. A P4
 program author can choose to record such location information
 explicitly. For example, one may define metadata fields specifically
 for that purpose -- e.g. to hold an encoded value representing the last
-parser state reached, or the number of bytes extracted so far -- and then 
+parser state reached, or the number of bytes extracted so far -- and then
 assign values to those fields within the parser state code.
 
 ```
@@ -832,12 +832,12 @@ on the original packet is correct, and update it incrementally by
 invoking `remove` and then `update` on any fields that are modified by
 the program. For example, the ingress control in the program below
 updates the IPv4 source address, recording the original source address
-in a metadata field:    
+in a metadata field:
 ```
 [INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Table]
 ```
 The deparser first updates the IPv4 checksum as above, and then
-incrementally computes the TCP checksum.         
+incrementally computes the TCP checksum.
 ```
 [INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Example]
 ```
@@ -1079,6 +1079,9 @@ in such a way that they return a `GREEN` (also known as conform),
 conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
+The value returned by an uninitialized meter shall be GREEN. This is in
+accordance with the P4Runtime specification.
+
 
 RFC 2698 describes "color aware" and "color blind" variations of
 meters.  The `Meter` and `DirectMeter` externs implement both.  The
@@ -1199,6 +1202,9 @@ keys, you may use the `read()` method call on the right-hand side of
 an assignment statement, which retrieves the current value of the
 register.  You may copy the register value into metadata, and it is
 then available for matching in subsequent tables.
+The value returned by an uninitialized register is undefined. If a target
+implementation chooses to return some value, the PSA recommends the
+value should be 0.
 
 A simple usage example might be to verify that a "first packet" was
 seen for a particular type of flow.  A register cell would be
@@ -1297,7 +1303,7 @@ Action profiles provide a mechanism to populate table entries
 with action specifications that have been defined outside the table entry
 specification. An action profile extern can be instantiated as
 a resource in the P4 program. A table that uses this action profile
-must specify its implementation attribute as the action profile 
+must specify its implementation attribute as the action profile
 instance.
 
 ~ Figure { #fig-ap; caption: "Action profiles in PSA"; page-align: here; }
@@ -1424,7 +1430,7 @@ match type `selector` when defining the table match key. The match fields of
 type `selector` are composed into a field list in the order they are specified.
 The composed field list is passed as an input to the action selector
 implementation. It is illegal to define a `selector` type match field if the
-table does not have an action selector implemenation.  
+table does not have an action selector implemenation.
 
 The control plane can add, modify or delete member and group entries for a
 given action selector instance. An action selector instance may hold atmost
