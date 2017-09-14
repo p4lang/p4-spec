@@ -73,7 +73,8 @@ each such egress port, the packet passes through an egress match
 action pipeline and a checksum update calculation before it is
 deparsed and queued to leave the pipeline. Note: the checksum
 operations are available -- validation in the parser,
-and checksum computation and update in deparser (see also Table [])
+and checksum computation and update in deparser (see also
+Table [#table-extern-usage])
 however, they need to be explicitly invoked though the checksum extern
 in order to be executed.
 
@@ -168,6 +169,8 @@ instance is instantiated in Ingress, for example, then it cannot be
 referenced, and thus its methods cannot be called, from any
 non-Ingress control block.
 
+~ TableFigure { #table-extern-usage; \
+  caption: Summary of controls that can instantiate and invoke externs.}
 |-------------------|----------------------------------------------|
 | Extern type       | Where it may be instantiated and called from |
 +:------------------+:---------------------------------------------+
@@ -184,6 +187,7 @@ non-Ingress control block.
 | `Register`        | Ingress, Egress |
 | `ValueSet`        | IngressParser, EgressParser |
 |-------------------|----------------------------------------------|
+~
 
 PSA implementations need not support instantiating these externs at
 the top level.  PSA implementations are allowed to accept programs
@@ -424,7 +428,7 @@ recirculate, and resubmit in PSA.
 A PSA implementation provides a cloning mechanism to create copies of
 the original packet as independent packet instances. A cloned
 packet may be a duplicate of the original packet or a copy of the
-deparsed packet after egress pipeline. The cloning may mechanism submit
+deparsed packet after egress pipeline. The cloning mechanism submit
 the cloned packet to either the ingress parser or the buffering mechanism.
 In a PSA implementation, the cloning mechanism is logically implemented in
 the PRE, that is, even if targets chose to implement it as part of other
@@ -449,9 +453,10 @@ block.
 
 A PSA implementation provides two configuration metadata, `clone`
 and `clone_port`, to the PRE to control the cloning mechanism. When
-the `clone` bit is set, the clone mechanism generates a cloned packet with the
-optional attached metadata. When the `clone` bit is unset or
-uninitialized, cloning is disabled and a cloned packet is
+`clone` is set to true, the cloning mechanism generates a
+cloned packet with the
+optional attached metadata. When `clone` is set to false,
+cloning is disabled and a cloned packet is
 not generated even if the `emit` method is invoked in the deparser.
 The `clone_port` controls the destination of the cloned packet. A
 common use case is to the send the cloned packet to the control CPU,
@@ -497,10 +502,10 @@ ingress deparser only. It is an error to instantiate the `resubmit`
 extern in the P4 control or parser block.
 
 A PSA implementation provides a configuration bit `resubmit` to
-the PRE to enable the resubmission mechanism. If the `resubmit` bit is
-set, the resubmission mechanism resends the original packet with the
-optional attached metadata. If the `resubmit` bit is unset or
-uninitialized, the resubmission mechanism is disabled and the original
+the PRE to enable the resubmission mechanism. If `resubmit` is
+set to true, the resubmission mechanism resends the original packet with the
+optional attached metadata. If `resubmit` is set to false,
+the resubmission mechanism is disabled and the original
 packet is not resubmitted even if the `emit` method is invoked in the
 deparser.
 
@@ -538,10 +543,10 @@ in egress deparser only. It is an error to instantiate the
 `recirculate` extern in a P4 control or parser block.
 
 A PSA implementation provides a configuration bit `recirculate` to the
-PRE to enable the recirculation mechanism. If the `recirculate` bit is
-set, the recirculation mechanism sends back the deparsed packet with
-the optional attached metadata to the ingress parser. If the
-`recirculate` bit is unset or uninitialized, the recirculation mechanism
+PRE to enable the recirculation mechanism. If `recirculate` is
+set to true, the recirculation mechanism sends back the deparsed packet with
+the optional attached metadata to the ingress parser. If
+`recirculate` is set to false, the recirculation mechanism
 is disabled and the deparsed packet is not recirculated even if the
 `emit` method is invoked in the deparser.
 
