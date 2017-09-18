@@ -320,11 +320,21 @@ extern Hash<O> {
 
 // BEGIN:Checksum_extern
 extern Checksum<W> {
-  Checksum(HashAlgorithm_t hash);          /// constructor
-  void clear();              /// prepare unit for computation
-  void update<T>(in T data); /// add data to checksum
-  void remove<T>(in T data); /// remove data from existing checksum
-  W    get();      	     /// get the checksum for data added since last clear
+  /// Constructor
+  Checksum(HashAlgorithm_t hash);
+    
+  /// Reset internal state and prepare unit for computation 
+  void clear();
+
+  /// Add data to checksum  
+  void update<T>(in T data);
+    
+  /// Remove data from existing checksum
+  /// Only supported if hash is CRC{16,32}
+  void remove<T>(in T data);
+
+  /// Get checksum for data added (and not removed) since last clear                               
+  W    get();
 }
 // END:Checksum_extern
 
@@ -582,17 +592,13 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
                      in  psa_egress_input_metadata_t  istd,
                      out psa_egress_output_metadata_t ostd);
 
-control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
-
 control Deparser<H>(packet_out buffer, in H hdr);
 
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
-                                   ComputeChecksum<IH, IM> ic,
                                    Deparser<IH> id,
                                    EgressParser<EH, EM> ep,
                                    Egress<EH, EM> eg,
-                                   ComputeChecksum<EH, EM> ec,
                                    Deparser<EH> ed);
 // END:Programmable_blocks
 
