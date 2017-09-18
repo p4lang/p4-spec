@@ -211,32 +211,30 @@ control egress(inout headers hdr,
     apply { }
 }
 
-// BEGIN:Compute_New_IPv4_Checksum_Example
 control computeChecksum(inout headers hdr, inout metadata meta) {
-    Checksum<bit<16>>(HashAlgorithm_t.ONES_COMPLEMENT16) ck;
     apply {
-        // TBD: Update the code below for checking the IPv4 header
-        // checksum with whatever the API we decide upon for a PSA
-        // checksum extern.
-        ck.clear();
-        ck.update({ hdr.ipv4.version,
-                hdr.ipv4.ihl,
-                hdr.ipv4.diffserv,
-                hdr.ipv4.totalLen,
-                hdr.ipv4.identification,
-                hdr.ipv4.flags,
-                hdr.ipv4.fragOffset,
-                hdr.ipv4.ttl,
-                hdr.ipv4.protocol,
-                //hdr.ipv4.hdrChecksum, // intentionally leave this out
-                hdr.ipv4.srcAddr,
-                hdr.ipv4.dstAddr });
-        hdr.ipv4.hdrChecksum = ck.get();
     }
 }
 // END:Compute_New_IPv4_Checksum_Example
 
-control DeparserImpl(packet_out packet, in headers hdr) {
+// BEGIN:Compute_New_IPv4_Checksum_Example
+control DeparserImpl(packet_out packet, in headers hdr_) {
+    Checksum<bit<16>>(HashAlgorithm_t.ONES_COMPLEMENT16) ck;
+    headers hdr = hdr_; //TBD: or better, change declaration to inout?
+    ck.clear();
+    ck.update({ hdr.ipv4.version,
+            hdr.ipv4.ihl,
+            hdr.ipv4.diffserv,
+            hdr.ipv4.totalLen,
+            hdr.ipv4.identification,
+            hdr.ipv4.flags,
+            hdr.ipv4.fragOffset,
+            hdr.ipv4.ttl,
+            hdr.ipv4.protocol,
+            //hdr.ipv4.hdrChecksum, // intentionally leave this out
+            hdr.ipv4.srcAddr,
+            hdr.ipv4.dstAddr });
+    hdr.ipv4.hdrChecksum = ck.get();
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -245,9 +243,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
 
 PSA_Switch(IngressParserImpl(),
            ingress(),
-           computeChecksum(),
            DeparserImpl(),
            EgressParserImpl(),
            egress(),
-           computeChecksum(),
            DeparserImpl()) main;
