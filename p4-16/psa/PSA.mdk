@@ -652,10 +652,23 @@ Parameters:
 [INCLUDE=psa.p4:Checksum_extern]
 ```
 
-Note that the `remove` method is only supported for the `CRC16` and
-`CRC32` hash algorithms. In particular, incremental computation of
-checksums is not supported using other hash algorithms.
+## Incremental checksum computation
 
+PSA also provides an extern that is able to compute checksums
+incrementally. This extern provides an additional `remove` method that
+can be used to remove data previously added. It is based on the
+`ONES_COMPLEMENT16` hash algorithm used in the "Internet checksum"
+used to compute for protocols such as IPv4, TCP, and UDP -- see [IETF
+RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
+
+Parameters:
+
+- W   The width of the checksum
+
+```
+[INCLUDE=psa.p4:InternetChecksum_extern]    
+```            
+    
 ### Checksum example
 
 The partial P4 program below demonstrates one way to use the
