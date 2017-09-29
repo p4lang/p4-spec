@@ -329,15 +329,33 @@ extern Checksum<W> {
   /// Add data to checksum  
   void update<T>(in T data);
     
-  /// Remove data from existing checksum
-  /// Only supported if hash is CRC{16,32}
-  void remove<T>(in T data);
-
   /// Get checksum for data added (and not removed) since last clear                               
   W    get();
 }
 // END:Checksum_extern
 
+// BEGIN:InternetChecksum_extern
+// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
+// Supports incremental updating via `remove` method.
+// See IETF RFC 1624.
+extern InternetChecksum<W> {
+  /// Constructor
+  Checksum();
+    
+  /// Reset internal state and prepare unit for computation 
+  void clear();
+
+  /// Add data to checksum  
+  void update<T>(in T data);
+
+  /// Remove data from existing checksum
+  void remove<T>(in T data);
+        
+  /// Get checksum for data added (and not removed) since last clear                               
+  W    get();
+}
+// END:InternetChecksum_extern
+    
 // BEGIN:CounterType_defn
 enum CounterType_t {
     PACKETS,
