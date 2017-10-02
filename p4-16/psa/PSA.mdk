@@ -636,14 +636,16 @@ TBD: Should there be a `const` defined that specifies the maximum
 allowed value of `max` parameter?
 
 
-## Checksum computation
+## Checksums
 
-Checksums and hash value generators are examples of functions that
-operate on a stream of bytes from a packet to produce an integer. The
-integer may be used, for example, as an integrity check for a packet
-or as a means to generate a pseudo-random value in a given range on a
-packet-by-packet or flow-by-flow basis.
+Checksums operate on a stream of bytes from a packet to produce an
+integer that is often used as an integrity check.
 
+### Basic checksum
+
+The basic checksum extern provided in PSA supports arbitrary hash
+algorithms.
+        
 Parameters:
 
 - W    The width of the checksum
@@ -652,14 +654,14 @@ Parameters:
 [INCLUDE=psa.p4:Checksum_extern]
 ```
 
-## Incremental checksum computation
+### Incremental checksum 
 
-PSA also provides an extern that is able to compute checksums
-incrementally. This extern provides an additional `remove` method that
-can be used to remove data previously added. It is based on the
-`ONES_COMPLEMENT16` hash algorithm used in the "Internet checksum"
-used to compute for protocols such as IPv4, TCP, and UDP -- see [IETF
-RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
+In addition, PSA provides an incremental checksum that comes equipped
+with an additional `remove` method that can be used to remove data
+previously added. The checksum is computed using the
+`ONES_COMPLEMENT16` hash algorithm used with protocols such as IPv4,
+TCP, and UDP -- see [IETF RFC 1624](https://tools.ietf.org/html/rfc1624)
+for details.
 
 ```
 [INCLUDE=psa.p4:InternetChecksum_extern]    
@@ -690,11 +692,10 @@ assign values to those fields within the parser state code.
 
 The partial program below demonstrates one way to use the `Checksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
-the deparser block.  In
-this example, the checksum is calculated fresh, so the outgoing
-checksum will be correct regardless of what changes might have been
-made to the IPv4 header fields in the ingress (or egress) control
-block that precedes it.
+the deparser block.  In this example, the checksum is calculated
+fresh, so the outgoing checksum will be correct regardless of what
+changes might have been made to the IPv4 header fields in the ingress
+(or egress) control block that precedes it.
 
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
