@@ -322,14 +322,14 @@ extern Hash<O> {
 extern Checksum<W> {
   /// Constructor
   Checksum(HashAlgorithm_t hash);
-    
-  /// Reset internal state and prepare unit for computation 
+
+  /// Reset internal state and prepare unit for computation
   void clear();
 
-  /// Add data to checksum  
+  /// Add data to checksum
   void update<T>(in T data);
-    
-  /// Get checksum for data added (and not removed) since last clear                               
+
+  /// Get checksum for data added (and not removed) since last clear
   W    get();
 }
 // END:Checksum_extern
@@ -338,21 +338,21 @@ extern Checksum<W> {
 // Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
 // Supports incremental updating via `remove` method.
 // See IETF RFC 1624.
-extern InternetChecksum<W> {
+extern InternetChecksum {
   /// Constructor
   Checksum();
     
-  /// Reset internal state and prepare unit for computation 
+  /// Reset internal state and prepare unit for computation
   void clear();
 
-  /// Add data to checksum  
+  /// Add data to checksum
   void update<T>(in T data);
 
   /// Remove data from existing checksum
   void remove<T>(in T data);
         
-  /// Get checksum for data added (and not removed) since last clear                               
-  W    get();
+  /// Get checksum for data added (and not removed) since last clear
+  bit<16>    get();
 }
 // END:InternetChecksum_extern
     
