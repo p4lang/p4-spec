@@ -280,7 +280,7 @@ extern recirculate {
   /// Write @hdr into the egress packet.
   /// @T can be a header type, a header stack, a header union or a struct
   /// containing fields with such types.
-  void emit(in T hdr);
+  void emit<T>(in T hdr);
 }
 // END:Recirculate_extern
 
