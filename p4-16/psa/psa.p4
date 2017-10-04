@@ -460,17 +460,9 @@ extern Register<T, S> {
 }
 // END:Register_extern
 
-// BEGIN:RandomDistribution_defn
-enum RandomDistribution {
-  PRNG,
-  Binomial,
-  Poisson
-}
-// END:RandomDistribution_defn
-
 // BEGIN:Random_extern
 extern Random<T> {
-  Random(RandomDistribution dist, T min, T max);
+  Random(T min, T max);
   T read();
 
   /*
