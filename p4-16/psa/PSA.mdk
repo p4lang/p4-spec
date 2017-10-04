@@ -1133,17 +1133,17 @@ $2^W$ entries.
 
 ## Random
 
-The random extern provides a reliable, target specific number generator
-in the min .. max range.
+The `Random` extern provides generation of pseudo-random numbers in a
+specified range with a uniform distribution.  If one wishes to
+generate numbers with a non-uniform distribution, you may do so by
+first generating a uniformly distributed random value, and then using
+appropriate table lookups and/or arithmetic on the resulting value to
+achieve the desired distribution.
 
-
-The set of distributions supported by the Random extern.
-\TODO: should this be removed in favor of letting the extern
-return whatever distribution is supported by the target?
-
-```
-[INCLUDE=psa.p4:RandomDistribution_defn]
-```
+An implementation is not required to produce cryptographically strong
+pseudo-random number generation.  For example, a particularly
+inexpensive implementation might use a linear feedback shift register
+to generate values.
 
 ```
 [INCLUDE=psa.p4:Random_extern]
