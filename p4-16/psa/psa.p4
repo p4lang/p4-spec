@@ -280,7 +280,7 @@ extern recirculate {
   /// Write @hdr into the egress packet.
   /// @T can be a header type, a header stack, a header union or a struct
   /// containing fields with such types.
-  void emit(in T hdr);
+  void emit<T>(in T hdr);
 }
 // END:Recirculate_extern
 
@@ -568,8 +568,8 @@ parser IngressParser<H, M>(packet_in buffer,
 
 control Ingress<H, M>(inout H hdr, inout M user_meta,
                       PacketReplicationEngine pre,
-                      in  psa_ingress_input_metadata_t  istd,
-                      out psa_ingress_output_metadata_t ostd);
+                      in    psa_ingress_input_metadata_t  istd,
+                      inout psa_ingress_output_metadata_t ostd);
 
 parser EgressParser<H, M>(packet_in buffer,
                           out H parsed_hdr,
@@ -579,8 +579,8 @@ parser EgressParser<H, M>(packet_in buffer,
 
 control Egress<H, M>(inout H hdr, inout M user_meta,
                      BufferingQueueingEngine bqe,
-                     in  psa_egress_input_metadata_t  istd,
-                     out psa_egress_output_metadata_t ostd);
+                     in    psa_egress_input_metadata_t  istd,
+                     inout psa_egress_output_metadata_t ostd);
 
 control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
 
