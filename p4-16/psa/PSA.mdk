@@ -534,7 +534,11 @@ no payload.
 [INCLUDE=psa.p4:Action_ingress_truncate]
 ```
 
+<<<<<<< HEAD
 ### Clone, Recirculate, Resubmit
+=======
+### Clone/recirculation/resubmit/digest
+>>>>>>> cdff10b... move digest to be after clone and resubmit
 
 ~ Figure { #fig-clone; caption: "Clone, recirculate, and resubmit in PSA"; page-align: here; }
 ![clone]
@@ -585,7 +589,16 @@ in which case the `clone_port` should be set to the value that
 represents the control CPU port.
 
 ```
+<<<<<<< HEAD
 [INCLUDE=psa.p4:Clone_extern]
+=======
+extern clone {
+  /// Write @hdr into the ingress/egress clone engine.
+  /// @T can be a header type, a header stack, a header union, or a struct
+  /// containing fields with such types.
+  void pack<T>(in T hdr);
+}
+>>>>>>> cdff10b... move digest to be after clone and resubmit
 ```
 
 #### Resubmit
@@ -625,7 +638,16 @@ packet is not resubmitted even if the `emit` method is invoked in the
 deparser.
 
 ```
+<<<<<<< HEAD
 [INCLUDE=psa.p4:Resubmit_extern]
+=======
+extern resubmit {
+  /// Write @hdr into the ingress packet buffer.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void pack<T>(in T hdr);
+}
+>>>>>>> cdff10b... move digest to be after clone and resubmit
 ```
 
 #### Recirculate
@@ -681,7 +703,35 @@ based on the `ingress_port` metadata of the received packet. If the
 number, then the `is_recirc` bit is set.
 
 ```
+<<<<<<< HEAD
 [INCLUDE=psa.p4:Recirculate_extern]
+=======
+extern recirculate {
+  /// Write @hdr into the egress packet.
+  /// @T can be a header type, a header stack, a header union or a struct
+  /// containing fields with such types.
+  void pack(in T hdr);
+}
+>>>>>>> cdff10b... move digest to be after clone and resubmit
+```
+
+## Digest
+
+A PSA implementation provides a digest mechanism to send a separate
+data object to the control plane. The data object may contain a
+identifier to identify the receiver of the object. The data object can
+optionally attach metadata to provide more information about the
+source of the digest. The attached metadata can be one or more header
+fields from a packet or one or more metadata generated in the Ingress
+or Egress pipeline. The digest extern can only be invoked in the
+deparser.
+
+A common use case of the digest mechanism is MAC learning. In the MAC
+learning case, the receiver of the digest is the CPU port. The digest
+metadata is the source MAC address of the received packet.
+
+```
+[INCLUDE=psa.p4:Digest_extern]
 ```
 
 
@@ -1443,6 +1493,7 @@ allowed for tables with an action selector implementation.
 ```
 [INCLUDE=psa.p4:ActionSelector_extern]
 ```
+<<<<<<< HEAD
 ### Action Selector Example
 The P4 control block `Ctrl` in the example below instantiates an
 action selector `as` that can contain at most 128 member entries. The
@@ -1502,6 +1553,8 @@ control Ctrl(inout H hdr, inout M meta) {
 }
 ```
 
+=======
+>>>>>>> cdff10b... move digest to be after clone and resubmit
 
 ## Parser Value Sets
 
