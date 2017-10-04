@@ -610,7 +610,7 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
                      in  psa_egress_input_metadata_t  istd,
                      out psa_egress_output_metadata_t ostd);
 
-control Deparser<H>(packet_out buffer, in H hdr);
+control Deparser<H>(packet_out buffer, inout H hdr, in M user_meta);
 
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
