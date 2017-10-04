@@ -100,6 +100,7 @@ struct psa_ingress_output_metadata_t {
   ClassOfService_t         class_of_service; // 0
   bool                     clone;            // false
   PortId_t                 clone_port;       // undefined
+  ClassOfService_t         clone_class_of_service; // 0
   bool                     drop;             // true
   bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
@@ -121,6 +122,7 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
+  ClassOfService_t         clone_class_of_service; // 0
   bool                     drop;          // false
   bool                     recirculate;   // false
   bool                     truncate;      // false

@@ -252,22 +252,26 @@ the contents of several metadata fields in the struct
     psa_ingress_output_metadata_t ostd;
 
     if (ostd.class_of_service value is not supported) {
-        drop the packet;
-        Optional: Record error status, e.g. update a count of packets
-            dropped for this reason, and record the bad value of
-            ostd.class_of_service in a small queue, dropping a new
-            value if the queue is full.
-        return;   // Do not continue below.
+        // use default class
+        ostd.class_of_service = 0;
+        Optional: Count occurrences and first few unsupported values
+            of ostd.class_of_service.
     }
     if (truncate) {
         Truncate the payload to at most truncate_payload_bytes long.
             This affects any copies made below.
     }
     if (ostd.clone) {
-        create a copy of the packet and send it to the packet buffer,
-            after which it will start egress processing with
-            egress_port=ostd.clone_port (which might be PORT_CPU to
-            send the clone to the control CPU).
+        if (ostd.clone_class_of_service value is not supported) {
+            ostd.clone_class_of_service = 0;
+            Optional: Count occurrences and first few unsupported
+                values of ostd.clone_class_of_service.
+	}
+        create a copy of the packet and send it to the packet buffer
+            with class of service specified by
+            ostd.clone_class_of_service, after which it will start
+            egress processing with egress_port=ostd.clone_port (which
+            might be PORT_CPU to send the clone to the control CPU).
         The contents of the packet will be the same as the packet as
            it began ingress parsing, prepended with any headers
            created by clone.emit() calls in the ingress deparser apply
@@ -293,7 +297,6 @@ the contents of several metadata fields in the struct
     }
     enqueue one packet for output port ostd.egress_port with class of
         service specified by ostd.class_of_service
-
 ```
 
 TBD: Need text defining, for each possible copy, exactly what the
@@ -395,10 +398,16 @@ the contents of several metadata fields in the struct
             This affects any copies made below.
     }
     if (ostd.clone) {
-        create a copy of the packet and send it to the packet buffer,
-            after which it will start egress processing with
-            egress_port=ostd.clone_port (which might be PORT_CPU to
-            send the clone to the control CPU).
+        if (ostd.clone_class_of_service value is not supported) {
+            ostd.clone_class_of_service = 0;
+            Optional: Count occurrences and first few unsupported
+                values of ostd.clone_class_of_service.
+	}
+        create a copy of the packet and send it to the packet buffer
+            with class of service specified by
+            ostd.clone_class_of_service, after which it will start
+            egress processing with egress_port=ostd.clone_port (which
+            might be PORT_CPU to send the clone to the control CPU).
         The contents of the packet will be the same as the packet as
            it comes out of the egress deparser, prepended with any
            headers created by clone.emit() calls in the egress
