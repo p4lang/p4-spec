@@ -97,6 +97,7 @@ control ingress(inout headers hdr,
     action do_clone (PortId_t port) {
         ostd.clone = true;
         ostd.clone_port = port;
+        ostd.clone_instance = 0;
     }
     table t() {
         key = {
@@ -135,26 +136,50 @@ control egress(inout headers hdr,
 
 control computeChecksum(inout headers hdr, inout metadata meta) {}
 
-control DeparserImpl(packet_out packet, clone cl, in headers hdr) {
-    // Alternatively, we can provide a constructor to Clone().
-    // Clone() clone;
+
+control DeparserImpl(packet_out packet, inout headers hdr) {
     apply {
-        cl.emit({hdr.ethernet.srcAddr, hdr.ipv4.srcAddr});
-        // Use a different method name (pack?)
-        // cl.pack({hdr.ethernet.srcAddr, hdr.ipv4.srcAddr});
-
-        // XXX(hanw): multiple clone instances?
-
-        packet.emit(hdr.ethernet);
+        packet.emit(hdr.eth);
         packet.emit(hdr.ipv4);
+    }
+}
+
+control IngressDeparserImpl(packet_out packet,
+    clone_out clone,
+    inout headers hdr,
+    in userMetadata meta,
+    in psa_ingress_output_metadata_t istd) {
+    DeparserImpl() common_deparser;
+    apply {
+        if (istd.clone_instance == 0 && istd.clone) {
+            clone.add_metadata({hdr.eth.srcAddr, hdr.eth.dstAddr});
+        }
+        if (istd.clone_instance == 1 && istd.clone) {
+            clone.add_metadata({hdr.eth.dstAddr, hdr.eth.srcAddr});
+        }
+        common_deparser.apply(packet, hdr);
+    }
+}
+
+control EgressDeparserImpl(packet_out packet,
+    clone_out clone,
+    inout headers hdr,
+    in userMetadata meta,
+    in psa_egress_output_metadata_t istd) {
+    DeparserImpl() common_deparser;
+    apply {
+        if (istd.clone_instance == 0 && istd.clone) {
+            clone.add_metadata({hdr.ipv4.srcAddr, hdr.ipv4.dstAddr});
+        }
+        common_deparser.apply(packet, hdr);
     }
 }
 
 PSA_Switch(IngressParserImpl(),
            ingress(),
            computeChecksum(),
-           DeparserImpl(),
+           IngressDeparserImpl(),
            EgressParserImpl(),
            egress(),
            computeChecksum(),
-           DeparserImpl()) main;
+           EgressDeparserImpl()) main;

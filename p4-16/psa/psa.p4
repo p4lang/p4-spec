@@ -39,6 +39,9 @@ typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<48> Timestamp_t;
 typedef error   ParserError_t;
+typedef bit<3>  CloneInstance_t;
+typedef bit<3>  ResubmitInstance_t;
+typedef bit<3>  DigestInstance_t;
 
 const   PortId_t         PORT_CPU = 255;
 
@@ -98,10 +101,12 @@ struct psa_ingress_output_metadata_t {
   // Ingress control block begins executing.
   ClassOfService_t         class_of_service; // 0
   bool                     clone;            // false
+  CloneInstance_t          clone_instance;   // 0
   PortId_t                 clone_port;       // undefined
   ClassOfService_t         clone_class_of_service; // 0
   bool                     drop;             // true
   bool                     resubmit;         // false
+  ResubmitInstance_t       resubmit_instance;  // 0
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // undefined
   bool                     truncate;         // false
@@ -124,6 +129,7 @@ struct psa_egress_output_metadata_t {
   ClassOfService_t         clone_class_of_service; // 0
   bool                     drop;          // false
   bool                     recirculate;   // false
+  RecirculateInstance_t    recirculate_instance;  // 0
   bool                     truncate;      // false
   PacketLength_t           truncate_payload_bytes;  // undefined
 }
@@ -608,6 +614,18 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
                      inout psa_egress_output_metadata_t ostd);
 
 control Deparser<H, M>(packet_out buffer, inout H hdr, in M user_meta);
+
+control IngressDeparser<H, M>(packet_out buffer
+                              clone_out clone,
+                              inout H hdr,
+                              in M meta,
+                              in psa_ingress_output_metadata_t istd);
+
+control EgressDeparser<H, M>(packet_out buffer
+                             clone_out clone,
+                             inout H hdr,
+                             in M meta,
+                             in psa_egress_output_metadata_t istd);
 
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
