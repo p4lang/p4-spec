@@ -1,5 +1,4 @@
-/*
-Copyright 2013-present Barefoot Networks, Inc.
+/* Copyright 2013-present Barefoot Networks, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -340,7 +339,7 @@ extern Checksum<W> {
 // See IETF RFC 1624.
 extern InternetChecksum {
   /// Constructor
-  Checksum();
+  InternetChecksum();
     
   /// Reset internal state and prepare unit for computation
   void clear();
@@ -610,14 +609,14 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
                      in  psa_egress_input_metadata_t  istd,
                      out psa_egress_output_metadata_t ostd);
 
-control Deparser<H>(packet_out buffer, inout H hdr, in M user_meta);
+control Deparser<H, M>(packet_out buffer, inout H hdr, in M user_meta);
 
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
-                                   Deparser<IH> id,
+                                   Deparser<IH, IM> id,
                                    EgressParser<EH, EM> ep,
                                    Egress<EH, EM> eg,
-                                   Deparser<EH> ed);
+                                   Deparser<EH, EM> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
