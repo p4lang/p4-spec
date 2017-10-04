@@ -113,8 +113,8 @@ parser EgressParserImpl(packet_in buffer,
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 PacketReplicationEngine pre,
-                in  psa_ingress_input_metadata_t  istd,
-                out psa_ingress_output_metadata_t ostd)
+                in    psa_ingress_input_metadata_t  istd,
+                inout psa_ingress_output_metadata_t ostd)
 {
     Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.BYTES)
         port_bytes_in;
@@ -152,8 +152,8 @@ control ingress(inout headers hdr,
 control egress(inout headers hdr,
                inout metadata user_meta,
                BufferingQueueingEngine bqe,
-               in  psa_egress_input_metadata_t  istd,
-               out psa_egress_output_metadata_t ostd)
+               in    psa_egress_input_metadata_t  istd,
+               inout psa_egress_output_metadata_t ostd)
 {
     Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.BYTES)
         port_bytes_out;
