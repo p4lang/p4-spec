@@ -88,7 +88,7 @@ parser IngressParserImpl(packet_in buffer,
                          in psa_ingress_parser_input_metadata_t istd,
                          out psa_parser_output_metadata_t ostd)
 {
-    Checksum<bit<16>>(HashAlgorithm_t.ONES_COMPLEMENT16) ck;
+    InternetChecksum() ck;
     state start {
         buffer.extract(parsed_hdr.ethernet);
         transition select(parsed_hdr.ethernet.etherType) {
@@ -103,9 +103,6 @@ parser IngressParserImpl(packet_in buffer,
         // headers with options, but this example does not handle such
         // packets.
         verify(parsed_hdr.ipv4.ihl == 5, error.UnhandledIPv4Options);
-        // TBD: Update the code below for checking the IPv4 header
-        // checksum with whatever the API we decide upon for a PSA
-        // checksum extern.
         ck.clear();
         ck.update({ parsed_hdr.ipv4.version,
                 parsed_hdr.ipv4.ihl,
@@ -212,12 +209,9 @@ control egress(inout headers hdr,
 }
 
 // BEGIN:Compute_New_IPv4_Checksum_Example
-control computeChecksum(inout headers hdr, inout metadata meta) {
-    Checksum<bit<16>>(HashAlgorithm_t.ONES_COMPLEMENT16) ck;
+control DeparserImpl(packet_out packet, inout headers hdr, in metadata meta) {
+    InternetChecksum() ck;
     apply {
-        // TBD: Update the code below for checking the IPv4 header
-        // checksum with whatever the API we decide upon for a PSA
-        // checksum extern.
         ck.clear();
         ck.update({ hdr.ipv4.version,
                 hdr.ipv4.ihl,
@@ -232,22 +226,16 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
                 hdr.ipv4.srcAddr,
                 hdr.ipv4.dstAddr });
         hdr.ipv4.hdrChecksum = ck.get();
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.tcp);
     }
 }
 // END:Compute_New_IPv4_Checksum_Example
 
-control DeparserImpl(packet_out packet, in headers hdr) {
-    apply {
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv4);
-    }
-}
-
 PSA_Switch(IngressParserImpl(),
            ingress(),
-           computeChecksum(),
            DeparserImpl(),
            EgressParserImpl(),
            egress(),
-           computeChecksum(),
            DeparserImpl()) main;

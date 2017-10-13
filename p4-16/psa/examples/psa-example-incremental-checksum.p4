@@ -41,7 +41,22 @@ header ipv4_t {
     bit<32> dstAddr;
 }
 
+header tcp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+    bit<32> seqNo;
+    bit<32> ackNo;
+    bit<4>  dataOffset;
+    bit<3>  res;
+    bit<3>  ecn;
+    bit<6>  ctrl;
+    bit<16> window;
+    bit<16> checksum;
+    bit<16> urgentPtr;
+}
+
 struct fwd_metadata_t {
+    bit<32> old_srcAddr;
 }
 
 struct metadata {
@@ -51,26 +66,21 @@ struct metadata {
 struct headers {
     ethernet_t       ethernet;
     ipv4_t           ipv4;
+    tcp_t            tcp;
 }
 
-// BEGIN:Register_Example1_Part1
-const PortId_t NUM_PORTS = 512;
 
-typedef bit<48> ByteCounter_t;
+// Define additional error values, one of them for packets with
+// incorrect IPv4 header checksums.
+error {
+    UnhandledIPv4Options,
+    BadIPv4HeaderChecksum
+}
+
 typedef bit<32> PacketCounter_t;
+typedef bit<8>  ErrorIndex_t;
 
-struct PacketByteCountState_t {
-    PacketCounter_t pkt_count;
-    ByteCounter_t   byte_count;
-}
-
-action update_pkt_ip_byte_count (inout PacketByteCountState_t s,
-                                 in bit<16> ip_length_bytes)
-{
-    s.pkt_count = s.pkt_count + 1;
-    s.byte_count = s.byte_count + (ByteCounter_t) ip_length_bytes;
-}
-// END:Register_Example1_Part1
+const bit<9> NUM_ERRORS = 256;
 
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
@@ -79,9 +89,6 @@ parser IngressParserImpl(packet_in buffer,
                          out psa_parser_output_metadata_t ostd)
 {
     state start {
-        transition parse_ethernet;
-    }
-    state parse_ethernet {
         buffer.extract(parsed_hdr.ethernet);
         transition select(parsed_hdr.ethernet.etherType) {
             0x0800: parse_ipv4;
@@ -90,33 +97,46 @@ parser IngressParserImpl(packet_in buffer,
     }
     state parse_ipv4 {
         buffer.extract(parsed_hdr.ipv4);
+        verify(parsed_hdr.ipv4.ihl == 5, error.UnhandledIPv4Options);
+        transition select(parsed_hdr.ipv4.protocol) {
+            6: parse_tcp;
+            default: accept;
+        }
+    }
+    state parse_tcp {
+        buffer.extract(parsed_hdr.tcp);
         transition accept;
     }
 }
 
-// BEGIN:Register_Example1_Part2
+// BEGIN:Incremental_Checksum_Table    
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 PacketReplicationEngine pre,
                 in  psa_ingress_input_metadata_t  istd,
-                out psa_ingress_output_metadata_t ostd)
-{
-    Register<PacketByteCountState_t, PortId_t>((bit<32>) NUM_PORTS)
-        port_pkt_ip_bytes_in;
-
+                out psa_ingress_output_metadata_t ostd) {
+    action drop() {
+      ingress_drop(ostd);
+    }
+    action forward(PortId_t port, bit<32> srcAddr) {
+      user_meta.fwd_metadata.old_srcAddr = hdr.ipv4.srcAddr;
+      hdr.ipv4.srcAddr = srcAddr;
+      send_to_port(ostd, port);      
+    }
+    table route {
+        key = { hdr.ipv4.dstAddr : lpm; }
+        actions = {
+          forward;
+          drop;
+        }
+    }
     apply {
-        ostd.egress_port = 0;
-        if (hdr.ipv4.isValid()) {
-            @atomic {
-                PacketByteCountState_t tmp;
-                tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);
-                update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);
-                port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);
-            }
+        if(hdr.ipv4.isValid()) {
+          route.apply();
         }
     }
 }
-// END:Register_Example1_Part2
+// END:Incremental_Checksum_Table        
 
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
@@ -138,12 +158,41 @@ control egress(inout headers hdr,
     apply { }
 }
 
-control DeparserImpl(packet_out packet, inout headers hdr, in metadata meta) {
+// BEGIN:Incremental_Checksum_Example
+control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta) {
+    InternetChecksum() ck;
+    bit<16> hdrChecksum;
     apply {
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv4);
+        // Update IPv4 checksum
+        ck.clear();
+        ck.update({ hdr.ipv4.version,
+            hdr.ipv4.ihl,
+            hdr.ipv4.diffserv,
+            hdr.ipv4.totalLen,
+            hdr.ipv4.identification,
+            hdr.ipv4.flags,
+            hdr.ipv4.fragOffset,
+            hdr.ipv4.ttl,
+            hdr.ipv4.protocol,
+            //hdr.ipv4.hdrChecksum, // intentionally leave this out
+            hdr.ipv4.srcAddr,
+            hdr.ipv4.dstAddr });
+        hdrChecksum = ck.get();
+        // Update TCP checksum
+       ck.clear();
+       ck.remove(hdr.tcp.checksum);
+       ck.remove(user_meta.fwd_metadata.old_srcAddr);
+       ck.remove(hdr.ipv4.hdrChecksum);
+       ck.update(hdr.ipv4.srcAddr);
+       ck.update(hdrChecksum);
+       hdr.ipv4.hdrChecksum = hdrChecksum;
+       hdr.tcp.checksum = ck.get();
+       packet.emit(hdr.ethernet);
+       packet.emit(hdr.ipv4);
+       packet.emit(hdr.tcp);
     }
 }
+// END:Incremental_Checksum_Example
 
 PSA_Switch(IngressParserImpl(),
            ingress(),

@@ -65,18 +65,16 @@ Replication Engine (PRE) and the Buffer Queuing Engine (BQE) are
 target dependent functional blocks that may be configured for a fixed
 set of operations.
 
-Incoming packets are parsed and have their checksums validated and are
+Incoming packets are parsed and validated, and are
 then passed to an ingress match action pipeline, which makes decisions
 on where the packets should go. After the ingress pipeline, the packet
 may be buffered and/or replicated (sent to multiple egress ports). For
 each such egress port, the packet passes through an egress match
-action pipeline and a checksum update calculation before it is
+action pipeline before it is
 deparsed and queued to leave the pipeline. Note: the checksum
 operations are available -- validation in the parser,
 and checksum computation and update in deparser (see also
-Table [#table-extern-usage])
-however, they need to be explicitly invoked though the checksum extern
-in order to be executed.
+Table [#table-extern-usage]).
 
 ~ Figure { #fig-switch; caption: "Portable Switch Pipeline"; page-align: here; }
 ![switch]
@@ -638,13 +636,16 @@ TBD: Should there be a `const` defined that specifies the maximum
 allowed value of `max` parameter?
 
 
-## Checksum computation
+## Checksums { #sec-checksums }
 
-Checksums and hash value generators are examples of functions that
-operate on a stream of bytes from a packet to produce an integer. The
-integer may be used, for example, as an integrity check for a packet
-or as a means to generate a pseudo-random value in a given range on a
-packet-by-packet or flow-by-flow basis.
+PSA provides checksum functions compute an integer on the stream of
+bytes in packet headers. Checksums are often used as an integrity
+check to detect corrupted or otherwise malformed packets.
+
+### Basic checksum { #sec-basic-checksum }
+
+The basic checksum extern provided in PSA supports arbitrary hash
+algorithms.
 
 Parameters:
 
@@ -654,24 +655,36 @@ Parameters:
 [INCLUDE=psa.p4:Checksum_extern]
 ```
 
-### Checksum example
+### Incremental checksum { #sec-incremental-checksum }
 
-The partial P4 program below demonstrates one way to use the
-`Checksum` extern to verify whether the checksum field in a parsed
-IPv4 header is correct, and set a parser error if it is wrong.  It
-also demonstrates checking for parser errors in the ingress control
-block, dropping the packet if any errors occurred during parsing.  PSA
-programs may choose to handle packets with parser errors in other ways
-than shown in this example -- it is up to the P4 program author to
-choose and write the desired behavior.
+PSA also provides an incremental checksum that comes equipped with an
+additional `remove` method that can be used to remove data previously
+added. The checksum is computed using the `ONES_COMPLEMENT16` hash
+algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
+RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
+
+```
+[INCLUDE=psa.p4:InternetChecksum_extern]    
+```            
+    
+### Checksum examples { #sec-checksum-examples }
+
+The partial program below demonstrates one way to use the `Checksum`
+extern to verify whether the checksum field in a parsed IPv4 header is
+correct, and set a parser error if it is wrong.  It also demonstrates
+checking for parser errors in the `ingress` control block, dropping
+the packet if any errors occurred during parsing.  PSA programs may
+choose to handle packets with parser errors in other ways than shown
+in this example -- it is up to the P4 program author to choose and
+write the desired behavior.
 
 Neither P4~16~ nor the PSA provide any special mechanisms to record
-the location within a packet that a parser error occurred.  A P4
+the location within a packet that a parser error occurred. A P4
 program author can choose to record such location information
-explicitly.  For example, one may define metadata fields specifically
-for that purpose, e.g. to hold an encoded value representing the last
-parser state reached, or the number of bytes extracted so far.  Then,
-assign values to those fields within parser state code.
+explicitly. For example, one may define metadata fields specifically
+for that purpose -- e.g. to hold an encoded value representing the last
+parser state reached, or the number of bytes extracted so far -- and then 
+assign values to those fields within the parser state code.
 
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Parse_Error_Example]
@@ -679,29 +692,32 @@ assign values to those fields within parser state code.
 
 The partial program below demonstrates one way to use the `Checksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
-the `computeChecksum` control block, just before the deparser.  In
-this example, the checksum is calculated fresh, so the outgoing
-checksum will be correct regardless of what changes might have been
-made to the IPv4 header fields in the ingress (or egress) control
-block that precedes it.
+the deparser block.  In this example, the checksum is calculated
+fresh, so the outgoing checksum will be correct regardless of what
+changes might have been made to the IPv4 header fields in the ingress
+(or egress) control block that precedes it.
 
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
 ```
 
-TBD: It would be good if the Checksum extern can handle a case of
-doing a 'delta' correction of a TCP header checksum when an IPv4 or
-IPv6 source or destination address is changed, e.g. due to
-implementing a feature like NAT.  This should be possible without
-having to redo the TCP checksum over the entire TCP payload, by
-assuming that the incoming TCP header checksum was correct.  With the
-proposed `remove` and `update` methods, this should be possible by
-calling `remove` on the old source/destination addresses, and then
-`update` on the new source/destination addresses.  It would also be
-good to have a short example program demonstrating one way to do this,
-ideally with a one-packet test case to verify it works when it is
-implemented.
-
+As a final example, we can use the `InternetChecksum` to compute an
+incremental checksum for the TCP header. Recall the TCP checksum is
+computed over the _entire_ packet, including the payload. Because the
+packet payload is not available in P4, we assume that the TCP checksum
+on the original packet is correct, and update it incrementally by
+invoking `remove` and then `update` on any fields that are modified by
+the program. For example, the ingress control in the program below
+updates the IPv4 source address, recording the original source address
+in a metadata field:    
+```
+[INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Table]
+```
+The deparser first updates the IPv4 checksum as above, and then
+incrementally computes the TCP checksum.         
+```
+[INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Example]
+```
 
 ## Counters
 

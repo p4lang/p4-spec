@@ -1,5 +1,4 @@
-/*
-Copyright 2013-present Barefoot Networks, Inc.
+/* Copyright 2013-present Barefoot Networks, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -320,14 +319,42 @@ extern Hash<O> {
 
 // BEGIN:Checksum_extern
 extern Checksum<W> {
-  Checksum(HashAlgorithm_t hash);          /// constructor
-  void clear();              /// prepare unit for computation
-  void update<T>(in T data); /// add data to checksum
-  void remove<T>(in T data); /// remove data from existing checksum
-  W    get();      	     /// get the checksum for data added since last clear
+  /// Constructor
+  Checksum(HashAlgorithm_t hash);
+
+  /// Reset internal state and prepare unit for computation
+  void clear();
+
+  /// Add data to checksum
+  void update<T>(in T data);
+
+  /// Get checksum for data added (and not removed) since last clear
+  W    get();
 }
 // END:Checksum_extern
 
+// BEGIN:InternetChecksum_extern
+// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
+// Supports incremental updating via `remove` method.
+// See IETF RFC 1624.
+extern InternetChecksum {
+  /// Constructor
+  InternetChecksum();
+    
+  /// Reset internal state and prepare unit for computation
+  void clear();
+
+  /// Add data to checksum
+  void update<T>(in T data);
+
+  /// Remove data from existing checksum
+  void remove<T>(in T data);
+        
+  /// Get checksum for data added (and not removed) since last clear
+  bit<16>    get();
+}
+// END:InternetChecksum_extern
+    
 // BEGIN:CounterType_defn
 enum CounterType_t {
     PACKETS,
@@ -574,18 +601,14 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
                      in    psa_egress_input_metadata_t  istd,
                      inout psa_egress_output_metadata_t ostd);
 
-control ComputeChecksum<H, M>(inout H hdr, inout M user_meta);
-
-control Deparser<H>(packet_out buffer, in H hdr);
+control Deparser<H, M>(packet_out buffer, inout H hdr, in M user_meta);
 
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
-                                   ComputeChecksum<IH, IM> ic,
-                                   Deparser<IH> id,
+                                   Deparser<IH, IM> id,
                                    EgressParser<EH, EM> ep,
                                    Egress<EH, EM> eg,
-                                   ComputeChecksum<EH, EM> ec,
-                                   Deparser<EH> ed);
+                                   Deparser<EH, EM> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
