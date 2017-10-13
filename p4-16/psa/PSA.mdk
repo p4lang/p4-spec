@@ -244,6 +244,23 @@ after the Ingress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 `psa_ingress_output_metadata_t`.
 
+The function `platform_port_valid()` mentioned below takes a value of
+type `PortId_t`, returning `true` only when the value represents an
+output port for the implementation.  It is expected that for some PSA
+implementations there will be bit patterns for a value of type
+`PortId_t` that do not correspond to any port.
+
+A comment saying "recommended to log error" is not a requirement, but
+a recommendation, that a PSA implementation should maintain a counter
+that counts the number of times this error occurs.  It would also be
+useful if the implementation recorded details about the first few
+times this error occurred, e.g. a FIFO queue of the first several
+invalid values of `ostd.egress_port` that cause an error to occur,
+perhaps with other information about the packet that caused it, with
+tail dropping if it fills up.  Control plane or driver software would
+be able to read these counters, and read and drain the FIFO queues to
+assist P4 developers in debugging their code.
+
 ```
 [INCLUDE=psa.p4:Metadata_ingress_output]
 
@@ -252,8 +269,8 @@ the contents of several metadata fields in the struct
     if (ostd.class_of_service value is not supported) {
         // use default class
         ostd.class_of_service = 0;
-        Optional: Count occurrences and first few unsupported values
-            of ostd.class_of_service.
+        // Recommended to log error about unsupported
+        // ostd.class_of_service value.
     }
     if (truncate) {
         Truncate the payload to at most truncate_payload_bytes long.
@@ -262,18 +279,23 @@ the contents of several metadata fields in the struct
     if (ostd.clone) {
         if (ostd.clone_class_of_service value is not supported) {
             ostd.clone_class_of_service = 0;
-            Optional: Count occurrences and first few unsupported
-                values of ostd.clone_class_of_service.
-	}
-        create a copy of the packet and send it to the packet buffer
-            with class of service specified by
-            ostd.clone_class_of_service, after which it will start
-            egress processing with egress_port=ostd.clone_port (which
-            might be PORT_CPU to send the clone to the control CPU).
-        The contents of the packet will be the same as the packet as
-           it began ingress parsing, prepended with any headers
-           created by clone.emit() calls in the ingress deparser apply
-           block.
+            // Recommmended to log error about unsupported
+            // ostd.clone_class_of_service value.
+        }
+        if (platform_port_valid(ostd.clone_port)) {
+            create a copy of the packet and send it to the packet
+                buffer with class of service specified by
+                ostd.clone_class_of_service, after which it will start
+                egress processing with egress_port=ostd.clone_port (which
+                might be PORT_CPU to send the clone to the control CPU).
+            The contents of the packet will be the same as the packet
+                as it began ingress parsing, prepended with any headers
+                created by clone.emit() calls in the ingress deparser
+                apply block.
+        } else {
+            // Do not create a clone.  Recommended to log error about
+            // unsupported ostd.clone_port value.
+        }
     }
     // Continue below, regardless of whether a clone was created or not.
     if (ostd.drop) {
@@ -293,8 +315,14 @@ the contents of several metadata fields in the struct
             Every copy will have the same value of ostd.class_of_service
         return;   // Do not continue below.
     }
-    enqueue one packet for output port ostd.egress_port with class of
-        service specified by ostd.class_of_service
+    if (platform_port_valid(ostd.egress_port)) {
+        enqueue one packet for output port ostd.egress_port with class
+            of service specified by ostd.class_of_service
+    } else {
+        drop the packet.
+        // Recommended to log error about unsupported ostd.egress_port
+        // value.
+    }
 ```
 
 TBD: Need text defining, for each possible copy, exactly what the
@@ -403,18 +431,23 @@ the contents of several metadata fields in the struct
     if (ostd.clone) {
         if (ostd.clone_class_of_service value is not supported) {
             ostd.clone_class_of_service = 0;
-            Optional: Count occurrences and first few unsupported
-                values of ostd.clone_class_of_service.
-	}
-        create a copy of the packet and send it to the packet buffer
-            with class of service specified by
-            ostd.clone_class_of_service, after which it will start
-            egress processing with egress_port=ostd.clone_port (which
-            might be PORT_CPU to send the clone to the control CPU).
-        The contents of the packet will be the same as the packet as
-           it comes out of the egress deparser, prepended with any
-           headers created by clone.emit() calls in the egress
-           deparser apply block.
+            // Recommmended to log error about unsupported
+            // ostd.clone_class_of_service value.
+        }
+        if (platform_port_valid(ostd.clone_port)) {
+            create a copy of the packet and send it to the packet
+                buffer with class of service specified by
+                ostd.clone_class_of_service, after which it will start
+                egress processing with egress_port=ostd.clone_port (which
+                might be PORT_CPU to send the clone to the control CPU).
+            The contents of the packet will be the same as the packet
+                as it comes out of the egress deparser, prepended with any
+                headers created by clone.emit() calls in the egress
+                deparser apply block.
+        } else {
+            // Do not create a clone.  Recommended to log error about
+            // unsupported ostd.clone_port value.
+        }
     }
     // Continue below, regardless of whether a clone was created or not.
     if (ostd.drop) {
