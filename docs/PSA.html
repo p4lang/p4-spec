@@ -297,7 +297,7 @@
 <div class="authors align-center" data-line="43" style="text-align:center;width:80%;line-adjust:0"><table class="authorrow columns block" data-line="43" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="43" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="43" style="font-size:large;line-adjust:0"><span data-line="43"></span>The P4.org language consortium</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2017-10-09</div></div>
+<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2017-10-13</div></div>
 <p class="p noindent para-continued" data-line="36"><span data-line="36"></span><span data-line="36"></span>
 <span data-line="37"></span><span data-line="37"></span>
 <span data-line="38"></span><span data-line="38"></span>
@@ -1849,20 +1849,20 @@ undefined behavior.  Out of bounds register accesses are impossible
 for a register instance with type <span data-line="1130"></span><code class="code code1 language-p4 lang-p4 p4 colorized">S</code><span data-line="1130"></span> declared as <span data-line="1130"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;W&gt;</code><span data-line="1130"></span> and size
 <span data-line="1131"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAjCAYAAAA0aUL2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRYw9VY7XGbQBB9y6QAxiWgDpBTgUkHuITIHSiTEnAH2CVQguwOjDqAdBCpg82f1cxqzcEelmJ8MzeSjne626+3u4CZcekJoAbAoTmA347hAWQDe8oA9oBrCCWHZgB26rBG1tIRfKXwOwB5CK/2NIJvARTMjKsJJYdu1CVLB75Q+Mp5RgWg1WvfcN3Rq++ZA/83Bk9EqbjhWq8nVxZKX3LlwD+r76kDXwGomfn4P4XSlrqZ0Hop+KPHUkSUSww9vnt4zZgSnz/FSDuCSQF06nOQJc2eFkA+9CwZ0EBBRA0RHYiIZR5krfyAtTKnG/WOWNoA6Jl5Pwgw2jpRcC3MVchne5YHhDqdlmrHNC+03QVyXDZm1eCZCtzJBVIHPbsoWvY1ak8aELoIJOIi8H+bsTMTMWcjhruzTKIs+gRAB2UjwTqb1pUbvajl4wg+F+s9TR2ai1Zyh9ZTY612bgIOuZFJwFvzrPPcMwHwINq5lWQWHGJFraWciLKZCXUwxxjLrpSVtgBeguRgRmdIII3Q/DttBojgrPSx5DDiDTsvOVhL3ZgsXkwo4c38Xs2IqWcA9yPeMISvQvFuRzJwyf6SJYW9pJDD24Qbne5wQ0SFlxxgtNGK61WOwLd9jGfPQbm3x8V1y+Iih7MqnZl7W+VOjO/m985J67m494PDjfRzNznMrv0MsXSRCbiN6JEYwGFOvRlVpZ/8Wy3dR9Z/P534LhI/31KmBmwiW/syAp9OlUKj+yMOKm3+WOokubCnbf4jGtwz8xoLHt6YehWBegB3WPhIHFaqhY73ANberP6pYyKOtl8hhtxEoYih/koCBYVSPU3loOp88ULJRb01XT3VenzGTAaouwXwyMy/HCF5e+mq/uJEIeVJFZH1B9/4LCb5EtFOtdmeduWHlD60SEuZ11gxs1si+yXyQqOcqZN+qRXF7w/s3y9RqH9Od68MIChgRQAAAABJRU5ErkJggg==" alt="$2^W$" class="math-inline math-render-png math" style="height:0.9106em"><span data-line="1131"></span> entries.
 </p><h3 id="sec-random" class="h2" data-line="1134" data-heading-depth="2" style="display:block"><span data-line="1134"></span><span class="heading-before"><span class="heading-label">4.9</span>.&#8194;</span><span data-line="1134"></span>Random</h3>
-<p class="p noindent" data-line="1136"><span data-line="1136"></span>The random extern provides a reliable, target specific number generator
-in the min .. max range.
+<p class="p noindent" data-line="1136"><span data-line="1136"></span>The <span data-line="1136"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Random</code><span data-line="1136"></span> extern provides generation of pseudo-random numbers in a
+specified range with a uniform distribution.  If one wishes to
+generate numbers with a non-uniform distribution, you may do so by
+first generating a uniformly distributed random value, and then using
+appropriate table lookups and/or arithmetic on the resulting value to
+achieve the desired distribution.
 </p>
-<p class="p indent" data-line="1140"><span data-line="1140"></span>The set of distributions supported by the Random extern.
-<span data-line="1141"></span>\<span data-line="1141"></span>TODO: should this be removed in favor of letting the extern
-return whatever distribution is supported by the target?
+<p class="p indent" data-line="1143"><span data-line="1143"></span>An implementation is not required to produce cryptographically strong
+pseudo-random number generation.  For example, a particularly
+inexpensive implementation might use a linear feedback shift register
+to generate values.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1144" data-line-first="1145;psa.p4:469" style="display:block"><code data-line="1145;psa.p4:469"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> RandomDistribution {
-  PRNG,
-  Binomial,
-  Poisson
-}</code></pre>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1148" data-line-first="1149;psa.p4:484" style="display:block"><code data-line="1149;psa.p4:484"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
-  Random(RandomDistribution dist, T min, T max);
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1148" data-line-first="1149;psa.p4:476" style="display:block"><code data-line="1149;psa.p4:476"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
+  Random(T min, T max);
   T read();
 
   <span style="color:darkgreen">/*</span>
@@ -1881,7 +1881,7 @@ required is to instantiate this extern. When the control plane adds
 entries (members) into the extern, they are essentially populating
 the corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1162" data-line-first="1163;psa.p4:500" style="display:block"><code data-line="1163;psa.p4:500"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1162" data-line-first="1163;psa.p4:492" style="display:block"><code data-line="1163;psa.p4:492"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
   <span style="color:darkgreen">/// Construct an action profile of &#39;size&#39; entries</span>
   ActionProfile(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
 
@@ -1905,7 +1905,7 @@ instantiate this extern. When the control plane adds entries
 (members) into the extern, they are essentially populating the
 corresponding table entries.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1179" data-line-first="1180;psa.p4:523" style="display:block"><code data-line="1180;psa.p4:523"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1179" data-line-first="1180;psa.p4:515" style="display:block"><code data-line="1180;psa.p4:515"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
   <span style="color:darkgreen">/// Construct an action selector of &#39;size&#39; entries</span>
   <span style="color:darkgreen">/// @param algo hash algorithm to select a member in a group</span>
   <span style="color:darkgreen">/// @param size number of entries in the action selector</span>
@@ -1929,7 +1929,7 @@ corresponding table entries.
 it adding a header to the current packet and sending it to the
 stream (copying or redirecting).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1189" data-line-first="1190;psa.p4:539" style="display:block"><code data-line="1190;psa.p4:539"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1189" data-line-first="1190;psa.p4:531" style="display:block"><code data-line="1190;psa.p4:531"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Digest&lt;T&gt; {
   Digest(PortId_t receiver); <span style="color:darkgreen">/// define a digest stream to receiver</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> emit(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);      <span style="color:darkgreen">/// emit data into the stream</span>
 
@@ -1951,7 +1951,7 @@ whether a particular value is in the set, returning a Boolean value.
 That Boolean value can then be used in a <span data-line="1202"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1202"></span> statement to control
 parsing (see examples below).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1205" data-line-first="1206;psa.p4:560" style="display:block"><code data-line="1206;psa.p4:560"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1205" data-line-first="1206;psa.p4:552" style="display:block"><code data-line="1206;psa.p4:552"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
     ValueSet(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">int</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_member(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> D data);
 
@@ -2273,7 +2273,7 @@ for all ingress parsers and control blocks.  The egress parser and
 control blocks can use the same types for those things, or different
 types, as the P4 program author wishes.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1451" data-line-first="1452;psa.p4:597" style="display:block"><code data-line="1452;psa.p4:597"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1451" data-line-first="1452;psa.p4:589" style="display:block"><code data-line="1452;psa.p4:589"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
