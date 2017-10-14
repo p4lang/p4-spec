@@ -344,10 +344,11 @@ extern InternetChecksum {
   /// Reset internal state and prepare unit for computation
   void clear();
 
-  /// Add data to checksum
+  /// Add data to checksum.  data must be a multiple of 16 bits long.
   void update<T>(in T data);
 
-  /// Remove data from existing checksum
+  /// Remove data from existing checksum.  data must be a multiple of
+  /// 16 bits long.
   void remove<T>(in T data);
         
   /// Get checksum for data added (and not removed) since last clear
