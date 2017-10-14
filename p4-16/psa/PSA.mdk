@@ -1467,3 +1467,63 @@ types, as the P4 program author wishes.
 ```
 [INCLUDE=psa.p4:Programmable_blocks]
 ```
+
+
+# Appendix: Implementation of the `InternetChecksum` extern
+
+Besides RFC 1461, RFC 1071 and RFC 1141 contain useful tips on
+efficiently computing the Internet checksum, especially in software
+implementations.
+
+Here we give reference implementations for the methods of the
+`InternetChecksum` extern, specified with the syntax and semantics of
+P4~16~, with extensions of a `for` loop and a `return` statement for
+returning a value from a function.
+
+The minimum internal state necessary for one instance of an
+`InternetChecksum` object is a 16-bit bit vector, here called `sum`.
+
+```
+// This is one way to perform a normal one's complement sum of two
+// 16-bit values.
+bit<16> ones_complement_sum(in bit<16> x, in bit<16> y) {
+    bit<17> ret = (bit<17>) x + (bit<17>) y;
+    if (ret[16:16] == 1) {
+        ret = ret + 1;
+    }
+    return ret[15:0];
+}
+
+bit<16> sum;
+
+void clear() {
+    sum = 0;
+}
+
+// Restriction: data is a multiple of 16 bits long
+void update<T>(in T data) {
+    bit<16> d;
+    for (each 16-bit aligned piece d of data) {
+        sum = ones_complement_sum(sum, d);
+    }
+}
+
+// Restriction: data is a multiple of 16 bits long
+void remove<T>(in T data) {
+    bit<16> d;
+    for (each 16-bit aligned piece d of data) {
+        // ~d is the negative of d in one's complement arithmetic.
+        sum = ones_complement_sum(sum, ~d);
+    }
+}
+
+// The Internet checksum is the one's complement _of_ the one's
+// complement sum of the relevant parts of the packet.  The methods
+// above calculate the one's complement sum of the parts in the
+// variable 'sum'.  get() returns the bitwise negation of 'sum', which
+// is the one's complement of 'sum'.
+
+bit<16> get() {
+    return ~sum;
+}
+```
