@@ -178,6 +178,7 @@ non-Ingress control block.
 | `Counter`         | Ingress, Egress |
 | `Digest`          | Ingress, Egress |
 | `Hash`            | Ingress, Egress |
+| `InternetChecksum` | IngressParser, EgressParser, Deparser |
 | `Meter`           | Ingress, Egress |
 | `DirectCounter`   | Ingress, Egress |
 | `DirectMeter`     | Ingress, Egress |
@@ -667,9 +668,9 @@ RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
 [INCLUDE=psa.p4:InternetChecksum_extern]    
 ```            
     
-### Checksum examples { #sec-checksum-examples }
+### InternetChecksum examples { #sec-checksum-examples }
 
-The partial program below demonstrates one way to use the `Checksum`
+The partial program below demonstrates one way to use the `InternetChecksum`
 extern to verify whether the checksum field in a parsed IPv4 header is
 correct, and set a parser error if it is wrong.  It also demonstrates
 checking for parser errors in the `ingress` control block, dropping
@@ -690,7 +691,7 @@ assign values to those fields within the parser state code.
 [INCLUDE=examples/psa-example-parser-checksum.p4:Parse_Error_Example]
 ```
 
-The partial program below demonstrates one way to use the `Checksum`
+The partial program below demonstrates one way to use the `InternetChecksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
 the deparser block.  In this example, the checksum is calculated
 fresh, so the outgoing checksum will be correct regardless of what
