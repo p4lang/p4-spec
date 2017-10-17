@@ -39,9 +39,6 @@ typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
 typedef bit<48> Timestamp_t;
 typedef error   ParserError_t;
-typedef bit<3>  CloneInstance_t;
-typedef bit<3>  ResubmitInstance_t;
-typedef bit<3>  DigestInstance_t;
 
 const   PortId_t         PORT_CPU = 255;
 
