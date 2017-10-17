@@ -44,15 +44,19 @@ struct fwd_metadata_t {
 
 }
 
+struct telemetry_metadata_t {
+    bit<8> reason;
+}
+
 struct metadata {
     fwd_metadata_t fwd_metadata;
+    telemetry_metadata_t telemetry_md;
     clone_metadata_t cloned_header;
-    bit<3> custom_clone_id;
 }
 
 struct clone_metadata_t {
-    bit<8> custom_tag;
-    EthernetAddress srcAddr;
+    bit<8> clone_tag;
+    telemetry_metadata_t telemetry_md;
 }
 
 struct headers {
@@ -103,7 +107,7 @@ parser IngressParserImpl(packet_in buffer,
 {
     CommonParser() p;
     CloneParser() cp;
-
+    
     state start {
         transition select(istd.instance_type) {
            CLONE: parse_clone_header;
@@ -129,20 +133,22 @@ control ingress(inout headers hdr,
                 in  psa_ingress_input_metadata_t  istd,
                 out psa_ingress_output_metadata_t ostd)
 {
-    action do_clone (PortId_t port) {
-        ostd.clone = 1;
-        ostd.clone_port = port;
-	user_meta.custom_clone_id = 3w1;
+    action mirror_on_drop(bit<8> reason, PortId_t port) {
+	ostd.clone = 1;
+	ostd.clone_port = port;
+        ostd.drop = 1;
+ 	user_meta.telemetry_md.reason = reason;
     }
-    table t() {
+        
+    table system_acl() {
         key = {
-            user_meta : exact;
+            acl_metadata.acl_deny : ternary;
         }
-        actions = { do_clone; }
+        actions = { mirror_on_drop; }
     }
 
     apply {
-        t.apply();
+        system_acl.apply();
     }
 }
 
@@ -182,14 +188,17 @@ control DeparserImpl(packet_out packet, inout headers hdr) {
 control IngressDeparserImpl(packet_out packet,
     clone_out clone,
     inout headers hdr,
-    in metadata meta,
+    in userMetadata meta,
     in psa_ingress_output_metadata_t istd) {
     DeparserImpl() common_deparser;
     apply {
-	clone_metadata_t clone_md;
-	clone_md.srcAddr = hdr.ethernet.srcAddr;
-        clone_md.custom_tag = 8w1;
-        if (meta.custom_clone_id == 3w1) {
+        // user is responsible for constructing the clone header,
+        // it may include a user-defined tag to distinguish different
+        // clone headers.
+        clone_metadata_t clone_md;
+        clone_md.tag = 8w1;
+        clone_md.telemetry_md = meta.telemetry_md;
+        if (istd.clone) {
             clone.add_metadata(clone_md);
         }
         common_deparser.apply(packet, hdr);
@@ -199,10 +208,13 @@ control IngressDeparserImpl(packet_out packet,
 control EgressDeparserImpl(packet_out packet,
     clone_out clone,
     inout headers hdr,
-    in metadata meta,
+    in userMetadata meta,
     in psa_egress_output_metadata_t istd) {
     DeparserImpl() common_deparser;
     apply {
+        if (istd.clone) {
+            clone.add_metadata({hdr.ipv4.srcAddr, hdr.ipv4.dstAddr});
+        }
         common_deparser.apply(packet, hdr);
     }
 }
