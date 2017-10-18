@@ -41,18 +41,18 @@ header ipv4_t {
 }
 
 struct fwd_metadata_t {
+    bit<32> outport;
+}
 
+header clone_metadata_t {
+    bit<8> custom_tag;
+    EthernetAddress srcAddr;
 }
 
 struct metadata {
     fwd_metadata_t fwd_metadata;
-    clone_metadata_t cloned_header;
+    clone_metadata_t clone_header;
     bit<3> custom_clone_id;
-}
-
-struct clone_metadata_t {
-    bit<8> custom_tag;
-    EthernetAddress srcAddr;
 }
 
 struct headers {
@@ -106,8 +106,8 @@ parser IngressParserImpl(packet_in buffer,
 
     state start {
         transition select(istd.instance_type) {
-           CLONE: parse_clone_header;
-           NORMAL: parse_ethernet;
+           InstanceType_t.CLONE: parse_clone_header;
+           InstanceType_t.NORMAL: parse_ethernet;
         }
     }
     
@@ -127,16 +127,16 @@ control ingress(inout headers hdr,
                 inout metadata user_meta,
                 PacketReplicationEngine pre,
                 in  psa_ingress_input_metadata_t  istd,
-                out psa_ingress_output_metadata_t ostd)
+                inout psa_ingress_output_metadata_t ostd)
 {
     action do_clone (PortId_t port) {
-        ostd.clone = 1;
+        ostd.clone = true;
         ostd.clone_port = port;
-	user_meta.custom_clone_id = 3w1;
+        user_meta.custom_clone_id = 3w1;
     }
-    table t() {
+    table t {
         key = {
-            user_meta : exact;
+            user_meta.fwd_metadata.outport : exact;
         }
         actions = { do_clone; }
     }
@@ -164,18 +164,13 @@ control egress(inout headers hdr,
                inout metadata user_meta,
                BufferingQueueingEngine bqe,
                in  psa_egress_input_metadata_t  istd,
-               out psa_egress_output_metadata_t ostd)
+               inout psa_egress_output_metadata_t ostd)
 {
     apply { }
 }
 
-control computeChecksum(inout headers hdr, inout metadata meta) {}
-
-
 control DeparserImpl(packet_out packet, inout headers hdr) {
     apply {
-        packet.emit(hdr.eth);
-        packet.emit(hdr.ipv4);
     }
 }
 
@@ -186,18 +181,20 @@ control IngressDeparserImpl(packet_out packet,
     in psa_ingress_output_metadata_t istd) {
     DeparserImpl() common_deparser;
     apply {
-	clone_metadata_t clone_md;
-	clone_md.srcAddr = hdr.ethernet.srcAddr;
+        clone_metadata_t clone_md;
+        clone_md.srcAddr = hdr.ethernet.srcAddr;
         clone_md.custom_tag = 8w1;
         if (meta.custom_clone_id == 3w1) {
-            clone.add_metadata(clone_md);
+            clone.emit(clone_md);
         }
         common_deparser.apply(packet, hdr);
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
     }
 }
 
 control EgressDeparserImpl(packet_out packet,
-    clone_out clone,
+    clone_out cl,
     inout headers hdr,
     in metadata meta,
     in psa_egress_output_metadata_t istd) {
@@ -209,9 +206,7 @@ control EgressDeparserImpl(packet_out packet,
 
 PSA_Switch(IngressParserImpl(),
            ingress(),
-           computeChecksum(),
            IngressDeparserImpl(),
            EgressParserImpl(),
            egress(),
-           computeChecksum(),
            EgressDeparserImpl()) main;
