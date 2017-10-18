@@ -1288,36 +1288,6 @@ to generate values.
 [INCLUDE=psa.p4:Random_extern]
 ```
 
-## Action Profile
-
-Action profiles are used as table implementation attributes.
-
-Action profiles implement a mechanism to populate table entries
-with actions and action data. The only data plane operation
-required is to instantiate this extern. When the control plane adds
-entries (members) into the extern, they are essentially populating
-the corresponding table entries.
-
-```
-[INCLUDE=psa.p4:ActionProfile_extern]
-```
-
-## Action Selector
-
-Action selectors are used as table implementation attributes.
-
-Action selectors implement another mechanism to populate table
-entries with actions and action data. They are similar to action
-profiles, with additional support to define groups of
-entries. Action selectors require a hash algorithm to select
-members in a group. The only data plane operation required is to
-instantiate this extern. When the control plane adds entries
-(members) into the extern, they are essentially populating the
-corresponding table entries.
-
-```
-[INCLUDE=psa.p4:ActionSelector_extern]
-```
 
 ## Packet Generation
 
@@ -1327,6 +1297,190 @@ stream (copying or redirecting).
 
 ```
 [INCLUDE=psa.p4:Digest_extern]
+```
+
+
+## Action Profile
+
+Action profiles are used as table implementation attributes.
+
+Action profiles provide a mechanism to populate table entries
+with action specifications that have been defined outside the table entry
+specification. An action profile extern can be instantiated as
+a resource in the P4 program. A table that uses this action profile
+must specify its implementation attribute as the action profile 
+instance.
+
+~ Figure { #fig-ap; caption: "Action profiles in PSA"; page-align: here; }
+![ap]
+~
+[ap]: action_profile.png { width: 75%; }
+
+Figure [#fig-ap] contrasts a direct table with a table that has an action
+profile implementation. A direct table, as seen in Figure [#fig-ap] (a) contains
+the action specification in each table entry. In this example, the table has a
+match key consisting of an LPM on header field `h.f`. The action is to set the
+port. As we can see, entries t1 and t3 have the same action, i.e. to set the
+port to 1. Action profiles enable sharing an action across multiple entries by
+using a separate table as shown in Figure [#fig-ap] (b).
+
+A table with an action profile implementation has entries that point to a member
+reference instead of directly defining an action specification. A mapping from
+member references to action specifications is maintained in a separate table
+that is part of the action profile instance defined in the table implementation
+attribute. When a table with an action profile implementation is applied, the
+member reference is resolved and the corresponding action specification is
+applied to the packet.
+
+Action profile members may only specify action types defined in the `actions`
+attribute of the implemented table. An action profile instance may be shared
+across multiple tables only if all such tables define the same set of actions
+in their `actions` attribute. Tables with an action profile implementation
+cannot define a default action. The default action for such tables is implicitly
+set to `NoAction`.
+
+The control plane can add, modify or delete member entries for a
+given action profile instance. The controller-assigned member reference
+must be unique in the scope of the action profile instance. An
+action profile instance may hold at most `size` entries as defined in the
+constructor parameter. Table entries must specify the action using the
+controller-assigned reference for the desired member entry. Directly specifying
+the action as part of the table entry is not allowed for tables with an
+action profile implementation.
+
+```
+[INCLUDE=psa.p4:ActionProfile_extern]
+```
+
+### Action Profile Example
+The P4 control block `Ctrl` in the example below instantiates an
+action profile `ap` that can contain at most 128 member entries. Table
+`indirect` uses this instance by specifying the implementation attribute.
+The control plane can add member entries to `ap`, where each member can
+specify either a `foo` or `NoAction` action. Table entries for `indirect`
+table must specify the action using the controller-assigned member reference.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+  action foo() { meta.foo = 1; }
+
+  action_profile ap(32w128);
+
+  table indirect {
+    key = {hdr.ipv4.dst_address: exact;}
+    actions = { foo; NoAction; }
+    implementation = ap;
+  }
+
+  apply {
+    indirect.apply();
+  }
+}
+```
+
+
+## Action Selector
+
+Action selectors are used as table implementation attributes.
+
+Action selectors implement yet another mechanism to populate table
+entries with action specifications that have been defined outside the
+table entry. They are more powerful than action profiles because they also
+provide the ability to dynamically select the action specification to apply
+upon maching a table entry. An action selector extern can be instantiated as
+a resource in the P4 program, similar to action profiles. Furthermore,
+a table that uses this action selector must specify its implementation attribute
+as the action selector instance.
+
+~ Figure { #fig-as; caption: "Action selectors in PSA"; page-align: here; }
+![as]
+~
+[as]: action_selector.png { width: 90%; }
+
+Figure [#fig-as] illustrates a table that has an action selector implementation.
+In this example, the table has a match key consisting of an LPM on header field
+`h.f`. A second match type `selector` is used to define the fields that are
+used to look up the action specification from the selector at runtime.
+
+A table with an action action selector implementation consists of entries that
+point to either an action profile member reference or an action profile group
+reference. An action selector instance can be logically visualized as two tables
+as shown in Figure [#fig-as]. The first table contains a mapping from group
+references to a set of member references. The second table contains a mapping
+from member references to action specifications.
+
+When a packet matches a table entry at runtime, the controller-assigned
+reference of the action profile member or group is read. If the entry points to
+a member then the corresponding action specification is applied to the packet.
+However, if the entry points to a group, a dynamic selection algorithm is used
+to select a member from the group, and the action specification
+corresponding to that member is applied. The dynamic selection algorithm is
+specified as a parameter when instantiating the action selector.
+
+Action selector members may only specify action types defined
+in the `actions` attribute of the implemented table. An action selector instance
+may be shared across multiple tables only if all such tables define the same
+set of actions in their `actions` attribute. Tables with an action selector
+implementation cannot define a default action. The default action for such
+tables is implicitly set to `NoAction`.
+
+The dynamic selection algorithm requires a field list as an input for generating
+the index to a member entry in a group. This field list is created by using the
+match type `selector` when defining the table match key. The match fields of
+type `selector` are composed into a field list in the order they are specified.
+The composed field list is passed as an input to the action selector
+implementation. It is illegal to define a `selector` type match field if the
+table does not have an action selector implemenation.  
+
+The control plane can add, modify or delete member and group entries for a
+given action selector instance. An action selector instance may hold at most
+`size` member entries as defined in the constructor parameter. The number of
+groups may be atmost the size of the table that is implemented by the selector.
+Table entries must specify the action using a reference to the desired member
+or group entry. Directly specifying the action as part of the table entry is not
+allowed for tables with an action selector implementation.
+
+```
+[INCLUDE=psa.p4:ActionSelector_extern]
+```
+### Action Selector Example
+The P4 control block `Ctrl` in the example below instantiates an
+action selector `as` that can contain at most 128 member entries. The
+action selector uses a crc16 algorithm with output width of 10 bits
+to select a member entry within a group.
+
+Table `indirect_with_selection` uses this instance by specifying the
+implementation attribute as shown. The control plane can add member and group
+entries to `as`. Each member can specify either a `foo` or `NoAction` action.
+When programming the table entries, the control plane *does not* include the
+fields of match type `selector` in the match key. The selector match fields are
+instead used to compose a list that is passed to the action selector instance.
+In the example below, the list {hdr.ipv4.src_address, hdr.ipv4.protocol} is
+passed as input to the crc16 hash algorithm used for dynamic member selection
+by action selector `as`.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+  action foo() { meta.foo = 1; }
+
+  action_selector as(HashAlgorithm.crc16, 32w128, 32w10);
+
+  table indirect_with_selection {
+    key = {
+      hdr.ipv4.dst_address: exact;
+      hdr.ipv4.src_address: selector;
+      hdr.ipv4.protocol: selector;
+    }
+    actions = { foo; NoAction; }
+    implementation = as;
+  }
+
+  apply {
+    indirect_with_selection.apply();
+  }
+}
 ```
 
 
