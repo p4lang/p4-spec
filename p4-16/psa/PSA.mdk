@@ -1419,11 +1419,15 @@ corresponding to that member is applied. The dynamic selection algorithm is
 specified as a parameter when instantiating the action selector.
 
 Action selector members may only specify action types defined
-in the `actions` attribute of the implemented table. An action selector instance
-may be shared across multiple tables only if all such tables define the same
-set of actions in their `actions` attribute. Tables with an action selector
-implementation cannot define a default action. The default action for such
-tables is implicitly set to `NoAction`.
+in the `actions` attribute of the implemented table. All actions in a group must be
+of the same type. The action parameters for actions in the same group are allowed
+to differ, and the action of different groups in a selector may be different.
+An action selector instance may be shared across multiple tables only if all such
+tables define the same set of actions in their `actions` attribute. Furthermore,
+the selector match fields for such tables must be identical and must be specified
+in the same order across all tables sharing the selector. Tables with an action
+selector implementation cannot define a default action. The default action for
+such tables is implicitly set to `NoAction`.
 
 The dynamic selection algorithm requires a field list as an input for generating
 the index to a member entry in a group. This field list is created by using the
@@ -1434,7 +1438,7 @@ implementation. It is illegal to define a `selector` type match field if the
 table does not have an action selector implemenation.  
 
 The control plane can add, modify or delete member and group entries for a
-given action selector instance. An action selector instance may hold at most
+given action selector instance. An action selector instance may hold atmost
 `size` member entries as defined in the constructor parameter. The number of
 groups may be atmost the size of the table that is implemented by the selector.
 Table entries must specify the action using a reference to the desired member
