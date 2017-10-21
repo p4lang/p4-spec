@@ -113,12 +113,12 @@ parser IngressParserImpl(packet_in buffer,
     
     state parse_clone_header {
         cp.apply(buffer, istd, user_meta.clone_header);
-	transition accept;
+        transition parse_ethernet;
     }
 
     state parse_ethernet {
         p.apply(buffer, parsed_hdr, user_meta);
-	transition accept;
+        transition accept;
     }
 }
 
