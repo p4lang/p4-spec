@@ -1459,6 +1459,26 @@ In the example below, the list {hdr.ipv4.src_address, hdr.ipv4.protocol} is
 passed as input to the crc16 hash algorithm used for dynamic member selection
 by action selector `as`.
 
+A PSA implementation provides a digest mechanism to send a separate
+data object to the control plane. The data object may contain a
+identifier to identify the receiver of the object. The data object can
+optionally attach metadata to provide more information about the
+source of the digest. The attached metadata can be one or more header
+fields from a packet or one or more metadata generated in the Ingress
+or Egress pipeline. The digest extern can only be invoked in the
+deparser.
+
+A common use case of the digest mechanism is MAC learning. In the MAC
+learning case, the receiver of the digest is the CPU port, represented
+by a enum type. The digest metadata is the source MAC address of the
+received packet.
+
+It may be desirable to avoid sending a burst of identical digests to
+the control plane, to save the processing cycles of the control plane
+processor for other tasks. In this case, the PSA implementation can
+implement a deduplication mechanism to filter repeated digests. 
+>>>>>>> eb539bc... Proposal for Digest mechanism
+
 ```
 control Ctrl(inout H hdr, inout M meta) {
 
