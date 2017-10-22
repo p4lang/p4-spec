@@ -54,6 +54,7 @@ typedef bit<unspecified> ClassOfService_t;
 typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> Timestamp_t;
+typedef bit<unspecified> CloneMetadata_t;
 
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
@@ -78,12 +79,21 @@ struct psa_ingress_parser_input_metadata_t {
 struct psa_egress_parser_input_metadata_t {
   PortId_t                 egress_port;
   InstanceType_t           instance_type;
+  CloneMetadata_t          clone_metadata;  // undefined
 }
 
 struct psa_parser_output_metadata_t {
   ParserError_t            parser_error;
 }
 
+struct psa_ingress_deparser_output_metadata_t {
+  CloneMetadata_t          clone_metadata;  // undefined
+}
+
+struct psa_egress_deparser_output_metadata_t {
+  CloneMetadata_t          clone_metadata;  // undefined
+}
+  
 struct psa_ingress_input_metadata_t {
   // All of these values are initialized by the architecture before
   // the Ingress control block begins executing.
@@ -592,7 +602,6 @@ parser IngressParser<H, M>(packet_in buffer,
                            out psa_parser_output_metadata_t ostd);
 
 control Ingress<H, M>(inout H hdr, inout M user_meta,
-                      PacketReplicationEngine pre,
                       in    psa_ingress_input_metadata_t  istd,
                       inout psa_ingress_output_metadata_t ostd);
 
@@ -603,18 +612,25 @@ parser EgressParser<H, M>(packet_in buffer,
                           out psa_parser_output_metadata_t ostd);
 
 control Egress<H, M>(inout H hdr, inout M user_meta,
-                     BufferingQueueingEngine bqe,
                      in    psa_egress_input_metadata_t  istd,
                      inout psa_egress_output_metadata_t ostd);
 
 control Deparser<H, M>(packet_out buffer, inout H hdr, in M user_meta);
 
+control IngressDeparser<H, M>(packet_out buffer, inout H hdr, in M user_meta,
+			      in psa_ingress_output_metadata_t istd,
+			      out psa_ingress_deparser_output_metadata_t ostd);
+
+control EgressDeparser<H, M>(packet_out buffer, inout H hdr, in M user_meta,
+			     in psa_egress_output_metadata_t istd,
+			     out psa_egress_deparser_output_metadata_t ostd);
+
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
-                                   Deparser<IH, IM> id,
+                                   IngressDeparser<IH, IM> id,
                                    EgressParser<EH, EM> ep,
                                    Egress<EH, EM> eg,
-                                   Deparser<EH, EM> ed);
+                                   EgressDeparser<EH, EM> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
