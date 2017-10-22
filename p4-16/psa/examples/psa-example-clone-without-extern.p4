@@ -204,12 +204,10 @@ control IngressDeparserImpl(packet_out packet,
 			    out psa_ingress_deparser_output_metadata_t ostd) {
   apply {
     clone_metadata_t clone_md;
-    clone_1_t clone_hdr;
-    clone_hdr.data = 32w0;
-    clone_md.data = clone_hdr ;  //XXX(hanw) how to do assignment on header union?
+    clone_md.data.h1 = { 32w0 };
     clone_md.type = 3w0;
     if (meta.custom_clone_id == 3w1) {
-      ostd.clone_metadata = { meta.custom_clone_id, clone_hdr };
+      ostd.clone_metadata = clone_md;
     }
     packet.emit(hdr.ethernet);
     packet.emit(hdr.ipv4);
@@ -222,6 +220,8 @@ control EgressDeparserImpl(packet_out packet,
                            in psa_egress_output_metadata_t istd,
 			   out psa_egress_deparser_output_metadata_t ostd) {
   apply {
+    packet.emit(hdr.ethernet);
+    packet.emit(hdr.ipv4);
   }
 }
 
