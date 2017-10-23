@@ -528,9 +528,10 @@ extern ActionProfile {
 extern ActionSelector {
   /// Construct an action selector of 'size' entries
   /// @param algo hash algorithm to select a member in a group
-  /// @param size number of entries in the action selector
+  /// @param max_members number of member entries in the action selector
+  /// @param max_groups number of group entries in the action selector
   /// @param outputWidth size of the key
-  ActionSelector(HashAlgorithm_t algo, bit<32> size, bit<32> outputWidth);
+  ActionSelector(HashAlgorithm_t algo, bit<32> max_members, bit<32> max_groups, bit<32> outputWidth);
 
   /*
   @ControlPlaneAPI

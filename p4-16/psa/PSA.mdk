@@ -1428,20 +1428,20 @@ table does not have an action selector implemenation.
 
 The control plane can add, modify or delete member and group entries for a
 given action selector instance. An action selector instance may hold atmost
-`size` member entries as defined in the constructor parameter. The number of
-groups may be atmost the size of the table that is implemented by the selector.
-Table entries must specify the action using a reference to the desired member
-or group entry. Directly specifying the action as part of the table entry is not
-allowed for tables with an action selector implementation.
+`max_members` member entries and atmost `max_groups` group entries as defined
+in the constructor parameter. Table entries must specify the action using a
+reference to the desired member or group entry. Directly specifying the action
+as part of the table entry is not allowed for tables with an action selector
+implementation.
 
 ```
 [INCLUDE=psa.p4:ActionSelector_extern]
 ```
 ### Action Selector Example
 The P4 control block `Ctrl` in the example below instantiates an
-action selector `as` that can contain at most 128 member entries. The
-action selector uses a crc16 algorithm with output width of 10 bits
-to select a member entry within a group.
+action selector `as` that can contain atmost 128 member entries and atmost 256
+group entries. The action selector uses a crc16 algorithm with output width of
+10 bits to select a member entry within a group.
 
 Table `indirect_with_selection` uses this instance by specifying the
 implementation attribute as shown. The control plane can add member and group
@@ -1458,7 +1458,7 @@ control Ctrl(inout H hdr, inout M meta) {
 
   action foo() { meta.foo = 1; }
 
-  action_selector as(HashAlgorithm.crc16, 32w128, 32w10);
+  action_selector as(HashAlgorithm.crc16, 32w128, 32w256, 32w10);
 
   table indirect_with_selection {
     key = {
