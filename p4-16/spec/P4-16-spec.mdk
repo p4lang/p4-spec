@@ -3281,9 +3281,28 @@ of the header.
 - The method `setInvalid()` sets the header's validity bit to
 "false". It can only be applied to an l-value.
 
-The result of reading or writing a field in an invalid header is
-undefined. The result of reading an uninitialized header field is
-undefined, even if the header itself is valid.
+The result of reading a field in a header that is currently invalid,
+or reading an uninitialized field in a header that is currently valid,
+is that some unspecified value will be used for that field.  This
+unspecified value could differ from one such read to another.
+
+Writing to a field in a currently invalid header must not change any
+state that is currently defined in the system, neither in header
+fields nor anywhere else.  Such a write is allowed to modify state
+whose values are not defined, e.g. the values of fields in headers
+that are currently invalid.
+
+It is expected that some P4~16~ implementations will have options that
+reduce the safety in order to enable more programs to be supported.
+For example, one such optimization would enable different headers to
+be overlaid in the same storage if the compiler can determine that
+those headers are never simultaneously valid.  They might allow
+assignments statements to fields of currently invalid headers to
+corrupt the values of a currently valid header overlaid with the
+invalid header's storage.  Such implementations should document how to
+enable these options, and it is recommended that they provide warnings
+during compilation about any statements in the program that may cause
+such less safe behavior.
 
 A header object can be initialized with a list expression, similar to
 a `struct`---the list fields are assigned to the header fields in the
