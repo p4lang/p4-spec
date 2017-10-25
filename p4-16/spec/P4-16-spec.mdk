@@ -3286,11 +3286,21 @@ or reading an uninitialized field in a header that is currently valid,
 is that some unspecified value will be used for that field.  This
 unspecified value could differ from one such read to another.
 
-Writing to a field in a currently invalid header must not change any
-state that is currently defined in the system, neither in header
-fields nor anywhere else.  Such a write is allowed to modify state
-whose values are not defined, e.g. the values of fields in headers
-that are currently invalid.
+If a write is performed to a field in a currently invalid header, and
+that header is part of a `header_union`, and a different member header
+of that `header_union` is currently valid, then any or all of that
+valid header's field values may change as a result of the write.  Such
+a write must not change any other state that is currently defined in
+the system, neither in header fields nor anywhere else.
+
+If a write is performed to a field in a currently invalid header, and
+that header is not part of a `header_union`, that write must not
+change any state that is currently defined in the system, neither in
+header fields nor anywhere else.
+
+Either of the kinds of writes to fields in a currently invalid header
+is allowed to modify state whose values are not defined, e.g. the
+values of fields in headers that are currently invalid.
 
 It is expected that some P4~16~ implementations will have options that
 reduce the safety in order to enable more programs to be supported.
