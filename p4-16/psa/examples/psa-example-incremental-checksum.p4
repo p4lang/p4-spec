@@ -164,18 +164,16 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
     apply {
         // Update IPv4 checksum
         ck.clear();
-        ck.update({ hdr.ipv4.version,
-            hdr.ipv4.ihl,
-            hdr.ipv4.diffserv,
-            hdr.ipv4.totalLen,
-            hdr.ipv4.identification,
-            hdr.ipv4.flags,
-            hdr.ipv4.fragOffset,
-            hdr.ipv4.ttl,
-            hdr.ipv4.protocol,
-            //hdr.ipv4.hdrChecksum, // intentionally leave this out
-            hdr.ipv4.srcAddr,
-            hdr.ipv4.dstAddr });
+        ck.update({
+            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+            /* 16-bit word  1   */ hdr.ipv4.totalLen,
+            /* 16-bit word  2   */ hdr.ipv4.identification,
+            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
+            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
+            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
+            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
+            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
+            });
         hdr.ipv4.hdrChecksum = ck.get();
         // Update TCP checksum
         ck.clear();
