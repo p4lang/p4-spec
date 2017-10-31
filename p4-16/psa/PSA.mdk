@@ -245,24 +245,58 @@ after the Ingress control block has completed executing, based upon
 the contents of several metadata fields in the struct
 `psa_ingress_output_metadata_t`.
 
+The function `platform_port_valid()` mentioned below takes a value of
+type `PortId_t`, returning `true` only when the value represents an
+output port for the implementation.  It is expected that for some PSA
+implementations there will be bit patterns for a value of type
+`PortId_t` that do not correspond to any port.
+
+A comment saying "recommended to log error" is not a requirement, but
+a recommendation, that a PSA implementation should maintain a counter
+that counts the number of times this error occurs.  It would also be
+useful if the implementation recorded details about the first few
+times this error occurred, e.g. a FIFO queue of the first several
+invalid values of `ostd.egress_port` that cause an error to occur,
+perhaps with other information about the packet that caused it, with
+tail dropping if it fills up.  Control plane or driver software would
+be able to read these counters, and read and drain the FIFO queues to
+assist P4 developers in debugging their code.
+
 ```
 [INCLUDE=psa.p4:Metadata_ingress_output]
 
     psa_ingress_output_metadata_t ostd;
 
+    if (ostd.class_of_service value is not supported) {
+        // use default class
+        ostd.class_of_service = 0;
+        // Recommended to log error about unsupported
+        // ostd.class_of_service value.
+    }
     if (truncate) {
         Truncate the payload to at most truncate_payload_bytes long.
             This affects any copies made below.
     }
     if (ostd.clone) {
-        create a copy of the packet and send it to the packet buffer,
-            after which it will start egress processing with
-            egress_port=ostd.clone_port (which might be PORT_CPU to
-            send the clone to the control CPU).
-        The contents of the packet will be the same as the packet as
-           it began ingress parsing, prepended with any headers
-           created by clone.emit() calls in the ingress deparser apply
-           block.
+        if (ostd.clone_class_of_service value is not supported) {
+            ostd.clone_class_of_service = 0;
+            // Recommmended to log error about unsupported
+            // ostd.clone_class_of_service value.
+        }
+        if (platform_port_valid(ostd.clone_port)) {
+            create a copy of the packet and send it to the packet
+                buffer with class of service specified by
+                ostd.clone_class_of_service, after which it will start
+                egress processing with egress_port=ostd.clone_port (which
+                might be PORT_CPU to send the clone to the control CPU).
+            The contents of the packet will be the same as the packet
+                as it began ingress parsing, prepended with any headers
+                created by clone.emit() calls in the ingress deparser
+                apply block.
+        } else {
+            // Do not create a clone.  Recommended to log error about
+            // unsupported ostd.clone_port value.
+        }
     }
     // Continue below, regardless of whether a clone was created or not.
     if (ostd.drop) {
@@ -279,9 +313,17 @@ the contents of several metadata fields in the struct
     if (ostd.multicast_group != 0) {
         Make 0 or more copies of the packet according to the control
             plane configuration of multicast group ostd.multicast_group.
+            Every copy will have the same value of ostd.class_of_service
         return;   // Do not continue below.
     }
-    enqueue one packet for output port ostd.egress_port
+    if (platform_port_valid(ostd.egress_port)) {
+        enqueue one packet for output port ostd.egress_port with class
+            of service specified by ostd.class_of_service
+    } else {
+        drop the packet.
+        // Recommended to log error about unsupported ostd.egress_port
+        // value.
+    }
 ```
 
 TBD: Need text defining, for each possible copy, exactly what the
@@ -297,6 +339,76 @@ some simpler common cases).  Ideally it should be possible for the
 copy going to the control CPU to have a software-defined header
 (defined in the P4 program) that is different than any headers on the
 packet copies going to the Egress control block.
+
+A PSA implementation may implement multiple classes of service for
+packets sent to the packet buffer.  If so, the Ingress control block
+may choose to assign a value to the `ostd.class_of_service` field to
+change the packet's class of service to a value other than the default
+of 0.
+
+PSA only specifies how the Ingress control block can choose the class
+of service the packet is assigned.  PSA does not mandate a scheduling
+policy among queues that exist in the packet buffer.  Something at
+least as flexible as weighted fair queuing, with an optional strict
+high priority queue, is recommended.
+
+Normally all unicast packets (i.e. those that follow the "enqueue one
+packet" path in the pseudocode above) received by a PSA device on the
+same ingress port, and sent to the same output port, will be processed
+by the Ingress control block in the same order they are received, and
+then processed by the Egress control bock in the same order as they
+are processed by the Ingress control block, i.e. all such packets go
+through the same FIFO queue in the packet buffer.
+
+It is expected that some PSA implementations will implement the class
+of service mechanism by having a separate FIFO queue per class of
+service, and thus while unicast packets with the same ingress port,
+egress port, and class of service will pass through the system in FIFO
+order, unicast packets with the same ingress and egress port, but
+different classes of service, may be processed by the Egress control
+block in a different order than they were processed by the Ingress
+control block.
+
+All of the above is also true for multicast packets (i.e. those that
+follow the "Make 0 or more copies" path in the pseudocode above) that
+are received on the same input port and their copies made to the same
+output port, at least during times when the multicast group
+memberships are stable (i.e. it has been a significant time since
+the control plane has updated the multicast group
+configuration).  As for unicast packets, multicast packets with the
+same ingress port and replicated using the same value of
+`ostd.multicast_group`, but different values of
+`ostd.class_of_service`, are expected that they may be processed by
+the Egress control block in a different order than they were processed
+by the Ingress control block.
+
+The control plane API excerpt below is intended to be added as part of
+the P4Runtime API[^P4RuntimeAPI].
+
+TBD: Antonin Bas suggests exposing 'switch capabilities' type of
+information like that shown below not via the P4Runtime API, but
+instead via Openconfig data models.  Ask him for a more appropriate
+way to document this in the PSA spec.
+
+```
+// The ClassOfServiceInfo message should be added to the "oneof"
+// inside of message "Entity".
+
+// ClassOfServiceInfo is only intended to be read.  Attempts to update
+// this entity have no effect, and should return an error status that
+// the entity is read only.
+
+message ClassOfServiceInfo {
+  // The number of class of service queues per output port that are
+  // available in this PSA implementation.
+  uint32 class_of_service_queues_per_output_port = 1;
+  // The list of values of type ClassOfService_t that are supported by
+  // this PSA implementation.  It is recommended that they be a
+  // contiguous range from 0 up to
+  // (class_of_service_queues_per_output_port - 1).
+  repeated uint32 class_of_service_id = 2;
+}
+```
 
 
 ### Behavior of packets after Egress processing is complete { #sec-after-egress }
@@ -318,14 +430,25 @@ the contents of several metadata fields in the struct
             This affects any copies made below.
     }
     if (ostd.clone) {
-        create a copy of the packet and send it to the packet buffer,
-            after which it will start egress processing with
-            egress_port=ostd.clone_port (which might be PORT_CPU to
-            send the clone to the control CPU).
-        The contents of the packet will be the same as the packet as
-           it comes out of the egress deparser, prepended with any
-           headers created by clone.emit() calls in the egress
-           deparser apply block.
+        if (ostd.clone_class_of_service value is not supported) {
+            ostd.clone_class_of_service = 0;
+            // Recommmended to log error about unsupported
+            // ostd.clone_class_of_service value.
+        }
+        if (platform_port_valid(ostd.clone_port)) {
+            create a copy of the packet and send it to the packet
+                buffer with class of service specified by
+                ostd.clone_class_of_service, after which it will start
+                egress processing with egress_port=ostd.clone_port (which
+                might be PORT_CPU to send the clone to the control CPU).
+            The contents of the packet will be the same as the packet
+                as it comes out of the egress deparser, prepended with any
+                headers created by clone.emit() calls in the egress
+                deparser apply block.
+        } else {
+            // Do not create a clone.  Recommended to log error about
+            // unsupported ostd.clone_port value.
+        }
     }
     // Continue below, regardless of whether a clone was created or not.
     if (ostd.drop) {
@@ -670,6 +793,7 @@ RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
     
 ### InternetChecksum examples { #sec-checksum-examples }
 
+
 The partial program below demonstrates one way to use the `InternetChecksum`
 extern to verify whether the checksum field in a parsed IPv4 header is
 correct, and set a parser error if it is wrong.  It also demonstrates
@@ -684,7 +808,7 @@ the location within a packet that a parser error occurred. A P4
 program author can choose to record such location information
 explicitly. For example, one may define metadata fields specifically
 for that purpose -- e.g. to hold an encoded value representing the last
-parser state reached, or the number of bytes extracted so far -- and then 
+parser state reached, or the number of bytes extracted so far -- and then
 assign values to those fields within the parser state code.
 
 ```
@@ -710,12 +834,12 @@ on the original packet is correct, and update it incrementally by
 invoking `remove` and then `update` on any fields that are modified by
 the program. For example, the ingress control in the program below
 updates the IPv4 source address, recording the original source address
-in a metadata field:    
+in a metadata field:
 ```
 [INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Table]
 ```
 The deparser first updates the IPv4 checksum as above, and then
-incrementally computes the TCP checksum.         
+incrementally computes the TCP checksum.
 ```
 [INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Example]
 ```
@@ -957,6 +1081,9 @@ in such a way that they return a `GREEN` (also known as conform),
 conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
+The value returned by an uninitialized meter shall be GREEN. This is in
+accordance with the P4Runtime specification.
+
 
 RFC 2698 describes "color aware" and "color blind" variations of
 meters.  The `Meter` and `DirectMeter` externs implement both.  The
@@ -1077,6 +1204,9 @@ keys, you may use the `read()` method call on the right-hand side of
 an assignment statement, which retrieves the current value of the
 register.  You may copy the register value into metadata, and it is
 then available for matching in subsequent tables.
+The value returned by an uninitialized register is undefined. If a target
+implementation chooses to return some value, the PSA recommends the
+value should be 0.
 
 A simple usage example might be to verify that a "first packet" was
 seen for a particular type of flow.  A register cell would be
@@ -1166,45 +1296,192 @@ to generate values.
 [INCLUDE=psa.p4:Random_extern]
 ```
 
+
 ## Action Profile
 
 Action profiles are used as table implementation attributes.
 
-Action profiles implement a mechanism to populate table entries
-with actions and action data. The only data plane operation
-required is to instantiate this extern. When the control plane adds
-entries (members) into the extern, they are essentially populating
-the corresponding table entries.
+Action profiles provide a mechanism to populate table entries
+with action specifications that have been defined outside the table entry
+specification. An action profile extern can be instantiated as
+a resource in the P4 program. A table that uses this action profile
+must specify its implementation attribute as the action profile
+instance.
+
+~ Figure { #fig-ap; caption: "Action profiles in PSA"; page-align: here; }
+![ap]
+~
+[ap]: action_profile.png { width: 75%; }
+
+Figure [#fig-ap] contrasts a direct table with a table that has an action
+profile implementation. A direct table, as seen in Figure [#fig-ap] (a) contains
+the action specification in each table entry. In this example, the table has a
+match key consisting of an LPM on header field `h.f`. The action is to set the
+port. As we can see, entries t1 and t3 have the same action, i.e. to set the
+port to 1. Action profiles enable sharing an action across multiple entries by
+using a separate table as shown in Figure [#fig-ap] (b).
+
+A table with an action profile implementation has entries that point to a member
+reference instead of directly defining an action specification. A mapping from
+member references to action specifications is maintained in a separate table
+that is part of the action profile instance defined in the table implementation
+attribute. When a table with an action profile implementation is applied, the
+member reference is resolved and the corresponding action specification is
+applied to the packet.
+
+Action profile members may only specify action types defined in the `actions`
+attribute of the implemented table. An action profile instance may be shared
+across multiple tables only if all such tables define the same set of actions
+in their `actions` attribute. Tables with an action profile implementation
+cannot define a default action. The default action for such tables is implicitly
+set to `NoAction`.
+
+The control plane can add, modify or delete member entries for a
+given action profile instance. The controller-assigned member reference
+must be unique in the scope of the action profile instance. An
+action profile instance may hold at most `size` entries as defined in the
+constructor parameter. Table entries must specify the action using the
+controller-assigned reference for the desired member entry. Directly specifying
+the action as part of the table entry is not allowed for tables with an
+action profile implementation.
 
 ```
 [INCLUDE=psa.p4:ActionProfile_extern]
 ```
 
+### Action Profile Example
+The P4 control block `Ctrl` in the example below instantiates an
+action profile `ap` that can contain at most 128 member entries. Table
+`indirect` uses this instance by specifying the implementation attribute.
+The control plane can add member entries to `ap`, where each member can
+specify either a `foo` or `NoAction` action. Table entries for `indirect`
+table must specify the action using the controller-assigned member reference.
+
+```
+control Ctrl(inout H hdr, inout M meta) {
+
+  action foo() { meta.foo = 1; }
+
+  action_profile ap(32w128);
+
+  table indirect {
+    key = {hdr.ipv4.dst_address: exact;}
+    actions = { foo; NoAction; }
+    implementation = ap;
+  }
+
+  apply {
+    indirect.apply();
+  }
+}
+```
+
+
 ## Action Selector
 
 Action selectors are used as table implementation attributes.
 
-Action selectors implement another mechanism to populate table
-entries with actions and action data. They are similar to action
-profiles, with additional support to define groups of
-entries. Action selectors require a hash algorithm to select
-members in a group. The only data plane operation required is to
-instantiate this extern. When the control plane adds entries
-(members) into the extern, they are essentially populating the
-corresponding table entries.
+Action selectors implement yet another mechanism to populate table
+entries with action specifications that have been defined outside the
+table entry. They are more powerful than action profiles because they also
+provide the ability to dynamically select the action specification to apply
+upon maching a table entry. An action selector extern can be instantiated as
+a resource in the P4 program, similar to action profiles. Furthermore,
+a table that uses this action selector must specify its implementation attribute
+as the action selector instance.
+
+~ Figure { #fig-as; caption: "Action selectors in PSA"; page-align: here; }
+![as]
+~
+[as]: action_selector.png { width: 90%; }
+
+Figure [#fig-as] illustrates a table that has an action selector implementation.
+In this example, the table has a match key consisting of an LPM on header field
+`h.f`. A second match type `selector` is used to define the fields that are
+used to look up the action specification from the selector at runtime.
+
+A table with an action action selector implementation consists of entries that
+point to either an action profile member reference or an action profile group
+reference. An action selector instance can be logically visualized as two tables
+as shown in Figure [#fig-as]. The first table contains a mapping from group
+references to a set of member references. The second table contains a mapping
+from member references to action specifications.
+
+When a packet matches a table entry at runtime, the controller-assigned
+reference of the action profile member or group is read. If the entry points to
+a member then the corresponding action specification is applied to the packet.
+However, if the entry points to a group, a dynamic selection algorithm is used
+to select a member from the group, and the action specification
+corresponding to that member is applied. The dynamic selection algorithm is
+specified as a parameter when instantiating the action selector.
+
+Action selector members may only specify action types defined
+in the `actions` attribute of the implemented table. All actions in a group must be
+of the same type. The action parameters for actions in the same group are allowed
+to differ, and the action of different groups in a selector may be different.
+An action selector instance may be shared across multiple tables only if all such
+tables define the same set of actions in their `actions` attribute. Furthermore,
+the selector match fields for such tables must be identical and must be specified
+in the same order across all tables sharing the selector. Tables with an action
+selector implementation cannot define a default action. The default action for
+such tables is implicitly set to `NoAction`.
+
+The dynamic selection algorithm requires a field list as an input for generating
+the index to a member entry in a group. This field list is created by using the
+match type `selector` when defining the table match key. The match fields of
+type `selector` are composed into a field list in the order they are specified.
+The composed field list is passed as an input to the action selector
+implementation. It is illegal to define a `selector` type match field if the
+table does not have an action selector implemenation.
+
+The control plane can add, modify or delete member and group entries for a
+given action selector instance. An action selector instance may hold atmost
+`size` member entries as defined in the constructor parameter. The number of
+groups may be atmost the size of the table that is implemented by the selector.
+Table entries must specify the action using a reference to the desired member
+or group entry. Directly specifying the action as part of the table entry is not
+allowed for tables with an action selector implementation.
 
 ```
 [INCLUDE=psa.p4:ActionSelector_extern]
 ```
+### Action Selector Example
+The P4 control block `Ctrl` in the example below instantiates an
+action selector `as` that can contain at most 128 member entries. The
+action selector uses a crc16 algorithm with output width of 10 bits
+to select a member entry within a group.
 
-## Packet Generation
-
-\TODO: is generating a new packet and sending it to the stream or is
-it adding a header to the current packet and sending it to the
-stream (copying or redirecting).
+Table `indirect_with_selection` uses this instance by specifying the
+implementation attribute as shown. The control plane can add member and group
+entries to `as`. Each member can specify either a `foo` or `NoAction` action.
+When programming the table entries, the control plane *does not* include the
+fields of match type `selector` in the match key. The selector match fields are
+instead used to compose a list that is passed to the action selector instance.
+In the example below, the list {hdr.ipv4.src_address, hdr.ipv4.protocol} is
+passed as input to the crc16 hash algorithm used for dynamic member selection
+by action selector `as`.
 
 ```
-[INCLUDE=psa.p4:Digest_extern]
+control Ctrl(inout H hdr, inout M meta) {
+
+  action foo() { meta.foo = 1; }
+
+  action_selector as(HashAlgorithm.crc16, 32w128, 32w10);
+
+  table indirect_with_selection {
+    key = {
+      hdr.ipv4.dst_address: exact;
+      hdr.ipv4.src_address: selector;
+      hdr.ipv4.protocol: selector;
+    }
+    actions = { foo; NoAction; }
+    implementation = as;
+  }
+
+  apply {
+    indirect_with_selection.apply();
+  }
+}
 ```
 
 
@@ -1379,6 +1656,11 @@ implementations were allowed to do this with their timestamp values?
 
 The control plane API excerpt below is intended to be added as part of
 the P4Runtime API[^P4RuntimeAPI].
+
+TBD: Antonin Bas suggests exposing 'switch capabilities' type of
+information like that shown below not via the P4Runtime API, but
+instead via Openconfig data models.  Ask him for a more appropriate
+way to document this in the PSA spec.
 
 ```
 // The TimestampInfo and Timestamp messages should be added to the
