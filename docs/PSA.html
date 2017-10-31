@@ -297,7 +297,7 @@
 <div class="authors align-center" data-line="43" style="text-align:center;width:80%;line-adjust:0"><table class="authorrow columns block" data-line="43" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="43" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="43" style="font-size:large;line-adjust:0"><span data-line="43"></span>The P4.org language consortium</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2017-10-21</div></div>
+<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2017-10-31</div></div>
 <p class="p noindent para-continued" data-line="36"><span data-line="36"></span><span data-line="36"></span>
 <span data-line="37"></span><span data-line="37"></span>
 <span data-line="38"></span><span data-line="38"></span>
@@ -1000,7 +1000,7 @@ common use case is to the send the cloned packet to the control CPU,
 in which case the <span data-line="584"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_port</code><span data-line="584"></span> should be set to the value that
 represents the control CPU port.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="587" data-line-first="588;psa.p4:271" style="display:block"><code data-line="588;psa.p4:271"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> clone {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="587" data-line-first="588;psa.p4:271" style="display:block"><code data-line="588;psa.p4:271"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> clone_out {
   <span style="color:darkgreen">/// Write @hdr into the ingress/egress clone engine.</span>
   <span style="color:darkgreen">/// @T can be a header type, a header stack, a header union, or a struct</span>
   <span style="color:darkgreen">/// containing fields with such types.</span>
@@ -2637,7 +2637,7 @@ for all ingress parsers and control blocks.  The egress parser and
 control blocks can use the same types for those things, or different
 types, as the P4 program author wishes.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1748" data-line-first="1749;psa.p4:618" style="display:block"><code data-line="1749;psa.p4:618"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1748" data-line-first="1749;psa.p4:630" style="display:block"><code data-line="1749;psa.p4:630"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
@@ -2661,12 +2661,24 @@ types, as the P4 program author wishes.
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> Deparser&lt;H, M&gt;(packet_out buffer, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> H hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> M user_meta);
 
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> IngressDeparser&lt;H, M&gt;(packet_out buffer,
+                              clone_out cl,
+                              <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> H hdr,
+                              <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> M meta,
+                              <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_output_metadata_t istd);
+
+<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparser&lt;H, M&gt;(packet_out buffer,
+                             clone_out cl,
+                             <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> H hdr,
+                             <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> M meta,
+                             <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_egress_output_metadata_t istd);
+
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">package</span> PSA_Switch&lt;IH, IM, EH, EM&gt;(IngressParser&lt;IH, IM&gt; ip,
                                    Ingress&lt;IH, IM&gt; ig,
-                                   Deparser&lt;IH, IM&gt; id,
+                                   IngressDeparser&lt;IH, IM&gt; id,
                                    EgressParser&lt;EH, EM&gt; ep,
                                    Egress&lt;EH, EM&gt; eg,
-                                   Deparser&lt;EH, EM&gt; ed);</code></pre><span data-line=""></span>
+                                   EgressDeparser&lt;EH, EM&gt; ed);</code></pre><span data-line=""></span>
 <div class="footnotes madoko">
 <hr >
 
