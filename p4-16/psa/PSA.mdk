@@ -546,45 +546,57 @@ no payload.
 Figure [#fig-clone] shows the proposed architectures for clone,
 recirculate, and resubmit in PSA.
 
-#### Clone
+### Packet Cloning  { #sec-clone }
 
-A PSA implementation provides a cloning mechanism to create copies of
-the original packet as independent packet instances. A cloned
-packet may be a duplicate of the original packet or a copy of the
-deparsed packet after egress pipeline. The cloning mechanism submit
-the cloned packet to either the ingress parser or the buffering mechanism.
-In a PSA implementation, the cloning mechanism is logically implemented in
-the PRE, that is, even if targets chose to implement it as part of other
-controls, the observable behavior should follow the semantics of cloning in
-the PRE.
+Packet cloning is a mechanism to send a copy of a packet to a
+specified port, and is often synonymous with packet mirroring.
 
-The cloning mechanism can optionally attach metadata to the cloned
-packet. A PSA implementation provides the `clone` extern to specify
-the attached metadata. The `clone` extern provides a `emit` method
-which accepts the attached metadata of generic type `T`. In PSA,
-the metadata is prepended to the cloned packet. It is
-the responsibility of the programmer to parse the cloned packet
-such that it correctly extracts the attached metadata.
-The attached metadata may
+Packets cloning happens at the end of the ingress and egress pipeline.
+PSA specifies the following semantics for clone operation. If the
+clone operation is invoked at the end of the ingress pipeline, the
+cloned packet is a copy of the original packet from ingress port. If
+the clone operation is invoked at the end of egress pipeline, the
+cloned packet is a copy of the modified packet after egress
+processing. In both cases, the cloned packet is submitted to the
+egress pipeline for further processing.
+
+Logically, PRE implements the mechanics of copying a packet. PRE reads
+the original packet from ingress port and the modified packet from
+egress deparser. PRE then decides which version of the packet to use
+to generate a copy based on the value of the metadata provided by the
+ingress and egress pipeline. Two sets of configuration metadata are
+provided to the PRE, one from each pipeline.
+
+```
+bool              clone;
+PortId_t          clone_port;
+ClassOfService_t  clone_class_of_service;
+```
+
+The `clone` bit specifies whether a packet should be cloned in the
+specific pipeline. If the bit is true, then the cloned packet should
+be generated at the end of the pipeline. The `clone_port` specifies
+which port to send the cloned packet to after egress processing. The
+`clone_port` could be any addressable port in the pipeline. For
+instance, it can be a port to control CPU or a port to the next hop
+router.
+
+PRE can optionally attach metadata to the cloned packet. The extra
+metadata is specified with the `clone` extern using the `add_metadata`
+method. The `add_metadata` method accepts a generic type `T`.
+
+TBD: if we decide to use pure metadata, then this paragraph needs to
+be rewritten.
+
+In PSA, the metadata is prepended to the cloned packet. It is the
+responsibility of the programmer to parse the cloned packet such that
+it correctly extracts the attached metadata. The attached metadata may
 be of type `header`, `header stack`, `header union` or `struct` of the
-above types. Invoking the `emit` method multiple times will attach all
-specified metadata to the same cloned packet. The PSA architecture
-instantiates the `clone` extern in the ingress and egress deparser. A
-P4 program can use it in ingress and egress deparser only. It is an
-error to instantiate the `clone` extern in the P4 control or parser
-block.
-
-A PSA implementation provides two configuration metadata, `clone`
-and `clone_port`, to the PRE to control the cloning mechanism. When
-`clone` is set to true, the cloning mechanism generates a
-cloned packet with the
-optional attached metadata. When `clone` is set to false,
-cloning is disabled and a cloned packet is
-not generated even if the `emit` method is invoked in the deparser.
-The `clone_port` controls the destination of the cloned packet. A
-common use case is to the send the cloned packet to the control CPU,
-in which case the `clone_port` should be set to the value that
-represents the control CPU port.
+above types. Invoking the `add_metadata` method multiple times will
+attach all specified metadata to the same cloned packet in order. The
+PSA architecture instantiates the `clone` extern in the ingress and
+egress deparser. It is an error to instantiate the `clone` extern in
+blocks other than the deparser block.
 
 ```
 [INCLUDE=psa.p4:Clone_extern]
@@ -602,12 +614,14 @@ the cloned copy to `clone_port`.
 [INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part3]
 ```
 
-#### Packet Resubmission  { #sec-resubmit }
+### Packet Resubmission  { #sec-resubmit }
 
 Packet resubmission is a mechanism to repeat ingress processing on a
-packet. If a packet is resubmitted, it re-enters the ingress parser
-after the ingress pipeline processing. The `ingress_port` of the
-resubmitted packet is the same as the original packet, however, the
+packet.
+
+If a packet is resubmitted, it re-enters the ingress parser after the
+ingress pipeline processing. The `ingress_port` of the resubmitted
+packet is the same as the original packet, however, the
 `instance_type` of the resubmitted packet is changed to `RESUBMIT`.
 The resubmitted packet has the same header and payload as the original
 packet.
@@ -677,7 +691,7 @@ need example
 
 ```
 
-#### Recirculate { #sec-recirculate }
+### Recirculate { #sec-recirculate }
 
 A PSA implementation provides a recirculation mechanism to send a
 deparsed packet from egress pipeline to ingress parser for recursive
