@@ -549,8 +549,8 @@ extern ActionSelector {
 
 // BEGIN:Digest_extern
 extern Digest<T> {
-  Digest(PortId_t receiver); /// define a digest stream to receiver
-  void emit(in T data);      /// emit data into the stream
+  Digest(PortId_t receiver);    /// define a digest stream to receiver
+  void add_metadata(in T data); /// emit data into the stream
 
   /*
   @ControlPlaneAPI
