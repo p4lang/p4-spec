@@ -691,62 +691,23 @@ need example
 
 ```
 
-### Recirculate { #sec-recirculate }
+### Packet Recirculation { #sec-recirculate }
 
-A PSA implementation provides a recirculation mechanism to send a
-deparsed packet from egress pipeline to ingress parser for recursive
-processing. The recirculated packet is the deparsed packet after the
-egress pipeline. The recirculation mechanism does not make copies of
-the original packet. It sends the deparsed packet from egress back to
-the ingress parser. In a PSA implementation, the recirculation
-mechanism is logically implemented in
-the PRE, that is, even if targets chose to implement it as part of other
-controls, the observable behavior should follow the semantics of recirculating
-in the PRE.
+Packet recirculation sends the deparsed packet at the end of egress
+pipeline to the ingress parser. Unlikely the previous two mechanisms,
+recirculation does not replicate packets. The modified packet itself
+is sent back to the ingress pipeline for further processing.
 
+In PSA, recirculation is controlled by the `recirculate` bit in the
+egress pipeline. If the `recirculate` bit is set to true, the modified
+packet at the end of the pipeline is sent to a special recirculation
+port. The recirculation port overrides the value in `egress_port`.
 
-The recirculation mechanism can optionally attach metadata to the
-recirculated packet. A PSA implementation provides the `recirculate`
-extern to specify the attached metadata. The `emit` method in the
-`recirculate` extern accepts an attached metadata of generic type `T`.
-In a PSA implementation, the metadata is prepended to the recirculated
-packet. It is the responsibility of the programmer to parse the
-recirculated packet correctly to extract the attached metadata. The
-attached metadata can be of type `header`, `header stack`, `header
-union` or `struct` of the above types. Invoking the `emit` method
-multiple times will attach all specified metadata to the same
-recirculated packet. The PSA architecture instantiates the
-`recirculate` extern in the ingress deparser. A P4 program can use it
-in egress deparser only. It is an error to instantiate the
-`recirculate` extern in a P4 control or parser block.
-
-A PSA implementation provides a configuration bit `recirculate` to the
-PRE to enable the recirculation mechanism. If `recirculate` is
-set to true, the recirculation mechanism sends back the deparsed packet with
-the optional attached metadata to the ingress parser. If
-`recirculate` is set to false, the recirculation mechanism
-is disabled and the deparsed packet is not recirculated even if the
-`emit` method is invoked in the deparser.
-
-One possible implementation of the `recirculate` bit is to set the
-`egress_port` metadata to a dedicated recirculation port number. A PSA
-implementation sends the deparsed packet to the dedicated
-recirculation port to recirculate the packet.
-
-A PSA implementation provides a metadata bit `is_recirc` as the input
-metadata to the parser to indicate if a packet is a recirculation
-packet. The `is_recirc` bit is true if the packet is a recirculation
-packet.
-
-One possible implementation of the `is_recirc` bit is to set the bit
-based on the `ingress_port` metadata of the received packet. If the
-`ingress_port` metadata is equal to the dedicated recirculation port
-number, then the `is_recirc` bit is set.
-
-```
-[INCLUDE=psa.p4:Recirculate_extern]
-```
-
+Users can leverage the existing `emit` methods in `packet_out` to
+attach additional metadata to the recirculated packet. Upon receiving
+the recirculated packet in ingress parser, the `instance_type` of the
+recirculated packet is set to `RECIRCULATE`. It is the user's
+responsibility to parse the recirculated packet correctly.
 
 ## Buffering Queuing Engine { #sec-bqe }
 
