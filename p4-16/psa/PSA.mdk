@@ -605,59 +605,69 @@ the cloned copy to `clone_port`.
 #### Packet Resubmission  { #sec-resubmit }
 
 Packet resubmission is a mechanism to repeat ingress processing on a
-packet. The header and payload of the resubmitted packet are the same
-as the original packet. However, the instance type of the resubmitted
-packet is changed to `RESUBMIT`, instead of `NORMAL`. The resubmitted
-packet enters the ingress parser with the same ingress port. The
-ingress parser can choose to parse the resubmitted packet in the same
-or different way as the original packet. Similarly, the ingress
-pipeline can process the resubmitted packet with the same or different
-actions as the original packet.
+packet. If a packet is resubmitted, it re-enters the ingress parser
+after the ingress pipeline processing. The `ingress_port` of the
+resubmitted packet is the same as the original packet, however, the
+`instance_type` of the resubmitted packet is changed to `RESUBMIT`.
+The resubmitted packet has the same header and payload as the original
+packet.
 
-PSA specifies that a packet can be resubmitted at most once. The
-resubmit operation can only be used in the ingress pipeline. The
-egress pipeline cannot resubmit packets.
+The ingress parser is able to distinguish between the original packet
+and the resubmitted packet using the `instance_type` field in
+`ingress_parser_intrinsic_metadata_t`. The ingress parser is allowed
+to choose a different algorithm to parse the resubmitted packet.
+Similarly, the ingress pipeline can choose to process the resubmitted
+packet with different actions as opposed to the ones used to process
+the original packet.
 
-One expected use case for packet resubmission is to extend the length
-of the processing pipeline, because now the same packet can be
-processed by the ingress pipeline twice, instead of once. Another use
-case is to parse and modify the original packet, then, resubmit and
-re-parse the packet in a different way.
+TBD: does PSA specify that a packet can be resubmitted at most once?
 
-The resubmission mechanism can optionally attach metadata to the
-resubmitted packet. A PSA implementation provides the `resubmit`
-extern to specify the attached metadata. The `resubmit` extern
-provides a `emit` method which accepts the attached metadata of
-generic type `T`. In a PSA implementation, the metadata is prepended
-to the resubmitted packet. It is the responsibility of the programmer
-to parse the resubmitted packet correctly to extract the attached
-metadata. The attached metadata can be of type `header`, `header
-stack`, `header union` or `struct` of the above types. Invoking the
-`emit` method multiple times will attach all specified metadata to the
-same resubmitted packet. The PSA architecture instantiates the
-`resubmit` extern in the ingress deparser. A P4 program can use it in
-ingress deparser only. It is an error to instantiate the `resubmit`
-extern in the P4 control or parser block.
+PSA specifies that the resubmit operation can only be used in the
+ingress pipeline. The egress pipeline cannot resubmit packets.
+
+Packet resubmission is intended to increase the capacity and
+ flexibility of the packet processing pipeline. For example, because
+ the same packet is processed by the ingress pipeline multiple times,
+ it effectively increase the amount of operations on the packet by N
+ folds. Another use case is deploy multiple packet processing
+ algorithms on the same packet. For example, the original packet can
+ be parsed, modified and resubmitted in the first pass. Then, the
+ resubmitted packet can be parsed and modified using a different
+ algorithm.
+
+To facilitate communication between the first pass and the second pass
+through the ingress pipeline, the resubmission mechanism supports
+attaching optional metadata with the resubmitted packet. The metadata
+is generated during the first pass through the ingress pipeline, and
+used in the second pass.
+
+A PSA implementation provides the `resubmit` extern to specify the
+attached metadata. The `resubmit` extern provides a `add_metadata`
+method which accepts metadata with generic type `T`. In a PSA
+implementation, the metadata is prepended to the resubmitted packet.
+It is the responsibility of the programmer to parse the resubmitted
+packet correctly to extract the attached metadata. The attached
+metadata can be of type `header`, `header stack`, `header union` or
+`struct` of the above types. Invoking the `add_metadata` method
+multiple times will attach all specified metadata to the same
+resubmitted packet.
 
 PSA does not specify the maximum size of the associated metadata.
 However, a target implementation may enforce a limit on the metadata
 size and reject programs that exceed the limit.
 
-* The PSA architecture does not mandate initialization of user-defined
-  metadata to known values as given as input to the ingress parser. If
-  a user’s P4 program explicitly initializes all user-defined metadata
-  early on (e.g. in the parser’s start state), then that will flow
-  through the rest of the parser into the ingress control block as one
-  might normally expect. But this will be left as an option to the
-  user in their P4 PSA programs, not required behavior for all P4 PSA
-  programs.
+TBD: if the pure intrinsic metadata approach is accept, this paragraph
+needs to be rewritten.
 
-A PSA implementation provides a configuration bit `resubmit` to
-the PRE to enable the resubmission mechanism. If `resubmit` is
-set to true, the resubmission mechanism resends the original packet with the
-optional attached metadata. If `resubmit` is set to false,
-the resubmission mechanism is disabled and the original
-packet is not resubmitted even if the `emit` method is invoked in the
+TBD: packing the resubmitted metadata is an issue with explicit
+parsing, which can be solved with the intrinsic metadata approach.
+
+A PSA implementation provides a configuration bit `resubmit` to the
+PRE to enable the resubmission mechanism. If `resubmit` is set to
+true, the resubmission mechanism resends the original packet with the
+optional attached metadata. If `resubmit` is set to false, the
+resubmission mechanism is disabled and the original packet is not
+resubmitted even if the `add_metadata` method is invoked in the
 deparser.
 
 ```
