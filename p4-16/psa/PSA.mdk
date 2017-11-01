@@ -1776,7 +1776,7 @@ types, as the P4 program author wishes.
 ```
 
 
-# Appendix: Initial values of metadata and packet contents
+# Appendix: Packet paths
 
 While this is initially written as an appendix, it is expected to be
 moved into a more prominent place into the PSA specification document.
@@ -1800,7 +1800,7 @@ multicast packet passes through the packet replication engine and
 typically also a packet buffer after leaving the ingress deparser,
 before arriving at the egress parser.  This table focuses on the
 P4-programmable portions of the architecture as sources and
-destinations of these packet path.
+destinations of these packet paths.
 
 
 ~ TableFigure { #packet-path-abbreviations; \
@@ -1835,7 +1835,7 @@ destinations of these packet path.
 
 Table [#results-of-one-pkt-thru-ingress-or-egress] shows what can
 happen to a packet as a result of a single time being processed in
-ingress, or a single time being processed by egress.  The cases are
+ingress, or a single time being processed in egress.  The cases are
 the same as shown in Table [#packet-path-abbreviations], but have been
 grouped together by similar values of "Processed next by".
 
@@ -1874,40 +1874,44 @@ grouped together by similar values of "Processed next by".
 For egress packets, the choice of egress port, or the port to the CPU,
 is made by the immediately previous processing step (ingress for NU,
 NM, or CI2E packets, egress for CE2E packets), and egress processing
-cannot change that choice to a different port.  It can change it to
-RECIRC instead, or drop the packet.
+cannot change that choice to a different port.  It can change the
+packet to RECIRC instead, or drop the packet.
 
 A single packet received by a PSA system from a port can result in 0,
-1, or many packets going out, all under control of the P4 program.
+1, or many packets going out, all under control of the PSA program.
 For example, a single packet received from a port could cause all of
-the following to occur, if the P4 program so directed it:
+the following to occur, if the PSA program so directed it:
 
-+ The original packet received as NFP.  Ingress processing creates a
-  CI2E clone destined for the CPU port (copy 1), and a multicast NM
-  packet, which is replicated to ports 5 (copy 2) and 7 (copy 3).
++ The original packet received as NFP from port 2.  Ingress processing
+  creates a CI2E clone destined for the CPU port (copy 1), and a
+  multicast NM packet to multicast group 18, which is configured in
+  the PacketReplicationEngine to have copies made to ports 5 (copy 2)
+  and 7 (copy 3).
 + Copy 1 performs egress processing, which does not create a CE2E
-  clone, and allows the packet through to send a NTCPU packet to the
-  CPU port.
+  clone, and sends the packet on path NTCPU to the CPU port.
 + Copy 2 performs egress processing, which creates a CE2E clone
   destined for port 8 (copy 4), and sends a NTP packet to port 5.
 + Copy 3 performs egress processing, which does not create a CE2E
-  clone, and does a RECIRC back to ingress instead of allowing the
-  packet to go to port 7 (copy 5).
+  clone, and does a RECIRC back to ingress instead of sending the
+  packet to port 7 (copy 5).
 + Copy 4 performs egress processing, which does not create a CE2E
   clone, and sends a NTP packet to port 8.
 + Copy 5 performs ingress processing, which does not create a CI2E
   clone, and sends a NU packet destined for port 1 (copy 6).
 + Copy 6 performs egress processing, which does not create a CE2E
-  clone, and drops the packet instead of allowing it out port 1.
+  clone, and drops the packet instead of sending it to port 1.
 
 This is simply an example of what is possible given an appropriately
-written P4 program.  There is no need to use all of the packet paths
-available if you do not need them.
+written PSA program.  There is no need to use all of the packet paths
+available.  The numbering of the packet copies above is only for
+purposes of distinctly identifying each one in the example.  A PSA
+implementation is free to perform the steps above in many possible
+orders.
 
 There is no mechanism defined in PSA to prevent a single received
 packet from creating packets that continue to recirculate, resubmit,
 or clone from egress to egress indefinitely.  This can be prevented by
-suitable testing of your P4 program, and/or creating in your P4
+suitable testing of your PSA program, and/or creating in your PSA
 program a "recirculate limit" metadata field that is carried along
 with copies of a packet, similar to the IPv4 Time To Live header
 field.
@@ -1924,29 +1928,31 @@ packet contents and metadata when a packet begins ingress processing.
 |--------------|-------------|---------------|--------------|-----|
 |              | NFP         | NFCPU         | RESUB        | RECIRC   |
 +--------------+-------------+---------------+--------------+-----+
-| packet_in         | | | | |
+| `packet_in`         | see text ||||
 +--------------+-------------+---------------+--------------+-----+
-| user_meta         | | | | |
+| `user_meta`         | see text ||||
 +--------------+-------------+---------------+--------------+-----+
-| IngressParser istd fields (type psa_ingress_parser_input_metadata_t) |||||
 +--------------+-------------+---------------+--------------+-----+
-| ingress_port      | PortId_t value of   | PORT_CPU | copied from    | PORT_ |
-|                   | packet's input port |          | resub'd packet | RECIRCULATED |
+| IngressParser `istd` fields (type `psa_ingress_parser_input_metadata_t`) |||||
 +--------------+-------------+---------------+--------------+-----+
-| instance_type     | NORMAL              | NORMAL   | RESUBMIT       | RECIRCULATE |
+| `ingress_port`      | `PortId_t` value of | PORT_ | copied from    | PORT_ |
+|                     | packet's input port | CPU   | resub'd packet | RECIRCULATED |
 +--------------+-------------+---------------+--------------+-----+
-| Ingress istd fields (type psa_ingress_input_metadata_t)              |||||
+| `instance_type`     | NORMAL              | NORMAL   | RESUBMIT       | RECIRCULATE |
 +--------------+-------------+---------------+--------------+-----+
-| ingress_port      | Same value as received by IngressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| instance_type     | Same value as received by IngressParser above. ||||
+| Ingress `istd` fields (type `psa_ingress_input_metadata_t`)         |||||
 +--------------+-------------+---------------+--------------+-----+
-| ingress_timestamp | Time that packet began processing in IngressParser. ||||
-|                   | For RESUB or RECIRC packets, the time the 'copy'    ||||
-|                   | began IngressParser, not the original.              ||||
+| `ingress_port`      | Same value as received by IngressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| parser_error      | From output of IngressParser.  Always       ||||
-|                   | error.NoError if there was no parser error. ||||
+| `instance_type`     | Same value as received by IngressParser above. ||||
++--------------+-------------+---------------+--------------+-----+
+| `ingress_timestamp` | Time that packet began processing in IngressParser. ||||
+|                     | For RESUB or RECIRC packets, the time the 'copy'    ||||
+|                     | began IngressParser, not the original.              ||||
++--------------+-------------+---------------+--------------+-----+
+| `parser_error`      | From output of IngressParser.  Always `error.NoError` if there ||||
+|                     | was no parser error.                                           ||||
 |--------------|-------------|---------------|--------------|-----|
 ~
 
@@ -1958,39 +1964,45 @@ recirculated packet was resubmitted.
 
 ### packet_in for NFP and NFCPU packets
 
-For Ethernet ports, the Ethernet frame starting with the Ethernet
-header, not including the Ethernet frame CRC (TBD whether it includes
-Ethernet payload padding for minimum-sized frames, and whether all of
-this is platform-dependent, or common across PSA implementations).
+For Ethernet ports, packet_in contains the Ethernet frame starting
+with the Ethernet header.  It does not include the Ethernet frame CRC.
+TBD whether the payload is always the minimum of 46 bytes (64 byte
+minimum Ethernet frame size, minus 14 bytes of header, minus 4 bytes
+of CRC), or whether an implementation is allowed to leave some of
+those bytes out.
 
 TBD: Mention packet length, which I think is a property of packet_in
 in P4_16 spec.
 
 ### packet_in for RESUB packets
 
-The same as the pre-IngressParser contents of packet_in for the packet
-that caused this resubmitted packet to occur (i.e. with NO
-modifications from IngressParser, Ingress, or ingress Deparser
-processing).  Truncation is not be supported for RESUB packets.
+For RESUB packets, packet_in is the same as the pre-IngressParser
+contents of packet_in, for the packet that caused this resubmitted
+packet to occur (i.e. with NO modifications from IngressParser,
+Ingress, or ingress Deparser processing).  Truncation is not supported
+for RESUB packets.
 
 ### packet_in for RECIRC packets
 
-As modified by Egress and then output by egress Deparser.  Truncation
-is not supported for RECIRC packets.
+For RECIRC packets, packet_in is created by starting with the headers
+emitted by the egress Deparser of the egress packet that was
+recirculated, followed by the payload of that packet, i.e. the part
+that was not parsed by the egress parser.  Truncation is not supported
+for RECIRC packets.
 
 ### user_meta for all ingress packets
 
 The PSA architecture does not mandate initialization of user-defined
 metadata to known values as given as input to the ingress parser.  If
-a user's P4 program explicitly initializes all user-defined metadata
+a user's PSA program explicitly initializes all user-defined metadata
 early on (e.g. in the parser's start state), then that will flow
 through the rest of the parser into the ingress control block as one
 might normally expect.  This will be left as an option to the user in
-their P4 PSA programs, not required behavior for all P4 PSA programs.
+their PSA programs, not required behavior for all PSA programs.
 
-TBD: Even for RESUB and RECIRC packets, or is it intended that
-there by a way in a P4 program to specify some collection of fields to
-be preserved with a resub/recirc'ed packet?
+TBD: Is this true for RESUB and RECIRC packets, or is it intended
+that there by a way in a PSA program to specify some collection of
+fields to be preserved with a resub/recirc'ed packet?
 
 
 ## Initial values of packets processed by egress
@@ -2004,69 +2016,117 @@ packet contents and metadata when a packet begins egress processing.
 |--------------|-------------|---------------|--------------|-----|
 |              | NU          | NM            | CI2E         | CE2E |
 +--------------+-------------+---------------+--------------+-----+
-| packet_in         | | | | |
+| packet_in         | see text ||||
 +--------------+-------------+---------------+--------------+-----+
-| user_meta         | | | | |
+| user_meta         | see text ||||
 +--------------+-------------+---------------+--------------+-----+
-| EgressParser istd fields (type psa_egress_parser_input_metadata_t) |||||
 +--------------+-------------+---------------+--------------+-----+
-| egress_port       | ostd.egress_port of | from PRE      | ostd.clone_port of    | ostd.clone_port of   |
-|                   | ingress packet      | configuration | cloned ingress packet | cloned egress packet |
+| EgressParser `istd` fields (type `psa_egress_parser_input_metadata_t`) |||||
 +--------------+-------------+---------------+--------------+-----+
-| instance_type     | NORMAL_ | NORMAL_   | CLONE_I2E | CLONE_E2E |
+| `egress_port`     | `ostd.egress_port` | from PRE      | `ostd.clone_port` | `ostd.clone_port` |
+|                   | of ingress packet  | configuration | of cloned         | of cloned         |
+|                   |                    |               | ingress packet    | egress packet     |
++--------------+-------------+---------------+--------------+-----+
+| `instance_type`   | NORMAL_ | NORMAL_   | CLONE_I2E | CLONE_E2E |
 |                   | UNICAST | MULTICAST |           |           |
 +--------------+-------------+---------------+--------------+-----+
-| Egress istd fields (type psa_egress_input_metadata_t)             |||||
 +--------------+-------------+---------------+--------------+-----+
-| class_of_service  | ostd.class_of_service || ostd.clone_class_of_service of ||
-|                   | of ingress packet     || packet that caused this clone  ||
+| Egress `istd` fields (type `psa_egress_input_metadata_t`)   |||||
 +--------------+-------------+---------------+--------------+-----+
-| ingress_port      | Same value as received by EgressParser above. ||||
+| `class_of_service` | `ostd.class_of_service` || `ostd.clone_class_of_service` of ||
+|                    | of ingress packet       || packet that caused this clone    ||
 +--------------+-------------+---------------+--------------+-----+
-| instance_type     | Same value as received by EgressParser above. ||||
+| `egress_port`      | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| ingress_timestamp | Time that packet began processing in EgressParser. ||||
-|                   | Filled in independently for each copy of a         ||||
-|                   | multicast-replicated packet.                       ||||
+| `instance_type`    | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| parser_error      | From output of EgressParser.  Always        ||||
-|                   | error.NoError if there was no parser error. ||||
-|                   | See "Multicast notes"                       ||||
+| `ingress_timestamp` | Time that packet began processing in EgressParser.  Filled in ||||
+|                     | independently for each copy of a multicast-replicated packet. ||||
++--------------+-------------+---------------+--------------+-----+
+| `parser_error`    | From output of EgressParser.  Always `error.NoError` if there ||||
+|                   | was no parser error.  See "Multicast copies" section.         ||||
 |--------------|-------------|---------------|--------------|-----|
 ~
 
 TBD: Add instance types NORMAL_UNICAST, NORMAL_MULTICAST, CLONE_I2E,
 CLONE_E2E to psa.p4
 
+### packet_in for NU and NM packets
 
-### Multicast notes
+For NU and NM packets, packet_in comes from the ingress packet that
+caused this packet to be sent to egress.  It starts with the packet
+headers as emitted by the ingress deparser, followed by the payload of
+that packet, i.e. the part that was not parsed by the ingress parser.
+Truncation of the payload is supported.
 
-The following fields may be different among different copies of a
-multicast-replicated packet that are processed in egress.
+### packet_in for CI2E packets
 
-+ egress_port - This field will typically be different for different
-  copies of a multicast-replicated packet, but it may also be the same
-  for arbitrary copies, as determined by the control plane
-  configuration of the PacketReplicationEngine.  It is expected that
-  the control plane will configure the PacketReplicationEngine so that
-  each copy of the same original packet is assigned a unique value of
-  the pair (egress_port, instance).
+For CI2E packets, packet_in is from the ingress packet that caused
+this clone to be created.  It is the same as the pre-IngressParser
+contents of packet_in of that ingress packet, with no modifications
+from IngressParser, Ingress, or ingress deparser processing.
+
+TBD: Is payload truncation supported for such packets?
+
+
+### packet_in for CE2E packets
+
+For CE2E packets, packet_in is from the egress packet that caused this
+clone to be created.  It starts with the headers emitted by the egress
+deparser, followed by the payload of that packet, i.e. the part that
+was not parsed by the egress parser.  Truncation of the payload is
+supported.
+
+
+### user_meta for all egress packets
+
+TBD: Pending discussion of bridged metadata, and how clone packets may
+be able to carry metadata with them.
+
+
+### Multicast copies
+
+The following fields may differ among copies of a multicast-replicated
+packet that are processed in egress.
+
++ egress_port - This field will typically differ among copies of a
+  multicast-replicated packet, but it may also be the same for
+  arbitrary copies, as determined by the control plane configuration
+  of the PacketReplicationEngine.  It is expected that the control
+  plane will configure the PacketReplicationEngine so that each copy
+  of the same original packet is assigned a unique value of the pair
+  (egress_port, instance).
 + instance - See egress_port
 + egress_timestamp: This value is filled in independently for each
-  copy of a multicast-replicated packet.  Depending upon the quantity of
-  traffic destined to each output port, this time could vary
-  significantly between different copies of the same original packet.
+  copy of a multicast-replicated packet.  Depending upon the quantity
+  of traffic destined to each output port, the timestamp could vary
+  significantly between copies of the same original packet.
 + parser_error - In the common case, this will typically be the same
   for every copy of the same original multicast-replicated packet.
-  However, it is determined by the user's EgressParser P4 code for
-  each copy independently, so if that code parses packets differently
-  depending upon a field that can differ among copies,
-  e.g. egress_port, then the parser_error field can differ among
-  copies, too.
+  However, it is determined by the EgressParser P4 code for each copy
+  independently, so if that parsing behavior depends upon a field that
+  can differ among copies, e.g. egress_port, then the parser_error
+  field can differ among copies.
 
 All contents of a packet and its associated metadata, other than those
 mentioned above, will be the same for every copy of the same original
 multicast-replicated packet.
+
+
+## Contents of packets sent out to ports
+
+There is no metadata associated with NTP and NTCPU packets at all.
+Their only contents are explicitly specified by the egress code that
+generates them.
+
+They begin with the series of bytes emitted by the egress deparser.
+Following that is the payload, which are those packet bytes that were
+not parsed in the egress parser.  Truncation is supported for these
+packets.
+
+For Ethernet ports, any padding required to get the packet up to the
+minimum frame size required is done by the implementation, as well as
+calculation of and appending the Ethernet frame CRC.
 
 
 # Appendix: Implementation of the `InternetChecksum` extern
