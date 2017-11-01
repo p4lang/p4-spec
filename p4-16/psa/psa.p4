@@ -563,15 +563,14 @@ extern ActionSelector {
 
 // BEGIN:Digest_extern
 extern Digest<T> {
-  Digest(PortId_t receiver); /// define a digest stream to receiver
-  void emit(in T data);      /// emit data into the stream
+  Digest(PortId_t receiver);         /// define a digest stream to receiver
+  void pack<T>(in T data);           /// emit data into the stream
 
   /*
   @ControlPlaneAPI
   {
-  // TBD
-  // If the type T is a named struct, the name should be used
-  // to generate the control-plane API.
+  T data;                           /// If T is a list, control plane generates a struct.
+  int unpack(T& data);              /// unpacked data is in T&, int return status code.
   }
   */
 }
