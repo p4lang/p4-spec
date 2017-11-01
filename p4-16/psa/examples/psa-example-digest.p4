@@ -195,3 +195,51 @@ PSA_Switch(IngressParserImpl(),
            egress(),
            EgressDeparserImpl()) main;
 
+// A sketch of how the control plane software could look like
+
+/*
+
+struct digest_id_0_t {
+    uint64_t srcAddr;
+    uint16_t ingress_port;
+}
+
+struct digest_id_1_t {
+    uint64_t srcAddr;
+    uint16_t ingress_port;
+    uint32_t metadata;
+}
+
+#define RECEIVER_ZERO  0
+#define DIGEST_ID_ZERO 0
+
+# register a process to listen to digest from dataplane.
+bool digest_receiver_register(RECEIVER_ZERO, DIGEST_ID_ZERO, digest_handler_id_0);
+bool digest_receiver_register(RECEIVER_ONE, DIGEST_ID_ONE, digest_handler_id_1);
+bool digest_receiver_deregister(RECEIVER_ZERO, DIGEST_ZERO);
+
+// asynchronous handler
+bool digest_handler_id_0(digest_id_0_t& digest) {
+    fprintf(stderr, "0x%08x %d\n", digest->srcAddr, digest->ingress_port);
+}
+
+bool digest_handler_id_1(digest_id_1_t& digest) {
+    fprintf(stderr, "0x%08x %d %d\n", digest->srcAddr, digest->ingress_port, digest->metadata);
+}
+
+// polling
+void process_digest() {
+    digest_id_0_t digest_0;
+    digest_id_1_t digest_1;
+    while(true) {
+        if (poll_digest(&digest)) {
+            fprintf(stderr, "0x%08x %d\n", digest->srcAddr, digest->ingress_port);
+        } else if (poll_digest(&digest_1)) {
+            // print
+        } else {
+            // sleep
+        }
+    }
+}
+
+ */
