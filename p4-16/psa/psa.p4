@@ -592,7 +592,6 @@ parser IngressParser<H, M>(packet_in buffer,
                            out psa_parser_output_metadata_t ostd);
 
 control Ingress<H, M>(inout H hdr, inout M user_meta,
-                      PacketReplicationEngine pre,
                       in    psa_ingress_input_metadata_t  istd,
                       inout psa_ingress_output_metadata_t ostd);
 
@@ -603,7 +602,6 @@ parser EgressParser<H, M>(packet_in buffer,
                           out psa_parser_output_metadata_t ostd);
 
 control Egress<H, M>(inout H hdr, inout M user_meta,
-                     BufferingQueueingEngine bqe,
                      in    psa_egress_input_metadata_t  istd,
                      inout psa_egress_output_metadata_t ostd);
 
@@ -621,12 +619,18 @@ control EgressDeparser<H, M>(packet_out buffer,
                              in M meta,
                              in psa_egress_output_metadata_t istd);
 
-package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
-                                   Ingress<IH, IM> ig,
-                                   IngressDeparser<IH, IM> id,
-                                   EgressParser<EH, EM> ep,
-                                   Egress<EH, EM> eg,
-                                   EgressDeparser<EH, EM> ed);
+package IngressPipeline<IH, IM>(IngressParser<IH, IM> ip,
+                                Ingress<IH, IM> ig,
+                                IngressDeparser<IH, IM> id);
+
+package EgressPipeline<EH, EM>(EgressParser<EH, EM> ep,
+                               Egress<EH, EM> eg,
+                               EgressDeparser<EH, EM> ed);
+
+package PSA_Switch<IH, IM, EH, EM> (IngressPipeline<IH, IM> ingress,
+                                    PacketReplicationEngine pre,
+                                    EgressPipeline<EH, EM> egress,
+                                    BufferQueueingEngine bqe);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
