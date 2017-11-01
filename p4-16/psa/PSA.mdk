@@ -565,12 +565,11 @@ the responsibility of the programmer to parse the cloned packet
 such that it correctly extracts the attached metadata.
 The attached metadata may
 be of type `header`, `header stack`, `header union` or `struct` of the
-above types. Invoking the `emit` method multiple times will attach all
-specified metadata to the same cloned packet. The PSA architecture
-instantiates the `clone` extern in the ingress and egress deparser. A
-P4 program can use it in ingress and egress deparser only. It is an
-error to instantiate the `clone` extern in the P4 control or parser
-block.
+above types. Invoking `emit` method multiple times on the same cloned
+packet is not allowed. The PSA architecture instantiates the `clone`
+extern in the ingress and egress deparser. A P4 program can use it in
+ingress and egress deparser only. It is an error to instantiate the
+`clone` extern in the P4 control or parser block.
 
 A PSA implementation provides two configuration metadata, `clone`
 and `clone_port`, to the PRE to control the cloning mechanism. When
@@ -583,6 +582,12 @@ The `clone_port` controls the destination of the cloned packet. A
 common use case is to the send the cloned packet to the control CPU,
 in which case the `clone_port` should be set to the value that
 represents the control CPU port.
+
+The PSA specifies two types of cloning: cloning from ingress to egress
+and cloning from egress to egress. With cloning from ingress to
+egress, the original packet from ingress buffer is cloned from ingress
+deparser to egress parser. With cloning from egress to egress, the
+modified packet after egress deparser is cloned to the egress parser.
 
 ```
 [INCLUDE=psa.p4:Clone_extern]
@@ -610,11 +615,10 @@ to the resubmitted packet. It is the responsibility of the programmer
 to parse the resubmitted packet correctly to extract the attached
 metadata. The attached metadata can be of type `header`, `header
 stack`, `header union` or `struct` of the above types. Invoking the
-`emit` method multiple times will attach all specified metadata to the
-same resubmitted packet. The PSA architecture instantiates the
-`resubmit` extern in the ingress deparser. A P4 program can use it in
-ingress deparser only. It is an error to instantiate the `resubmit`
-extern in the P4 control or parser block.
+`emit` method multiple times is not allowed. The PSA architecture
+instantiates the `resubmit` extern in the ingress deparser. A P4
+program can use it in ingress deparser only. It is an error to
+instantiate the `resubmit` extern in the P4 control or parser block.
 
 A PSA implementation provides a configuration bit `resubmit` to
 the PRE to enable the resubmission mechanism. If `resubmit` is
@@ -651,8 +655,7 @@ packet. It is the responsibility of the programmer to parse the
 recirculated packet correctly to extract the attached metadata. The
 attached metadata can be of type `header`, `header stack`, `header
 union` or `struct` of the above types. Invoking the `emit` method
-multiple times will attach all specified metadata to the same
-recirculated packet. The PSA architecture instantiates the
+multiple times is not allowed. The PSA architecture instantiates the
 `recirculate` extern in the ingress deparser. A P4 program can use it
 in egress deparser only. It is an error to instantiate the
 `recirculate` extern in a P4 control or parser block.
@@ -683,7 +686,6 @@ number, then the `is_recirc` bit is set.
 ```
 [INCLUDE=psa.p4:Recirculate_extern]
 ```
-
 
 ## Buffering Queuing Engine { #sec-bqe }
 
