@@ -44,10 +44,12 @@ struct fwd_metadata_t {
     bit<32> outport;
 }
 
+// BEGIN:Clone_Example_Part1
 header clone_metadata_t {
     bit<8> custom_tag;
     EthernetAddress srcAddr;
 }
+// END:Clone_Example_Part1
 
 struct metadata {
     fwd_metadata_t fwd_metadata;
@@ -122,7 +124,7 @@ parser IngressParserImpl(packet_in buffer,
     }
 }
 
-// clone a packet to CPU.
+// BEGIN:Clone_Example_Part2
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 PacketReplicationEngine pre,
@@ -145,6 +147,7 @@ control ingress(inout headers hdr,
         t.apply();
     }
 }
+// END:Clone_Example_Part2
 
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
@@ -174,6 +177,7 @@ control DeparserImpl(packet_out packet, inout headers hdr) {
     }
 }
 
+// BEGIN:Clone_Example_Part3
 control IngressDeparserImpl(packet_out packet,
     clone_out clone,
     inout headers hdr,
@@ -192,6 +196,7 @@ control IngressDeparserImpl(packet_out packet,
         packet.emit(hdr.ipv4);
     }
 }
+// END:Clone_Example_Part3
 
 control EgressDeparserImpl(packet_out packet,
     clone_out cl,
