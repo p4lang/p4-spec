@@ -2144,27 +2144,42 @@ program could discard the most significant bits of the timestamp so
 that the remaining bits wrap every 8 seconds, and store those partial
 timestamps in the `Register` instance.
 
-### Digest
+### Packet Digest
 
-A PSA implementation provides a digest mechanism to send a separate
-data object to the control plane. The data object may contain a
-identifier to identify the receiver of the object. The data object can
-optionally attach metadata to provide more information about the
-source of the digest. The attached metadata can be one or more header
-fields from a packet or one or more metadata generated in the Ingress
-or Egress pipeline. The digest extern can only be invoked in the
-deparser.
+Packet digest is a mechanism to perform a upcall to the control plane.
+A upcall is a way to send information from the lower layer of the
+software stack to an upper layer. In the case of packet digest, the
+information is sent from dataplane to control plane.
 
-The Digest extern provides a `pack` method to specify the content in
-the data object. The compiler decides the best serializatoin format to
-send the data object to the control plane. On the control plane side,
-the control plane API calls the `unpack` method, and pass in a
-reference to the data object to be read. The `unpack` method return 0
-if succeed. The field names in the control plane API is derived from
-the field names in the dataplane `pack` method.
+A PSA implementation should provide a digest mechanism. The digest
+contains two pieces of information: the receiver identifier and the
+digest message. The receiver identifier is an opaque id used by the
+control plane to route the digest message to the right receiver. The
+digest message can contain any from the dataplane.
+
+In PSA, digest is performed at the end of the ingress pipeline in the
+deparser. The digest extern provides a `pack` method to specify the
+content in the 
+
+The compiler decides the best serializatoin format to send the data
+object to the control plane.
+
+On the control plane side, the control plane API calls the `unpack`
+method, and pass in a reference to the data object to be read.
+
+The `unpack` method return 0 if succeed. The field names in the
+control plane API is derived from the field names in the dataplane
+`pack` method.
+
+#### Control Plane
+
+The control plane should provide a
+
 
 ```
 [INCLUDE=psa.p4:Digest_extern]
+
+
 ```
 
 # Appendix: Implementation of the `InternetChecksum` extern

@@ -160,36 +160,17 @@ control ingress(inout headers hdr,
     }
 }
 
-
-control egress(inout headers hdr,
-               inout metadata meta,
-               BufferingQueueingEngine bqe,
-               in    psa_egress_input_metadata_t  istd,
-               inout psa_egress_output_metadata_t ostd)
-{
-    apply {
-
-    }
-}
-
-
-control CommonDeparserImpl(packet_out packet, inout headers hdr) {
-    apply {
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv4);
-    }
-}
-
+/// Expected control plane API for parsing the digest_out metadata.
 control IngressDeparserImpl(packet_out packet,
-                            digest_out packed_meta,
                             inout headers hdr,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
 {
+    Digest(0) digest;
     CommonDeparserImpl() common_deparser;
     apply {
         if (meta.digest_id == 0) {
-            packed_meta.pack(meta.digest_h);
+            digest.pack(meta.digest_h);
         }
         common_deparser.apply(packet, hdr);
     }
