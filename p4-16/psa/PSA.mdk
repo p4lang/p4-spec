@@ -184,6 +184,8 @@ non-Ingress control block.
 | `Random`          | Ingress, Egress |
 | `Register`        | Ingress, Egress |
 | `ValueSet`        | IngressParser, EgressParser |
+| `Clone`           | IngressDeparser, EgressDeparser |
+| `Resubmit`        | IngressDeparser |
 |-------------------|----------------------------------------------|
 ~
 
@@ -588,18 +590,39 @@ represents the control CPU port.
 [INCLUDE=psa.p4:Clone_extern]
 ```
 
-#### Resubmit
+#### Clone Examples { #sec-clone-examples }
 
-A PSA implementation provides a resubmission mechanism to resend the
-original packet to ingress parser for recursive processing. The
-resubmitted packet is the original packet as seen on the ingress
-pipeline. The resubmission mechanism sends the original packet to the
-ingress parser. The resubmission mechanism does not make copies of
-the original packet. In a PSA implementation, the resubmission mechanism is
-logically implemented in
-the PRE, that is, even if targets chose to implement it as part of other
-controls, the observable behavior should follow the semantics of resubmitting
-in the PRE.
+The partial program below demonstrates one way to use the `Clone`
+extern to configure the PRE to create a copy of the packet and send
+the cloned copy to `clone_port`.
+
+```
+[INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part1]
+[INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part2]
+[INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part3]
+```
+
+#### Packet Resubmission  { #sec-resubmit }
+
+Packet resubmission is a mechanism to repeat ingress processing on a
+packet. The header and payload of the resubmitted packet are the same
+as the original packet. However, the instance type of the resubmitted
+packet is changed to `RESUBMIT`, instead of `NORMAL`. The resubmitted
+packet enters the ingress parser with the same ingress port. The
+ingress parser can choose to parse the resubmitted packet in the same
+or different way as the original packet. Similarly, the ingress
+pipeline can process the resubmitted packet with the same or different
+actions as the original packet.
+
+PSA specifies that a packet can be resubmitted at most once. The
+resubmit operation can only be used in the ingress pipeline. The
+egress pipeline cannot resubmit packets.
+
+One expected use case for packet resubmission is to extend the length
+of the processing pipeline, because now the same packet can be
+processed by the ingress pipeline twice, instead of once. Another use
+case is to parse and modify the original packet, then, resubmit and
+re-parse the packet in a different way.
 
 The resubmission mechanism can optionally attach metadata to the
 resubmitted packet. A PSA implementation provides the `resubmit`
@@ -616,6 +639,19 @@ same resubmitted packet. The PSA architecture instantiates the
 ingress deparser only. It is an error to instantiate the `resubmit`
 extern in the P4 control or parser block.
 
+PSA does not specify the maximum size of the associated metadata.
+However, a target implementation may enforce a limit on the metadata
+size and reject programs that exceed the limit.
+
+* The PSA architecture does not mandate initialization of user-defined
+  metadata to known values as given as input to the ingress parser. If
+  a user’s P4 program explicitly initializes all user-defined metadata
+  early on (e.g. in the parser’s start state), then that will flow
+  through the rest of the parser into the ingress control block as one
+  might normally expect. But this will be left as an option to the
+  user in their P4 PSA programs, not required behavior for all P4 PSA
+  programs.
+
 A PSA implementation provides a configuration bit `resubmit` to
 the PRE to enable the resubmission mechanism. If `resubmit` is
 set to true, the resubmission mechanism resends the original packet with the
@@ -626,9 +662,12 @@ deparser.
 
 ```
 [INCLUDE=psa.p4:Resubmit_extern]
+
+need example
+
 ```
 
-#### Recirculate
+#### Recirculate { #sec-recirculate }
 
 A PSA implementation provides a recirculation mechanism to send a
 deparsed packet from egress pipeline to ingress parser for recursive
