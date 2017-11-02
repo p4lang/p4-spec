@@ -160,7 +160,7 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
     apply {
         // Update IPv4 checksum
         ck.clear();
-        ck.update({
+        ck.add({
             /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
             /* 16-bit word  1   */ hdr.ipv4.totalLen,
             /* 16-bit word  2   */ hdr.ipv4.identification,
@@ -174,13 +174,13 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
         // Update TCP checksum
         ck.clear();
         // Subtract the original TCP checksum
-        ck.remove(hdr.tcp.checksum);
+        ck.subtract(hdr.tcp.checksum);
         // Subtract the effect of the original IPv4 source address,
         // which is part of the TCP 'pseudo-header' for the purposes
         // of TCP checksum calculation (see RFC 793), then add the
         // effect of the new IPv4 source address.
-        ck.remove(user_meta.fwd_metadata.old_srcAddr);
-        ck.update(hdr.ipv4.srcAddr);
+        ck.subtract(user_meta.fwd_metadata.old_srcAddr);
+        ck.add(hdr.ipv4.srcAddr);
         hdr.tcp.checksum = ck.get();
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);

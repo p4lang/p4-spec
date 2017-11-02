@@ -806,7 +806,7 @@ Parameters:
 ### Incremental checksum { #sec-incremental-checksum }
 
 PSA also provides an incremental checksum that comes equipped with an
-additional `remove` method that can be used to remove data previously
+additional `subtract` method that can be used to remove data previously
 added. The checksum is computed using the `ONES_COMPLEMENT16` hash
 algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
 RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
@@ -855,7 +855,7 @@ incremental checksum for the TCP header. Recall the TCP checksum is
 computed over the _entire_ packet, including the payload. Because the
 packet payload is not available in P4, we assume that the TCP checksum
 on the original packet is correct, and update it incrementally by
-invoking `remove` and then `update` on any fields that are modified by
+invoking `subtract` and then `add` on any fields that are modified by
 the program. For example, the ingress control in the program below
 updates the IPv4 source address, recording the original source address
 in a metadata field:
@@ -1778,7 +1778,7 @@ types, as the P4 program author wishes.
 
 # Appendix: Implementation of the `InternetChecksum` extern
 
-Besides RFC 1461, RFC 1071 and RFC 1141 contain useful tips on
+Besides RFC 1461, RFC 1071 and RFC 1141 also contain useful tips on
 efficiently computing the Internet checksum, especially in software
 implementations.
 
@@ -1832,5 +1832,13 @@ void remove<T>(in T data) {
 
 bit<16> get() {
     return ~sum;
+}
+
+bit<16> get_state() {
+    return sum;
+}
+
+void set_state(bit<16> checksum_state) {
+    sum = checksum_state;
 }
 ```

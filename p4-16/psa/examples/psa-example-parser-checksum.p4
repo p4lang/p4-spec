@@ -104,7 +104,7 @@ parser IngressParserImpl(packet_in buffer,
         // packets.
         verify(parsed_hdr.ipv4.ihl == 5, error.UnhandledIPv4Options);
         ck.clear();
-        ck.update({ parsed_hdr.ipv4.version,
+        ck.add({ parsed_hdr.ipv4.version,
                 parsed_hdr.ipv4.ihl,
                 parsed_hdr.ipv4.diffserv,
                 parsed_hdr.ipv4.totalLen,
@@ -213,7 +213,7 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata meta) {
     InternetChecksum() ck;
     apply {
         ck.clear();
-        ck.update({ hdr.ipv4.version,
+        ck.add({ hdr.ipv4.version,
                 hdr.ipv4.ihl,
                 hdr.ipv4.diffserv,
                 hdr.ipv4.totalLen,
