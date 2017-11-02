@@ -206,5 +206,4 @@ EgressPipeline(EgressParserImpl(),
                egress(),
                EgressDeparserImpl()) ep;
 
-PSA_Switch(ip, PacketReplicationEngine(),
-           ep, BufferingQueueingEngine()) main;
+PSA_SWITCH(ip, ep) main;
