@@ -1048,7 +1048,6 @@ the cloned copy to <span data-line="610"></span><code class="code code1 language
 }
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
-                PacketReplicationEngine pre,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>  psa_ingress_input_metadata_t  istd,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t ostd)
 {
@@ -1352,7 +1351,7 @@ for that purpose<span data-line="834"></span> <span data-line="834"></span>&#821
 parser state reached, or the number of bytes extracted so far<span data-line="835"></span> <span data-line="835"></span>&#8211;<span data-line="835"></span> and then
 assign values to those fields within the parser state code.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="838" data-line-first="839;examples/psa-example-parser-checksum.p4:189" style="display:block"><code data-line="839;examples/psa-example-parser-checksum.p4:189"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="838" data-line-first="839;examples/psa-example-parser-checksum.p4:186" style="display:block"><code data-line="839;examples/psa-example-parser-checksum.p4:186"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
 <span style="color:darkgreen">// incorrect IPv4 header checksums.</span>
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span> {
     UnhandledIPv4Options,
@@ -1365,60 +1364,57 @@ assign values to those fields within the parser state code.
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">9</span>&gt; NUM_ERRORS = <span class="constant" style="color:purple">256</span>;
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
-                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers hdr,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
 {
     InternetChecksum() ck;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> start {
-        buffer.extract(parsed_hdr.ethernet);
-        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(parsed_hdr.ethernet.etherType) {
+        buffer.extract(hdr.ethernet);
+        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(hdr.ethernet.etherType) {
             <span class="constant" style="color:purple">0x0800</span>: parse_ipv4;
             <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">default</span>: accept;
         }
     }
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> parse_ipv4 {
-        buffer.extract(parsed_hdr.ipv4);
+        buffer.extract(hdr.ipv4);
         <span style="color:darkgreen">// TBD: It would be good to enhance this example to</span>
         <span style="color:darkgreen">// demonstrate checking of IPv4 header checksums for IPv4</span>
         <span style="color:darkgreen">// headers with options, but this example does not handle such</span>
         <span style="color:darkgreen">// packets.</span>
-        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">verify</span>(parsed_hdr.ipv4.ihl == <span class="constant" style="color:purple">5</span>, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.UnhandledIPv4Options);
+        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">verify</span>(hdr.ipv4.ihl == <span class="constant" style="color:purple">5</span>, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.UnhandledIPv4Options);
         ck.clear();
-        ck.add({ parsed_hdr.ipv4.version,
-                parsed_hdr.ipv4.ihl,
-                parsed_hdr.ipv4.diffserv,
-                parsed_hdr.ipv4.totalLen,
-                parsed_hdr.ipv4.identification,
-                parsed_hdr.ipv4.flags,
-                parsed_hdr.ipv4.fragOffset,
-                parsed_hdr.ipv4.ttl,
-                parsed_hdr.ipv4.protocol,
-                <span style="color:darkgreen">//parsed_hdr.ipv4.hdrChecksum, // intentionally leave this out</span>
-                parsed_hdr.ipv4.srcAddr,
-                parsed_hdr.ipv4.dstAddr });
+        ck.add({
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  0   </span><span style="color:darkgreen">*/</span> hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  1   </span><span style="color:darkgreen">*/</span> hdr.ipv4.totalLen,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  2   </span><span style="color:darkgreen">*/</span> hdr.ipv4.identification,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  3   </span><span style="color:darkgreen">*/</span> hdr.ipv4.flags, hdr.ipv4.fragOffset,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  4   </span><span style="color:darkgreen">*/</span> hdr.ipv4.ttl, hdr.ipv4.protocol,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  5 skip hdr.ipv4.hdrChecksum, </span><span style="color:darkgreen">*/</span>
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit words 6-7 </span><span style="color:darkgreen">*/</span> hdr.ipv4.srcAddr,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit words 8-9 </span><span style="color:darkgreen">*/</span> hdr.ipv4.dstAddr
+            });
         <span style="color:darkgreen">// The verify statement below will cause the parser to enter</span>
         <span style="color:darkgreen">// the reject state, and thus terminate parsing immediately,</span>
         <span style="color:darkgreen">// if the IPv4 header checksum is wrong.  It will also record</span>
         <span style="color:darkgreen">// the error error.BadIPv4HeaderChecksum, which will be</span>
         <span style="color:darkgreen">// available in a metadata field in the ingress control block.</span>
-        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">verify</span>(ck.get() == parsed_hdr.ipv4.hdrChecksum,
+        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">verify</span>(ck.get() == hdr.ipv4.hdrChecksum,
                <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.BadIPv4HeaderChecksum);
-        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(parsed_hdr.ipv4.protocol) {
+        <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(hdr.ipv4.protocol) {
             <span class="constant" style="color:purple">6</span>: parse_tcp;
             <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">default</span>: accept;
         }
     }
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> parse_tcp {
-        buffer.extract(parsed_hdr.tcp);
+        buffer.extract(hdr.tcp);
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> accept;
     }
 }
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
-                PacketReplicationEngine pre,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>    psa_ingress_input_metadata_t  istd,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t ostd)
 {
@@ -1475,22 +1471,25 @@ fresh, so the outgoing checksum will be correct regardless of what
 changes might have been made to the IPv4 header fields in the ingress
 (or egress) control block that precedes it.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="849" data-line-first="850;examples/psa-example-parser-checksum.p4:234" style="display:block"><code data-line="850;examples/psa-example-parser-checksum.p4:234"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> DeparserImpl(packet_out packet, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> metadata meta) {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="849" data-line-first="850;examples/psa-example-parser-checksum.p4:246" style="display:block"><code data-line="850;examples/psa-example-parser-checksum.p4:246"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparserImpl(packet_out packet,
+                           clone_out cl,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> metadata meta,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_egress_output_metadata_t istd)
+{
     InternetChecksum() ck;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         ck.clear();
-        ck.add({ hdr.ipv4.version,
-                hdr.ipv4.ihl,
-                hdr.ipv4.diffserv,
-                hdr.ipv4.totalLen,
-                hdr.ipv4.identification,
-                hdr.ipv4.flags,
-                hdr.ipv4.fragOffset,
-                hdr.ipv4.ttl,
-                hdr.ipv4.protocol,
-                <span style="color:darkgreen">//hdr.ipv4.hdrChecksum, // intentionally leave this out</span>
-                hdr.ipv4.srcAddr,
-                hdr.ipv4.dstAddr });
+        ck.add({
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  0   </span><span style="color:darkgreen">*/</span> hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  1   </span><span style="color:darkgreen">*/</span> hdr.ipv4.totalLen,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  2   </span><span style="color:darkgreen">*/</span> hdr.ipv4.identification,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  3   </span><span style="color:darkgreen">*/</span> hdr.ipv4.flags, hdr.ipv4.fragOffset,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  4   </span><span style="color:darkgreen">*/</span> hdr.ipv4.ttl, hdr.ipv4.protocol,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  5 skip hdr.ipv4.hdrChecksum, </span><span style="color:darkgreen">*/</span>
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit words 6-7 </span><span style="color:darkgreen">*/</span> hdr.ipv4.srcAddr,
+            <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit words 8-9 </span><span style="color:darkgreen">*/</span> hdr.ipv4.dstAddr
+            });
         hdr.ipv4.hdrChecksum = ck.get();
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -1507,9 +1506,8 @@ the program. For example, the ingress control in the program below
 updates the IPv4 source address, recording the original source address
 in a metadata field:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="862" data-line-first="863;examples/psa-example-incremental-checksum.p4:135" style="display:block"><code data-line="863;examples/psa-example-incremental-checksum.p4:135"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="862" data-line-first="863;examples/psa-example-incremental-checksum.p4:134" style="display:block"><code data-line="863;examples/psa-example-incremental-checksum.p4:134"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
-                PacketReplicationEngine pre,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>    psa_ingress_input_metadata_t  istd,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t ostd) {
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">action</span> drop() {
@@ -1536,7 +1534,12 @@ in a metadata field:
 <p class="p noindent para-continued" data-line="865"><span data-line="865"></span>The deparser first updates the IPv4 checksum as above, and then
 incrementally computes the TCP checksum.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="867" data-line-first="868;examples/psa-example-incremental-checksum.p4:190" style="display:block"><code data-line="868;examples/psa-example-incremental-checksum.p4:190"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> DeparserImpl(packet_out packet, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> metadata user_meta) {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="867" data-line-first="868;examples/psa-example-incremental-checksum.p4:206" style="display:block"><code data-line="868;examples/psa-example-incremental-checksum.p4:206"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparserImpl(packet_out packet,
+                           clone_out cl,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> metadata user_meta,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_egress_output_metadata_t istd)
+{
     InternetChecksum() ck;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         <span style="color:darkgreen">// Update IPv4 checksum</span>
@@ -2102,7 +2105,6 @@ the PSA implementation.
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
-                PacketReplicationEngine pre,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>    psa_ingress_input_metadata_t  istd,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t ostd)
 {
