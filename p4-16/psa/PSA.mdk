@@ -1878,43 +1878,48 @@ cannot change that choice to a different port.  It can change the
 packet to RECIRC instead, or drop the packet.
 
 A single packet received by a PSA system from a port can result in 0,
-1, or many packets going out, all under control of the PSA program.
+1, or many packets going out, all under control of the P4 program.
 For example, a single packet received from a port could cause all of
-the following to occur, if the PSA program so directed it:
+the following to occur, if the P4 program so directed it:
 
 + The original packet received as NFP from port 2.  Ingress processing
   creates a CI2E clone destined for the CPU port (copy 1), and a
   multicast NM packet to multicast group 18, which is configured in
   the PacketReplicationEngine to have copies made to ports 5 (copy 2)
   and 7 (copy 3).
-+ Copy 1 performs egress processing, which does not create a CE2E
-  clone, and sends the packet on path NTCPU to the CPU port.
++ Copy 1 performs egress processing, which sends the packet on path
+  NTCPU to the CPU port.
 + Copy 2 performs egress processing, which creates a CE2E clone
   destined for port 8 (copy 4), and sends a NTP packet to port 5.
-+ Copy 3 performs egress processing, which does not create a CE2E
-  clone, and does a RECIRC back to ingress instead of sending the
-  packet to port 7 (copy 5).
-+ Copy 4 performs egress processing, which does not create a CE2E
-  clone, and sends a NTP packet to port 8.
-+ Copy 5 performs ingress processing, which does not create a CI2E
-  clone, and sends a NU packet destined for port 1 (copy 6).
-+ Copy 6 performs egress processing, which does not create a CE2E
-  clone, and drops the packet instead of sending it to port 1.
++ Copy 3 performs egress processing, which does a RECIRC back to
+  ingress instead of sending the packet to port 7 (copy 5).
++ Copy 4 performs egress processing, which sends a NTP packet to port
+  8.
++ Copy 5 performs ingress processing, which sends a NU packet destined
+  for port 1 (copy 6).
++ Copy 6 performs egress processing, which drops the packet instead of
+  sending it to port 1.
 
 This is simply an example of what is possible given an appropriately
-written PSA program.  There is no need to use all of the packet paths
+written P4 program.  There is no need to use all of the packet paths
 available.  The numbering of the packet copies above is only for
 purposes of distinctly identifying each one in the example.  A PSA
 implementation is free to perform the steps above in many possible
 orders.
 
-There is no mechanism defined in PSA to prevent a single received
+There is no mandated mechanism in PSA to prevent a single received
 packet from creating packets that continue to recirculate, resubmit,
 or clone from egress to egress indefinitely.  This can be prevented by
-suitable testing of your PSA program, and/or creating in your PSA
-program a "recirculate limit" metadata field that is carried along
-with copies of a packet, similar to the IPv4 Time To Live header
-field.
+suitable testing of your P4 program, and/or creating in your P4
+program a "time to live" metadata field that is carried along with
+copies of a packet, similar to the IPv4 Time To Live header field.
+
+A PSA implementation may optionally drop resubmitted, recirculated, or
+egress-to-egress clone packets after an implementation-specific
+maximum number of times from the same original packet.  If so, the
+implementation should maintain counters of packets dropped for these
+reasons, and preferably record some debug information about the first
+few packets dropped for these reasons (perhaps only one).
 
 
 ## Initial values of packets processed by ingress
@@ -1994,15 +1999,15 @@ for RECIRC packets.
 
 The PSA architecture does not mandate initialization of user-defined
 metadata to known values as given as input to the ingress parser.  If
-a user's PSA program explicitly initializes all user-defined metadata
+a user's P4 program explicitly initializes all user-defined metadata
 early on (e.g. in the parser's start state), then that will flow
 through the rest of the parser into the ingress control block as one
 might normally expect.  This will be left as an option to the user in
-their PSA programs, not required behavior for all PSA programs.
+their P4 programs, not required behavior for all P4 programs.
 
-TBD: Is this true for RESUB and RECIRC packets, or is it intended
-that there by a way in a PSA program to specify some collection of
-fields to be preserved with a resub/recirc'ed packet?
+TBD: Is this true for RESUB and RECIRC packets, or is it intended that
+there by a way in PSA to specify some collection of fields to be
+preserved with a resub/recirc'ed packet?
 
 
 ## Initial values of packets processed by egress
