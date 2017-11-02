@@ -643,11 +643,11 @@ Packet resubmission is intended to increase the capacity and
  flexibility of the packet processing pipeline. For example, because
  the same packet is processed by the ingress pipeline multiple times,
  it effectively increase the amount of operations on the packet by N
- folds. Another use case is deploy multiple packet processing
- algorithms on the same packet. For example, the original packet can
- be parsed, modified and resubmitted in the first pass. Then, the
- resubmitted packet can be parsed and modified using a different
- algorithm.
+ folds, where N is the number of times the packet is resubmitted.
+ Another use case is deploy multiple packet processing algorithms on
+ the same packet. For example, the original packet can be parsed,
+ modified and resubmitted in the first pass. Then, the resubmitted
+ packet can be parsed and modified using a different algorithm.
 
 To facilitate communication between the first pass and the second pass
 through the ingress pipeline, the resubmission mechanism supports
@@ -694,7 +694,7 @@ need example
 ### Packet Recirculation { #sec-recirculate }
 
 Packet recirculation sends the deparsed packet at the end of egress
-pipeline to the ingress parser. Unlikely the previous two mechanisms,
+pipeline to the ingress parser. Unlike the previous two mechanisms,
 recirculation does not replicate packets. The modified packet itself
 is sent back to the ingress pipeline for further processing.
 
