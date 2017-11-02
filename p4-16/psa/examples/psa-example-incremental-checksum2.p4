@@ -74,7 +74,7 @@ header udp_t {
 }
 
 struct fwd_metadata_t {
-    bit<16> incremental_checksum;
+    bit<16> checksum_state;
 }
 
 struct metadata {
@@ -121,7 +121,7 @@ parser IngressParserImpl(packet_in buffer,
         // Compare the received IPv4 header checkum against one we
         // calculate from scratch.
         ck.clear();
-        ck.update({
+        ck.add({
             /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
             /* 16-bit word  1   */ hdr.ipv4.totalLen,
             /* 16-bit word  2   */ hdr.ipv4.identification,
@@ -135,7 +135,7 @@ parser IngressParserImpl(packet_in buffer,
 
         // See Note 1
         ck.clear();
-        ck.remove({
+        ck.subtract({
             /* 16-bit words 0-1 */ hdr.ipv4.srcAddr,
             /* 16-bit words 2-3 */ hdr.ipv4.dstAddr
         });
@@ -150,7 +150,7 @@ parser IngressParserImpl(packet_in buffer,
         // There is no header checksum for IPv6.
         // See Note 2
         ck.clear();
-        ck.remove({
+        ck.subtract({
             /* 16-bit words 0-7  */ hdr.ipv6.srcAddr,
             /* 16-bit words 8-15 */ hdr.ipv6.dstAddr
         });
@@ -164,7 +164,7 @@ parser IngressParserImpl(packet_in buffer,
         buffer.extract(hdr.tcp);
         // Part 2 of incremental update of TCP checksum: Subtract out
         // the contribution of the original TCP header.
-        ck.remove({
+        ck.subtract({
                 /* TCP 16-bit word 0    */ hdr.tcp.srcPort,
                 /* TCP 16-bit word 1    */ hdr.tcp.dstPort,
                 /* TCP 16-bit words 2-3 */ hdr.tcp.seqNo,
@@ -175,24 +175,20 @@ parser IngressParserImpl(packet_in buffer,
                 /* TCP 16-bit word 8    */ hdr.tcp.checksum,
                 /* TCP 16-bit word 9    */ hdr.tcp.urgentPtr
             });
-        user_meta.fwd_metadata.incremental_checksum = ck.get();
-        // or, if we had {get,set}_state methods:
-        // user_meta.fwd_metadata.incremental_checksum = ck.get_state();
+        user_meta.fwd_metadata.checksum_state = ck.get_state();
         transition accept;
     }
     state parse_udp {
         buffer.extract(hdr.udp);
         // Part 2 of incremental update of UDP checksum: Subtract out
         // the contribution of the original UDP header.
-        ck.remove({
+        ck.subtract({
                 /* UDP 16-bit word 0 */ hdr.udp.srcPort,
                 /* UDP 16-bit word 1 */ hdr.udp.dstPort,
                 /* UDP 16-bit word 2 */ hdr.udp.length_,
                 /* UDP 16-bit word 3 */ hdr.udp.checksum
             });
-        user_meta.fwd_metadata.incremental_checksum = ck.get();
-        // or, if we had {get,set}_state methods:
-        // user_meta.fwd_metadata.incremental_checksum = ck.get_state();
+        user_meta.fwd_metadata.checksum_state = ck.get_state();
         transition accept;
     }
 }
@@ -346,7 +342,7 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
     apply {
         // Calculate IPv4 header checksum from scratch.
         ck.clear();
-        ck.update({
+        ck.add({
             /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
             /* 16-bit word  1   */ hdr.ipv4.totalLen,
             /* 16-bit word  2   */ hdr.ipv4.identification,
@@ -361,41 +357,24 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
         // There is no IPv6 header checksum
 
         // TCP/UDP header incremental checksum update.
-        ck.clear();
-
-        // It may seem a bit strange, but this code is written
-        // assuming that ck.get() returns the bit-wise complement of
-        // the one's complement sum it has been calculating
-        // internally, so that when doing non-incremental checksum
-        // calculations like the one for the IPv4 header above, you
-        // can do clear, then update, then get, and copy that value
-        // with no changes into the checksum field.
-
-        // For incremental checksums with the calculation spread
-        // across two different controls, like this example, it might
-        // be easier to understand if there were also ck.get_state()
-        // and ck.set_state(new_state) methods, that simply returned
-        // the current 16-bit internal state, or assigned it.
-
-        ck.remove(user_meta.fwd_metadata.incremental_checksum);
-
-        // or, if we had {get,set}_state methods:
-        // ck.set_state(user_meta.fwd_metadata.incremental_checksum);
+        // Restore the checksum state partially calculated in the
+        // parser.
+        ck.set_state(user_meta.fwd_metadata.checksum_state);
 
         if (hdr.ipv4.isValid()) {
-            ck.update({
+            ck.add({
                 /* 16-bit words 0-1 */ hdr.ipv4.srcAddr,
                 /* 16-bit words 2-3 */ hdr.ipv4.dstAddr
             });
         }
         if (hdr.ipv6.isValid()) {
-            ck.update({
+            ck.add({
                 /* 16-bit words 0-7  */ hdr.ipv6.srcAddr,
                 /* 16-bit words 8-15 */ hdr.ipv6.dstAddr
             });
         }
         if (hdr.tcp.isValid()) {
-            ck.update({
+            ck.add({
                 /* TCP 16-bit word 0    */ hdr.tcp.srcPort,
                 /* TCP 16-bit word 1    */ hdr.tcp.dstPort,
                 /* TCP 16-bit words 2-3 */ hdr.tcp.seqNo,
@@ -409,7 +388,7 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
             hdr.tcp.checksum = ck.get();
         }
         if (hdr.udp.isValid()) {
-            ck.update({
+            ck.add({
                 /* UDP 16-bit word 0 */ hdr.udp.srcPort,
                 /* UDP 16-bit word 1 */ hdr.udp.dstPort,
                 /* UDP 16-bit word 2 */ hdr.udp.length_

@@ -346,22 +346,33 @@ extern Checksum<W> {
 extern InternetChecksum {
   /// Constructor
   InternetChecksum();
-    
+
   /// Reset internal state and prepare unit for computation
   void clear();
 
   /// Add data to checksum.  data must be a multiple of 16 bits long.
-  void update<T>(in T data);
+  void add<T>(in T data);
 
-  /// Remove data from existing checksum.  data must be a multiple of
+  /// Subtract data from existing checksum.  data must be a multiple of
   /// 16 bits long.
-  void remove<T>(in T data);
-        
+  void subtract<T>(in T data);
+
   /// Get checksum for data added (and not removed) since last clear
-  bit<16>    get();
+  bit<16> get();
+
+  /// Get current state of checksum computation.  The return value is
+  /// only intended to be used for a future call to the set_state
+  /// method.
+  bit<16> get_state();
+
+  /// Restore the state of the InternetChecksum instance to one
+  /// returned from an earlier call to the get_state method.  This
+  /// state could hae been returned from the same instance of the
+  /// InternetChecksum extern, or a different one.
+  void set_state(bit<16> checksum_state);
 }
 // END:InternetChecksum_extern
-    
+
 // BEGIN:CounterType_defn
 enum CounterType_t {
     PACKETS,
