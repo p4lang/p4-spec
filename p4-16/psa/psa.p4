@@ -249,12 +249,14 @@ action egress_truncate(inout psa_ingress_output_metadata_t meta,
 // END:Action_egress_truncate
 
 extern PacketReplicationEngine {
+    PacketReplicationEngine();
 
   // PacketReplicationEngine(); /// No constructor. PRE is instantiated
                                 /// by the architecture.
 }
 
 extern BufferingQueueingEngine {
+    BufferingQueueingEngine();
 
   // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
                                 /// by the architecture.
@@ -631,7 +633,14 @@ package EgressPipeline<EH, EM>(EgressParser<EH, EM> ep,
 package PSA_Switch<IH, IM, EH, EM> (IngressPipeline<IH, IM> ingress,
                                     PacketReplicationEngine pre,
                                     EgressPipeline<EH, EM> egress,
-                                    BufferQueueingEngine bqe);
+                                    BufferingQueueingEngine bqe);
+
+// Macro enabling the PSA program author to more conveniently create a
+// PSA_Switch package instantiation, without having to type the
+// constructor calls for PacketReplicationEngine and
+// BufferingQueueingEngine.
+
+#define PSA_SWITCH(ip, ep) PSA_Switch((ip), PacketReplicationEngine(), (ep), BufferingQueueingEngine())
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
