@@ -21,4 +21,6 @@ check:
 	${P4C} examples/psa-example-value-sets3.p4
 	${P4C} examples/psa-example-register2.p4
 	${P4C} examples/psa-example-parser-checksum.p4
+	${P4C} examples/psa-example-incremental-checksum.p4
 	${P4C} examples/psa-example-clone-to-port.p4
+

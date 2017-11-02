@@ -178,6 +178,7 @@ non-Ingress control block.
 | `Counter`         | Ingress, Egress |
 | `Digest`          | Ingress, Egress |
 | `Hash`            | Ingress, Egress |
+| `InternetChecksum` | IngressParser, EgressParser, Deparser |
 | `Meter`           | Ingress, Egress |
 | `DirectCounter`   | Ingress, Egress |
 | `DirectMeter`     | Ingress, Egress |
@@ -787,12 +788,13 @@ algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
 RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
 
 ```
-[INCLUDE=psa.p4:InternetChecksum_extern]
-```
+[INCLUDE=psa.p4:InternetChecksum_extern]    
+```            
+    
+### InternetChecksum examples { #sec-checksum-examples }
 
-### Checksum examples { #sec-checksum-examples }
 
-The partial program below demonstrates one way to use the `Checksum`
+The partial program below demonstrates one way to use the `InternetChecksum`
 extern to verify whether the checksum field in a parsed IPv4 header is
 correct, and set a parser error if it is wrong.  It also demonstrates
 checking for parser errors in the `ingress` control block, dropping
@@ -813,7 +815,7 @@ assign values to those fields within the parser state code.
 [INCLUDE=examples/psa-example-parser-checksum.p4:Parse_Error_Example]
 ```
 
-The partial program below demonstrates one way to use the `Checksum`
+The partial program below demonstrates one way to use the `InternetChecksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
 the deparser block.  In this example, the checksum is calculated
 fresh, so the outgoing checksum will be correct regardless of what
@@ -1747,4 +1749,64 @@ types, as the P4 program author wishes.
 
 ```
 [INCLUDE=psa.p4:Programmable_blocks]
+```
+
+
+# Appendix: Implementation of the `InternetChecksum` extern
+
+Besides RFC 1461, RFC 1071 and RFC 1141 contain useful tips on
+efficiently computing the Internet checksum, especially in software
+implementations.
+
+Here we give reference implementations for the methods of the
+`InternetChecksum` extern, specified with the syntax and semantics of
+P4~16~, with extensions of a `for` loop and a `return` statement for
+returning a value from a function.
+
+The minimum internal state necessary for one instance of an
+`InternetChecksum` object is a 16-bit bit vector, here called `sum`.
+
+```
+// This is one way to perform a normal one's complement sum of two
+// 16-bit values.
+bit<16> ones_complement_sum(in bit<16> x, in bit<16> y) {
+    bit<17> ret = (bit<17>) x + (bit<17>) y;
+    if (ret[16:16] == 1) {
+        ret = ret + 1;
+    }
+    return ret[15:0];
+}
+
+bit<16> sum;
+
+void clear() {
+    sum = 0;
+}
+
+// Restriction: data is a multiple of 16 bits long
+void update<T>(in T data) {
+    bit<16> d;
+    for (each 16-bit aligned piece d of data) {
+        sum = ones_complement_sum(sum, d);
+    }
+}
+
+// Restriction: data is a multiple of 16 bits long
+void remove<T>(in T data) {
+    bit<16> d;
+    for (each 16-bit aligned piece d of data) {
+        // ~d is the negative of d in one's complement arithmetic.
+        sum = ones_complement_sum(sum, ~d);
+    }
+}
+
+// The Internet checksum is the one's complement _of_ the one's
+// complement sum of the relevant parts of the packet.  The methods
+// above calculate the one's complement sum of the parts in the
+// variable 'sum'.  get() returns the bitwise negation of 'sum', which
+// is the one's complement of 'sum'.
+
+bit<16> get() {
+    return ~sum;
+}
 ```

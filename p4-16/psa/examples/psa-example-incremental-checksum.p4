@@ -77,10 +77,6 @@ error {
     BadIPv4HeaderChecksum
 }
 
-typedef bit<32> PacketCounter_t;
-typedef bit<8>  ErrorIndex_t;
-
-const bit<9> NUM_ERRORS = 256;
 
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
@@ -113,8 +109,8 @@ parser IngressParserImpl(packet_in buffer,
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 PacketReplicationEngine pre,
-                in  psa_ingress_input_metadata_t  istd,
-                out psa_ingress_output_metadata_t ostd) {
+                in    psa_ingress_input_metadata_t  istd,
+                inout psa_ingress_output_metadata_t ostd) {
     action drop() {
       ingress_drop(ostd);
     }
@@ -152,8 +148,8 @@ parser EgressParserImpl(packet_in buffer,
 control egress(inout headers hdr,
                inout metadata user_meta,
                BufferingQueueingEngine bqe,
-               in  psa_egress_input_metadata_t  istd,
-               out psa_egress_output_metadata_t ostd)
+               in    psa_egress_input_metadata_t  istd,
+               inout psa_egress_output_metadata_t ostd)
 {
     apply { }
 }
@@ -161,35 +157,34 @@ control egress(inout headers hdr,
 // BEGIN:Incremental_Checksum_Example
 control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta) {
     InternetChecksum() ck;
-    bit<16> hdrChecksum;
     apply {
         // Update IPv4 checksum
         ck.clear();
-        ck.update({ hdr.ipv4.version,
-            hdr.ipv4.ihl,
-            hdr.ipv4.diffserv,
-            hdr.ipv4.totalLen,
-            hdr.ipv4.identification,
-            hdr.ipv4.flags,
-            hdr.ipv4.fragOffset,
-            hdr.ipv4.ttl,
-            hdr.ipv4.protocol,
-            //hdr.ipv4.hdrChecksum, // intentionally leave this out
-            hdr.ipv4.srcAddr,
-            hdr.ipv4.dstAddr });
-        hdrChecksum = ck.get();
+        ck.update({
+            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+            /* 16-bit word  1   */ hdr.ipv4.totalLen,
+            /* 16-bit word  2   */ hdr.ipv4.identification,
+            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
+            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
+            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
+            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
+            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
+            });
+        hdr.ipv4.hdrChecksum = ck.get();
         // Update TCP checksum
-       ck.clear();
-       ck.remove(hdr.tcp.checksum);
-       ck.remove(user_meta.fwd_metadata.old_srcAddr);
-       ck.remove(hdr.ipv4.hdrChecksum);
-       ck.update(hdr.ipv4.srcAddr);
-       ck.update(hdrChecksum);
-       hdr.ipv4.hdrChecksum = hdrChecksum;
-       hdr.tcp.checksum = ck.get();
-       packet.emit(hdr.ethernet);
-       packet.emit(hdr.ipv4);
-       packet.emit(hdr.tcp);
+        ck.clear();
+        // Subtract the original TCP checksum
+        ck.remove(hdr.tcp.checksum);
+        // Subtract the effect of the original IPv4 source address,
+        // which is part of the TCP 'pseudo-header' for the purposes
+        // of TCP checksum calculation (see RFC 793), then add the
+        // effect of the new IPv4 source address.
+        ck.remove(user_meta.fwd_metadata.old_srcAddr);
+        ck.update(hdr.ipv4.srcAddr);
+        hdr.tcp.checksum = ck.get();
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.tcp);
     }
 }
 // END:Incremental_Checksum_Example
