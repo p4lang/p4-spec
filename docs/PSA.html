@@ -1282,30 +1282,41 @@ algorithms.
   W    get();
 }</code></pre><h4 id="sec-incremental-checksum" class="h3" data-line="806" data-heading-depth="3" style="display:block"><span data-line="806"></span><span class="heading-before"><span class="heading-label">4.5.2</span>.&#8194;</span><span data-line="806"></span>Incremental checksum</h4>
 <p class="p noindent" data-line="808"><span data-line="808"></span>PSA also provides an incremental checksum that comes equipped with an
-additional <span data-line="809"></span><code class="code code1 language-p4 lang-p4 p4 colorized">remove</code><span data-line="809"></span> method that can be used to remove data previously
+additional <span data-line="809"></span><code class="code code1 language-p4 lang-p4 p4 colorized">subtract</code><span data-line="809"></span> method that can be used to remove data previously
 added. The checksum is computed using the <span data-line="810"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ONES_COMPLEMENT16</code><span data-line="810"></span> hash
 algorithm used with protocols such as IPv4, TCP, and UDP<span data-line="811"></span> <span data-line="811"></span>&#8211;<span data-line="811"></span> see<span data-line="811"></span>&nbsp;<a href="https://tools.ietf.org/html/rfc1624">IETF
 RFC 1624</a><span data-line="812"></span> for details.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="814" data-line-first="815;psa.p4:365" style="display:block"><code data-line="815;psa.p4:365"><span style="color:darkgreen">// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="814" data-line-first="815;psa.p4:376" style="display:block"><code data-line="815;psa.p4:376"><span style="color:darkgreen">// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.</span>
 <span style="color:darkgreen">// Supports incremental updating via `remove` method.</span>
 <span style="color:darkgreen">// See IETF RFC 1624.</span>
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> InternetChecksum {
   <span style="color:darkgreen">/// Constructor</span>
   InternetChecksum();
-    
+
   <span style="color:darkgreen">/// Reset internal state and prepare unit for computation</span>
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> clear();
 
   <span style="color:darkgreen">/// Add data to checksum.  data must be a multiple of 16 bits long.</span>
-  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> update&lt;T&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);
+  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> add&lt;T&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);
 
-  <span style="color:darkgreen">/// Remove data from existing checksum.  data must be a multiple of</span>
+  <span style="color:darkgreen">/// Subtract data from existing checksum.  data must be a multiple of</span>
   <span style="color:darkgreen">/// 16 bits long.</span>
-  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> remove&lt;T&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);
-        
+  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> subtract&lt;T&gt;(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T data);
+
   <span style="color:darkgreen">/// Get checksum for data added (and not removed) since last clear</span>
-  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;    get();
+  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; get();
+
+  <span style="color:darkgreen">/// Get current state of checksum computation.  The return value is</span>
+  <span style="color:darkgreen">/// only intended to be used for a future call to the set_state</span>
+  <span style="color:darkgreen">/// method.</span>
+  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; get_state();
+
+  <span style="color:darkgreen">/// Restore the state of the InternetChecksum instance to one</span>
+  <span style="color:darkgreen">/// returned from an earlier call to the get_state method.  This</span>
+  <span style="color:darkgreen">/// state could have been returned from the same instance of the</span>
+  <span style="color:darkgreen">/// InternetChecksum extern, or a different one.</span>
+  <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> set_state(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; checksum_state);
 }</code></pre>
 <pre class="para-block pre-indented language-p4 lang-p4 p4 colorized" data-line="818" style="display:block"><code></code></pre><h4 id="sec-checksum-examples" class="h3" data-line="818" data-heading-depth="3" style="display:block"><span data-line="818"></span><span class="heading-before"><span class="heading-label">4.5.3</span>.&#8194;</span><span data-line="818"></span>InternetChecksum examples</h4>
 <p class="p noindent" data-line="821"><span data-line="821"></span>The partial program below demonstrates one way to use the <span data-line="821"></span><code class="code code1 language-p4 lang-p4 p4 colorized">InternetChecksum</code><span data-line="821"></span>
@@ -1359,7 +1370,7 @@ assign values to those fields within the parser state code.
         <span style="color:darkgreen">// packets.</span>
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">verify</span>(parsed_hdr.ipv4.ihl == <span class="constant" style="color:purple">5</span>, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span>.UnhandledIPv4Options);
         ck.clear();
-        ck.update({ parsed_hdr.ipv4.version,
+        ck.add({ parsed_hdr.ipv4.version,
                 parsed_hdr.ipv4.ihl,
                 parsed_hdr.ipv4.diffserv,
                 parsed_hdr.ipv4.totalLen,
@@ -1452,7 +1463,7 @@ changes might have been made to the IPv4 header fields in the ingress
     InternetChecksum() ck;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         ck.clear();
-        ck.update({ hdr.ipv4.version,
+        ck.add({ hdr.ipv4.version,
                 hdr.ipv4.ihl,
                 hdr.ipv4.diffserv,
                 hdr.ipv4.totalLen,
@@ -1475,7 +1486,7 @@ incremental checksum for the TCP header. Recall the TCP checksum is
 computed over the <span data-line="855"></span><em class="em-low1">entire</em><span data-line="855"></span> packet, including the payload. Because the
 packet payload is not available in P4, we assume that the TCP checksum
 on the original packet is correct, and update it incrementally by
-invoking <span data-line="858"></span><code class="code code1 language-p4 lang-p4 p4 colorized">remove</code><span data-line="858"></span> and then <span data-line="858"></span><code class="code code1 language-p4 lang-p4 p4 colorized">update</code><span data-line="858"></span> on any fields that are modified by
+invoking <span data-line="858"></span><code class="code code1 language-p4 lang-p4 p4 colorized">subtract</code><span data-line="858"></span> and then <span data-line="858"></span><code class="code code1 language-p4 lang-p4 p4 colorized">add</code><span data-line="858"></span> on any fields that are modified by
 the program. For example, the ingress control in the program below
 updates the IPv4 source address, recording the original source address
 in a metadata field:
@@ -1514,7 +1525,7 @@ incrementally computes the TCP checksum.
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         <span style="color:darkgreen">// Update IPv4 checksum</span>
         ck.clear();
-        ck.update({
+        ck.add({
             <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  0   </span><span style="color:darkgreen">*/</span> hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
             <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  1   </span><span style="color:darkgreen">*/</span> hdr.ipv4.totalLen,
             <span style="color:darkgreen">/*</span><span style="color:darkgreen"> 16-bit word  2   </span><span style="color:darkgreen">*/</span> hdr.ipv4.identification,
@@ -1528,13 +1539,13 @@ incrementally computes the TCP checksum.
         <span style="color:darkgreen">// Update TCP checksum</span>
         ck.clear();
         <span style="color:darkgreen">// Subtract the original TCP checksum</span>
-        ck.remove(hdr.tcp.checksum);
+        ck.subtract(hdr.tcp.checksum);
         <span style="color:darkgreen">// Subtract the effect of the original IPv4 source address,</span>
         <span style="color:darkgreen">// which is part of the TCP &#39;pseudo-header&#39; for the purposes</span>
         <span style="color:darkgreen">// of TCP checksum calculation (see RFC 793), then add the</span>
         <span style="color:darkgreen">// effect of the new IPv4 source address.</span>
-        ck.remove(user_meta.fwd_metadata.old_srcAddr);
-        ck.update(hdr.ipv4.srcAddr);
+        ck.subtract(user_meta.fwd_metadata.old_srcAddr);
+        ck.add(hdr.ipv4.srcAddr);
         hdr.tcp.checksum = ck.get();
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -1595,12 +1606,12 @@ how it determines the packet length used for byte counter updates.
 precise control over the packet length used in a byte counter, you may
 use Registers to achieve that (Section<span data-line="916"></span>&nbsp;<a href="#sec-registers" title="4.8.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">4.8</span></a><span data-line="916"></span>).
 </p><h4 id="sec-counter-types" class="h3" data-line="919" data-heading-depth="3" style="display:block"><span data-line="919"></span><span class="heading-before"><span class="heading-label">4.6.1</span>.&#8194;</span><span data-line="919"></span>Counter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="921" data-line-first="922;psa.p4:373" style="display:block"><code data-line="922;psa.p4:373"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="921" data-line-first="922;psa.p4:384" style="display:block"><code data-line="922;psa.p4:384"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
     PACKETS,
     BYTES,
     PACKETS_AND_BYTES
 }</code></pre><h4 id="sec-counter" class="h3" data-line="925" data-heading-depth="3" style="display:block"><span data-line="925"></span><span class="heading-before"><span class="heading-label">4.6.2</span>.&#8194;</span><span data-line="925"></span>Counter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="927" data-line-first="928;psa.p4:405" style="display:block"><code data-line="928;psa.p4:405"><span style="color:darkgreen">/// Indirect counter with n_counters independent counter values, where</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="927" data-line-first="928;psa.p4:416" style="display:block"><code data-line="928;psa.p4:416"><span style="color:darkgreen">/// Indirect counter with n_counters independent counter values, where</span>
 <span style="color:darkgreen">/// every counter value has a data plane size specified by type W.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Counter&lt;W, S&gt; {
@@ -1717,7 +1728,7 @@ information to identify which <span data-line="1013"></span><code class="code co
 program had the out-of-range <span data-line="1014"></span><code class="code code1 language-p4 lang-p4 p4 colorized">index</code><span data-line="1014"></span> value is also recommended.
 </li></ul>
 <h4 id="sec-direct-counter" class="h3" data-line="1017" data-heading-depth="3" style="display:block"><span data-line="1017"></span><span class="heading-before"><span class="heading-label">4.6.3</span>.&#8194;</span><span data-line="1017"></span>Direct Counter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1019" data-line-first="1020;psa.p4:424" style="display:block"><code data-line="1020;psa.p4:424"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectCounter&lt;W&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1019" data-line-first="1020;psa.p4:435" style="display:block"><code data-line="1020;psa.p4:435"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectCounter&lt;W&gt; {
   DirectCounter(CounterType_t type);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> count();
 
@@ -1960,12 +1971,12 @@ It is recommended that the maximum rate supported be at least the rate
 of the implementation<span data-line="1191"></span>&#39;<span data-line="1191"></span>s fastest port, and that the actual implemented
 rate should always be within plus or minus 0.1% of the requested rate.
 </p><h4 id="sec-meter-types" class="h3" data-line="1194" data-heading-depth="3" style="display:block"><span data-line="1194"></span><span class="heading-before"><span class="heading-label">4.7.1</span>.&#8194;</span><span data-line="1194"></span>Meter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1196" data-line-first="1197;psa.p4:431" style="display:block"><code data-line="1197;psa.p4:431"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1196" data-line-first="1197;psa.p4:442" style="display:block"><code data-line="1197;psa.p4:442"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
     PACKETS,
     BYTES
 }</code></pre><h4 id="sec-meter-colors" class="h3" data-line="1200" data-heading-depth="3" style="display:block"><span data-line="1200"></span><span class="heading-before"><span class="heading-label">4.7.2</span>.&#8194;</span><span data-line="1200"></span>Meter colors</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1202" data-line-first="1203;psa.p4:435" style="display:block"><code data-line="1203;psa.p4:435"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="1206" data-heading-depth="3" style="display:block"><span data-line="1206"></span><span class="heading-before"><span class="heading-label">4.7.3</span>.&#8194;</span><span data-line="1206"></span>Meter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1208" data-line-first="1209;psa.p4:462" style="display:block"><code data-line="1209;psa.p4:462"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1202" data-line-first="1203;psa.p4:446" style="display:block"><code data-line="1203;psa.p4:446"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="1206" data-heading-depth="3" style="display:block"><span data-line="1206"></span><span class="heading-before"><span class="heading-label">4.7.3</span>.&#8194;</span><span data-line="1206"></span>Meter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1208" data-line-first="1209;psa.p4:473" style="display:block"><code data-line="1209;psa.p4:473"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Meter&lt;S&gt; {
   Meter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_meters, MeterType_t type);
@@ -1989,7 +2000,7 @@ rate should always be within plus or minus 0.1% of the requested rate.
 <span style="color:darkgreen">  }</span>
 <span style="color:darkgreen">  </span><span style="color:darkgreen">*/</span>
 }</code></pre><h4 id="sec-direct-meter" class="h3" data-line="1212" data-heading-depth="3" style="display:block"><span data-line="1212"></span><span class="heading-before"><span class="heading-label">4.7.4</span>.&#8194;</span><span data-line="1212"></span>Direct Meter</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1214" data-line-first="1215;psa.p4:480" style="display:block"><code data-line="1215;psa.p4:480"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectMeter {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1214" data-line-first="1215;psa.p4:491" style="display:block"><code data-line="1215;psa.p4:491"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> DirectMeter {
   DirectMeter(MeterType_t type);
   <span style="color:darkgreen">// See the corresponding methods for extern Meter.</span>
   MeterColor_t execute(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> MeterColor_t color);
@@ -2028,7 +2039,7 @@ could would be mapped to the same cell; the current cell value would
 be stored in metadata for the packet and a subsequent table could
 check that the flow was marked as active.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1244" data-line-first="1245;psa.p4:497" style="display:block"><code data-line="1245;psa.p4:497"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1244" data-line-first="1245;psa.p4:508" style="display:block"><code data-line="1245;psa.p4:508"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Register&lt;T, S&gt; {
   Register(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
   T    read  (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index);
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> write (<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> S index, <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> T value);
@@ -2148,7 +2159,7 @@ pseudo-random number generation.  For example, a particularly
 inexpensive implementation might use a linear feedback shift register
 to generate values.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1319" data-line-first="1320;psa.p4:512" style="display:block"><code data-line="1320;psa.p4:512"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1319" data-line-first="1320;psa.p4:523" style="display:block"><code data-line="1320;psa.p4:523"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Random&lt;T&gt; {
   Random(T min, T max);
   T read();
 
@@ -2207,7 +2218,7 @@ controller-assigned reference for the desired member entry. Directly specifying
 the action as part of the table entry is not allowed for tables with an
 action profile implementation.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1372" data-line-first="1373;psa.p4:528" style="display:block"><code data-line="1373;psa.p4:528"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1372" data-line-first="1373;psa.p4:539" style="display:block"><code data-line="1373;psa.p4:539"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionProfile {
   <span style="color:darkgreen">/// Construct an action profile of &#39;size&#39; entries</span>
   ActionProfile(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
 
@@ -2307,7 +2318,7 @@ Table entries must specify the action using a reference to the desired member
 or group entry. Directly specifying the action as part of the table entry is not
 allowed for tables with an action selector implementation.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1469" data-line-first="1470;psa.p4:551" style="display:block"><code data-line="1470;psa.p4:551"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1469" data-line-first="1470;psa.p4:562" style="display:block"><code data-line="1470;psa.p4:562"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ActionSelector {
   <span style="color:darkgreen">/// Construct an action selector of &#39;size&#39; entries</span>
   <span style="color:darkgreen">/// @param algo hash algorithm to select a member in a group</span>
   <span style="color:darkgreen">/// @param size number of entries in the action selector</span>
@@ -2371,7 +2382,7 @@ whether a particular value is in the set, returning a Boolean value.
 That Boolean value can then be used in a <span data-line="1520"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span></code><span data-line="1520"></span> statement to control
 parsing (see examples below).
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1523" data-line-first="1524;psa.p4:588" style="display:block"><code data-line="1524;psa.p4:588"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1523" data-line-first="1524;psa.p4:599" style="display:block"><code data-line="1524;psa.p4:599"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> ValueSet&lt;D&gt; {
     ValueSet(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">int</span>&lt;<span class="constant" style="color:purple">32</span>&gt; size);
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_member(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> D data);
 
@@ -2698,7 +2709,7 @@ for all ingress parsers and control blocks.  The egress parser and
 control blocks can use the same types for those things, or different
 types, as the P4 program author wishes.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1774" data-line-first="1775;psa.p4:644" style="display:block"><code data-line="1775;psa.p4:644"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1774" data-line-first="1775;psa.p4:655" style="display:block"><code data-line="1775;psa.p4:655"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParser&lt;H, M&gt;(packet_in buffer,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> H parsed_hdr,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> M user_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
@@ -2751,7 +2762,7 @@ types, as the P4 program author wishes.
 <span style="color:darkgreen">// BufferingQueueingEngine.</span>
 
 <span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> PSA_SWITCH(ip, ep) PSA_Switch((ip), PacketReplicationEngine(), (ep), BufferingQueueingEngine())</span></code></pre><h2 id="sec-appendix--implementation-of-the-internetchecksum-extern" class="h1" data-line="1779" data-heading-depth="1" style="display:block"><span data-line="1779"></span><span class="heading-before"><span class="heading-label">6</span>.&#8194;</span><span data-line="1779"></span>Appendix: Implementation of the <span data-line="1779"></span><code class="code code1 language-p4 lang-p4 p4 colorized">InternetChecksum</code><span data-line="1779"></span> extern</h2>
-<p class="p noindent" data-line="1781"><span data-line="1781"></span>Besides RFC 1461, RFC 1071 and RFC 1141 contain useful tips on
+<p class="p noindent" data-line="1781"><span data-line="1781"></span>Besides RFC 1461, RFC 1071 and RFC 1141 also contain useful tips on
 efficiently computing the Internet checksum, especially in software
 implementations.
 </p>
@@ -2804,6 +2815,14 @@ returning a value from a function.
 
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; get() {
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">return</span> ~sum;
+}
+
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; get_state() {
+    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">return</span> sum;
+}
+
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">void</span> set_state(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; checksum_state) {
+    sum = checksum_state;
 }</code></pre><span data-line=""></span>
 <div class="footnotes madoko">
 <hr >
