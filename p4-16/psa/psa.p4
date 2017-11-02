@@ -609,6 +609,12 @@ control Ingress<H, M>(inout H hdr, inout M user_meta,
                       in    psa_ingress_input_metadata_t  istd,
                       inout psa_ingress_output_metadata_t ostd);
 
+control IngressDeparser<H, M>(packet_out buffer,
+                              clone_out cl,
+                              inout H hdr,
+                              in M meta,
+                              in psa_ingress_output_metadata_t istd);
+
 parser EgressParser<H, M>(packet_in buffer,
                           out H parsed_hdr,
                           inout M user_meta,
@@ -618,14 +624,6 @@ parser EgressParser<H, M>(packet_in buffer,
 control Egress<H, M>(inout H hdr, inout M user_meta,
                      in    psa_egress_input_metadata_t  istd,
                      inout psa_egress_output_metadata_t ostd);
-
-control Deparser<H, M>(packet_out buffer, inout H hdr, in M user_meta);
-
-control IngressDeparser<H, M>(packet_out buffer,
-                              clone_out cl,
-                              inout H hdr,
-                              in M meta,
-                              in psa_ingress_output_metadata_t istd);
 
 control EgressDeparser<H, M>(packet_out buffer,
                              clone_out cl,
