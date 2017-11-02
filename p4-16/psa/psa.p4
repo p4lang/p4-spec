@@ -367,7 +367,7 @@ extern InternetChecksum {
 
   /// Restore the state of the InternetChecksum instance to one
   /// returned from an earlier call to the get_state method.  This
-  /// state could hae been returned from the same instance of the
+  /// state could have been returned from the same instance of the
   /// InternetChecksum extern, or a different one.
   void set_state(bit<16> checksum_state);
 }
