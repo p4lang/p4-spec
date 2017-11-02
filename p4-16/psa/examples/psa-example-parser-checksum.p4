@@ -83,60 +83,57 @@ typedef bit<8>  ErrorIndex_t;
 const bit<9> NUM_ERRORS = 256;
 
 parser IngressParserImpl(packet_in buffer,
-                         out headers parsed_hdr,
+                         out headers hdr,
                          inout metadata user_meta,
                          in psa_ingress_parser_input_metadata_t istd,
                          out psa_parser_output_metadata_t ostd)
 {
     InternetChecksum() ck;
     state start {
-        buffer.extract(parsed_hdr.ethernet);
-        transition select(parsed_hdr.ethernet.etherType) {
+        buffer.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
             0x0800: parse_ipv4;
             default: accept;
         }
     }
     state parse_ipv4 {
-        buffer.extract(parsed_hdr.ipv4);
+        buffer.extract(hdr.ipv4);
         // TBD: It would be good to enhance this example to
         // demonstrate checking of IPv4 header checksums for IPv4
         // headers with options, but this example does not handle such
         // packets.
-        verify(parsed_hdr.ipv4.ihl == 5, error.UnhandledIPv4Options);
+        verify(hdr.ipv4.ihl == 5, error.UnhandledIPv4Options);
         ck.clear();
-        ck.add({ parsed_hdr.ipv4.version,
-                parsed_hdr.ipv4.ihl,
-                parsed_hdr.ipv4.diffserv,
-                parsed_hdr.ipv4.totalLen,
-                parsed_hdr.ipv4.identification,
-                parsed_hdr.ipv4.flags,
-                parsed_hdr.ipv4.fragOffset,
-                parsed_hdr.ipv4.ttl,
-                parsed_hdr.ipv4.protocol,
-                //parsed_hdr.ipv4.hdrChecksum, // intentionally leave this out
-                parsed_hdr.ipv4.srcAddr,
-                parsed_hdr.ipv4.dstAddr });
+        ck.add({
+            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+            /* 16-bit word  1   */ hdr.ipv4.totalLen,
+            /* 16-bit word  2   */ hdr.ipv4.identification,
+            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
+            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
+            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
+            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
+            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
+            });
         // The verify statement below will cause the parser to enter
         // the reject state, and thus terminate parsing immediately,
         // if the IPv4 header checksum is wrong.  It will also record
         // the error error.BadIPv4HeaderChecksum, which will be
         // available in a metadata field in the ingress control block.
-        verify(ck.get() == parsed_hdr.ipv4.hdrChecksum,
+        verify(ck.get() == hdr.ipv4.hdrChecksum,
                error.BadIPv4HeaderChecksum);
-        transition select(parsed_hdr.ipv4.protocol) {
+        transition select(hdr.ipv4.protocol) {
             6: parse_tcp;
             default: accept;
         }
     }
     state parse_tcp {
-        buffer.extract(parsed_hdr.tcp);
+        buffer.extract(hdr.tcp);
         transition accept;
     }
 }
 
 control ingress(inout headers hdr,
                 inout metadata user_meta,
-                PacketReplicationEngine pre,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
@@ -189,7 +186,7 @@ control ingress(inout headers hdr,
 // END:Parse_Error_Example
 
 parser EgressParserImpl(packet_in buffer,
-                        out headers parsed_hdr,
+                        out headers hdr,
                         inout metadata user_meta,
                         in psa_egress_parser_input_metadata_t istd,
                         out psa_parser_output_metadata_t ostd)
@@ -201,30 +198,45 @@ parser EgressParserImpl(packet_in buffer,
 
 control egress(inout headers hdr,
                inout metadata user_meta,
-               BufferingQueueingEngine bqe,
                in    psa_egress_input_metadata_t  istd,
                inout psa_egress_output_metadata_t ostd)
 {
     apply { }
 }
 
+control IngressDeparserImpl(packet_out packet,
+                            clone_out cl,
+                            inout headers hdr,
+                            in metadata meta,
+                            in psa_ingress_output_metadata_t istd)
+{
+    apply {
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.tcp);
+    }
+}
+
 // BEGIN:Compute_New_IPv4_Checksum_Example
-control DeparserImpl(packet_out packet, inout headers hdr, in metadata meta) {
+control EgressDeparserImpl(packet_out packet,
+                           clone_out cl,
+                           inout headers hdr,
+                           in metadata meta,
+                           in psa_egress_output_metadata_t istd)
+{
     InternetChecksum() ck;
     apply {
         ck.clear();
-        ck.add({ hdr.ipv4.version,
-                hdr.ipv4.ihl,
-                hdr.ipv4.diffserv,
-                hdr.ipv4.totalLen,
-                hdr.ipv4.identification,
-                hdr.ipv4.flags,
-                hdr.ipv4.fragOffset,
-                hdr.ipv4.ttl,
-                hdr.ipv4.protocol,
-                //hdr.ipv4.hdrChecksum, // intentionally leave this out
-                hdr.ipv4.srcAddr,
-                hdr.ipv4.dstAddr });
+        ck.add({
+            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+            /* 16-bit word  1   */ hdr.ipv4.totalLen,
+            /* 16-bit word  2   */ hdr.ipv4.identification,
+            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
+            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
+            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
+            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
+            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
+            });
         hdr.ipv4.hdrChecksum = ck.get();
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -233,9 +245,12 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata meta) {
 }
 // END:Compute_New_IPv4_Checksum_Example
 
-PSA_Switch(IngressParserImpl(),
-           ingress(),
-           DeparserImpl(),
-           EgressParserImpl(),
-           egress(),
-           DeparserImpl()) main;
+IngressPipeline(IngressParserImpl(),
+                ingress(),
+                IngressDeparserImpl()) ip;
+
+EgressPipeline(EgressParserImpl(),
+               egress(),
+               EgressDeparserImpl()) ep;
+
+PSA_SWITCH(ip, ep) main;

@@ -127,7 +127,6 @@ parser IngressParserImpl(packet_in buffer,
 // BEGIN:Clone_Example_Part2
 control ingress(inout headers hdr,
                 inout metadata user_meta,
-                PacketReplicationEngine pre,
                 in  psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
@@ -165,7 +164,6 @@ parser EgressParserImpl(packet_in buffer,
 
 control egress(inout headers hdr,
                inout metadata user_meta,
-               BufferingQueueingEngine bqe,
                in  psa_egress_input_metadata_t  istd,
                inout psa_egress_output_metadata_t ostd)
 {
@@ -209,9 +207,12 @@ control EgressDeparserImpl(packet_out packet,
     }
 }
 
-PSA_Switch(IngressParserImpl(),
-           ingress(),
-           IngressDeparserImpl(),
-           EgressParserImpl(),
-           egress(),
-           EgressDeparserImpl()) main;
+IngressPipeline(IngressParserImpl(),
+                ingress(),
+                IngressDeparserImpl()) ip;
+
+EgressPipeline(EgressParserImpl(),
+               egress(),
+               EgressDeparserImpl()) ep;
+
+PSA_SWITCH(ip, ep) main;

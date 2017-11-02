@@ -106,7 +106,6 @@ parser IngressParserImpl(packet_in buffer,
 // BEGIN:Register_Example2_Part2
 control ingress(inout headers hdr,
                 inout metadata user_meta,
-                PacketReplicationEngine pre,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
@@ -140,27 +139,51 @@ parser EgressParserImpl(packet_in buffer,
 
 control egress(inout headers hdr,
                inout metadata user_meta,
-               BufferingQueueingEngine bqe,
                in    psa_egress_input_metadata_t  istd,
                inout psa_egress_output_metadata_t ostd)
 {
     apply { }
 }
 
-control computeChecksum(inout headers hdr, inout metadata meta) {
-    apply { }
-}
-
-control DeparserImpl(packet_out packet, inout headers hdr, in metadata meta) {
+control CommonDeparserImpl(packet_out packet,
+                           inout headers hdr)
+{
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
     }
 }
 
-PSA_Switch(IngressParserImpl(),
-           ingress(),
-           DeparserImpl(),
-           EgressParserImpl(),
-           egress(),
-           DeparserImpl()) main;
+control IngressDeparserImpl(packet_out buffer,
+                            clone_out cl,
+                            inout headers hdr,
+                            in metadata meta,
+                            in psa_ingress_output_metadata_t istd)
+{
+    CommonDeparserImpl() cp;
+    apply {
+        cp.apply(buffer, hdr);
+    }
+}
+
+control EgressDeparserImpl(packet_out buffer,
+                           clone_out cl,
+                           inout headers hdr,
+                           in metadata meta,
+                           in psa_egress_output_metadata_t istd)
+{
+    CommonDeparserImpl() cp;
+    apply {
+        cp.apply(buffer, hdr);
+    }
+}
+
+IngressPipeline(IngressParserImpl(),
+                ingress(),
+                IngressDeparserImpl()) ip;
+
+EgressPipeline(EgressParserImpl(),
+               egress(),
+               EgressDeparserImpl()) ep;
+
+PSA_SWITCH(ip, ep) main;
