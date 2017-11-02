@@ -262,7 +262,7 @@ extern BufferingQueueingEngine {
 }
 
 // BEGIN:Clone_extern
-extern clone {
+extern clone_out {
   /// Write @hdr into the ingress/egress clone engine.
   /// @T can be a header type, a header stack, a header union, or a struct
   /// containing fields with such types.
@@ -610,12 +610,24 @@ control Egress<H, M>(inout H hdr, inout M user_meta,
 
 control Deparser<H, M>(packet_out buffer, inout H hdr, in M user_meta);
 
+control IngressDeparser<H, M>(packet_out buffer,
+                              clone_out cl,
+                              inout H hdr,
+                              in M meta,
+                              in psa_ingress_output_metadata_t istd);
+
+control EgressDeparser<H, M>(packet_out buffer,
+                             clone_out cl,
+                             inout H hdr,
+                             in M meta,
+                             in psa_egress_output_metadata_t istd);
+
 package PSA_Switch<IH, IM, EH, EM>(IngressParser<IH, IM> ip,
                                    Ingress<IH, IM> ig,
-                                   Deparser<IH, IM> id,
+                                   IngressDeparser<IH, IM> id,
                                    EgressParser<EH, EM> ep,
                                    Egress<EH, EM> eg,
-                                   Deparser<EH, EM> ed);
+                                   EgressDeparser<EH, EM> ed);
 // END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
