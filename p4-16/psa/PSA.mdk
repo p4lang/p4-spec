@@ -1247,7 +1247,8 @@ PSA also provides an incremental checksum that comes equipped with an
 additional `subtract` method that can be used to remove data previously
 added. The checksum is computed using the `ONES_COMPLEMENT16` hash
 algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
-RFC 1624](https://tools.ietf.org/html/rfc1624) for details.
+RFC 1624](https://tools.ietf.org/html/rfc1624)
+and section [#appendix-internetchecksum-implementation] for details.
 
 ```
 [INCLUDE=psa.p4:InternetChecksum_extern]    
@@ -1366,90 +1367,13 @@ use Registers to achieve that (Section [#sec-registers]).
 [INCLUDE=psa.p4:Counter_extern]
 ```
 
-See below for pseudocode of an example implementation for the Counter
-extern.
+See section [#appendix-counter-implementation] for pseudocode of an
+example implementation of the Counter extern.
 
-The example implementation for `next_counter_value` is not intended to
-restrict PSA implementations.  In particular, the storage format for
-`PACKETS_AND_BYTES` type counters is just one example of how it could
-be done.  Implementations are free to store state in other ways, as
-long as the control plane API returns the correct packet and byte
-count values.
-
-Two common techniques for counter implementations in the data plane are:
-
-- wrap around counters
-- saturating counters, that 'stick' at their maximum possible value,
-  without wrapping around.
-
-This specification does not mandate any particular approach in the
-data plane.  Implementations should strive to avoid losing information
-in counters.  One common implementation technique is to implement an
-atomic "read and clear" operation in the data plane that can be
-invoked by the control plane software.  The control plane software
-invokes this operation frequently enough to prevent counters from ever
-wrapping or saturating, and adds the values read to larger counters in
-driver memory.
-
-```
-Counter(bit<32> n_counters, CounterType_t type) {
-    this.num_counters = n_counters;
-    this.counter_vals = new array of size n_counters, each element with type W;
-    this.type = type;
-    if (this.type == CounterType_t.PACKETS_AND_BYTES) {
-        // Packet and byte counts share storage in the same counter
-        // state.  Should we have a separate constructor with an
-        // additional argument indicating how many of the bits to use
-        // for the byte counter?
-        W shift_amount = TBD;
-        this.shifted_packet_count = ((W) 1) << shift_amount;
-        this.packet_count_mask = (~((W) 0)) << shift_amount;
-        this.byte_count_mask = ~this.packet_count_mask;
-    }
-}
-
-W next_counter_value(W cur_value, CounterType_t type) {
-    if (type == CounterType_t.PACKETS) {
-        return (cur_value + 1);
-    }
-    // Exactly which packet bytes are included in packet_len is
-    // implementation-specific.
-    PacketLength_t packet_len = <packet length in bytes>;
-    if (type == CounterType_t.BYTES) {
-        return (cur_value + packet_len);
-    }
-    // type must be CounterType_t.PACKETS_AND_BYTES
-    // In type W, the least significant bits contain the byte
-    // count, and most significant bits contain the packet count.
-    // This is merely one example storage format.  Implementations
-    // are free to store packets_and_byte state in other ways, as
-    // long as the control plane API returns the correct separate
-    // packet and byte count values.
-    W next_packet_count = ((cur_value + this.shifted_packet_count) &
-                           this.packet_count_mask);
-    W next_byte_count = (cur_value + packet_len) & this.byte_count_mask;
-    return (next_packet_count | next_byte_count);
-}
-
-void count(in S index) {
-    if (index < this.num_counters) {
-        this.counter_vals[index] = next_counter_value(this.counter_vals[index],
-                                                      this.type);
-    } else {
-        // No counter_vals updated if index is out of range.
-        // See below for optional debug information to record.
-    }
-}
-```
-
-Optional debugging information that may be kept if an `index` value is
-out of range includes:
-
-- Number of times this occurs.
-- A FIFO of the first N out-of-range index values that occur, where N
-  is implementation-defined (e.g. it might only be 1).  Extra
-  information to identify which `count()` method call in the P4
-  program had the out-of-range `index` value is also recommended.
+PSA implementations must not update any counter values if an indexed
+counter is updated with an index that is too large.  It is recommended
+that they count such erroneous attempted updates, and record other
+information that can help an P4 programmer debug such errors.
 
 
 ### Direct Counter
@@ -2234,7 +2158,7 @@ The control plane should provide a
 
 ```
 
-# Appendix: Implementation of the `InternetChecksum` extern
+# Appendix: Implementation of the `InternetChecksum` extern { #appendix-internetchecksum-implementation }
 
 Besides RFC 1461, RFC 1071 and RFC 1141 also contain useful tips on
 efficiently computing the Internet checksum, especially in software
@@ -2300,3 +2224,88 @@ void set_state(bit<16> checksum_state) {
     sum = checksum_state;
 }
 ```
+
+
+# Appendix: Example implementation of `Counter` extern { #appendix-counter-implementation }
+
+The example implementation below, in particuar the function
+`next_counter_value`, is not intended to restrict PSA implementations.
+The storage format for `PACKETS_AND_BYTES` type counters demonstrated
+there is one example of how it could be done.  Implementations are
+free to store state in other ways, as long as the control plane API
+returns the correct packet and byte count values.
+
+Two common techniques for counter implementations in the data plane are:
+
+- wrap around counters
+- saturating counters, that 'stick' at their maximum possible value,
+  without wrapping around.
+
+This specification does not mandate any particular approach in the
+data plane.  Implementations should strive to avoid losing information
+in counters.  One common implementation technique is to implement an
+atomic "read and clear" operation in the data plane that can be
+invoked by the control plane software.  The control plane software
+invokes this operation frequently enough to prevent counters from ever
+wrapping or saturating, and adds the values read to larger counters in
+driver memory.
+
+```
+Counter(bit<32> n_counters, CounterType_t type) {
+    this.num_counters = n_counters;
+    this.counter_vals = new array of size n_counters, each element with type W;
+    this.type = type;
+    if (this.type == CounterType_t.PACKETS_AND_BYTES) {
+        // Packet and byte counts share storage in the same counter
+        // state.  Should we have a separate constructor with an
+        // additional argument indicating how many of the bits to use
+        // for the byte counter?
+        W shift_amount = TBD;
+        this.shifted_packet_count = ((W) 1) << shift_amount;
+        this.packet_count_mask = (~((W) 0)) << shift_amount;
+        this.byte_count_mask = ~this.packet_count_mask;
+    }
+}
+
+W next_counter_value(W cur_value, CounterType_t type) {
+    if (type == CounterType_t.PACKETS) {
+        return (cur_value + 1);
+    }
+    // Exactly which packet bytes are included in packet_len is
+    // implementation-specific.
+    PacketLength_t packet_len = <packet length in bytes>;
+    if (type == CounterType_t.BYTES) {
+        return (cur_value + packet_len);
+    }
+    // type must be CounterType_t.PACKETS_AND_BYTES
+    // In type W, the least significant bits contain the byte
+    // count, and most significant bits contain the packet count.
+    // This is merely one example storage format.  Implementations
+    // are free to store packets_and_byte state in other ways, as
+    // long as the control plane API returns the correct separate
+    // packet and byte count values.
+    W next_packet_count = ((cur_value + this.shifted_packet_count) &
+                           this.packet_count_mask);
+    W next_byte_count = (cur_value + packet_len) & this.byte_count_mask;
+    return (next_packet_count | next_byte_count);
+}
+
+void count(in S index) {
+    if (index < this.num_counters) {
+        this.counter_vals[index] = next_counter_value(this.counter_vals[index],
+                                                      this.type);
+    } else {
+        // No counter_vals updated if index is out of range.
+        // See below for optional debug information to record.
+    }
+}
+```
+
+Optional debugging information that may be kept if an `index` value is
+out of range includes:
+
+- Number of times this occurs.
+- A FIFO of the first N out-of-range index values that occur, where N
+  is implementation-defined (e.g. it might only be 1).  Extra
+  information to identify which `count()` method call in the P4
+  program had the out-of-range `index` value is also recommended.
