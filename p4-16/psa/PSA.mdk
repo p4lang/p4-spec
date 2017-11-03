@@ -400,10 +400,17 @@ The function `platform_port_valid()` mentioned below takes a value of
 type `PortId_t`, returning `true` only when the value represents an
 output port for the implementation.  It is expected that for some PSA
 implementations there will be bit patterns for a value of type
-`PortId_t` that do not correspond to any port.  This function is not
-one defined in PSA for calling from your P4 program, since there is no
-known use case for calling it at packet processing time.  The control
-plane is expected only to configure tables with valid port numbers.
+`PortId_t` that do not correspond to any port.  This function returns
+true for `PORT_CPU`, but false for `PORT_RECIRCULATE`.
+`PORT_RECIRCULATE` is only intended as a value for `ingress_port` when
+ingress processing begins for a recirculated packet (see Table
+[#ingress-initial-values].  See section [#sec-after-egress] for how P4
+programs cause a packet to be recirculated.
+
+`platform_port_valid` is not defined in PSA for calling from your P4
+program, since there is no known use case for calling it at packet
+processing time.  The control plane is expected to configure tables
+with valid port numbers.
 
 A comment saying "recommended to log error" is not a requirement, but
 a recommendation, that a PSA implementation should maintain a counter
@@ -798,6 +805,16 @@ the contents of several metadata fields in the struct
 
 TBD: Should it be possible to truncate a cloned packet differently
 than the normal packet that goes out?
+
+As for the handling of a packet after ingress processing, a PSA
+implementation may drop a packet after egress processing, even if the
+pseudocode above says that a packet will be sent.  For example, you
+may attempt to clone a packet after egress when the packet buffer is
+too full, or you may attempt to recirculate a packet when the ingress
+pipeline is busy handling other packets.  It is recommended that an
+implementation maintain counters of packets dropped, preferably with
+separate counters for as many different reasons as the implementation
+has for dropping packets outside the control of the P4 program.
 
 
 ## Actions for directing packets during egress { #sec-egress-actions }
