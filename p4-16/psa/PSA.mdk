@@ -200,7 +200,7 @@ grouped together by similar values of "Processed next by".
 | NTCPU        | normal packet to CPU port | CPU | determined by CPU |
 |--------------|-------------|---------------|--------------------|
 ~
-arriving 
+
 There are metadata fields defined by PSA that enable your P4 program
 to identify which path each packet arrived on, and to control where it
 will go next.  See section [#packet-path-details].
@@ -209,8 +209,8 @@ For egress packets, the choice of egress port, or the port to the CPU,
 is made by the immediately previous processing step (ingress for NU,
 NM, or CI2E packets, egress for CE2E packets), and egress processing
 cannot change that choice to a different port.  It can change the
-packet to RECIRC instead, or drop the packet.  The primary location
-where output ports are chosen in PSA programs is in ingress code.
+packet to RECIRC instead, or drop the packet.  Ingress code is the
+intended place in your P4 program where the output port(s) are chosen.
 
 A single packet received by a PSA system from a port can result in 0,
 1, or many packets going out, all under control of the P4 program.
