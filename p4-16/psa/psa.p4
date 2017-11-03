@@ -40,10 +40,9 @@ typedef bit<16> EgressInstance_t;
 typedef bit<48> Timestamp_t;
 typedef error   ParserError_t;
 
+const   PortId_t         PORT_RECIRCULATE = 254;
 const   PortId_t         PORT_CPU = 255;
 
-// typedef bit<unspecified> InstanceType_t;
-// const   InstanceType_t   INSTANCE_NORMAL = unspecified;
 #endif  // PSA_CORE_TYPES
 #ifndef PSA_CORE_TYPES
 #error "Please define the following types for PSA and the PSA_CORE_TYPES macro"
@@ -55,17 +54,19 @@ typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> Timestamp_t;
 
+const   PortId_t         PORT_RECIRCULATE = unspecified;
 const   PortId_t         PORT_CPU = unspecified;
 // END:Type_defns
 
-// typedef bit<unspecified> InstanceType_t;
-// const   InstanceType_t   INSTANCE_NORMAL = unspecified;
 #endif
 
 // BEGIN:Metadata_types
 enum InstanceType_t {
-    NORMAL,     /// Packet is "normal", i.e. none of the other cases below
-    CLONE,      /// Packet was created via a clone operation
+    NORMAL,     /// Packet received by ingress that is none of the cases below.
+    NORMAL_UNICAST,   /// Packet received by egress that is none of the cases below, and unicast
+    NORMAL_MULTICAST, /// Packet received by egress that is none of the cases below, and multicast
+    CLONE_I2E,  /// Packet created via a clone operation in ingress, destined for egress
+    CLONE_E2E,  /// Packet created via a clone operation in egress, destined for egress
     RESUBMIT,   /// Packet arrival is the result of a resubmit operation
     RECIRCULATE /// Packet arrival is the result of a recirculate operation
 }
@@ -139,20 +140,11 @@ match_kind {
 
 // BEGIN:Action_send_to_port
 /// Modify ingress output metadata to cause one packet to be sent to
-/// egress processing, and then to the output port egress_port, unless
-/// it is dropped during egress processing.
+/// egress processing, and then to the output port egress_port.
+/// (Egress processing may instead drop or recirculate the packet.)
 
 /// This action does not change whether a clone or resubmit operation
 /// will occur.
-
-/// The one copy it causes to be sent to egress processing will have
-/// its struct of type psa_egress_input_metadata_t filled in as
-/// follows:
-
-/// egress_port - equal to the egress_port parameter of this action
-/// instance_type - InstanceType_t.NORMAL
-/// instance - undefined
-/// egress_timestamp - the time the packet begins egress processing
 
 action send_to_port(inout psa_ingress_output_metadata_t meta,
                     in PortId_t egress_port)
@@ -170,7 +162,7 @@ action send_to_port(inout psa_ingress_output_metadata_t meta,
 /// This action does not change whether a clone or resubmit operation
 /// will occur.
 
-/// The control plane must program each multicast_group to create the
+/// The control plane must configure each multicast_group to create the
 /// desired copies of the packet.  For a particular multicast group,
 /// the control plane specifies a list of 0 or more copy
 /// specifications:
@@ -181,12 +173,8 @@ action send_to_port(inout psa_ingress_output_metadata_t meta,
 /// (egress_port[N-1], instance[N-1])
 
 /// Copy number i sent to egress processing will have its struct of
-/// type psa_egress_input_metadata_t filled in as follows:
-
-/// egress_port - equal to the egress_port[i]
-/// instance_type - InstanceType_t.NORMAL
-/// instance - instance[i]
-/// egress_timestamp - the time the packet begins egress processing
+/// type psa_egress_input_metadata_t filled in with egress_port equal
+/// to egress_port[i], and instance filled in with instance[i].
 
 action multicast(inout psa_ingress_output_metadata_t meta,
                  in MulticastGroup_t multicast_group)
@@ -212,7 +200,8 @@ action ingress_drop(inout psa_ingress_output_metadata_t meta)
 // BEGIN:Action_ingress_truncate
 /// For any copies made of this packet at the end of Ingress
 /// processing, truncate the payload to at most payload_bytes bytes in
-/// length.
+/// length.  A PSA implementation need not support truncation for
+/// resubmitted packets.
 
 action ingress_truncate(inout psa_ingress_output_metadata_t meta,
                         in PacketLength_t payload_bytes)
@@ -238,7 +227,8 @@ action egress_drop(inout psa_egress_output_metadata_t meta)
 // BEGIN:Action_egress_truncate
 /// For any copies made of this packet at the end of Egress
 /// processing, truncate the payload to at most payload_bytes bytes in
-/// length.
+/// length.  A PSA implementation need not support truncation for
+/// recirculated packets.
 
 action egress_truncate(inout psa_ingress_output_metadata_t meta,
                        in PacketLength_t payload_bytes)
