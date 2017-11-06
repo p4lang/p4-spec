@@ -66,9 +66,9 @@ Replication Engine (PRE) and the Buffer Queuing Engine (BQE) are
 target dependent functional blocks that may be configured for a fixed
 set of operations.
 
-Incoming packets are parsed and validated, and are
+Incoming packets are parsed and validated, and
 then passed to an ingress match action pipeline, which makes decisions
-on where the packets should go. After the ingress pipeline, the packet
+on where the packets go. After the ingress pipeline, the packet
 may be buffered and/or replicated (sent to multiple egress ports). For
 each such egress port, the packet passes through an egress match
 action pipeline before it is
@@ -238,7 +238,8 @@ the following to occur, if the P4 program so directed it:
 This is simply an example of what is possible given an appropriately
 written P4 program.  There is no need to use all of the packet paths
 available.  The numbering of the packet copies above is only for
-purposes of distinctly identifying each one in the example.  A PSA
+purposes of distinctly identifying each one in the example.  The ports
+described in the example are also arbitrary. A PSA
 implementation is free to perform the steps above in many possible
 orders.
 
@@ -354,20 +355,22 @@ recirculated packet was resubmitted.
 
 For Ethernet ports, `packet_in` for FP and NFCPU path packets contains
 the Ethernet frame starting with the Ethernet header.  It does not
-include the Ethernet frame CRC.  TBD whether the payload is always the
+include the Ethernet frame CRC.
+
+TBD: whether the payload is always the
 minimum of 46 bytes (64 byte minimum Ethernet frame size, minus 14
 bytes of header, minus 4 bytes of CRC), or whether an implementation
 is allowed to leave some of those bytes out.
 
-TBD: Mention packet length, which I think is a property of `packet_in`
-in P4~16~ spec.
+The PSA does not put further restrictions on `packet_in.lenght()`
+as defined in the P4~16~ spec. Targets that do not support it, should provide mechanisms
+to raise an error (either at compile- or load-time).
 
 ### Initial packet contents for resubmitted packets
 
 For RESUB packets, `packet_in` is the same as the pre-IngressParser
 contents of `packet_in`, for the packet that caused this resubmitted
-packet to occur (i.e. with NO modifications from any ingress
-processing).  Truncation is not supported for RESUB packets.
+packet to occur (i.e. with NO modifications from any ingress processing).  Truncation is not supported for RESUB packets.
 
 ### Initial packet contents for recirculated packets
 
@@ -383,7 +386,7 @@ The PSA architecture does not mandate initialization of user-defined
 metadata to known values as given as input to the ingress parser.  If
 a user's P4 program explicitly initializes all user-defined metadata
 early on (e.g. in the parser's `start` state), then that will flow
-through the rest of the parser into the ingress control block as one
+through the rest of the parser into the Ingress control block as one
 might normally expect.  This will be left as an option to the user in
 their P4 programs, not required behavior for all P4 programs.
 
@@ -392,7 +395,7 @@ there by a way in PSA to specify some collection of fields to be
 preserved with a resub/recirc'ed packet?
 
 
-## Behavior of packets after Ingress processing is complete {#sec-after-ingress}
+## Behavior of packets after ingress processing is complete {#sec-after-ingress}
 
 The pseudocode below defines where copies of packets will be made
 after the Ingress control block has completed executing, based upon
@@ -408,11 +411,11 @@ true for `PORT_CPU`, but false for `PORT_RECIRCULATE`.
 `PORT_RECIRCULATE` is only intended as a value for `ingress_port` when
 ingress processing begins for a recirculated packet (see Table
 [#ingress-initial-values].  See section [#sec-after-egress] for how P4
-programs cause a packet to be recirculated.
-
-`platform_port_valid` is not defined in PSA for calling from your P4
+programs cause a packet to be recirculated). `platform_port_valid`
+is not defined in PSA for calling from the P4 data-plane
 program, since there is no known use case for calling it at packet
-processing time.  The control plane is expected to configure tables
+processing time. It is intended for describing the behavior in pseudo-code.
+The control plane is expected to configure tables
 with valid port numbers.
 
 A comment saying "recommended to log error" is not a requirement, but
@@ -500,7 +503,7 @@ copy going to the control CPU to have a software-defined header
 packet copies going to the Egress control block.
 
 Whenever the pseudocode above indicates that a packet should be sent
-to a particular place, a PSA implementation may under some
+on a particular packet path, a PSA implementation may under some
 circumstances instead drop the packet.  For example, the packet buffer
 may be too low on available space for storing new packets, or some
 other congestion control mechanism such as RED (Random Early
@@ -553,13 +556,9 @@ same ingress port and replicated using the same value of
 the Egress control block in a different order than they were processed
 by the Ingress control block.
 
-The control plane API excerpt below is intended to be added as part of
-the P4Runtime API[^P4RuntimeAPI].
-
-TBD: Antonin Bas suggests exposing 'switch capabilities' type of
-information like that shown below not via the P4Runtime API, but
-instead via Openconfig data models.  Ask him for a more appropriate
-way to document this in the PSA spec.
+The control plane API excerpt below is an example intended to be added as part of
+the P4 Runtime API, and the final version of this message will be defined
+by the P4 Runtime WG.
 
 ```
 // The ClassOfServiceInfo message should be added to the "oneof"
@@ -619,7 +618,7 @@ egress processing.
 
 The multicast_group parameter is the multicast group id. The control
 plane must configure the multicast groups through a separate
-mechanism such as the P4Runtime API.
+mechanism such as the P4 Runtime API.
 
 ```
 [INCLUDE=psa.p4:Action_multicast]
@@ -635,7 +634,7 @@ Do not send a copy of the packet for normal egress processing.
 
 ### Truncate operation {#sec-ingress-truncate}
 
-For all copies of the packet made at the end of Ingress processing,
+For all copies of the packet made at the end of ingress processing,
 truncate the payload to be at most the specified number of bytes.
 Specifying 0 is legal, and causes only packet headers to be sent, with
 no payload.
@@ -719,8 +718,8 @@ supported.
 
 ### User-defined metadata for all egress packets
 
-TBD: Pending discussion of bridged metadata, and how clone packets may
-be able to carry metadata with them.
+Pending discussion of bridged metadata, and how clone packets may
+be able to carry metadata with them (see [#sec-open-metadata]).
 
 
 ### Multicast copies
@@ -752,7 +751,7 @@ mentioned above, will be the same for every copy of the same original
 multicast-replicated packet.
 
 
-## Behavior of packets after Egress processing is complete {#sec-after-egress}
+## Behavior of packets after egress processing is complete {#sec-after-egress}
 
 
 The pseudocode below defines where copies of packets will be made
@@ -833,7 +832,7 @@ complete.
 
 ### Truncate operation {#sec-egress-truncate}
 
-For all copies of the packet made at the end of Egress processing,
+For all copies of the packet made at the end of egress processing,
 truncate the payload to be at most the specified number of bytes.
 Specifying 0 is legal, and causes only packet headers to be sent, with
 no payload.
@@ -877,15 +876,16 @@ recirculate, and resubmit in PSA.
 ## Packet Cloning  {#sec-clone}
 
 Packet cloning is a mechanism to send a copy of a packet to a
-specified port, and is often synonymous with packet mirroring.
+specified port, and is often synonymous with packet mirroring. In PSA cloning
+is represented as an extern `clone_out`.
 
-Packets cloning happens at the end of the ingress and egress pipeline.
-PSA specifies the following semantics for clone operation. If the
+Packet cloning happens at the end of the ingress and/or egress pipeline.
+PSA specifies the following semantics for clone operation. When the
 clone operation is invoked at the end of the ingress pipeline, the
-cloned packet is a copy of the original packet from ingress port. If
+cloned packet is a copy of the original packet from ingress port. When
 the clone operation is invoked at the end of egress pipeline, the
-cloned packet is a copy of the modified packet after egress
-processing. In both cases, the cloned packet is submitted to the
+cloned packet is a copy of the modified packet after egress processing.
+In both cases, the cloned packet is submitted to the
 egress pipeline for further processing.
 
 Logically, PRE implements the mechanics of copying a packet. PRE reads
@@ -893,7 +893,7 @@ the original packet from ingress port and the modified packet from
 egress deparser. PRE then decides which version of the packet to use
 to generate a copy based on the value of the metadata provided by the
 ingress and egress pipeline. Two sets of configuration metadata are
-provided to the PRE, one from each pipeline.
+provided to the PRE, one from each pipeline. The cloning metadata is:
 
 ```
 bool              clone;
@@ -909,22 +909,7 @@ which port to send the cloned packet to after egress processing. The
 instance, it can be a port to control CPU or a port to the next hop
 router.
 
-PRE can optionally attach metadata to the cloned packet. The extra
-metadata is specified with the `clone` extern using the `add_metadata`
-method. The `add_metadata` method accepts a generic type `T`.
-
-TBD: if we decide to use pure metadata, then this paragraph needs to
-be rewritten.
-
-In PSA, the metadata is prepended to the cloned packet. It is the
-responsibility of the programmer to parse the cloned packet such that
-it correctly extracts the attached metadata. The attached metadata may
-be of type `header`, `header stack`, `header union` or `struct` of the
-above types. Invoking the `add_metadata` method multiple times will
-attach all specified metadata to the same cloned packet in order. The
-PSA architecture instantiates the `clone` extern in the ingress and
-egress deparser. It is an error to instantiate the `clone` extern in
-blocks other than the deparser block.
+TBD: decide how to add other metadata to the cloned packet (see [#sec-open-metadata]).
 
 ```
 [INCLUDE=psa.p4:Clone_extern]
@@ -932,7 +917,7 @@ blocks other than the deparser block.
 
 ### Clone Examples {#sec-clone-examples}
 
-The partial program below demonstrates one way to use the `Clone`
+The partial program below demonstrates one way to use the `clone_out`
 extern to configure the PRE to create a copy of the packet and send
 the cloned copy to `clone_port`.
 
@@ -962,10 +947,11 @@ Similarly, the ingress pipeline can choose to process the resubmitted
 packet with different actions as opposed to the ones used to process
 the original packet.
 
-TBD: does PSA specify that a packet can be resubmitted at most once?
-
-PSA specifies that the resubmit operation can only be used in the
-ingress pipeline. The egress pipeline cannot resubmit packets.
+PSA specifies that the resubmit operation can only be used in the ingress pipeline. The egress
+pipeline cannot resubmit packets. As described in Section [#packet-paths], there is no mandated
+mechanism in PSA to prevent a single received packet from creating packets that continue to
+recirculate, resubmit, or clone from egress to egress indefinitely. However, targets may impose
+limits on the number of resubmissions, recirclulations, or clones.
 
 Packet resubmission is intended to increase the capacity and
  flexibility of the packet processing pipeline. For example, because
@@ -981,28 +967,8 @@ To facilitate communication between the first pass and the second pass
 through the ingress pipeline, the resubmission mechanism supports
 attaching optional metadata with the resubmitted packet. The metadata
 is generated during the first pass through the ingress pipeline, and
-used in the second pass.
-
-A PSA implementation provides the `resubmit` extern to specify the
-attached metadata. The `resubmit` extern provides a `add_metadata`
-method which accepts metadata with generic type `T`. In a PSA
-implementation, the metadata is prepended to the resubmitted packet.
-It is the responsibility of the programmer to parse the resubmitted
-packet correctly to extract the attached metadata. The attached
-metadata can be of type `header`, `header stack`, `header union` or
-`struct` of the above types. Invoking the `add_metadata` method
-multiple times will attach all specified metadata to the same
-resubmitted packet.
-
-PSA does not specify the maximum size of the associated metadata.
-However, a target implementation may enforce a limit on the metadata
-size and reject programs that exceed the limit.
-
-TBD: if the pure intrinsic metadata approach is accept, this paragraph
-needs to be rewritten.
-
-TBD: packing the resubmitted metadata is an issue with explicit
-parsing, which can be solved with the intrinsic metadata approach.
+used in the second pass. See Section [#sec-open-metadata] for the
+discussion.
 
 A PSA implementation provides a configuration bit `resubmit` to the
 PRE to enable the resubmission mechanism. If `resubmit` is set to
@@ -1014,8 +980,6 @@ deparser.
 
 ```
 [INCLUDE=psa.p4:Resubmit_extern]
-
-need example
 
 ```
 
@@ -1031,13 +995,16 @@ egress pipeline. If the `recirculate` bit is set to true, the modified
 packet at the end of the pipeline is sent to a special recirculation
 port. The recirculation port overrides the value in `egress_port`.
 
+```
+[INCLUDE=psa.p4:Recirculate_extern]
+
+```
+
 Users can leverage the existing `emit` methods in `packet_out` to
 attach additional metadata to the recirculated packet. Upon receiving
 the recirculated packet in ingress parser, the `instance_type` of the
 recirculated packet is set to `RECIRCULATE`. It is the user's
 responsibility to parse the recirculated packet correctly.
-
-
 
 
 # PSA Externs
@@ -1137,8 +1104,8 @@ regardless of whether they are for the PSA.
 Rationale:
 
 - It is expected that the highest performance PSA implementations will
-  not be able to update the same extern instance from both ingress and
-  egress, nor from more than one of the parsers or controls defined in
+  not be able to update the same extern instance from both Ingress and
+  Egress, nor from more than one of the parsers or controls defined in
   the PSA architecture.
 - In a multi-pipeline device, there are effectively multiple
   instantiations of the ingress pipeline and of the egress pipeline.
@@ -1164,17 +1131,15 @@ later.
 The PRE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
 it exactly once, without requiring the user's P4 program to
-instantiate it.
-The PRE is made available to the Ingress programmable block using the
-same mechanism as `packet_in`.  A corresponding Buffering and Queuing
-Engine (BQE) extern is defined for the Egress pipeline (see
-[#sec-bqe]).
+instantiate it. The PRE is made available to the `PSA_Switch` package.
+A corresponding Buffering and Queuing Engine (BQE) extern
+is defined for the egress pipeline (see [#sec-bqe]).
 
 
 ## Buffering Queuing Engine {#sec-bqe}
 
 The BufferingQueueingEngine extern (abbreviated BQE) represents
-another part of the PSA pipeline, after Egress, that is not
+another part of the PSA pipeline, after egress, that is not
 programmable via writing P4 code.
 
 Even though the BQE can not be programmed using P4, it can be
@@ -1184,12 +1149,7 @@ intrinsic metadata.
 The BQE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
 it exactly once, without requiring the user's P4 program to
-instantiate it.
-The BQE is made available to the Egress programmable block
-using the same mechanism as `packet_in`. A corresponding Packet
-Replication Engine (PRE) extern is defined for the Ingress pipeline
-(see [#sec-pre]).
-
+instantiate it. The BQE is made available to the PSA_Switch` package.
 
 ## Hashes {#sec-hash-algorithms}
 
@@ -1211,8 +1171,8 @@ parser P() {
 
 Parameters:
 
-- algo The algorithm to use for computation (see [#sec-hash-algorithms]).
-- O    The type of the return value of the hash.
+- `algo` -- The algorithm to use for computation (see [#sec-hash-algorithms]).
+- `O`       -- The type of the return value of the hash.
 
 ```
 [INCLUDE=psa.p4:Hash_extern]
@@ -1235,7 +1195,7 @@ algorithms.
 
 Parameters:
 
-- W    The width of the checksum
+- `W`   -- The width of the checksum
 
 ```
 [INCLUDE=psa.p4:Checksum_extern]
@@ -1260,7 +1220,7 @@ and section [#appendix-internetchecksum-implementation] for details.
 The partial program below demonstrates one way to use the `InternetChecksum`
 extern to verify whether the checksum field in a parsed IPv4 header is
 correct, and set a parser error if it is wrong.  It also demonstrates
-checking for parser errors in the `ingress` control block, dropping
+checking for parser errors in the `Ingress` control block, dropping
 the packet if any errors occurred during parsing.  PSA programs may
 choose to handle packets with parser errors in other ways than shown
 in this example -- it is up to the P4 program author to choose and
@@ -1282,8 +1242,8 @@ The partial program below demonstrates one way to use the `InternetChecksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
 the deparser block.  In this example, the checksum is calculated
 fresh, so the outgoing checksum will be correct regardless of what
-changes might have been made to the IPv4 header fields in the ingress
-(or egress) control block that precedes it.
+changes might have been made to the IPv4 header fields in the Ingress
+(or Egress) control block that precedes it.
 
 ```
 [INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
@@ -1295,7 +1255,7 @@ computed over the _entire_ packet, including the payload. Because the
 packet payload is not available in P4, we assume that the TCP checksum
 on the original packet is correct, and update it incrementally by
 invoking `subtract` and then `add` on any fields that are modified by
-the program. For example, the ingress control in the program below
+the program. For example, the Ingress control in the program below
 updates the IPv4 source address, recording the original source address
 in a metadata field:
 ```
@@ -1468,7 +1428,7 @@ conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
 The value returned by an uninitialized meter shall be GREEN. This is in
-accordance with the P4Runtime specification.
+accordance with the P4 Runtime specification.
 
 
 RFC 2698 describes "color aware" and "color blind" variations of
@@ -1480,7 +1440,7 @@ Similar to counters, there are two flavors of meters: indexed and
 direct.  (Indexed) meters are addressed by index, while direct meters
 always update a meter state corresponding to the matched table entry
 or action, and from the control plane API are addressed using
-P4Runtime table entry as key.
+P4 Runtime table entry as key.
 
 There are many other similarities between counters and meters,
 including:
@@ -1887,9 +1847,9 @@ parsing (see examples below).
 ```
 
 The control plane API excerpt above is intended to be added as part of
-the P4Runtime API[^P4RuntimeAPI].
+the P4 Runtime API[^P4RuntimeAPI].
 
-[^P4RuntimeAPI]: The P4Runtime API, defined as a Google Protocol
+[^P4RuntimeAPI]: The P4 Runtime API, defined as a Google Protocol
     Buffer `.proto` file, can be found at
     <https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto>
 
@@ -1951,17 +1911,17 @@ for maximum portability should avoid writing such code.
 ## Timestamps
 
 A PSA implementation provides an `ingress_timestamp` value for every
-packet in the ingress control block, as a field in the struct with
+packet in the Ingress control block, as a field in the struct with
 type `psa_ingress_input_metadata_t`.  This timestamp should be close
 to the time that the first bit of the packet arrived to the device, or
 alternately, to the time that the device began parsing the packet.
 This timestamp is _not_ automatically included with the packet in the
-egress control block.  A P4 program wishing to use the value of
+Egress control block.  A P4 program wishing to use the value of
 `ingress_timestamp` in egress code must copy it to a user-defined
 metadata field that reaches egress.
 
 A PSA implementation also provides an `egress_timestamp` value for
-every packet in the egress control block, as a field of the struct
+every packet in the Egress control block, as a field of the struct
 with type `psa_egress_input_metadata_t`.
 
 One expected use case for timestamps is to store them in tables or
@@ -2041,12 +2001,7 @@ small percentage, until the desired synchronization is achieved.
 implementations were allowed to do this with their timestamp values?
 
 The control plane API excerpt below is intended to be added as part of
-the P4Runtime API[^P4RuntimeAPI].
-
-TBD: Antonin Bas suggests exposing 'switch capabilities' type of
-information like that shown below not via the P4Runtime API, but
-instead via Openconfig data models.  Ask him for a more appropriate
-way to document this in the PSA spec.
+the P4 Runtime API.
 
 ```
 // The TimestampInfo and Timestamp messages should be added to the
@@ -2162,7 +2117,8 @@ The control plane should provide a
 # Appendix: Open Issues {@h1:"A"}
 
 As with any work in progress, we have a number of open issues that are under discussion in the
-working group. These are summarized here:
+working group. In addition to the TBDs in the doument, there a number of larger issues that are
+summarized here:
 
 ## Action Selectors
 
@@ -2174,11 +2130,20 @@ a common P4 program.
 We also need to formalize the interaction of action profiles and action selectors with counters and
 meters.
 
-## Metadata serialization
+## Metadata serialization {#sec-open-metadata}
 
 We have several proposals for serializing metadata that is bridged across the PRE between the
 ingress and egress pipelines, or as part of cloned and resubmitted packets. We are actively working
 on building a set of examples to determine what will be the final PSA API for these operations.
+
+For the `clone_out` and `resubmit` externs, we are currently discussing the addition of a method,
+`add_metadata`, to enable prepending metadata to the cloned or resubmitted packet. It is
+the responsibility of the programmer to parse these packets such that it correctly extracts the
+attached metadata. The attached metadata may be of type `header`, `header stack`, `header union` or
+`struct` of the above types. Invoking the `add_metadata` method multiple times will attach all
+specified metadata to the same copy of the packet in the order in which the method was called. The
+PSA architecture instantiates the `clone_out` extern in the ingress and egress deparser. It is an
+error to instantiate the `clone_out` extern in blocks other than the deparser block.
 
 
 ## How does PSA interact with multiple pipelines
