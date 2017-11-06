@@ -1,10 +1,14 @@
 
 SPEC=PSA
+CHARTER=P4_Arch_Charter
 
-all: build/${SPEC}.pdf
+all: build/${SPEC}.pdf build/${CHARTER}.pdf
 
 build/${SPEC}.pdf: ${SPEC}.mdk
 	madoko --pdf -vv --odir=build $<
+
+build/${CHARTER}.pdf: charter/${CHARTER}.mdk
+	madoko -vv --odir=build $<
 
 build/${SPEC}.pdf: p4.json
 build/${SPEC}.pdf: psa.p4
@@ -23,4 +27,3 @@ check:
 	${P4C} examples/psa-example-parser-checksum.p4
 	${P4C} examples/psa-example-incremental-checksum.p4
 	${P4C} examples/psa-example-clone-to-port.p4
-
