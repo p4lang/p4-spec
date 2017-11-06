@@ -635,6 +635,8 @@ package PSA_Switch<IH, IM, EH, EM> (IngressPipeline<IH, IM> ingress,
                                     EgressPipeline<EH, EM> egress,
                                     BufferingQueueingEngine bqe);
 
+// END:Programmable_blocks
+
 // Macro enabling the PSA program author to more conveniently create a
 // PSA_Switch package instantiation, without having to type the
 // constructor calls for PacketReplicationEngine and
@@ -645,6 +647,5 @@ package PSA_Switch<IH, IM, EH, EM> (IngressPipeline<IH, IM> ingress,
                                       PacketReplicationEngine(), \
                                       (ep),                      \
                                       BufferingQueueingEngine())
-// END:Programmable_blocks
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
