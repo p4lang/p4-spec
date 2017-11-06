@@ -23,7 +23,7 @@ tbd {
 
 Pdf Latex: pdflatex
 Document Class: [10pt]article
-Package: [top=1in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
+Package: [top=1in, bottom=1.25in, left=1.25in, right=1.25in]geometry
 Package: fancyhdr
 
 
@@ -77,10 +77,10 @@ operations are available -- validation in the parser,
 and checksum computation and update in deparser (see also
 Table [#table-extern-usage]).
 
-~ Figure { #fig-switch; caption: "Portable Switch Pipeline"; page-align: here; }
+~ Figure {#fig-switch; caption: "Portable Switch Pipeline"; page-align: here;}
 ![switch]
 ~
-[switch]: psa_pipeline.png { width: 100%; }
+[switch]: psa_pipeline.png { width: 100%;}
 
 A programmer targeting the PSA is required to instantiate objects for
 the programmable blocks that conform to these APIs (see section
@@ -98,28 +98,28 @@ In this document we use the following naming conventions:
 
 - Types are named using CamelCase followed by `_t`. For example, `PortId_t`.
 - Control types and extern object types are named using CamelCase. For
-  example `IngressParser`.
+example `IngressParser`.
 - Struct types are named using lower case words separated by `_`
   followed by `_t`. For example `psa_ingress_input_metadata_t`.
 - Actions, extern methods, extern functions, headers, structs, and
   instances of controls and externs start with lower case and words
   are separated using `_`. For example `send_to_port`.
 - Enum members, const definitions, and #define constants are all
-  caps, with words separated by `_`. For example 'PORT_CPU'.
+  caps, with words separated by `_`. For example `PORT_CPU`.
 
 Architecture specific metadata (e.g. structs) are prefixed by `psa_`.
 
 
-# Packet paths { #packet-paths }
+# Packet paths {#packet-paths}
 
 Figure [#fig-packet-paths] shows all possible paths for packets that
 must be supported by a PSA implementation.  An implementation is
 allowed to support paths for packets that are not described here.
 
-~ Figure { #fig-packet-paths; caption: "Packet Paths in PSA"; page-align: here; }
+~ Figure {#fig-packet-paths; caption: "Packet Paths in PSA"; page-align: here;}
 ![packet-paths]
 ~
-[packet-paths]: figs/psa-packet-paths-figure.pdf { width: 100%; }
+[packet-paths]: figs/psa-packet-paths-figure.pdf { width: 100%;}
 
 
 Table [#packet-path-abbreviations] defines the meanings of the
@@ -133,7 +133,7 @@ P4-programmable portions of the architecture as sources and
 destinations of these packet paths.
 
 
-~ TableFigure { #packet-path-abbreviations; \
+~ TableFigure {#packet-path-abbreviations; \
   caption: Packet path abbreviation meanings.}
 |--------------|-------------|---------------|--------------------|
 | Abbreviation | Description | Packet Source | Packet Destination |
@@ -170,7 +170,7 @@ the same as shown in Table [#packet-path-abbreviations], but have been
 grouped together by similar values of "Processed next by".
 
 
-~ TableFigure { #results-of-one-pkt-thru-ingress-or-egress; \
+~ TableFigure {#results-of-one-pkt-thru-ingress-or-egress; \
   caption: Result of packet processed one time by ingress or egress.}
 |--------------|-------------|---------------|--------------------|
 |              |             | Processed     | Resulting          |
@@ -284,7 +284,7 @@ Additional supported match_kind types
 ```
 
 
-# Programmable blocks { #sec-programmable-blocks }
+# Programmable blocks {#sec-programmable-blocks}
 
 The following declarations provide a template for the programmable
 blocks in the PSA. The P4 programmer is responsible for
@@ -301,7 +301,7 @@ types, as the P4 program author wishes.
 ```
 
 
-# Packet Path Details { #packet-path-details }
+# Packet Path Details {#packet-path-details}
 
 Refer to section [#packet-paths] for the packet paths provided by PSA,
 and their abbreviated names, used often in this section.
@@ -312,7 +312,7 @@ and their abbreviated names, used often in this section.
 Table [#ingress-initial-values] describes the initial values of the
 packet contents and metadata when a packet begins ingress processing.
 
-~ TableFigure { #ingress-initial-values; \
+~ TableFigure {#ingress-initial-values; \
   caption: Initial values for packets processed by ingress.}
 
 |--------------|-------------|---------------|--------------|-----|
@@ -392,7 +392,7 @@ there by a way in PSA to specify some collection of fields to be
 preserved with a resub/recirc'ed packet?
 
 
-## Behavior of packets after Ingress processing is complete { #sec-after-ingress }
+## Behavior of packets after Ingress processing is complete {#sec-after-ingress}
 
 The pseudocode below defines where copies of packets will be made
 after the Ingress control block has completed executing, based upon
@@ -582,7 +582,7 @@ message ClassOfServiceInfo {
 ```
 
 
-## Actions for directing packets during ingress { #sec-ingress-actions }
+## Actions for directing packets during ingress {#sec-ingress-actions}
 
 All of these actions modify one or more metadata fields in the struct
 with type `psa_ingress_output_metadata_t` that is an `out` parameter
@@ -633,7 +633,7 @@ Do not send a copy of the packet for normal egress processing.
 [INCLUDE=psa.p4:Action_ingress_drop]
 ```
 
-### Truncate operation { #sec-ingress-truncate }
+### Truncate operation {#sec-ingress-truncate}
 
 For all copies of the packet made at the end of Ingress processing,
 truncate the payload to be at most the specified number of bytes.
@@ -650,7 +650,7 @@ no payload.
 Table [#egress-initial-values] describes the initial values of the
 packet contents and metadata when a packet begins egress processing.
 
-~ TableFigure { #egress-initial-values; \
+~ TableFigure {#egress-initial-values; \
   caption: Initial values for packets processed by egress.}
 
 |--------------|-------------|---------------|--------------|-----|
@@ -752,7 +752,7 @@ mentioned above, will be the same for every copy of the same original
 multicast-replicated packet.
 
 
-## Behavior of packets after Egress processing is complete { #sec-after-egress }
+## Behavior of packets after Egress processing is complete {#sec-after-egress}
 
 
 The pseudocode below defines where copies of packets will be made
@@ -820,9 +820,9 @@ separate counters for as many different reasons as the implementation
 has for dropping packets outside the control of the P4 program.
 
 
-## Actions for directing packets during egress { #sec-egress-actions }
+## Actions for directing packets during egress {#sec-egress-actions}
 
-### Drop operation { #sec-bqe-drop }
+### Drop operation {#sec-bqe-drop}
 
 Do not send the packet out of the device after egress processing is
 complete.
@@ -831,7 +831,7 @@ complete.
 [INCLUDE=psa.p4:Action_egress_drop]
 ```
 
-### Truncate operation { #sec-egress-truncate }
+### Truncate operation {#sec-egress-truncate}
 
 For all copies of the packet made at the end of Egress processing,
 truncate the payload to be at most the specified number of bytes.
@@ -865,16 +865,16 @@ for such dropped frames.
 
 ## Clone, Recirculate, Resubmit
 
-~ Figure { #fig-clone; caption: "Clone, recirculate, and resubmit in PSA"; page-align: here; }
+~ Figure {#fig-clone; caption: "Clone, recirculate, and resubmit in PSA"; page-align: here;}
 ![clone]
 ~
-[clone]: clone_recirc_resubmit.png { width: 90%; }
+[clone]: clone_recirc_resubmit.png { width: 90%;}
 
 Figure [#fig-clone] shows the proposed architectures for clone,
 recirculate, and resubmit in PSA.
 
 
-## Packet Cloning  { #sec-clone }
+## Packet Cloning  {#sec-clone}
 
 Packet cloning is a mechanism to send a copy of a packet to a
 specified port, and is often synonymous with packet mirroring.
@@ -930,7 +930,7 @@ blocks other than the deparser block.
 [INCLUDE=psa.p4:Clone_extern]
 ```
 
-### Clone Examples { #sec-clone-examples }
+### Clone Examples {#sec-clone-examples}
 
 The partial program below demonstrates one way to use the `Clone`
 extern to configure the PRE to create a copy of the packet and send
@@ -942,7 +942,7 @@ the cloned copy to `clone_port`.
 [INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part3]
 ```
 
-## Packet Resubmission  { #sec-resubmit }
+## Packet Resubmission  {#sec-resubmit}
 
 Packet resubmission is a mechanism to repeat ingress processing on a
 packet.
@@ -1019,7 +1019,7 @@ need example
 
 ```
 
-## Packet Recirculation { #sec-recirculate }
+## Packet Recirculation {#sec-recirculate}
 
 Packet recirculation sends the deparsed packet at the end of egress
 pipeline to the ingress parser. Unlike the previous two mechanisms,
@@ -1042,7 +1042,7 @@ responsibility to parse the recirculated packet correctly.
 
 # PSA Externs
 
-## Restrictions on where externs may be used { #sec-extern-restrictions }
+## Restrictions on where externs may be used {#sec-extern-restrictions}
 
 All instantiations in a P4~16~ program occur at compile time, and can
 be arranged in a tree structure we will call the instantiation tree.
@@ -1055,10 +1055,10 @@ instantiation.  See Figure [#fig-instantiation-tree] for a drawing of
 the smallest instantiation tree possible for a P4 program written for
 PSA.
 
-~ Figure { #fig-instantiation-tree; caption: "Minimal PSA instantiation tree"; page-align: here; }
+~ Figure {#fig-instantiation-tree; caption: "Minimal PSA instantiation tree"; page-align: here;}
 ![switch]
 ~
-[switch]: figs/psa-instantiation-tree-figure.png { width: 100%; }
+[switch]: figs/psa-instantiation-tree-figure.png { width: 100%;}
 
 
 If any of those parsers or controls instantiate other parsers,
@@ -1074,7 +1074,7 @@ A PSA implementation is allowed to reject programs that instantiate
 externs, or attempt to call their methods, from anywhere other than
 the places mentioned in Table [#table-extern-usage].
 
-~ TableFigure { #table-extern-usage; \
+~ TableFigure {#table-extern-usage; \
   caption: Summary of controls that can instantiate and invoke externs.}
 |-------------------|----------------------------------------------|
 | Extern type       | Where it may be instantiated and called from |
@@ -1149,7 +1149,7 @@ Rationale:
   accessed from only a single pipeline on such a device.
 
 
-## Packet Replication Engine { #sec-pre }
+## Packet Replication Engine {#sec-pre}
 
 The ```PacketReplicationEngine``` extern (abbreviated PRE) represents
 a part of the PSA pipeline that is not programmable via writing P4
@@ -1171,7 +1171,7 @@ Engine (BQE) extern is defined for the Egress pipeline (see
 [#sec-bqe]).
 
 
-## Buffering Queuing Engine { #sec-bqe }
+## Buffering Queuing Engine {#sec-bqe}
 
 The BufferingQueueingEngine extern (abbreviated BQE) represents
 another part of the PSA pipeline, after Egress, that is not
@@ -1191,7 +1191,7 @@ Replication Engine (PRE) extern is defined for the Ingress pipeline
 (see [#sec-pre]).
 
 
-## Hashes { #sec-hash-algorithms }
+## Hashes {#sec-hash-algorithms}
 
 Supported hash algorithms:
 ```
@@ -1222,13 +1222,13 @@ TBD: Should there be a `const` defined that specifies the maximum
 allowed value of `max` parameter?
 
 
-## Checksums { #sec-checksums }
+## Checksums {#sec-checksums}
 
 PSA provides checksum functions compute an integer on the stream of
 bytes in packet headers. Checksums are often used as an integrity
 check to detect corrupted or otherwise malformed packets.
 
-### Basic checksum { #sec-basic-checksum }
+### Basic checksum {#sec-basic-checksum}
 
 The basic checksum extern provided in PSA supports arbitrary hash
 algorithms.
@@ -1241,7 +1241,7 @@ Parameters:
 [INCLUDE=psa.p4:Checksum_extern]
 ```
 
-### Incremental checksum { #sec-incremental-checksum }
+### Incremental checksum {#sec-incremental-checksum}
 
 PSA also provides an incremental checksum that comes equipped with an
 additional `subtract` method that can be used to remove data previously
@@ -1251,10 +1251,10 @@ RFC 1624](https://tools.ietf.org/html/rfc1624)
 and section [#appendix-internetchecksum-implementation] for details.
 
 ```
-[INCLUDE=psa.p4:InternetChecksum_extern]    
-```            
-    
-### InternetChecksum examples { #sec-checksum-examples }
+[INCLUDE=psa.p4:InternetChecksum_extern]
+```
+
+### InternetChecksum examples {#sec-checksum-examples}
 
 
 The partial program below demonstrates one way to use the `InternetChecksum`
@@ -1448,7 +1448,7 @@ updating of `Counter` and `DirectCounter` externs.
 [INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part2]
 ```
 
-## Meters { #sec-meters }
+## Meters {#sec-meters}
 
 Meters (RFC 2698) are a more complex mechanism for keeping statistics
 about packets, most often used for dropping
@@ -1577,7 +1577,7 @@ rate should always be within plus or minus 0.1% of the requested rate.
 [INCLUDE=psa.p4:DirectMeter_extern]
 ```
 
-## Registers { #sec-registers }
+## Registers {#sec-registers}
 
 Registers are stateful memories whose values can be read and written
 during packet forwarding under the control of the P4 program.  They
@@ -1694,10 +1694,10 @@ a resource in the P4 program. A table that uses this action profile
 must specify its implementation attribute as the action profile
 instance.
 
-~ Figure { #fig-ap; caption: "Action profiles in PSA"; page-align: here; }
+~ Figure {#fig-ap; caption: "Action profiles in PSA"; page-align: here;}
 ![ap]
 ~
-[ap]: action_profile.png { width: 75%; }
+[ap]: action_profile.png { width: 75%;}
 
 Figure [#fig-ap] contrasts a direct table with a table that has an action
 profile implementation. A direct table, as seen in Figure [#fig-ap] (a) contains
@@ -1776,10 +1776,10 @@ a resource in the P4 program, similar to action profiles. Furthermore,
 a table that uses this action selector must specify its implementation attribute
 as the action selector instance.
 
-~ Figure { #fig-as; caption: "Action selectors in PSA"; page-align: here; }
+~ Figure {#fig-as; caption: "Action selectors in PSA"; page-align: here;}
 ![as]
 ~
-[as]: action_selector.png { width: 90%; }
+[as]: action_selector.png { width: 90%;}
 
 Figure [#fig-as] illustrates a table that has an action selector implementation.
 In this example, the table has a match key consisting of an LPM on header field
@@ -2134,8 +2134,9 @@ control plane to route the digest message to the right receiver. The
 digest message can contain any from the dataplane.
 
 In PSA, digest is performed at the end of the ingress pipeline in the
-deparser. The digest extern provides a `pack` method to specify the
-content in the 
+deparser.
+TBD: The digest extern provides a `pack` method to specify the
+content in the digest header.
 
 The compiler decides the best serializatoin format to send the data
 object to the control plane.
@@ -2158,7 +2159,50 @@ The control plane should provide a
 
 ```
 
-# Appendix: Implementation of the `InternetChecksum` extern { #appendix-internetchecksum-implementation }
+# Appendix: Open Issues {@h1:"A"}
+
+As with any work in progress, we have a number of open issues that are under discussion in the
+working group. These are summarized here:
+
+## Action Selectors
+
+The size parameter in the action_selector instance that defines the maximum number of members in a
+selector. In some cases it might be useful to allow the controller to dynamically provision
+resources on the selector or to utilize different selector sizes on different targets, while using
+a common P4 program.
+
+We also need to formalize the interaction of action profiles and action selectors with counters and
+meters.
+
+## Metadata serialization
+
+We have several proposals for serializing metadata that is bridged across the PRE between the
+ingress and egress pipelines, or as part of cloned and resubmitted packets. We are actively working
+on building a set of examples to determine what will be the final PSA API for these operations.
+
+
+## How does PSA interact with multiple pipelines
+
+As presented, the PSA describes the operation of a single packet processing pipeline. However,
+programmable devices typically support multiple pipelines. It is unlikely that high performance
+devices implement any form of coherency across pipelines, even though forwarding across pipelines
+may happen.
+
+In the current specification, each extern has its own resources and they are constrained to a
+single pipeline, i.e., not shared across pipelines and not maintained coherent with any other
+externs even if attached to the same logical table. It is the responsability of the programmer to
+maintain state across pipelines using control-plane operations, if so desired.
+
+Likewise, for programming multiple pipelines, it is the responsability of the vendor and of target
+dependent tools to specify how PSA programs are mapped to multiple pipelines. A simple
+implementation may use a copy of the PSA program on each pipeline, and thus keeping pipelines fully
+isolated. We will continue to discuss and refine our position.
+
+## PSA profiles
+
+We are considering whether to specify different limits that a certain PSA implementation has to have in order for the implementation to be considered compliant. The main point of PSA is to enable a variety of devices, and thus limits may be artificial. On the other hand, for most interesting applications, it is necessary to support a minimum of functionality.
+
+# Appendix: Implementation of the InternetChecksum extern {#appendix-internetchecksum-implementation}
 
 Besides RFC 1461, RFC 1071 and RFC 1141 also contain useful tips on
 efficiently computing the Internet checksum, especially in software
@@ -2226,7 +2270,7 @@ void set_state(bit<16> checksum_state) {
 ```
 
 
-# Appendix: Example implementation of `Counter` extern { #appendix-counter-implementation }
+# Appendix: Example implementation of Counter extern {#appendix-counter-implementation}
 
 The example implementation below, in particuar the function
 `next_counter_value`, is not intended to restrict PSA implementations.
@@ -2309,3 +2353,5 @@ out of range includes:
   is implementation-defined (e.g. it might only be 1).  Extra
   information to identify which `count()` method call in the P4
   program had the out-of-range `index` value is also recommended.
+
+

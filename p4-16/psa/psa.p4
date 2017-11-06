@@ -63,10 +63,12 @@ const   PortId_t         PORT_CPU = unspecified;
 // BEGIN:Metadata_types
 enum InstanceType_t {
     NORMAL,     /// Packet received by ingress that is none of the cases below.
-    NORMAL_UNICAST,   /// Packet received by egress that is none of the cases below, and unicast
-    NORMAL_MULTICAST, /// Packet received by egress that is none of the cases below, and multicast
-    CLONE_I2E,  /// Packet created via a clone operation in ingress, destined for egress
-    CLONE_E2E,  /// Packet created via a clone operation in egress, destined for egress
+    NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
+    NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
+    CLONE_I2E,  /// Packet created via a clone operation in ingress,
+                /// destined for egress
+    CLONE_E2E,  /// Packet created via a clone operation in egress,
+                /// destined for egress
     RESUBMIT,   /// Packet arrival is the result of a resubmit operation
     RECIRCULATE /// Packet arrival is the result of a recirculate operation
 }
@@ -633,12 +635,17 @@ package PSA_Switch<IH, IM, EH, EM> (IngressPipeline<IH, IM> ingress,
                                     EgressPipeline<EH, EM> egress,
                                     BufferingQueueingEngine bqe);
 
+// END:Programmable_blocks
+
 // Macro enabling the PSA program author to more conveniently create a
 // PSA_Switch package instantiation, without having to type the
 // constructor calls for PacketReplicationEngine and
 // BufferingQueueingEngine.
 
-#define PSA_SWITCH(ip, ep) PSA_Switch((ip), PacketReplicationEngine(), (ep), BufferingQueueingEngine())
-// END:Programmable_blocks
+#define PSA_SWITCH(ip, ep) PSA_Switch(                           \
+                                      (ip),                      \
+                                      PacketReplicationEngine(), \
+                                      (ep),                      \
+                                      BufferingQueueingEngine())
 
 #endif  /* _PORTABLE_SWITCH_ARCHITECTURE_P4_ */
