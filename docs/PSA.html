@@ -1409,11 +1409,8 @@ the cloned copy to <span data-line="917"></span><code class="code code1 language
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_output_metadata_t istd) {
     DeparserImpl() common_deparser;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
-        clone_metadata_t clone_md;
-        clone_md.srcAddr = hdr.ethernet.srcAddr;
-        clone_md.custom_tag = <span class="constant" style="color:purple">8</span>w1;
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (meta.custom_clone_id == <span class="constant" style="color:purple">3</span>w1) {
-            clone.emit(clone_md);
+            clone.emit({ <span class="constant" style="color:purple">8</span>w1, hdr.ethernet.srcAddr });
         }
         common_deparser.<span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span>(packet, hdr);
         packet.emit(hdr.ethernet);
@@ -1606,15 +1603,15 @@ than that of a single pipeline.  Thus each stateful object should be
 accessed from only a single pipeline on such a device.
 </li></ul>
 <h3 id="sec-pre" class="h2" data-line="1114" data-heading-depth="2" style="display:block"><span data-line="1114"></span><span class="heading-before"><span class="heading-label">7.2</span>.&#8194;</span><span data-line="1114"></span>Packet Replication Engine</h3>
-<p class="p noindent" data-line="1116"><span data-line="1116"></span>The <span data-line="1116"></span><code class="code code3 language-p4 lang-p4 p4 colorized">PacketReplicationEngine</code><span data-line="1116"></span> extern (abbreviated PRE) represents
+<p class="p noindent" data-line="1116"><span data-line="1116"></span>The <span data-line="1116"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PacketReplicationEngine</code><span data-line="1116"></span> extern (abbreviated PRE) represents
 a part of the PSA pipeline that is not programmable via writing P4
 code.
 </p>
 <p class="p indent" data-line="1120"><span data-line="1120"></span>Even though the PRE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
-intrinsic metadata.  The <span data-line="1122"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="1122"></span> include file provides some actions
+intrinsic metadata.  The file <span data-line="1122"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="1122"></span> defines some actions
 to help set these metadata fields for some common use cases, described
-later.
+in sections<span data-line="1124"></span>&nbsp;<a href="#sec-ingress-actions" title="6.3.&#8194;Actions for directing packets during ingress" class="localref" style="target-element:h2"><span class="heading-label">6.3</span></a><span data-line="1124"></span> and<span data-line="1124"></span>&nbsp;<a href="#sec-egress-actions" title="6.6.&#8194;Actions for directing packets during egress" class="localref" style="target-element:h2"><span class="heading-label">6.6</span></a><span data-line="1124"></span>.
 </p>
 <p class="p indent" data-line="1126"><span data-line="1126"></span>The PRE extern object has no constructor, and thus it cannot be
 instantiated in the user<span data-line="1127"></span>&#39;<span data-line="1127"></span>s P4 program. The architecture instantiates
@@ -1623,7 +1620,7 @@ instantiate it. The PRE is made available to the <span data-line="1129"></span><
 A corresponding Buffering and Queuing Engine (BQE) extern
 is defined for the egress pipeline (see<span data-line="1131"></span>&nbsp;<a href="#sec-bqe" title="7.3.&#8194;Buffering Queuing Engine" class="localref" style="target-element:h2"><span class="heading-label">7.3</span></a><span data-line="1131"></span>).
 </p><h3 id="sec-bqe" class="h2" data-line="1134" data-heading-depth="2" style="display:block"><span data-line="1134"></span><span class="heading-before"><span class="heading-label">7.3</span>.&#8194;</span><span data-line="1134"></span>Buffering Queuing Engine</h3>
-<p class="p noindent" data-line="1136"><span data-line="1136"></span>The BufferingQueueingEngine extern (abbreviated BQE) represents
+<p class="p noindent" data-line="1136"><span data-line="1136"></span>The <span data-line="1136"></span><code class="code code1 language-p4 lang-p4 p4 colorized">BufferingQueueingEngine</code><span data-line="1136"></span> extern (abbreviated BQE) represents
 another part of the PSA pipeline, after egress, that is not
 programmable via writing P4 code.
 </p>
@@ -1634,7 +1631,7 @@ intrinsic metadata.
 <p class="p indent" data-line="1144"><span data-line="1144"></span>The BQE extern object has no constructor, and thus it cannot be
 instantiated in the user<span data-line="1145"></span>&#39;<span data-line="1145"></span>s P4 program. The architecture instantiates
 it exactly once, without requiring the user<span data-line="1146"></span>&#39;<span data-line="1146"></span>s P4 program to
-instantiate it. The BQE is made available to the PSA<span data-line="1147"></span>_<span data-line="1147"></span>Switch<span data-line="1147"></span>`<span data-line="1147"></span> package.
+instantiate it. The BQE is made available to the <span data-line="1147"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_Switch</code><span data-line="1147"></span> package.
 </p><h3 id="sec-hash-algorithms" class="h2" data-line="1149" data-heading-depth="2" style="display:block"><span data-line="1149"></span><span class="heading-before"><span class="heading-label">7.4</span>.&#8194;</span><span data-line="1149"></span>Hashes</h3>
 <p class="p noindent" data-line="1151"><span data-line="1151"></span>Supported hash algorithms:
 </p>
