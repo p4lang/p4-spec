@@ -392,12 +392,6 @@ through the rest of the parser into the `Ingress`  control block as one
 might normally expect.  This will be left as an option to the user in
 their P4 programs, not required behavior for all P4 programs.
 
-~TBD
-Is this true for RESUB and RECIRC packets, or is it intended that
-there by a way in PSA to specify some collection of fields to be
-preserved with a resub/recirc'ed packet?
-~
-
 ## Behavior of packets after ingress processing is complete {#sec-after-ingress}
 
 The pseudocode below defines where copies of packets will be made
@@ -491,17 +485,6 @@ assist P4 developers in debugging their code.
 
 Note: Truncation is not currently supported for cloned packets. The functionality of a truncated
 cloned packet can be replaced with sending a digest.
-
-~TBD
-
-If it is planned to be possible at the end of ingress to send a
-packet to be replicated via a multicast_group, and also have a copy go
-to the control CPU, give an example showing this case (after showing
-some simpler common cases).  Ideally it should be possible for the
-copy going to the control CPU to have a software-defined header
-(defined in the P4 program) that is different than any headers on the
-packet copies going to the `Egress` control block.
-~
 
 Whenever the pseudocode above indicates that a packet should be sent
 on a particular packet path, a PSA implementation may under some
@@ -806,11 +789,6 @@ the contents of several metadata fields in the struct
     enqueue one packet for output port istd.egress_port
 ```
 
-~TBD
-Should it be possible to truncate a cloned packet differently
-than the normal packet that goes out?
-~
-
 As for the handling of a packet after ingress processing, a PSA
 implementation may drop a packet after egress processing, even if the
 pseudocode above says that a packet will be sent.  For example, you
@@ -911,10 +889,6 @@ which port to send the cloned packet to after egress processing. The
 `clone_port` could be any addressable port in the pipeline. For
 instance, it can be a port to control CPU or a port to the next hop
 router.
-
-~ TBD
-Decide how to add other metadata to the cloned packet (see [#sec-open-metadata]).
-~
 
 ```
 [INCLUDE=psa.p4:Clone_extern]
@@ -1183,11 +1157,6 @@ Parameters:
 [INCLUDE=psa.p4:Hash_extern]
 ```
 
-~ TBD
-Should there be a `const` defined that specifies the maximum
-allowed value of `max` parameter?
-~
-
 ## Checksums {#sec-checksums}
 
 PSA provides checksum functions compute an integer on the stream of
@@ -1290,9 +1259,6 @@ primary differences between direct counters and indexed counters are:
   - A single instantiation of a direct counter always contains as many
     independent counter values as the number of entries in the table
     with which it is associated.
-~ TBD
-See below for what this means for tables that use action profiles.
-~
   - You must specify the number of independent counter values for an
     indexed counter when instantiating it.  This number of counters
     need not be the same as the size of any table.
@@ -1359,12 +1325,6 @@ inside an action of its owner table.
 The counter value updated by an invocation of `count` is always the
 one associated with the table entry that matched.
 
-~ TBD
-How to describe which counter value is updated for tables with
-action profiles and direct counters?  Or should this combination even
-be allowed?
-~
-
 An action of an owner table need not have `count` method calls for all
 of the `DirectCounter` instances that the table owns.  You must use an
 explicit `count()` method call on a `DirectCounter` to update it,
@@ -1395,20 +1355,6 @@ table has a `default_action` table property with an action assigned to
 it in the P4 program, or the control plane has made an explicit call
 to assign the table a default action.  If neither of these is true,
 then there is no default action assigned to the table.
-
-~ TBD
-Verify that the method of reading this default action counter
-state is documented for the control plane API.  I believe that Antonin
-Bas said that it can be accessed using the same API call used to read
-a `DirectCounter` value associated with a table entry, except that the
-key in the API call should be empty.
-~
-
-~ TBD
-Should a single table be restricted to have at most one
-DirectCounter associated with it, or should it be allowed to have more
-than one?
-~
 
 ### Example program using counters
 
@@ -2001,21 +1947,6 @@ synchronization, e.g. via PTP[^PTP] or NTP[^NTP].
 
 [^PTP]: <https://en.wikipedia.org/wiki/Precision_Time_Protocol>
 [^NTP]: <https://en.wikipedia.org/wiki/Network_Time_Protocol>
-
-~ TBD
- This text has been written assuming that it is more important for
-timestamps to be increasing at a constant rate, with no sudden "jumps"
-due to time synchronization events.  Is this what people want from
-timestamps?
-~
-
-~ TBD
- Some time synchronization methods avoid sudden "jumps" by
-temporarily speeding up or slowing down the rate of increase by a
-small percentage, until the desired synchronization is achieved.
-Which ones?  citation?).  Would anyone mind if PSA
-implementations were allowed to do this with their timestamp values?
-~
 
 The control plane API excerpt below is intended to be added as part of
 the P4 Runtime API.
