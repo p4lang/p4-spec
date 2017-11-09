@@ -329,14 +329,14 @@ packet contents and metadata when a packet begins ingress processing.
 | `ingress_port`      | `PortId_t` value of | `PORT_` | copied from    | `PORT_`       |
 |                     | packet's input port | `CPU`   | resub'd packet | `RECIRCULATE` |
 +--------------+-------------+---------------+--------------+-----+
-| `instance_type`     | `NORMAL`            | `NORMAL` | `RESUBMIT`    | `RECIRCULATE`  |
+| `packet_path`     | `NORMAL`            | `NORMAL` | `RESUBMIT`    | `RECIRCULATE`  |
 +--------------+-------------+---------------+--------------+-----+
 +--------------+-------------+---------------+--------------+-----+
 | Ingress `istd` fields (type `psa_ingress_input_metadata_t`)         |||||
 +--------------+-------------+---------------+--------------+-----+
 | `ingress_port`      | Same value as received by IngressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| `instance_type`     | Same value as received by IngressParser above. ||||
+| `packet_path`     | Same value as received by IngressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
 | `ingress_timestamp` | Time that packet began processing in IngressParser. ||||
 |                     | For RESUB or RECIRC packets, the time the 'copy'    ||||
@@ -569,7 +569,7 @@ message ClassOfServiceInfo {
 
 All of these actions modify one or more metadata fields in the struct
 with type `psa_ingress_output_metadata_t` that is an `out` parameter
-of the `Ingress` control block.  None of these actions has any other
+of the `Ingress` control block.  None of these actions have any other
 immediate effect.  What happens to the packet is determined by the
 value of all fields in that struct when ingress processing is
 complete, not at the time one of these actions is called.  See Section
@@ -650,7 +650,7 @@ packet contents and metadata when a packet begins egress processing.
 |                   | of ingress packet  | configuration | of cloned         | of cloned         |
 |                   |                    |               | ingress packet    | egress packet     |
 +--------------+-------------+---------------+--------------+-----+
-| `instance_type`   | NORMAL_ | NORMAL_   | CLONE_I2E | CLONE_E2E |
+| `packet_path`   | NORMAL_ | NORMAL_   | CLONE_I2E | CLONE_E2E |
 |                   | UNICAST | MULTICAST |           |           |
 +--------------+-------------+---------------+--------------+-----+
 +--------------+-------------+---------------+--------------+-----+
@@ -661,7 +661,7 @@ packet contents and metadata when a packet begins egress processing.
 +--------------+-------------+---------------+--------------+-----+
 | `egress_port`      | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| `instance_type`    | Same value as received by EgressParser above. ||||
+| `packet_path`    | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
 | `instance`         | From PacketReplicationEngine configuration for NM packets. ||||
 |                    | 0 for all other kinds of packets.                          ||||
@@ -914,12 +914,12 @@ packet.
 If a packet is resubmitted, it re-enters the ingress parser after the
 ingress pipeline processing. The `ingress_port` of the resubmitted
 packet is the same as the original packet, however, the
-`instance_type` of the resubmitted packet is changed to `RESUBMIT`.
+`packet_path` of the resubmitted packet is changed to `RESUBMIT`.
 The resubmitted packet has the same header and payload as the original
 packet.
 
 The ingress parser is able to distinguish between the original packet
-and the resubmitted packet using the `instance_type` field in
+and the resubmitted packet using the `packet_path` field in
 `ingress_parser_intrinsic_metadata_t`. The ingress parser is allowed
 to choose a different algorithm to parse the resubmitted packet.
 Similarly, the ingress pipeline can choose to process the resubmitted
@@ -981,7 +981,7 @@ port. The recirculation port overrides the value in `egress_port`.
 
 Users can leverage the existing `emit` methods in `packet_out` to
 attach additional metadata to the recirculated packet. Upon receiving
-the recirculated packet in ingress parser, the `instance_type` of the
+the recirculated packet in ingress parser, the `packet_path` of the
 recirculated packet is set to `RECIRCULATE`. It is the user's
 responsibility to parse the recirculated packet correctly.
 
@@ -2268,5 +2268,3 @@ out of range includes:
   is implementation-defined (e.g. it might only be 1).  Extra
   information to identify which `count()` method call in the P4
   program had the out-of-range `index` value is also recommended.
-
-

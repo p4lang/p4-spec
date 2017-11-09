@@ -107,14 +107,14 @@ parser IngressParserImpl(packet_in buffer,
 {
     CommonParser() p;
     CloneParser() cp;
-    
+
     state start {
-        transition select(istd.instance_type) {
+        transition select(istd.packet_path) {
            CLONE: parse_clone_header;
            NORMAL: parse_ethernet;
         }
     }
-    
+
     state parse_clone_header {
         cp.apply(buffer, istd, user_meta.clone_header);
 	transition accept;
@@ -139,7 +139,7 @@ control ingress(inout headers hdr,
         ostd.drop = 1;
  	user_meta.telemetry_md.reason = reason;
     }
-        
+
     table system_acl() {
         key = {
             acl_metadata.acl_deny : ternary;
