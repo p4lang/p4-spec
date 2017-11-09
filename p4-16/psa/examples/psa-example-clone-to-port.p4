@@ -145,9 +145,9 @@ parser EgressParserImpl(packet_in buffer,
     CloneParser() cp;
 
     state start {
-        transition select(istd.instance_type) {
-           InstanceType_t.CLONE_I2E: parse_clone_header;
-           InstanceType_t.NORMAL: parse_ethernet;
+        transition select(istd.packet_path) {
+           PacketPath_t.CLONE_I2E: parse_clone_header;
+           PacketPath_t.NORMAL: parse_ethernet;
         }
     }
 

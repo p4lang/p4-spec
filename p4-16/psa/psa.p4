@@ -61,7 +61,7 @@ const   PortId_t         PORT_CPU = unspecified;
 #endif
 
 // BEGIN:Metadata_types
-enum InstanceType_t {
+enum PacketPath_t {
     NORMAL,     /// Packet received by ingress that is none of the cases below.
     NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
     NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
@@ -75,12 +75,12 @@ enum InstanceType_t {
 
 struct psa_ingress_parser_input_metadata_t {
   PortId_t                 ingress_port;
-  InstanceType_t           instance_type;
+  PacketPath_t             packet_path;
 }
 
 struct psa_egress_parser_input_metadata_t {
   PortId_t                 egress_port;
-  InstanceType_t           instance_type;
+  PacketPath_t             packet_path;
 }
 
 struct psa_parser_output_metadata_t {
@@ -91,7 +91,7 @@ struct psa_ingress_input_metadata_t {
   // All of these values are initialized by the architecture before
   // the Ingress control block begins executing.
   PortId_t                 ingress_port;
-  InstanceType_t           instance_type;
+  PacketPath_t             packet_path;
   Timestamp_t              ingress_timestamp;
   ParserError_t            parser_error;
 }
@@ -114,7 +114,7 @@ struct psa_ingress_output_metadata_t {
 struct psa_egress_input_metadata_t {
   ClassOfService_t         class_of_service;
   PortId_t                 egress_port;
-  InstanceType_t           instance_type;
+  PacketPath_t             packet_path;
   EgressInstance_t         instance;       /// instance coming from PRE
   Timestamp_t              egress_timestamp;
   ParserError_t            parser_error;
