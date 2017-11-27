@@ -232,7 +232,7 @@ action egress_drop(inout psa_egress_output_metadata_t meta)
 /// length.  A PSA implementation need not support truncation for
 /// recirculated packets.
 
-action egress_truncate(inout psa_ingress_output_metadata_t meta,
+action egress_truncate(inout psa_egress_output_metadata_t meta,
                        in PacketLength_t payload_bytes)
 {
     meta.truncate = true;
