@@ -911,7 +911,12 @@ original packet with the `packet_path` field in
 different algorithm to parse the resubmitted packet. Similarly, the
 ingress pipeline can choose to process the resubmitted packet with
 different actions as opposed to the ones used to process the original
-packet.
+packet. Further, if a target permits the same packet to be resubmitted
+multiple times, the user program can distinguish the packet
+resubmitted the first time, or second time, by the extra metadata
+associated with the packet. Note the maximum number of packet
+resubmission for a single packet is target-dependent, see section
+[#packet-paths].
 
 PSA specifies that the resubmit operation can only be used in the
 ingress pipeline. The egress pipeline cannot resubmit packets. As
@@ -934,7 +939,7 @@ of the algorithms. Then, the resubmitted packet can be parsed,
 modified and deparsed using the selected algorithm.
 
 To facilitate communication between the first pass and the second pass
-through the ingress pipeline, the resubmission mechanism supports
+through the ingress pipeline, the resubmission mechanism supportsr
 attaching optional metadata with the resubmitted packet. The metadata
 is generated during the first pass through the ingress pipeline, and
 used in the second pass. See Section [#sec-open-metadata] for the
@@ -945,6 +950,7 @@ PRE to enable the resubmission mechanism. If true, the original packet
 is resubmitted with the optional resubmit metadata. If false, the
 resubmission mechanism is disabled and no assignments to
 `resubmit_meta` should be performed.
+
 
 ## Packet Recirculation {#sec-recirculate}
 
@@ -968,8 +974,7 @@ The `recirculate` flag specifies whether a packet should be
 recirculated. If true, the processed packet should be recirculated at
 the end of the egress pipeline with the optional metadata. If false,
 the recirculation mechanism is disabled and no assignments to
-`recirc_meta` should be performed. Some target may restrict the
-`recirculate` flag to be set in the ingress pipeline.
+`recirc_meta` should be performed.
 
 # PSA Externs
 
@@ -2070,6 +2075,10 @@ meters.
 We have several proposals for serializing metadata that is bridged across the PRE between the
 ingress and egress pipelines, or as part of cloned and resubmitted packets. We are actively working
 on building a set of examples to determine what will be the final PSA API for these operations.
+
+~ TBD
+This section needs to be updated.
+~
 
 For the `clone_out` and `resubmit` externs, we are currently discussing the addition of a method,
 `add_metadata`, to enable prepending metadata to the cloned or resubmitted packet. It is
