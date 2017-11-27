@@ -928,9 +928,10 @@ it effectively increase the amount of operations on the packet by N
 folds, where N is the number of times the packet is resubmitted.
 
 Another use case is to deploy multiple packet processing algorithms on
-the same packet. For example, the original packet can be parsed,
-modified and resubmitted in the first pass. Then, the resubmitted
-packet can be parsed and modified using a different algorithm.
+the same packet. For example, the original packet can be parsed and
+resubmitted in the first pass with additional metadata to select one
+of the algorithms. Then, the resubmitted packet can be parsed,
+modified and deparsed using the selected algorithm.
 
 To facilitate communication between the first pass and the second pass
 through the ingress pipeline, the resubmission mechanism supports
@@ -942,8 +943,8 @@ discussion.
 A PSA implementation provides a configuration bit `resubmit` to the
 PRE to enable the resubmission mechanism. If true, the original packet
 is resubmitted with the optional resubmit metadata. If false, the
-resubmission mechanism is disabled and the value assigned to the
-`resubmit_meta` is ignored.
+resubmission mechanism is disabled and no assignments to
+`resubmit_meta` should be performed.
 
 ## Packet Recirculation {#sec-recirculate}
 
@@ -954,19 +955,21 @@ Packet recirculation happens at the end of the egress pipeline. When a
 packet is recirculated, the packet finishes both ingress and egress
 processing and re-enters the ingress parser after being deparsed by
 the egress deparser. The `ingress_port` of the recirculated packet is
-set to `RECIRCULATE`. The `packet_path` of the recirculated packet is
-changed to `RECIRCULATE`.
+set to `PORT_RECIRCULATE`. The `packet_path` of the recirculated
+packet is changed to `RECIRCULATE`.
 
-~ TBD
-Whether use two different enums for recirc port and recirc path
-~
+Similar to packet resubmission, packet recirculation also supports
+attaching optional metadata with the recirculated packet. The metadata
+is generated during the first pass through the ingress and egress
+pipeline, and used in the second pass. See Section
+[#sec-open-metadata] for the discussion.
 
 The `recirculate` flag specifies whether a packet should be
 recirculated. If true, the processed packet should be recirculated at
-the end of the egress pipeline. The `egress_port` must be set to the
-dedicated port for recirculation in the pipeline. Some target may
-restrict the `recirculate` flag and `egress_port` to be set in the
-ingress pipeline.
+the end of the egress pipeline with the optional metadata. If false,
+the recirculation mechanism is disabled and no assignments to
+`recirc_meta` should be performed. Some target may restrict the
+`recirculate` flag to be set in the ingress pipeline.
 
 # PSA Externs
 
