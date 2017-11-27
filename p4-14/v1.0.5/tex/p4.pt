@@ -25,7 +25,7 @@
 \ifpdf
     \pdfinfo {
         /Author   (The P4 Language Consortium)
-        /Title    (The P4 Language Specification, v 1.0.4)
+        /Title    (The P4 Language Specification, v 1.0.5)
         /Keywords (P4)
         /Subject  ()
         /Creator  (TeX)
@@ -36,16 +36,15 @@
 \begin{document}
 \vspace{2cm}
 
-%\title{\sffamily\bfseries\huge The P4 Language Specification\\ \vspace{3mm} \Large Version 1.0.4}
 \centerline{\sffamily\bfseries\huge The P4 Language Specification}
 \vspace{3mm}
-\centerline{\sffamily\Large Version 1.0.4}
+\centerline{\sffamily\Large Version 1.0.5}
 \vspace{3mm}
-\centerline{\sffamily\large May 24, 2017}
+\centerline{\sffamily\large MM DD, YYYY}
 \vspace{8mm}
 \centerline{\sffamily\large The P4 Language Consortium}
 
-\date{May 24, 2017}
+\date{MM DD, YYYY}
 \thispagestyle{firstpagestyle}
 %\maketitle
 
@@ -662,9 +661,7 @@ Section~\ref{sec:headerinstances}.
 
 Header stack instances are referenced using bracket notation and such
 references are equivalent to a non-stack instance reference.  The
-parser maintains information to manage the header stack. See the
-proposal in Appendix 17.8.2. Parser Repeat Loops regarding how they
-may be parsed.  
+parser maintains information to manage the header stack.
 
 \SUBSECTION{Header and Field References}{headerreferences}
 
@@ -678,9 +675,7 @@ header_ref ::= instance_name | instance_name "[" index "]"
 index ::= const_value | last
 %%endbnf
 
-To refer to a particular header field, we use dotted notation. The
-keyword \texttt{last} can be used as an index to refer to the
-largest-index valid instance of a header stack.
+To refer to a particular header field, we use dotted notation.
 
 %%bnf
 field_ref ::= header_ref . field_name
@@ -705,6 +700,22 @@ References at run time to a header instance (or one of its fields) which is
 not valid results in a special ``undefined'' value.  The implications of this 
 depend on the context.
 \end{itemize}
+    
+To help programers write parsers for header stacks, P4 provides two
+keywords, \texttt{next} and \texttt{last}, that may be used to refer
+to header instances within a stack. These references are advanced
+automatically as the parser invokes \texttt{extract} in the parser. It
+is illegal to use these keywords outside of a parser.
+    
+More specifically, the keyword \texttt{next} refers to the header
+instance at index \texttt{0} initially, and is advanced each time that
+\texttt{extract} is invoked on an instance within the stack. If
+\texttt{extract} has been invoked more than $N$ times, where $N$ is
+the size of the stack, then evaluating \texttt{next} results in a
+\texttt{p4_pe_index_out_of_bounds} exception. The \texttt{last}
+keyword refers to the instance referred to by \texttt{next} prior to
+the last invocation of \texttt{extract}, if it exists, and otherwise
+results in \texttt{p4_pe_index_out_of_bounds} exception.
 
 \SUBSECTION{Field Lists}{fieldlists}
 
@@ -1711,7 +1722,7 @@ Drop a packet (in the egress pipeline). \\ \hline
 \texttt{no_op} &
 Placeholder action with no effect. \\ \hline
 \texttt{push} &
-Push all header instances in an array down and add a new header at the top. \\ \hline
+Push all header instances in an array down and add a new invalid header at the top. \\ \hline
 \texttt{pop} &
 Pop header instances from the top of an array, moving all subsequent array elements up. \\ \hline
 \texttt{count} &
@@ -1790,12 +1801,6 @@ If the \texttt{header_instance} is not an element in a header stack, the indicat
 header instance is set valid. If the header instance was invalid, all its 
 fields are initialized to 0. If the header instance is already valid, it is 
 not changed.
-
-If \texttt{header_instance} is an element in a header stack, the effect is to push 
-a new header into the stack at the indicated location. Any existing valid 
-instances from the given index or higher are copied to the next higher index. 
-The given instance is set to valid. If the array is fully populated when this 
-operation is executed, then no change is made to the Parsed Representation.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1830,10 +1835,6 @@ If the \texttt{header_instance} is not an element in a header stack, then the in
 header instance is marked invalid. It will not be available for matching in 
 subsequent \matchaction stages. The header will not be serialized on egress. 
 All field values in the header instance become uninitialized.
-
-If the \texttt{header_instance} is an element in a header stack, the effect is to 
-pop the indicated element from the stack. Any valid instances in the stack 
-at higher indices are copied to the next lower index.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2160,21 +2161,20 @@ continues as per the current control function specification.
 
 \primact{push(array, count)}
 { % Summary
-Push all header instances in an array down and add a new header at the top.
+Push all header instances in an array down and add a new invalid header at the top.
 }
 { % Parameters
 \paramdoc{array}{(ARR) The name of the instance array to be modified.}
 \paramdoc{count}{(VAL) A value indicating the number of elements to push.}
 }
 { % Description
-This primitive is used to make room for a new element in an array of header
-instances without knowing in advance how many elements are already valid. 
+This primitive is used to initialize elements at the top of a header stack.
 Existing elements will be shifted by \texttt{count}: an
-element at index N will be moved to index N+\texttt{count}. 
-\texttt{count} number of new elements will be pushed at indices 0 to 
-\texttt{count}-1, zeroed out and set valid.
-This primitive leaves the array's size constant; if an array is already full,
-elements pushed to indices beyond the static array size will be lost.
+element at index N will be moved to index N+\texttt{count} and 
+\texttt{count} invalid elements are created at indices 0 to 
+\texttt{count}-1. 
+This primitive leaves the array's size constant; any elements pushed to indices
+beyond the static array size will be lost.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2188,8 +2188,7 @@ Pop header instances from the top of an array, moving all subsequent array eleme
 \paramdoc{count}{(VAL) A value indicating the number of elements to pop.}
 }
 { % Description
-This primitive is used to remove elements from an array of header instances
-without knowing in advance how many elements are already valid. An element at
+This primitive is used to remove elements from a header stack. An element at
 index N will be moved to index N-\texttt{count}, and the elements at indices 0 to 
 \texttt{count}-1 will be lost. The bottom-most elements that had nothing 
 shifted into them are invalidated.
