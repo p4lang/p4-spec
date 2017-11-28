@@ -105,6 +105,7 @@ struct psa_ingress_output_metadata_t {
   ClassOfService_t         clone_class_of_service; // 0
   bool                     drop;             // true
   bool                     resubmit;         // false
+  bool                     recirculate;      // false
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // undefined
   bool                     truncate;         // false
@@ -126,7 +127,6 @@ struct psa_egress_output_metadata_t {
   bool                     clone;         // false
   ClassOfService_t         clone_class_of_service; // 0
   bool                     drop;          // false
-  bool                     recirculate;   // false
   bool                     truncate;      // false
   PacketLength_t           truncate_payload_bytes;  // undefined
 }
