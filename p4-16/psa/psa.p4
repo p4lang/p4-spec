@@ -133,6 +133,57 @@ struct psa_egress_output_metadata_t {
 // END:Metadata_egress_output
 // END:Metadata_types
 
+/// During the IngressDeparser execution, psa_clone_i2e returns true
+/// if and only if a clone of the ingress packet is being made to
+/// egress for the packet being processed.  If there are any
+/// assignments to the out parameter clone_i2e_meta in the
+/// IngressDeparser, they must be inside an if statement statement
+/// that only allows those assignments to execute if
+/// psa_clone_i2e(istd) returns true.  It can be implemented by
+/// returning istd.clone
+
+extern bool psa_clone_i2e(in psa_ingress_output_metadata_t istd);
+
+/// During the IngressDeparser execution, psa_resubmit returns true if
+/// and only if the packet is being resubmitted.  If there are any
+/// assignments to the out parameter resubmit_meta in the
+/// IngressDeparser, they must be inside an if statement that only
+/// allows those assignments to execute if psa_resubmit(istd) returns
+/// true.  It can be implemented by returning (!istd.drop &&
+/// istd.resubmit)
+
+extern bool psa_resubmit(in psa_ingress_output_metadata_t istd);
+
+/// During the IngressDeparser execution, psa_normal returns true if
+/// and only if the packet is being sent 'normally' as unicast or
+/// multicast to egress.  If there are any assignments to the out
+/// parameter normal_meta in the IngressDeparser, they must be inside
+/// an if statement that only allows those assignments to execute if
+/// psa_normal(istd) returns true.  It can be implemented by returning
+/// (!istd.drop && !istd.resubmit)
+
+extern bool psa_normal(in psa_ingress_output_metadata_t istd);
+
+/// During the EgressDeparser execution, psa_clone_e2e returns true if
+/// and only if a clone of the egress packet is being made to egress
+/// for the packet being processed.  If there are any assignments to
+/// the out parameter clone_e2e_meta in the EgressDeparser, they must
+/// be inside an if statement that only allows those assignments to
+/// execute if psa_clone_e2e(istd) returns true.  It can be
+/// implemented by returning istd.clone
+
+extern bool psa_clone_e2e(in psa_egress_output_metadata_t istd);
+
+/// During the EgressDeparser execution, psa_recirculate returns true
+/// if and only if the packet is being recirculated.  If there are any
+/// assignments to recirculate_meta in the EgressDeparser, they must
+/// be inside an if statement that only allows those assignments to
+/// execute if psa_recirculate(istd) returns true.  It can be
+/// implemented by returning (!istd.drop && istd.recirculate)
+
+extern bool psa_recirculate(in psa_egress_output_metadata_t istd);
+
+
 // BEGIN:Match_kinds
 match_kind {
     range,   /// Used to represent min..max intervals
@@ -590,50 +641,67 @@ extern ValueSet<D> {
 // END:ValueSet_extern
 
 // BEGIN:Programmable_blocks
-parser IngressParser<H, M>(packet_in buffer,
-                           out H parsed_hdr,
-                           inout M user_meta,
-                           in psa_ingress_parser_input_metadata_t istd,
-                           out psa_parser_output_metadata_t ostd);
+parser IngressParser<H, M, RESUBM, RECIRCM>(
+    packet_in buffer,
+    out H parsed_hdr,
+    inout M user_meta,
+    in psa_ingress_parser_input_metadata_t istd,
+    in RESUBM resubmit_meta,
+    in RECIRCM recirculate_meta,
+    out psa_parser_output_metadata_t ostd);
 
-control Ingress<H, M>(inout H hdr, inout M user_meta,
-                      in    psa_ingress_input_metadata_t  istd,
-                      inout psa_ingress_output_metadata_t ostd);
+control Ingress<H, M>(
+    inout H hdr, inout M user_meta,
+    in    psa_ingress_input_metadata_t  istd,
+    inout psa_ingress_output_metadata_t ostd);
 
-control IngressDeparser<H, M>(packet_out buffer,
-                              clone_out cl,
-                              inout H hdr,
-                              in M meta,
-                              in psa_ingress_output_metadata_t istd);
+control IngressDeparser<H, M, CI2EM, RESUBM, NM>(
+    packet_out buffer,
+    out CI2EM clone_i2e_meta,
+    out RESUBM resubmit_meta,
+    out NM normal_meta,
+    inout H hdr,
+    in M meta,
+    in psa_ingress_output_metadata_t istd);
 
-parser EgressParser<H, M>(packet_in buffer,
-                          out H parsed_hdr,
-                          inout M user_meta,
-                          in psa_egress_parser_input_metadata_t istd,
-                          out psa_parser_output_metadata_t ostd);
+parser EgressParser<H, M, NM, CI2EM, CE2EM>(
+    packet_in buffer,
+    out H parsed_hdr,
+    inout M user_meta,
+    in psa_egress_parser_input_metadata_t istd,
+    in NM normal_meta,
+    in CI2EM clone_i2e_meta,
+    in CE2EM clone_e2e_meta,
+    out psa_parser_output_metadata_t ostd);
 
-control Egress<H, M>(inout H hdr, inout M user_meta,
-                     in    psa_egress_input_metadata_t  istd,
-                     inout psa_egress_output_metadata_t ostd);
+control Egress<H, M>(
+    inout H hdr, inout M user_meta,
+    in    psa_egress_input_metadata_t  istd,
+    inout psa_egress_output_metadata_t ostd);
 
-control EgressDeparser<H, M>(packet_out buffer,
-                             clone_out cl,
-                             inout H hdr,
-                             in M meta,
-                             in psa_egress_output_metadata_t istd);
+control EgressDeparser<H, M, CE2EM, RECIRCM>(
+    packet_out buffer,
+    out CE2EM clone_e2e_meta,
+    out RECIRCM recirculate_meta,
+    inout H hdr,
+    in M meta,
+    in psa_egress_output_metadata_t istd);
 
-package IngressPipeline<IH, IM>(IngressParser<IH, IM> ip,
-                                Ingress<IH, IM> ig,
-                                IngressDeparser<IH, IM> id);
+package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
+    IngressParser<IH, IM, RESUBM, RECIRCM> ip,
+    Ingress<IH, IM> ig,
+    IngressDeparser<IH, IM, CI2EM, RESUBM, NM> id);
 
-package EgressPipeline<EH, EM>(EgressParser<EH, EM> ep,
-                               Egress<EH, EM> eg,
-                               EgressDeparser<EH, EM> ed);
+package EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
+    EgressParser<EH, EM, NM, CI2EM, CE2EM> ep,
+    Egress<EH, EM> eg,
+    EgressDeparser<EH, EM, CE2EM, RECIRCM> ed);
 
-package PSA_Switch<IH, IM, EH, EM> (IngressPipeline<IH, IM> ingress,
-                                    PacketReplicationEngine pre,
-                                    EgressPipeline<EH, EM> egress,
-                                    BufferingQueueingEngine bqe);
+package PSA_Switch<IH, IM, EH, EM, NM, CI2EM, CE2EM, RESUBM, RECIRCM> (
+    IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM> ingress,
+    PacketReplicationEngine pre,
+    EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM> egress,
+    BufferingQueueingEngine bqe);
 
 // END:Programmable_blocks
 

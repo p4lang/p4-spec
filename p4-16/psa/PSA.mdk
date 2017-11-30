@@ -91,6 +91,15 @@ can define a single metadata type for all controls.
 When instantiating the `main` `package` object, the instances
 corresponding to the programmable blocks are passed as arguments.
 
+A P4 programmer wishing to maximize the portability of their program
+should follow several general guidelines:
+
+- Do not use undefined values in a way that affects the resulting
+  output packet(s), or for side effects such as updating `Counter`,
+  `Meter` or `Register` instances.
+- Use as few resources as possible, e.g. table search key bits, array
+  sizes, quantity of metadata associated with packets, etc.
+
 
 # Naming conventions
 
@@ -382,15 +391,45 @@ recirculated, followed by the payload of that packet, i.e. the part
 that was not parsed by the egress parser.  Truncation is not supported
 for RECIRC packets.
 
-### User-defined metadata for all ingress packets
+### User-defined metadata for all ingress packets {#sec-ingress_initial-metadata}
 
 The PSA architecture does not mandate initialization of user-defined
 metadata to known values as given as input to the ingress parser.  If
 a user's P4 program explicitly initializes all user-defined metadata
 early on (e.g. in the parser's `start` state), then that will flow
-through the rest of the parser into the `Ingress`  control block as one
+through the rest of the parser into the `Ingress` control block as one
 might normally expect.  This will be left as an option to the user in
 their P4 programs, not required behavior for all P4 programs.
+
+There are two direction `in` parameters to the ingress parser with
+user-defined types, named `resubmit_meta` and `recirculate_meta`.
+They may be used to carry metadata for resubmitted and recirculated
+packets.
+
+Consider a packet that arrives at the ingress pipeline, and during
+ingress processing the P4 program assigns values to fields of the PSA
+standard metadata such that the packet is resubmitted (see Section
+[#sec-after-ingress] for details on how to do so).  In the ingress
+deparser, the P4 program assigns a value to the `out` parameter named
+`resubmit_meta`.  This value (which can be a collection of many
+individual values in fields, sub-structs, headers, etc.) becomes
+associated with the resubmitted packet by the PSA implementation, and
+when the resubmitted packet begins ingress parsing, that becomes the
+value of the `in` parameter named `resubmit_meta` to the ingress
+parser.
+
+For resubmitted packets, the value of the `in` parameter named
+`recirculate_meta` is undefined.
+
+Conversely, for recirculated packets, the value of the `in` parameter
+named `recirculate_meta` contains whatever value was assigned to the
+egress deparser `out` parameter named `recirculate_meta` when the
+packet was recirculated.  The value of the `in` parameter
+`resubmit_meta` is undefined for recirculated packets.
+
+For packets from a port, including the CPU port, both of the `in`
+parameters `resubmit_meta` and `recirculate_meta` are undefined.
+
 
 ## Behavior of packets after ingress processing is complete {#sec-after-ingress}
 
@@ -702,8 +741,30 @@ supported.
 
 ### User-defined metadata for all egress packets
 
-Pending discussion of bridged metadata, and how clone packets may
-be able to carry metadata with them (see [#sec-open-metadata]).
+This is very similar to how metadata is initialized for ingress
+packets.  See Section [#sec-ingress_initial-metadata].
+
+The primary differences for egress packets are the different packet
+paths involved.  There are three parameters with direction `in` for
+the egress parser, named `normal_meta`, `clone_i2e_meta`, and
+`clone_e2e_meta`.  For every packet that begins egress processing,
+exactly one of those three has defined contents, and the other two
+have undefined contents.
+
+For NU and NM packets, the parameter `normal_meta` is the only one
+with defined contents.  Its value is the one that was assigned to the
+`out` parameter with the same name of the ingress deparser, when the
+normal packet was completing its ingress processing.
+
+For CLONE_I2E packets, the parameter `clone_i2e_meta` is the only one
+with defined contents.  Its value is the one that was assigned to the
+`out` parameter with the same name of the ingress deparser, when the
+clone was created.
+
+For CLONE_I2E packets, the parameter `clone_e2e_meta` is the only one
+with defined contents.  Its value is the one that was assigned to the
+`out` parameter with the same name of the egress deparser, when the
+clone was created.
 
 
 ### Multicast copies
@@ -857,24 +918,28 @@ recirculate, and resubmit in PSA.
 ## Packet Cloning  {#sec-clone}
 
 Packet cloning is a mechanism to send a copy of a packet to a
-specified port, and is often synonymous with packet mirroring. In PSA cloning
-is represented as an extern `clone_out`.
+specified port, in addition to the 'regular' packet,
 
-Packet cloning happens at the end of the ingress and/or egress pipeline.
-PSA specifies the following semantics for clone operation. When the
-clone operation is invoked at the end of the ingress pipeline, the
-cloned packet is a copy of the original packet from ingress port. When
-the clone operation is invoked at the end of egress pipeline, the
-cloned packet is a copy of the modified packet after egress processing.
-In both cases, the cloned packet is submitted to the
-egress pipeline for further processing.
+One use case for cloning is packet mirroring, i.e. send the packet to
+its normal destination according to other features implemented by the
+P4 program, and in addition, send a copy of the packet as received to
+another output port, e.g. to a monitoring device.
 
-Logically, PRE implements the mechanics of copying a packet. PRE reads
-the original packet from ingress port and the modified packet from
-egress deparser. PRE then decides which version of the packet to use
-to generate a copy based on the value of the metadata provided by the
-ingress and egress pipeline. Two sets of configuration metadata are
-provided to the PRE, one from each pipeline. The cloning metadata is:
+Packet cloning happens at the end of the ingress and/or egress
+pipeline.  When the clone operation is invoked at the end of the
+ingress pipeline, the cloned packet is a copy of the original packet
+from the ingress port, before any ingress processing was performed.
+When the clone operation is invoked at the end of the egress pipeline,
+the cloned packet is a copy of the modified packet after egress
+processing.  In both cases, the cloned packet is submitted to the
+beginning of the egress pipeline (i.e. to the egress parser) for
+further processing.
+
+Logically, PRE implements the mechanics of copying a packet.  Two sets
+of metadata fields are provided to the PRE, one from ingress and the
+other from egress.  The metadata fields that control cloning are those
+whose names begin with `clone` in types
+`psa_ingress_output_metadata_t` and `psa_egress_output_metadata_t`.
 
 ```
 bool              clone;
@@ -882,23 +947,17 @@ PortId_t          clone_port;
 ClassOfService_t  clone_class_of_service;
 ```
 
-The `clone` bit specifies whether a packet should be cloned in the
-specific pipeline. If the bit is true, then the cloned packet should
-be generated at the end of the pipeline. The `clone_port` specifies
-which port to send the cloned packet to after egress processing. The
-`clone_port` could be any addressable port in the pipeline. For
-instance, it can be a port to control CPU or a port to the next hop
-router.
+The `clone` flag specifies whether a packet should be cloned.  If
+true, then a cloned packet should be generated at the end of the
+pipeline.  The `clone_port` specifies which port to send the cloned
+packet to, after egress processing.  The `clone_port` could be any
+addressable port in the pipeline.  For instance, it can be a port to
+the control CPU or a port to the next hop router.
 
-```
-[INCLUDE=psa.p4:Clone_extern]
-```
 
 ### Clone Examples {#sec-clone-examples}
 
-The partial program below demonstrates one way to use the `clone_out`
-extern to configure the PRE to create a copy of the packet and send
-the cloned copy to `clone_port`.
+The partial program below demonstrates how to clone a packet.
 
 ```
 [INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part1]
