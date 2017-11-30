@@ -91,6 +91,15 @@ can define a single metadata type for all controls.
 When instantiating the `main` `package` object, the instances
 corresponding to the programmable blocks are passed as arguments.
 
+A P4 programmer wishing to maximize the portability of their program
+should follow several general guidelines:
+
+- Do not use undefined values in a way that affects the resulting
+  output packet(s), or for side effects such as updating `Counter`,
+  `Meter` or `Register` instances.
+- Use as few resources as possible, e.g. table search key bits, array
+  sizes, quantity of metadata associated with packets, etc.
+
 
 # Naming conventions
 
@@ -420,9 +429,6 @@ packet was recirculated.  The value of the `in` parameter
 
 For packets from a port, including the CPU port, both of the `in`
 parameters `resubmit_meta` and `recirculate_meta` are undefined.
-
-A P4 program that wishes to maximize portability must not use an
-undefined value to affect how it processes the packet.
 
 
 ## Behavior of packets after ingress processing is complete {#sec-after-ingress}
