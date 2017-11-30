@@ -419,8 +419,7 @@ packet was recirculated.  The value of the `in` parameter
 `resubmit_meta` is undefined for recirculated packets.
 
 For packets from a port, including the CPU port, both of the `in`
-parameters `resubmit_meta` and `recirculate_meta` have undefined
-contents.
+parameters `resubmit_meta` and `recirculate_meta` are undefined.
 
 A P4 program that wishes to maximize portability must not use an
 undefined value to affect how it processes the packet.
@@ -918,15 +917,7 @@ specified port, in addition to the 'regular' packet,
 One use case for cloning is packet mirroring, i.e. send the packet to
 its normal destination according to other features implemented by the
 P4 program, and in addition, send a copy of the packet as received to
-another output port, to a monitoring device.
-
-Another example use case is to inform the control plane that a packet
-was received, while also forwarding the packet normally.  One way to
-implement IP multicast forwarding with the PIM-Sparse Mode routing
-protocol involves forwarding the packet in the data plane to one or
-more output ports, but also sending a copy to the control plane CPU,
-which the PIM routing protocol may choose to react to by creating or
-modifying multicast routes.
+another output port, e.g. to a monitoring device.
 
 Packet cloning happens at the end of the ingress and/or egress
 pipeline.  When the clone operation is invoked at the end of the
