@@ -903,18 +903,6 @@ typical implementation will drop frames larger than this maximum
 supported size.  It is recommended that they maintain error counters
 for such dropped frames.
 
-
-## Clone, Recirculate, Resubmit
-
-~ Figure {#fig-clone; caption: "Clone, recirculate, and resubmit in PSA"; page-align: here;}
-![clone]
-~
-[clone]: figs/clone_recirc_resubmit.png { width: 90%;}
-
-Figure [#fig-clone] shows the proposed architectures for clone,
-recirculate, and resubmit in PSA.
-
-
 ## Packet Cloning  {#sec-clone}
 
 Packet cloning is a mechanism to send a copy of a packet to a
@@ -925,20 +913,21 @@ its normal destination according to other features implemented by the
 P4 program, and in addition, send a copy of the packet as received to
 another output port, e.g. to a monitoring device.
 
-Packet cloning happens at the end of the ingress and/or egress
-pipeline.  When the clone operation is invoked at the end of the
-ingress pipeline, the cloned packet is a copy of the original packet
-from the ingress port, before any ingress processing was performed.
-When the clone operation is invoked at the end of the egress pipeline,
-the cloned packet is a copy of the modified packet after egress
-processing.  In both cases, the cloned packet is submitted to the
-beginning of the egress pipeline (i.e. to the egress parser) for
+Packet cloning happens at the end of the ingress and/or egress pipeline. PSA
+specifies the following semantics for clone operation. When the clone
+operation is invoked at the end of the ingress pipeline, the cloned
+packet is a copy of the original packet from ingress port. When the
+clone operation is invoked at the end of egress pipeline, the cloned
+packet is a copy of the modified packet after egress processing. In
+both cases, the cloned packet is submitted to the egress pipeline for
 further processing.
 
-Logically, PRE implements the mechanics of copying a packet.  Two sets
-of metadata fields are provided to the PRE, one from ingress and the
-other from egress.  The metadata fields that control cloning are those
-whose names begin with `clone` in types
+Logically, PRE implements the mechanics of copying a packet. PRE reads
+the original packet from ingress port and the modified packet from
+egress deparser. PRE then decides which version of the packet to use
+to generate a copy based on the value of the metadata provided by the
+ingress and egress pipeline.  The metadata fields that control cloning
+are those whose names begin with `clone` in types
 `psa_ingress_output_metadata_t` and `psa_egress_output_metadata_t`.
 
 ```
@@ -970,36 +959,46 @@ The partial program below demonstrates how to clone a packet.
 Packet resubmission is a mechanism to repeat ingress processing on a
 packet.
 
-If a packet is resubmitted, it re-enters the ingress parser after the
-ingress pipeline processing. The `ingress_port` of the resubmitted
-packet is the same as the original packet, however, the
-`packet_path` of the resubmitted packet is changed to `RESUBMIT`.
-The resubmitted packet has the same header and payload as the original
-packet.
+Packet resubmission happens at the end of the ingress pipeline. When a
+packet is resubmitted, the packet finishes the ingress pipeline
+processing and re-enters the ingress parser without being deparsed. In
+other words, the resubmitted packet has the same header and payload as
+the original packet. The `ingress_port` of the resubmitted packet is
+the same as the original packet. The `packet_path` of the resubmitted
+packet is changed to `RESUBMIT`.
 
-The ingress parser is able to distinguish between the original packet
-and the resubmitted packet using the `packet_path` field in
-`ingress_parser_intrinsic_metadata_t`. The ingress parser is allowed
-to choose a different algorithm to parse the resubmitted packet.
-Similarly, the ingress pipeline can choose to process the resubmitted
-packet with different actions as opposed to the ones used to process
-the original packet.
+The ingress parser distinguishes the resubmitted packet from the
+original packet with the `packet_path` field in
+`ingress_parser_intrinsic_metadata_t`. The ingress parser can choose a
+different algorithm to parse the resubmitted packet. Similarly, the
+ingress pipeline can choose to process the resubmitted packet with
+different actions as opposed to the ones used to process the original
+packet. Further, if a target permits the same packet to be resubmitted
+multiple times, the user program can distinguish the packet
+resubmitted the first time, or second time, by the extra metadata
+associated with the packet. Note the maximum number of packet
+resubmission for a single packet is target-dependent, see section
+[#packet-paths].
 
-PSA specifies that the resubmit operation can only be used in the ingress pipeline. The egress
-pipeline cannot resubmit packets. As described in Section [#packet-paths], there is no mandated
-mechanism in PSA to prevent a single received packet from creating packets that continue to
-recirculate, resubmit, or clone from egress to egress indefinitely. However, targets may impose
-limits on the number of resubmissions, recirculations, or clones.
+PSA specifies that the resubmit operation can only be used in the
+ingress pipeline. The egress pipeline cannot resubmit packets. As
+described in Section [#packet-paths], there is no mandated mechanism
+in PSA to prevent a single received packet from creating packets that
+continue to recirculate, resubmit, or clone from egress to egress
+indefinitely. However, targets may impose limits on the number of
+resubmissions, recirculations, or clones.
 
-Packet resubmission is intended to increase the capacity and
- flexibility of the packet processing pipeline. For example, because
- the same packet is processed by the ingress pipeline multiple times,
- it effectively increase the amount of operations on the packet by N
- folds, where N is the number of times the packet is resubmitted.
- Another use case is deploy multiple packet processing algorithms on
- the same packet. For example, the original packet can be parsed,
- modified and resubmitted in the first pass. Then, the resubmitted
- packet can be parsed and modified using a different algorithm.
+One use case of packet resubmission is to increase the capacity and
+flexibility of the packet processing pipeline. For example, because
+the same packet is processed by the ingress pipeline multiple times,
+it effectively increase the amount of operations on the packet by N
+folds, where N is the number of times the packet is resubmitted.
+
+Another use case is to deploy multiple packet processing algorithms on
+the same packet. For example, the original packet can be parsed and
+resubmitted in the first pass with additional metadata to select one
+of the algorithms. Then, the resubmitted packet can be parsed,
+modified and deparsed using the selected algorithm.
 
 To facilitate communication between the first pass and the second pass
 through the ingress pipeline, the resubmission mechanism supports
@@ -1009,41 +1008,35 @@ used in the second pass. See Section [#sec-open-metadata] for the
 discussion.
 
 A PSA implementation provides a configuration bit `resubmit` to the
-PRE to enable the resubmission mechanism. If `resubmit` is set to
-true, the resubmission mechanism resends the original packet with the
-optional attached metadata. If `resubmit` is set to false, the
-resubmission mechanism is disabled and the original packet is not
-resubmitted even if the `add_metadata` method is invoked in the
-deparser.
+PRE to enable the resubmission mechanism. If true, the original packet
+is resubmitted with the optional resubmit metadata. If false, the
+resubmission mechanism is disabled and no assignments to
+`resubmit_meta` should be performed.
 
-```
-[INCLUDE=psa.p4:Resubmit_extern]
-
-```
 
 ## Packet Recirculation {#sec-recirculate}
 
-Packet recirculation sends the deparsed packet at the end of egress
-pipeline to the ingress parser. Unlike the previous two mechanisms,
-recirculation does not replicate packets. The modified packet itself
-is sent back to the ingress pipeline for further processing.
+Packet recirculation is a mechanism to repeat both ingress and egress
+processing on a packet.
 
-In PSA, recirculation is controlled by the `recirculate` bit in the
-egress pipeline. If the `recirculate` bit is set to true, the modified
-packet at the end of the pipeline is sent to a special recirculation
-port. The recirculation port overrides the value in `egress_port`.
+Packet recirculation happens at the end of the egress pipeline. When a
+packet is recirculated, the packet finishes both ingress and egress
+processing and re-enters the ingress parser after being deparsed by
+the egress deparser. The `ingress_port` of the recirculated packet is
+set to `PORT_RECIRCULATE`. The `packet_path` of the recirculated
+packet is changed to `RECIRCULATE`.
 
-```
-[INCLUDE=psa.p4:Recirculate_extern]
+Similar to packet resubmission, packet recirculation also supports
+attaching optional metadata with the recirculated packet. The metadata
+is generated during the first pass through the ingress and egress
+pipeline, and used in the second pass. See Section
+[#sec-open-metadata] for the discussion.
 
-```
-
-Users can leverage the existing `emit` methods in `packet_out` to
-attach additional metadata to the recirculated packet. Upon receiving
-the recirculated packet in ingress parser, the `packet_path` of the
-recirculated packet is set to `RECIRCULATE`. It is the user's
-responsibility to parse the recirculated packet correctly.
-
+The `recirculate` flag specifies whether a packet should be
+recirculated. If true, the processed packet should be recirculated at
+the end of the egress pipeline with the optional metadata. If false,
+the recirculation mechanism is disabled and no assignments to
+`recirc_meta` should be performed.
 
 # PSA Externs
 
@@ -2140,6 +2133,10 @@ meters.
 We have several proposals for serializing metadata that is bridged across the PRE between the
 ingress and egress pipelines, or as part of cloned and resubmitted packets. We are actively working
 on building a set of examples to determine what will be the final PSA API for these operations.
+
+~ TBD
+This section needs to be updated.
+~
 
 For the `clone_out` and `resubmit` externs, we are currently discussing the addition of a method,
 `add_metadata`, to enable prepending metadata to the cloned or resubmitted packet. It is
