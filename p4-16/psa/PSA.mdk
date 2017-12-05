@@ -440,19 +440,14 @@ the contents of several metadata fields in the struct
 
 The function `platform_port_valid()` mentioned below takes a value of
 type `PortId_t`, returning `true` only when the value represents an
-output port for the implementation.  It is expected that for some PSA
+output port for the implementation. It is expected that for some PSA
 implementations there will be bit patterns for a value of type
-`PortId_t` that do not correspond to any port.  This function returns
-true for `PORT_CPU`, but false for `PORT_RECIRCULATE`.
-`PORT_RECIRCULATE` is only intended as a value for `ingress_port` when
-ingress processing begins for a recirculated packet (see Table
-[#ingress-initial-values].  See section [#sec-after-egress] for how P4
-programs cause a packet to be recirculated). `platform_port_valid`
-is not defined in PSA for calling from the P4 data-plane
-program, since there is no known use case for calling it at packet
-processing time. It is intended for describing the behavior in pseudo-code.
-The control plane is expected to configure tables
-with valid port numbers.
+`PortId_t` that do not correspond to any port. This function returns
+true for both `PORT_CPU` and `PORT_RECIRCULATE`. `platform_port_valid`
+is not defined in PSA for calling from the P4 data-plane program,
+since there is no known use case for calling it at packet processing
+time. It is intended for describing the behavior in pseudo-code. The
+control plane is expected to configure tables with valid port numbers.
 
 A comment saying "recommended to log error" is not a requirement, but
 a recommendation, that a PSA implementation should maintain a counter
@@ -1033,10 +1028,13 @@ pipeline, and used in the second pass. See Section
 [#sec-open-metadata] for the discussion.
 
 The `recirculate` flag specifies whether a packet should be
-recirculated. If true, the processed packet should be recirculated at
-the end of the egress pipeline with the optional metadata. If false,
-the recirculation mechanism is disabled and no assignments to
-`recirc_meta` should be performed.
+recirculated and it is a read-only value in the egress deparser. The
+`recirculate` flag is set to true if the `egress_port` is set to
+`PORT_RECIRCULATE` in the ingress pipeline, otherwise, the flag is set
+to false. If the `recirculate` flag is true, the processed packet
+should be recirculated at the end of the egress pipeline with the
+optional metadata. If false, the recirculation mechanism is disabled
+and no assignments to `recirc_meta` should be performed.
 
 # PSA Externs
 

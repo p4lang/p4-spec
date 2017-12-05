@@ -125,8 +125,8 @@ struct psa_egress_output_metadata_t {
   // Egress control block begins executing.
   bool                     clone;         // false
   ClassOfService_t         clone_class_of_service; // 0
+  bool                     recirculate;   // set by environment
   bool                     drop;          // false
-  bool                     recirculate;   // false
   bool                     truncate;      // false
   PacketLength_t           truncate_payload_bytes;  // undefined
 }
