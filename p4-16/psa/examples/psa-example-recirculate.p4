@@ -117,7 +117,7 @@ control ingress(inout headers hdr,
                 inout psa_ingress_output_metadata_t ostd)
 {
     action do_recirc (PortId_t port) {
-        ostd.egress_port = PORT_RECIRCULATE;
+        send_to_port(ostd, PORT_RECIRCULATE);
     }
     table t {
         key = {
