@@ -41,6 +41,9 @@ header ipv4_t {
     bit<32> dstAddr;
 }
 
+struct empty_metadata_t {
+}
+
 struct fwd_metadata_t {
 }
 
@@ -63,6 +66,8 @@ parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
                          inout metadata user_meta,
                          in psa_ingress_parser_input_metadata_t istd,
+                         in empty_metadata_t resubmit_meta,
+                         in empty_metadata_t recirculate_meta,
                          out psa_parser_output_metadata_t ostd)
 {
     ValueSet<CustomValueSet1_t>(2) trill_types;
@@ -117,6 +122,9 @@ parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata user_meta,
                         in psa_egress_parser_input_metadata_t istd,
+                        in empty_metadata_t normal_meta,
+                        in empty_metadata_t clone_i2e_meta,
+                        in empty_metadata_t clone_e2e_meta,
                         out psa_parser_output_metadata_t ostd)
 {
     state start {
@@ -142,7 +150,9 @@ control CommonDeparserImpl(packet_out packet,
 }
 
 control IngressDeparserImpl(packet_out buffer,
-                            clone_out cl,
+                            out empty_metadata_t clone_i2e_meta,
+                            out empty_metadata_t resubmit_meta,
+                            out empty_metadata_t normal_meta,
                             inout headers hdr,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
@@ -154,7 +164,8 @@ control IngressDeparserImpl(packet_out buffer,
 }
 
 control EgressDeparserImpl(packet_out buffer,
-                           clone_out cl,
+                           out empty_metadata_t clone_e2e_meta,
+                           out empty_metadata_t recirculate_meta,
                            inout headers hdr,
                            in metadata meta,
                            in psa_egress_output_metadata_t istd)
