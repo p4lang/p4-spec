@@ -604,6 +604,49 @@ message ClassOfServiceInfo {
 ```
 
 
+### Multicast replication
+
+The control plane may configure each `multicast_group` in the PRE to
+create the desired copies of packets sent to that group.  Each group
+begins empty.  Sending a packet to an empty group causes the packet to
+be dropped.  The control plane may add one or more pairs of the form
+`(egress_port, instance)` to a multicast group, and may also remove
+pairs from a group that were added earlier.
+
+Suppose a multicast group contains the following set of pairs:
+
+    (egress_port[0], instance[0]),
+    (egress_port[1], instance[1]),
+    ...,
+    (egress_port[N-1], instance[N-1])
+
+When a packet is sent to that group, `N` copies of the packet are
+made.  Copy number `i` that is sent to egress processing will have its
+`struct` of type `psa_egress_input_metadata_t` filled in with the
+field `egress_port` equal to `egress_port[i]`, and the field
+`instance` filled in with `instance[i]`.
+
+Within a single multicast group, the pairs `(egress_port, instance)`
+must be different from each other, but it is allowed for any number of
+pairs within a multicast group to have the same value of
+`egress_port`, or to have the same value of `instance`.  The same pair
+`(egress_port, instance)` can occur in any number of different
+multicast groups.
+
+A PSA implementation need only support `egress_port` values that
+represent single ports of the PSA device.  That is, it need not
+implement support for `egress_port` values that represent an entire
+Link Aggregation Group (LAG) interface, which is a set of physical
+ports over which load balancing of traffic is performed.
+
+A PSA device must support `egress_port` values in a multicast group
+that are equal to `PORT_CPU` or `PORT_RECIRCULATE`.  The copies of a
+multicast packet made to those ports will behave the same in egress as
+a unicast packets sent to the corresponding port, i.e. if not dropped,
+those copies will go the the CPU port, or be recirculated back to
+ingress.
+
+
 ## Actions for directing packets during ingress {#sec-ingress-actions}
 
 All of these actions modify one or more metadata fields in the struct
