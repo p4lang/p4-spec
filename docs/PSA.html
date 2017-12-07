@@ -297,7 +297,7 @@
 <div class="authors align-center" data-line="43" style="text-align:center;width:80%;line-adjust:0"><table class="authorrow columns block" data-line="43" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="43" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="43" style="font-size:large;line-adjust:0"><span data-line="43"></span>The P4.org Architecture Working Group</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2017-12-01</div></div>
+<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2017-12-07</div></div>
 <p class="p noindent para-continued" data-line="36"><span data-line="36"></span><span data-line="36"></span>
 <span data-line="37"></span><span data-line="37"></span>
 <span data-line="38"></span><span data-line="38"></span>
@@ -1811,7 +1811,7 @@ for that purpose<span data-line="1256"></span> <span data-line="1256"></span>&#8
 parser state reached, or the number of bytes extracted so far<span data-line="1257"></span> <span data-line="1257"></span>&#8211;<span data-line="1257"></span> and then
 assign values to those fields within the parser state code.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1260" data-line-first="1261;examples/psa-example-parser-checksum.p4:186" style="display:block"><code data-line="1261;examples/psa-example-parser-checksum.p4:186"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1260" data-line-first="1261;examples/psa-example-parser-checksum.p4:191" style="display:block"><code data-line="1261;examples/psa-example-parser-checksum.p4:191"><span style="color:darkgreen">// Define additional error values, one of them for packets with</span>
 <span style="color:darkgreen">// incorrect IPv4 header checksums.</span>
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">error</span> {
     UnhandledIPv4Options,
@@ -1827,6 +1827,8 @@ assign values to those fields within the parser state code.
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers hdr,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> empty_metadata_t resubmit_meta,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> empty_metadata_t recirculate_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
 {
     InternetChecksum() ck;
@@ -1931,8 +1933,9 @@ fresh, so the outgoing checksum will be correct regardless of what
 changes might have been made to the IPv4 header fields in the Ingress
 (or Egress) control block that precedes it.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1271" data-line-first="1272;examples/psa-example-parser-checksum.p4:246" style="display:block"><code data-line="1272;examples/psa-example-parser-checksum.p4:246"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparserImpl(packet_out packet,
-                           clone_out cl,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1271" data-line-first="1272;examples/psa-example-parser-checksum.p4:257" style="display:block"><code data-line="1272;examples/psa-example-parser-checksum.p4:257"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparserImpl(packet_out packet,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> empty_metadata_t clone_e2e_meta,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> empty_metadata_t recirculate_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> metadata meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_egress_output_metadata_t istd)
@@ -1966,7 +1969,7 @@ the program. For example, the <span data-line="1281"></span><code class="code co
 updates the IPv4 source address, recording the original source address
 in a metadata field:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1284" data-line-first="1285;examples/psa-example-incremental-checksum.p4:134" style="display:block"><code data-line="1285;examples/psa-example-incremental-checksum.p4:134"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1284" data-line-first="1285;examples/psa-example-incremental-checksum.p4:139" style="display:block"><code data-line="1285;examples/psa-example-incremental-checksum.p4:139"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> ingress(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>    psa_ingress_input_metadata_t  istd,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t ostd) {
@@ -1994,8 +1997,9 @@ in a metadata field:
 <p class="p noindent para-continued" data-line="1287"><span data-line="1287"></span>The deparser first updates the IPv4 checksum as above, and then
 incrementally computes the TCP checksum.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1289" data-line-first="1290;examples/psa-example-incremental-checksum.p4:206" style="display:block"><code data-line="1290;examples/psa-example-incremental-checksum.p4:206"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparserImpl(packet_out packet,
-                           clone_out cl,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1289" data-line-first="1290;examples/psa-example-incremental-checksum.p4:217" style="display:block"><code data-line="1290;examples/psa-example-incremental-checksum.p4:217"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">control</span> EgressDeparserImpl(packet_out packet,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> empty_metadata_t clone_e2e_meta,
+                           <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> empty_metadata_t recirculate_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> headers hdr,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> metadata user_meta,
                            <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_egress_output_metadata_t istd)
@@ -2442,7 +2446,7 @@ packet and byte counter, where the byte counter can be updated by a
 packet length specified in the P4 program, rather than one chosen by
 the PSA implementation.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1582" data-line-first="1583;examples/psa-example-register2.p4:82" style="display:block"><code data-line="1583;examples/psa-example-register2.p4:82"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span> PortId_t NUM_PORTS = <span class="constant" style="color:purple">512</span>;
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1582" data-line-first="1583;examples/psa-example-register2.p4:85" style="display:block"><code data-line="1583;examples/psa-example-register2.p4:85"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span> PortId_t NUM_PORTS = <span class="constant" style="color:purple">512</span>;
 
 <span style="color:darkgreen">// It would be more convenient to use a struct type to represent the</span>
 <span style="color:darkgreen">// state of a combined packet and byte count, and many other compound</span>
@@ -2810,10 +2814,12 @@ adding the four separate exact match values 5, 6, 7, and 8.
 <p class="p indent" data-line="1881"><span data-line="1881"></span>The parser definition below shows an example that uses two <span data-line="1881"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="1881"></span>
 instances called <span data-line="1882"></span><code class="code code1 language-p4 lang-p4 p4 colorized">tpid_types</code><span data-line="1882"></span> and <span data-line="1882"></span><code class="code code1 language-p4 lang-p4 p4 colorized">trill_types</code><span data-line="1882"></span>.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1884" data-line-first="1885;examples/psa-example-value-sets.p4:102" style="display:block"><code data-line="1885;examples/psa-example-value-sets.p4:102"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1884" data-line-first="1885;examples/psa-example-value-sets.p4:107" style="display:block"><code data-line="1885;examples/psa-example-value-sets.p4:107"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> IngressParserImpl(packet_in buffer,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> empty_metadata_t resubmit_meta,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> empty_metadata_t recirculate_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
 {
     ValueSet&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(<span class="constant" style="color:purple">4</span>) tpid_types;
@@ -2859,7 +2865,7 @@ instances called <span data-line="1882"></span><code class="code code1 language-
 example above, but combines the two parse states
 <span data-line="1890"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_tpid_value_set</code><span data-line="1890"></span> and <span data-line="1890"></span><code class="code code1 language-p4 lang-p4 p4 colorized">dispatch_trill_value_set</code><span data-line="1890"></span> into one.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1892" data-line-first="1893;examples/psa-example-value-sets2.p4:82" style="display:block"><code data-line="1893;examples/psa-example-value-sets2.p4:82">    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> dispatch_tpid_value_set {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1892" data-line-first="1893;examples/psa-example-value-sets2.p4:87" style="display:block"><code data-line="1893;examples/psa-example-value-sets2.p4:87">    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">state</span> dispatch_tpid_value_set {
         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span> is_trill = trill_types.is_member(parsed_hdr.ethernet.etherType);
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">transition</span> <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">select</span>(is_tpid, is_trill) {
@@ -2872,7 +2878,7 @@ example above, but combines the two parse states
 that matches on multiple fields, by making the type <span data-line="1897"></span><code class="code code1 language-p4 lang-p4 p4 colorized">D</code><span data-line="1897"></span> a <span data-line="1897"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span></code><span data-line="1897"></span>
 containing multiple bit vectors.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1900" data-line-first="1901;examples/psa-example-value-sets3.p4:81" style="display:block"><code data-line="1901;examples/psa-example-value-sets3.p4:81"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> CustomValueSet1_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1900" data-line-first="1901;examples/psa-example-value-sets3.p4:86" style="display:block"><code data-line="1901;examples/psa-example-value-sets3.p4:86"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">struct</span> CustomValueSet1_t {
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; etherType;
     <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">8</span>&gt;  partialMacAddress;
 }
@@ -2881,6 +2887,8 @@ containing multiple bit vectors.
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> headers parsed_hdr,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> metadata user_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> psa_ingress_parser_input_metadata_t istd,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> empty_metadata_t resubmit_meta,
+                         <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> empty_metadata_t recirculate_meta,
                          <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">out</span> psa_parser_output_metadata_t ostd)
 {
     ValueSet&lt;CustomValueSet1_t&gt;(<span class="constant" style="color:purple">2</span>) trill_types;
