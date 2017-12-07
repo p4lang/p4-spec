@@ -392,7 +392,11 @@ extern InternetChecksum {
   /// Constructor
   InternetChecksum();
 
-  /// Reset internal state and prepare unit for computation
+  /// Reset internal state and prepare unit for computation.  Every
+  /// instance of an InternetChecksum object is automatically
+  /// initialized as if clear() had been called on it, once for each
+  /// time the parser or control it is instantiated within is
+  /// executed.  All state maintained by it is independent per packet.
   void clear();
 
   /// Add data to checksum.  data must be a multiple of 16 bits long.

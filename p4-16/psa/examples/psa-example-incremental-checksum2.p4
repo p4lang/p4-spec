@@ -340,19 +340,21 @@ control egress(inout headers hdr,
 control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta) {
     InternetChecksum() ck;
     apply {
-        // Calculate IPv4 header checksum from scratch.
-        ck.clear();
-        ck.add({
-            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
-            /* 16-bit word  1   */ hdr.ipv4.totalLen,
-            /* 16-bit word  2   */ hdr.ipv4.identification,
-            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
-            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
-            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
-            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
-            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
-            });
-        hdr.ipv4.hdrChecksum = ck.get();
+        if (hdr.ipv4.isValid()) {
+            // Calculate IPv4 header checksum from scratch.
+            ck.clear();
+            ck.add({
+                /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+                /* 16-bit word  1   */ hdr.ipv4.totalLen,
+                /* 16-bit word  2   */ hdr.ipv4.identification,
+                /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
+                /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
+                /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
+                /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
+                /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
+                });
+            hdr.ipv4.hdrChecksum = ck.get();
+        }
 
         // There is no IPv6 header checksum
 
