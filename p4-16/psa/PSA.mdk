@@ -481,18 +481,26 @@ assist P4 developers in debugging their code.
             packets, which are not required to support truncation.
     }
     if (ostd.clone) {
-        if (ostd.clone_class_of_service value is not supported) {
-            ostd.clone_class_of_service = 0;
-            // Recommmended to log error about unsupported
-            // ostd.clone_class_of_service value.
-        }
-        if (platform_port_valid(ostd.clone_port)) {
-            create a clone of the packet and send it to the packet
-                buffer with class of service ostd.clone_class_of_service,
-                after which it will start egress processing.
+        if (ostd.clone_session_id value is supported) {
+            cos = class_of_service configured for ostd.clone_session_id in PRE
+            ep = egress_port configured for ostd.clone_session_id in PRE
+            if (cos value is not supported) {
+                cos = 0;
+                // Recommmended to log error about unsupported cos
+                // value.
+            }
+            if (platform_port_valid(ep)) {
+                create a clone of the packet and send it to the packet
+                    buffer with the egress_port ep and
+                    class_of_service cos, after which it will start
+                    egress processing.
+            } else {
+                // Do not create a clone.  Recommended to log error
+                // about unsupported ep value.
+            }
         } else {
-            // Do not create a clone.  Recommended to log error about
-            // unsupported ostd.clone_port value.
+            // Do not create a clone.  Recommmended to log error about
+            // unsupported ostd.clone_session_id value.
         }
     }
     // Continue below, regardless of whether a clone was created.
@@ -685,9 +693,9 @@ packet contents and metadata when a packet begins egress processing.
 +--------------+-------------+---------------+--------------+-----+
 | EgressParser `istd` fields (type `psa_egress_parser_input_metadata_t`) |||||
 +--------------+-------------+---------------+--------------+-----+
-| `egress_port`     | `ostd.egress_port` | from PRE      | `ostd.clone_port` | `ostd.clone_port` |
-|                   | of ingress packet  | configuration | of cloned         | of cloned         |
-|                   |                    |               | ingress packet    | egress packet     |
+| `egress_port`     | `ostd.egress_port` | from PRE           | from PRE configuration ||
+|                   | of ingress packet  | configuration      | of clone session       ||
+|                   |                    | of multicast group |                        ||
 +--------------+-------------+---------------+--------------+-----+
 | `packet_path`   | NORMAL_ | NORMAL_   | CLONE_I2E | CLONE_E2E |
 |                   | UNICAST | MULTICAST |           |           |
@@ -695,8 +703,8 @@ packet contents and metadata when a packet begins egress processing.
 +--------------+-------------+---------------+--------------+-----+
 | Egress `istd` fields (type `psa_egress_input_metadata_t`)   |||||
 +--------------+-------------+---------------+--------------+-----+
-| `class_of_service` | `ostd.class_of_service` || `ostd.clone_class_of_service` of ||
-|                    | of ingress packet       || packet that caused this clone    ||
+| `class_of_service` | `ostd.class_of_service` || from PRE configuration ||
+|                    | of ingress packet       || of clone session       ||
 +--------------+-------------+---------------+--------------+-----+
 | `egress_port`      | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
@@ -816,19 +824,26 @@ the contents of several metadata fields in the struct
             packets, which are not required to support truncation.
     }
     if (ostd.clone) {
-        if (ostd.clone_class_of_service value is not supported) {
-            ostd.clone_class_of_service = 0;
-            // Recommmended to log error about unsupported
-            // ostd.clone_class_of_service value.
-        }
-        if (platform_port_valid(ostd.clone_port)) {
-            create a copy of the packet and send it to the packet
-                buffer with class of service specified by
-                ostd.clone_class_of_service, after which it will start
-                egress processing.
+        if (ostd.clone_session_id value is supported) {
+            cos = class_of_service configured for ostd.clone_session_id in PRE
+            ep = egress_port configured for ostd.clone_session_id in PRE
+            if (cos value is not supported) {
+                cos = 0;
+                // Recommmended to log error about unsupported cos
+                // value.
+            }
+            if (platform_port_valid(ep)) {
+                create a clone of the packet and send it to the packet
+                    buffer with the egress_port ep and
+                    class_of_service cos, after which it will start
+                    egress processing.
+            } else {
+                // Do not create a clone.  Recommended to log error
+                // about unsupported ep value.
+            }
         } else {
-            // Do not create a clone.  Recommended to log error about
-            // unsupported ostd.clone_port value.
+            // Do not create a clone.  Recommmended to log error about
+            // unsupported ostd.clone_session_id value.
         }
     }
     // Continue below, regardless of whether a clone was created.
@@ -931,17 +946,28 @@ are those whose names begin with `clone` in types
 `psa_ingress_output_metadata_t` and `psa_egress_output_metadata_t`.
 
 ```
-bool              clone;
-PortId_t          clone_port;
-ClassOfService_t  clone_class_of_service;
+bool                     clone;
+CloneSessionId_t         clone_session_id;
 ```
 
 The `clone` flag specifies whether a packet should be cloned.  If
 true, then a cloned packet should be generated at the end of the
-pipeline.  The `clone_port` specifies which port to send the cloned
-packet to, after egress processing.  The `clone_port` could be any
-addressable port in the pipeline.  For instance, it can be a port to
-the control CPU or a port to the next hop router.
+pipeline.  The `clone_session_id` specifies one of several possible
+clone sessions that the control plane may configure in the PRE.  For
+each clone session, the control plane may configure the `egress_port`
+and `class_of_service` values that should be associated with packets
+cloned using that session.
+
+The `egress_port` may be any port that can be used for normal unicast
+packets, i.e. any normal port, `PORT_CPU`, or `PORT_RECIRCULATE`.  For
+the latter two values, the cloned packet will be sent to the CPU, or
+recirculated at the end of egress processing, as a normal unicast
+packet would at the end of egress processing.
+
+Since it is an expected common case to clone packets to the CPU, every
+PSA implementation begins with a clone session
+`PSA_CLONE_SESSION_TO_CPU` initialized with `egress_port = PORT_CPU`
+and `class_of_service = 0`.
 
 
 ### Clone Examples {#sec-clone-examples}

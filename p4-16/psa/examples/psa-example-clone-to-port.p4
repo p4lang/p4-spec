@@ -56,7 +56,7 @@ struct empty_metadata_t {
 
 struct metadata {
     fwd_metadata_t fwd_metadata;
-    clone_i2e_metadata_t clone_header;
+    clone_i2e_metadata_t clone_meta;
     bit<3> custom_clone_id;
 }
 
@@ -108,9 +108,9 @@ control ingress(inout headers hdr,
                 in  psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
-    action do_clone (PortId_t port) {
+    action do_clone (CloneSessionId_t session_id) {
         ostd.clone = true;
-        ostd.clone_port = port;
+        ostd.clone_session_id = session_id;
         user_meta.custom_clone_id = 1;
     }
     table t {
@@ -146,7 +146,7 @@ parser EgressParserImpl(
     }
 
     state copy_clone_i2e_meta {
-        user_meta.clone_header = clone_i2e_meta;
+        user_meta.clone_meta = clone_i2e_meta;
         transition parse_ethernet;
     }
 

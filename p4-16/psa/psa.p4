@@ -34,6 +34,7 @@ limitations under the License.
 
 typedef bit<10> PortId_t;
 typedef bit<10> MulticastGroup_t;
+typedef bit<10> CloneSessionId_t;
 typedef bit<3>  ClassOfService_t;
 typedef bit<14> PacketLength_t;
 typedef bit<16> EgressInstance_t;
@@ -43,12 +44,14 @@ typedef error   ParserError_t;
 const   PortId_t         PORT_RECIRCULATE = 254;
 const   PortId_t         PORT_CPU = 255;
 
+const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = 0;
 #endif  // PSA_CORE_TYPES
 #ifndef PSA_CORE_TYPES
 #error "Please define the following types for PSA and the PSA_CORE_TYPES macro"
 // BEGIN:Type_defns
 typedef bit<unspecified> PortId_t;
 typedef bit<unspecified> MulticastGroup_t;
+typedef bit<unspecified> CloneSessionId_t;
 typedef bit<unspecified> ClassOfService_t;
 typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
@@ -56,6 +59,8 @@ typedef bit<unspecified> Timestamp_t;
 
 const   PortId_t         PORT_RECIRCULATE = unspecified;
 const   PortId_t         PORT_CPU = unspecified;
+
+const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
 // END:Type_defns
 
 #endif
@@ -101,8 +106,7 @@ struct psa_ingress_output_metadata_t {
   // Ingress control block begins executing.
   ClassOfService_t         class_of_service; // 0
   bool                     clone;            // false
-  PortId_t                 clone_port;       // undefined
-  ClassOfService_t         clone_class_of_service; // 0
+  CloneSessionId_t         clone_session_id; // undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
@@ -124,7 +128,7 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
-  ClassOfService_t         clone_class_of_service; // 0
+  CloneSessionId_t         clone_session_id; // undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
   bool                     truncate;      // false
@@ -305,16 +309,6 @@ extern BufferingQueueingEngine {
                                 /// by the architecture.
 
 }
-
-// BEGIN:Clone_extern
-extern clone_out {
-  /// Write @hdr into the ingress/egress clone engine.
-  /// @T can be a header type, a header stack, a header union, or a struct
-  /// containing fields with such types.
-  void emit<T>(in T hdr);
-}
-// END:Clone_extern
-
 
 // BEGIN:Resubmit_extern
 extern resubmit {
