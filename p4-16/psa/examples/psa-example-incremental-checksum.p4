@@ -186,6 +186,9 @@ control EgressDeparserImpl(packet_out packet,
     InternetChecksum() ck;
     apply {
         // Update IPv4 checksum
+        // This clear() call can be removed without affecting
+        // behavior, as an InternetCheckum instance is automatically
+        // cleared for each packet.
         ck.clear();
         ck.add({
             /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
@@ -199,6 +202,11 @@ control EgressDeparserImpl(packet_out packet,
             });
         hdr.ipv4.hdrChecksum = ck.get();
         // Update TCP checksum
+        // This clear() call is necessary for correct behavior, since
+        // the same instance 'ck' is reused from above for the same
+        // packet.  If a second InternetChecksum instance other than
+        // 'ck' were used below instead, this clear() call would be
+        // unnecessary.
         ck.clear();
         // Subtract the original TCP checksum
         ck.subtract(hdr.tcp.checksum);
