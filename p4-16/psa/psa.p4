@@ -106,20 +106,20 @@ struct psa_ingress_output_metadata_t {
   // Ingress control block begins executing.
   ClassOfService_t         class_of_service; // 0
   bool                     clone;            // false
-  CloneSessionId_t         clone_session_id; // undefined
+  CloneSessionId_t         clone_session_id; // initial value is undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
-  PortId_t                 egress_port;      // undefined
+  PortId_t                 egress_port;      // initial value is undefined
   bool                     truncate;         // false
-  PacketLength_t           truncate_payload_bytes;  // undefined
+  PacketLength_t           truncate_payload_bytes;  // initial value is undefined
 }
 // END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
   ClassOfService_t         class_of_service;
   PortId_t                 egress_port;
   PacketPath_t             packet_path;
-  EgressInstance_t         instance;       /// instance coming from PRE
+  EgressInstance_t         instance;       /// instance coming from PacketReplicationEngine
   Timestamp_t              egress_timestamp;
   ParserError_t            parser_error;
 }
@@ -128,11 +128,11 @@ struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
   bool                     clone;         // false
-  CloneSessionId_t         clone_session_id; // undefined
+  CloneSessionId_t         clone_session_id; // initial value is undefined
   bool                     drop;          // false
   bool                     recirculate;   // false
   bool                     truncate;      // false
-  PacketLength_t           truncate_payload_bytes;  // undefined
+  PacketLength_t           truncate_payload_bytes;  // initial value is undefined
 }
 // END:Metadata_egress_output
 // END:Metadata_types
@@ -141,10 +141,9 @@ struct psa_egress_output_metadata_t {
 /// if and only if a clone of the ingress packet is being made to
 /// egress for the packet being processed.  If there are any
 /// assignments to the out parameter clone_i2e_meta in the
-/// IngressDeparser, they must be inside an if statement statement
-/// that only allows those assignments to execute if
-/// psa_clone_i2e(istd) returns true.  It can be implemented by
-/// returning istd.clone
+/// IngressDeparser, they must be inside an if statement that only
+/// allows those assignments to execute if psa_clone_i2e(istd) returns
+/// true.  psa_clone_i2e can be implemented by returning istd.clone
 
 extern bool psa_clone_i2e(in psa_ingress_output_metadata_t istd);
 
@@ -153,7 +152,7 @@ extern bool psa_clone_i2e(in psa_ingress_output_metadata_t istd);
 /// assignments to the out parameter resubmit_meta in the
 /// IngressDeparser, they must be inside an if statement that only
 /// allows those assignments to execute if psa_resubmit(istd) returns
-/// true.  It can be implemented by returning (!istd.drop &&
+/// true.  psa_resubmit can be implemented by returning (!istd.drop &&
 /// istd.resubmit)
 
 extern bool psa_resubmit(in psa_ingress_output_metadata_t istd);
@@ -163,8 +162,8 @@ extern bool psa_resubmit(in psa_ingress_output_metadata_t istd);
 /// multicast to egress.  If there are any assignments to the out
 /// parameter normal_meta in the IngressDeparser, they must be inside
 /// an if statement that only allows those assignments to execute if
-/// psa_normal(istd) returns true.  It can be implemented by returning
-/// (!istd.drop && !istd.resubmit)
+/// psa_normal(istd) returns true.  psa_normal can be implemented by
+/// returning (!istd.drop && !istd.resubmit)
 
 extern bool psa_normal(in psa_ingress_output_metadata_t istd);
 
@@ -173,7 +172,7 @@ extern bool psa_normal(in psa_ingress_output_metadata_t istd);
 /// for the packet being processed.  If there are any assignments to
 /// the out parameter clone_e2e_meta in the EgressDeparser, they must
 /// be inside an if statement that only allows those assignments to
-/// execute if psa_clone_e2e(istd) returns true.  It can be
+/// execute if psa_clone_e2e(istd) returns true.  psa_clone_e2e can be
 /// implemented by returning istd.clone
 
 extern bool psa_clone_e2e(in psa_egress_output_metadata_t istd);
@@ -182,8 +181,8 @@ extern bool psa_clone_e2e(in psa_egress_output_metadata_t istd);
 /// if and only if the packet is being recirculated.  If there are any
 /// assignments to recirculate_meta in the EgressDeparser, they must
 /// be inside an if statement that only allows those assignments to
-/// execute if psa_recirculate(istd) returns true.  It can be
-/// implemented by returning (!istd.drop && istd.recirculate)
+/// execute if psa_recirculate(istd) returns true.  psa_recirculate
+/// can be implemented by returning (!istd.drop && istd.recirculate)
 
 extern bool psa_recirculate(in psa_egress_output_metadata_t istd);
 
@@ -297,17 +296,16 @@ action egress_truncate(inout psa_egress_output_metadata_t meta,
 
 extern PacketReplicationEngine {
     PacketReplicationEngine();
-
-  // PacketReplicationEngine(); /// No constructor. PRE is instantiated
-                                /// by the architecture.
+    // There are no methods for this object callable from a P4
+    // program.  This extern exists so it will have an instance with a
+    // name that the control plane can use to make control plane API
+    // calls on this object.
 }
 
 extern BufferingQueueingEngine {
     BufferingQueueingEngine();
-
-  // BufferingQueueingEngine(); /// No constructor. BQE is instantiated
-                                /// by the architecture.
-
+    // There are no methods for this object callable from a P4
+    // program.  See comments for PacketReplicationEngine.
 }
 
 // BEGIN:Resubmit_extern
