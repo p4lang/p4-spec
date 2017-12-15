@@ -218,20 +218,6 @@ action send_to_port(inout psa_ingress_output_metadata_t meta,
 /// This action does not change whether a clone or resubmit operation
 /// will occur.
 
-/// The control plane must configure each multicast_group to create the
-/// desired copies of the packet.  For a particular multicast group,
-/// the control plane specifies a list of 0 or more copy
-/// specifications:
-
-/// (egress_port[0], instance[0]),
-/// (egress_port[1], instance[1]),
-/// ...,
-/// (egress_port[N-1], instance[N-1])
-
-/// Copy number i sent to egress processing will have its struct of
-/// type psa_egress_input_metadata_t filled in with egress_port equal
-/// to egress_port[i], and instance filled in with instance[i].
-
 action multicast(inout psa_ingress_output_metadata_t meta,
                  in MulticastGroup_t multicast_group)
 {

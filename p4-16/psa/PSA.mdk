@@ -574,18 +574,19 @@ different classes of service, may be processed by the `Egress` control
 block in a different order than they were processed by the Ingress
 control block.
 
-All of the above is also true for multicast packets (i.e. those that
-follow the "Make 0 or more copies" path in the pseudocode above) that
-are received on the same input port and their copies are made to the same
-output port, at least during times when the multicast group
-memberships are stable (i.e. it has been a significant time since
-the control plane has updated the multicast group
-configuration).  As for unicast packets, multicast packets with the
-same ingress port and replicated using the same value of
-`ostd.multicast_group`, but different values of
-`ostd.class_of_service`, are expected that they may be processed by
-the `Egress` control block in a different order than they were processed
-by the `Ingress` control block.
+A similar FIFO property is expected to hold for multicast packets,
+i.e. those that follow the "Make 0 or more copies" path in the
+pseudocode above.  By a short period of time after the control plane
+has stopped modifying the set of members of multicast groups, they
+should be 'stable', and all packets with the same `(ingress_port,
+ostd.multicast_group, ostd.class_of_service, egress_port)` should pass
+through the system in FIFO order, and be processed in the `Egress`
+control block in the same relative order that they were processed in
+the `Ingress` control block.
+
+There is no such expectation for multicast packets with different
+`class_of_service` values, again because of separate queues in the PRE
+for different class_of_service values.
 
 The control plane API excerpt below is an example intended to be added as part of
 the P4 Runtime API, and the final version of this message will be defined
@@ -610,6 +611,53 @@ message ClassOfServiceInfo {
   repeated uint32 class_of_service_id = 2;
 }
 ```
+
+
+### Multicast replication
+
+The control plane may configure each `multicast_group` in the PRE to
+create the desired copies of packets sent to that group.  Each group
+begins empty.  Sending a packet to an empty group causes the packet to
+be dropped.  The control plane may add one or more pairs of the form
+`(egress_port, instance)` to a multicast group, and may also remove
+pairs from a group that were added earlier.
+
+Suppose a multicast group contains the following set of pairs:
+
+    (egress_port[0], instance[0]),
+    (egress_port[1], instance[1]),
+    ...,
+    (egress_port[N-1], instance[N-1])
+
+When a packet is sent to that group, `N` copies of the packet are
+made.  Copy number `i` that is sent to egress processing will have its
+`struct` of type `psa_egress_input_metadata_t` filled in with the
+field `egress_port` equal to `egress_port[i]`, and the field
+`instance` filled in with `instance[i]`.  Note: A multicast group is a
+set of pairs, and it is not required that an implementation create
+copies in an order that the control plane can enforce.  However, see
+the ordering constraints for multicast described in
+[#sec-after-ingress].
+
+Within a single multicast group, the pairs `(egress_port, instance)`
+must be different from each other, but it is allowed for any number of
+pairs within a multicast group to have the same value of
+`egress_port`, or to have the same value of `instance`.  The same pair
+`(egress_port, instance)` can occur in any number of different
+multicast groups.
+
+A PSA implementation need only support `egress_port` values that
+represent single ports of the PSA device.  That is, it need not
+implement support for `egress_port` values that represent an entire
+Link Aggregation Group (LAG) interface, which is a set of physical
+ports over which load balancing of traffic is performed.
+
+A PSA device must support `egress_port` values in a multicast group
+that are equal to `PORT_CPU` or `PORT_RECIRCULATE`.  The copies of a
+multicast packet made to those ports will behave the same in egress as
+a unicast packets sent to the corresponding port, i.e. if not dropped,
+those copies will go the the CPU port, or be recirculated back to
+ingress.
 
 
 ## Actions for directing packets during ingress {#sec-ingress-actions}
