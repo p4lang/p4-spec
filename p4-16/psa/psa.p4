@@ -129,8 +129,8 @@ struct psa_egress_output_metadata_t {
   // Egress control block begins executing.
   bool                     clone;         // false
   CloneSessionId_t         clone_session_id; // initial value is undefined
+  bool                     recirculate;   // set by environment
   bool                     drop;          // false
-  bool                     recirculate;   // false
   bool                     truncate;      // false
   PacketLength_t           truncate_payload_bytes;  // initial value is undefined
 }
