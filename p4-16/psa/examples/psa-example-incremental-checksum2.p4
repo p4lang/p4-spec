@@ -73,6 +73,9 @@ header udp_t {
     bit<16> checksum;
 }
 
+struct empty_metadata_t {
+}
+
 struct fwd_metadata_t {
     bit<16> checksum_state;
 }
@@ -102,6 +105,8 @@ parser IngressParserImpl(packet_in buffer,
                          out headers hdr,
                          inout metadata user_meta,
                          in psa_ingress_parser_input_metadata_t istd,
+                         in empty_metadata_t resubmit_meta,
+                         in empty_metadata_t recirculate_meta,
                          out psa_parser_output_metadata_t ostd)
 {
     InternetChecksum() ck;
@@ -278,7 +283,6 @@ parser IngressParserImpl(packet_in buffer,
 // BEGIN:Incremental_Checksum_Table
 control ingress(inout headers hdr,
                 inout metadata user_meta,
-                PacketReplicationEngine pre,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd) {
     action drop() {
@@ -320,6 +324,9 @@ parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata user_meta,
                         in psa_egress_parser_input_metadata_t istd,
+                        in empty_metadata_t normal_meta,
+                        in empty_metadata_t clone_i2e_meta,
+                        in empty_metadata_t clone_e2e_meta,
                         out psa_parser_output_metadata_t ostd)
 {
     state start {
@@ -329,30 +336,54 @@ parser EgressParserImpl(packet_in buffer,
 
 control egress(inout headers hdr,
                inout metadata user_meta,
-               BufferingQueueingEngine bqe,
                in    psa_egress_input_metadata_t  istd,
                inout psa_egress_output_metadata_t ostd)
 {
     apply { }
 }
 
+control IngressDeparserImpl(packet_out packet,
+                            out empty_metadata_t clone_i2e_meta,
+                            out empty_metadata_t resubmit_meta,
+                            out empty_metadata_t normal_meta,
+                            inout headers hdr,
+                            in metadata meta,
+                            in psa_ingress_output_metadata_t istd)
+{
+    apply {
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.ipv6);
+        packet.emit(hdr.tcp);
+        packet.emit(hdr.udp);
+    }
+}
+
 // BEGIN:Incremental_Checksum_Example
-control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta) {
+control EgressDeparserImpl(packet_out packet,
+                           out empty_metadata_t clone_e2e_meta,
+                           out empty_metadata_t recirculate_meta,
+                           inout headers hdr,
+                           in metadata user_meta,
+                           in psa_egress_output_metadata_t istd)
+{
     InternetChecksum() ck;
     apply {
-        // Calculate IPv4 header checksum from scratch.
-        ck.clear();
-        ck.add({
-            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
-            /* 16-bit word  1   */ hdr.ipv4.totalLen,
-            /* 16-bit word  2   */ hdr.ipv4.identification,
-            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
-            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
-            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
-            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
-            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
-            });
-        hdr.ipv4.hdrChecksum = ck.get();
+        if (hdr.ipv4.isValid()) {
+            // Calculate IPv4 header checksum from scratch.
+            ck.clear();
+            ck.add({
+                /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
+                /* 16-bit word  1   */ hdr.ipv4.totalLen,
+                /* 16-bit word  2   */ hdr.ipv4.identification,
+                /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
+                /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
+                /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
+                /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
+                /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
+                });
+            hdr.ipv4.hdrChecksum = ck.get();
+        }
 
         // There is no IPv6 header checksum
 
@@ -415,9 +446,12 @@ control DeparserImpl(packet_out packet, inout headers hdr, in metadata user_meta
 }
 // END:Incremental_Checksum_Example
 
-PSA_Switch(IngressParserImpl(),
-           ingress(),
-           DeparserImpl(),
-           EgressParserImpl(),
-           egress(),
-           DeparserImpl()) main;
+IngressPipeline(IngressParserImpl(),
+                ingress(),
+                IngressDeparserImpl()) ip;
+
+EgressPipeline(EgressParserImpl(),
+               egress(),
+               EgressDeparserImpl()) ep;
+
+PSA_SWITCH(ip, ep) main;

@@ -55,6 +55,9 @@ header tcp_t {
     bit<16> urgentPtr;
 }
 
+struct empty_metadata_t {
+}
+
 struct fwd_metadata_t {
     bit<32> old_srcAddr;
 }
@@ -82,6 +85,8 @@ parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
                          inout metadata user_meta,
                          in psa_ingress_parser_input_metadata_t istd,
+                         in empty_metadata_t resubmit_meta,
+                         in empty_metadata_t recirculate_meta,
                          out psa_parser_output_metadata_t ostd)
 {
     state start {
@@ -137,6 +142,9 @@ parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata user_meta,
                         in psa_egress_parser_input_metadata_t istd,
+                        in empty_metadata_t normal_meta,
+                        in empty_metadata_t clone_i2e_meta,
+                        in empty_metadata_t clone_e2e_meta,
                         out psa_parser_output_metadata_t ostd)
 {
     state start {
@@ -153,7 +161,9 @@ control egress(inout headers hdr,
 }
 
 control IngressDeparserImpl(packet_out packet,
-                            clone_out cl,
+                            out empty_metadata_t clone_i2e_meta,
+                            out empty_metadata_t resubmit_meta,
+                            out empty_metadata_t normal_meta,
                             inout headers hdr,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
@@ -167,7 +177,8 @@ control IngressDeparserImpl(packet_out packet,
 
 // BEGIN:Incremental_Checksum_Example
 control EgressDeparserImpl(packet_out packet,
-                           clone_out cl,
+                           out empty_metadata_t clone_e2e_meta,
+                           out empty_metadata_t recirculate_meta,
                            inout headers hdr,
                            in metadata user_meta,
                            in psa_egress_output_metadata_t istd)
@@ -175,6 +186,9 @@ control EgressDeparserImpl(packet_out packet,
     InternetChecksum() ck;
     apply {
         // Update IPv4 checksum
+        // This clear() call can be removed without affecting
+        // behavior, as an InternetCheckum instance is automatically
+        // cleared for each packet.
         ck.clear();
         ck.add({
             /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
@@ -188,6 +202,11 @@ control EgressDeparserImpl(packet_out packet,
             });
         hdr.ipv4.hdrChecksum = ck.get();
         // Update TCP checksum
+        // This clear() call is necessary for correct behavior, since
+        // the same instance 'ck' is reused from above for the same
+        // packet.  If a second InternetChecksum instance other than
+        // 'ck' were used below instead, this clear() call would be
+        // unnecessary.
         ck.clear();
         // Subtract the original TCP checksum
         ck.subtract(hdr.tcp.checksum);
