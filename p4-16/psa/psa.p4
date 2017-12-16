@@ -109,6 +109,7 @@ struct psa_ingress_output_metadata_t {
   CloneSessionId_t         clone_session_id; // initial value is undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
+  bool                     recirculate;      // false
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // initial value is undefined
   bool                     truncate;         // false
