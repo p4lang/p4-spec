@@ -224,7 +224,9 @@ most common place in a P4 program where the output port(s) are chosen.
 The only exception to ingress choosing the output port is for
 egress-to-egress clone packets, whose destination port is chosen when
 the clone is created in the immediately preceding egress processing
-step.  See [#tbd] for the rationale for this restriction.
+step.  See section
+[#appendix-rationale-egress-cannot-change-output-port] for why this
+restriction exists.
 
 A single packet received by a PSA system from a port can result in 0,
 1, or many packets going out, all under control of the P4 program.
@@ -2410,3 +2412,138 @@ out of range includes:
   is implementation-defined (e.g. it might only be 1).  Extra
   information to identify which `count()` method call in the P4
   program had the out-of-range `index` value is also recommended.
+
+
+# Appendix: Rationale for design {#appendix-rationale}
+
+## Why egress processing? {#appendix-rationale-egress}
+
+Question: Why is it useful to have separate ingress vs. egress
+processing in a switch device?
+
+There have been packet processing ASICs built that effectively only do
+'ingress' processing, then go to a packet buffer with one or more
+queues, and then go out of the device, effectively being restricted to
+no or "empty" egress processing.
+
+There are a few things that are trickier to do in such a device.
+
+
+1. Last-nanosecond changes to the packet
+
+If you want to measure the queuing latency through the device, and put
+a measurement of this quantity inside the packet somewhere, it is in
+general not possible to know the queueing latency before the packet is
+sent to the packet buffer.  There are _special cases_ where you can
+predict it, e.g. when there is a single FIFO queue feeding a constant
+bit rate output port, with nothing like Ethernet pause flow control.
+
+But if you have variable bit rate links, e.g. because of things like
+Ethernet pause flow control, or Wi-Fi signal quality changes, or if
+you have multiple class-of-service queues with a scheduling policy
+between them like weighted fair queueing, then it is not possible to
+predict at the time the packet is enqueued, when it will be dequeued.
+The queueing latency depends upon unknown future events, such as
+whether Ethernet pause frames will arrive, or how many and what size
+of packets arriving in the near future will be put into which class of
+service queues for the same output port.
+
+In such cases, having egress processing for taking the measurement,
+after it is known and easy to calculate as "dequeue time - enqueue
+time", allows the egress processing to modify the packet further.
+
+
+
+2. Multicast efficiency and flexibility
+
+It is possible to handle multicast by doing a recirculate or resubmit
+operation in ingress processing for each of N copies to be made, but
+this reduces the processing capacity of ingress that is available to
+newly arriving packets, in particular newly arriving packets that you
+might consider more important to keep than the multicast packets.
+
+By designing a packet buffer that can take a packet with a 'multicast
+group id', which the control plane configures to make copies to a
+selected set of output ports, it frees up the part of the system that
+performs ingress processing to accept new packet more quickly, and at
+a more predictable rate.
+
+There could still be a challenge in designing the packet replication
+portion of the system not to fall behind when many multicast packets
+to be replicated to many output ports arrive close together in time,
+but it is fairly easy to separate the concerns of multicast from
+unicast packets.  For example, you could prioritize unicast packets so
+that they are not slowed down if multicast replication is falling
+behind.
+
+Once you have multicast designed in this way, there are still
+multicast use cases where one needs to process different copies of the
+packet differently.  For example, the copy going out port 5 might need
+a VLAN tag of 7 placed in its header, whereas the copy going out port
+2 might need a VLAN tag of 18 placed in its header.  Similarly for
+multicast packets entering one of many flavors of tunnels, e.g. VXLAN,
+GRE, etc.  By doing this per-copy modifications in egress processing,
+the packet replication logic can be kept very simple -- just make
+identical copies of the packet as ingress finished with it, except for
+some kind of unique 'id' on each copy that egress processing can use
+to distinguish them.
+
+
+## No output port change during egress {#appendix-rationale-egress-cannot-change-output-port}
+
+Question: Why can't my P4 program change the output port during egress
+processing?
+
+In a network device that has many input and output ports, packets can
+arrive at or near the same time on multiple input ports, all destined
+for the same output port.
+
+Packet buffers are typically designed into such network devices, to
+store the packets that cannot be sent out immediately, absorbing this
+short term congestion.
+
+For a given output port P, we now wish to retrieve packets from the
+packet buffer at a rate that is equal to the rate we will send them to
+port P, typically equal to the maximum bit rate that it is possible to
+send data out of port P.
+
+Packet scheduling algorithms such as weighted fair queueing, and many
+others, have been developed that can determine which among a set of
+potentially many FIFO queues that a packet should be read from next,
+and sent out on the port.
+
+These link scheduling algorithms are real time algorithms with very
+tight timing constraints.  If they go too slow, the output port goes
+idle and its capacity is wasted.  If they go too fast, we read packets
+from the packet buffer faster than they can be transmitted on the
+port, and we are back at the same problem we had originally -- either
+drop some of the packets, or store them somewhere again until the port
+is ready to transmit them.
+
+Such a scheduling algorithm that handles multiple output ports must
+know which output port all packets are destined to, before they are
+put into the packet buffer.  If that target output port can be changed
+after the packet is read out, then we can simultaneously overload one
+output port while starving another.
+
+That is why the `egress_port` of a packet must be selected during
+ingress processing, and egress processing is not allowed to change it.
+
+These scheduling algorithms also need to know the size of each packet,
+i.e. the size as it will be when transmitted on the port.
+
+It is possible in egress P4 code to drop a packet, or to change the
+size of the packet by adding or removing headers.  Very likely
+P4-programmable network devices will have their scheduling algorithms
+run just slightly faster than the port to handle cases where many
+packets in a row are decreased in size during egress processing, and
+have tight control loops monitoring the size of packets leaving egress
+processing to make small adustments in the rate that the scheduling
+algorithm operates for each port.  Either that, or they will just
+leave some fraction of the output port's capacity unused during times
+when all packet sizes are being decreased.
+
+Certainly if there are long durations of time when egress decides to
+drop all packets to an output port, that port will go idle.  The
+scheduling algorithm implementations are all built with a finite
+maximum packet scheduling rate.
