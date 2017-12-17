@@ -2456,8 +2456,8 @@ time", allows the egress processing to modify the packet further.
 
 2. Multicast efficiency and flexibility
 
-It is possible to handle multicast by doing a recirculate or resubmit
-operation in ingress processing for each of N copies to be made, but
+It is possible in a PSA device to handle multicast by doing a
+recirculate plus clone operation for each of N copies to be made, but
 this reduces the processing capacity of ingress that is available to
 newly arriving packets, in particular newly arriving packets that you
 might consider more important to keep than the multicast packets.
@@ -2465,16 +2465,16 @@ might consider more important to keep than the multicast packets.
 By designing a packet buffer that can take a packet with a 'multicast
 group id', which the control plane configures to make copies to a
 selected set of output ports, it frees up the part of the system that
-performs ingress processing to accept new packet more quickly, and at
+performs ingress processing to accept new packets more quickly, and at
 a more predictable rate.
 
 There could still be a challenge in designing the packet replication
 portion of the system not to fall behind when many multicast packets
 to be replicated to many output ports arrive close together in time,
 but it is fairly easy to separate the concerns of multicast from
-unicast packets.  For example, you could prioritize unicast packets so
-that they are not slowed down if multicast replication is falling
-behind.
+unicast packets.  For example, a device implementer could prioritize
+unicast packets so that they are not slowed down if multicast
+replication is falling behind.
 
 Once you have multicast designed in this way, there are still
 multicast use cases where one needs to process different copies of the
