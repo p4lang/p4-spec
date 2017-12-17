@@ -214,12 +214,17 @@ There are metadata fields defined by PSA that enable your P4 program
 to identify which path each packet arrived on, and to control where it
 will go next.  See section [#packet-path-details].
 
-For egress packets, the choice of egress port, or the port to the CPU,
-is made by the immediately previous processing step (ingress for NU,
-NM, or CI2E packets, egress for CE2E packets), and egress processing
-cannot change that choice to a different port.  It can change the
-packet to RECIRC instead, or drop the packet.  Ingress code is the
-intended place in your P4 program where the output port(s) are chosen.
+For egress packets, the choice between one of multiple egress ports,
+the port to the CPU, or the "recirculation port", is made by the
+immediately previous processing step (ingress for NU, NM, or CI2E
+packets, egress for CE2E packets).  Egress processing can choose to
+drop the packet instead of sending it to the port chosen earlier, but
+it cannot change the choice to a different port.  Ingress code is the
+most common place in a P4 program where the output port(s) are chosen.
+The only exception to ingress choosing the output port is for
+egress-to-egress clone packets, whose destination port is chosen when
+the clone is created in the immediately preceding egress processing
+step.  See [#tbd] for the rationale for this restriction.
 
 A single packet received by a PSA system from a port can result in 0,
 1, or many packets going out, all under control of the P4 program.
@@ -230,13 +235,13 @@ the following to occur, if the P4 program so directed it:
   creates a CI2E clone destined for the CPU port (copy 1), and a
   multicast NM packet to multicast group 18, which is configured in
   the PacketReplicationEngine to have copies made to ports 5 (copy 2)
-  and 7 (copy 3).
+  and the recirculate port `PORT_RECIRCULATE` (copy 3).
 + Copy 1 performs egress processing, which sends the packet on path
   NTCPU to the CPU port.
 + Copy 2 performs egress processing, which creates a CE2E clone
   destined for port 8 (copy 4), and sends a NTP packet to port 5.
 + Copy 3 performs egress processing, which does a RECIRC back to
-  ingress instead of sending the packet to port 7 (copy 5).
+  ingress (copy 5).
 + Copy 4 performs egress processing, which sends a NTP packet to port
   8.
 + Copy 5 performs ingress processing, which sends a NU packet destined
@@ -573,15 +578,15 @@ A similar FIFO property is expected to hold for multicast packets,
 i.e. those that follow the "Make 0 or more copies" path in the
 pseudocode above.  By a short period of time after the control plane
 has stopped modifying the set of members of multicast groups, they
-should be 'stable', and all packets with the same `(ingress_port,
-ostd.multicast_group, ostd.class_of_service, egress_port)` should pass
-through the system in FIFO order, and be processed in the `Egress`
-control block in the same relative order that they were processed in
-the `Ingress` control block.
+should be 'stable', and all packets with the same `(ingress_port,`
+`ostd.multicast_group,` `ostd.class_of_service,` `egress_port)` should
+pass through the system in FIFO order, and be processed in the
+`Egress` control block in the same relative order that they were
+processed in the `Ingress` control block.
 
 There is no such expectation for multicast packets with different
 `class_of_service` values, again because of separate queues in the PRE
-for different class_of_service values.
+for different `class_of_service` values.
 
 The control plane API excerpt below is an example intended to be added as part of
 the P4 Runtime API, and the final version of this message will be defined
@@ -668,9 +673,8 @@ complete, not at the time one of these actions is called.  See Section
 These actions are provided for convenience in making changes to these
 metadata fields.  Their effects are expected to be common kinds of
 changes one will want to make in a P4 program.  If they do not suit
-your use cases, you are of course welcome to modify the metadata
-fields directly in your P4 programs however you prefer, perhaps within
-actions you define yourself.
+your use cases, you may modify the metadata fields directly in your P4
+programs however you prefer, e.g. within actions you define.
 
 
 ### Unicast operation
@@ -690,8 +694,8 @@ Sends packet to a multicast group or a port.  See Table
 filled in when each multicast-replicated copy of such a packet begins
 egress processing.
 
-The multicast_group parameter is the multicast group id. The control
-plane must configure the multicast groups through a separate
+The `multicast_group` parameter is the multicast group id.  The
+control plane must configure the multicast groups through a separate
 mechanism such as the P4 Runtime API.
 
 ```
@@ -773,12 +777,21 @@ headers as emitted by the ingress deparser, followed by the payload of
 that packet, i.e. the part that was not parsed by the ingress parser.
 Truncation of the payload is supported.
 
+Packets to be recirculated, i.e. those sent to port `PORT_RECIRCULATE`
+via the normal unicast or multicast packet paths, fit into this
+category.  They are not treated differently by a PSA implementation
+from normal unicast or multicast packets until they reach the egress
+deparser.
+
 ### Initial packet contents for packets cloned from ingress to egress
 
 For CI2E packets, `packet_in` is from the ingress packet that caused
 this clone to be created.  It is the same as the pre-IngressParser
 contents of `packet_in` of that ingress packet, with no modifications
 from any ingress processing.  Truncation of the payload is supported.
+
+Packets cloned in ingress using a clone session configured with
+`clone_port` equal to `PORT_RECIRCULATE` fit into this category.
 
 
 ### Initial packet contents for packets cloned from egress to egress
@@ -788,6 +801,9 @@ clone to be created.  It starts with the headers emitted by the egress
 deparser, followed by the payload of that packet, i.e. the part that
 was not parsed by the egress parser.  Truncation of the payload is
 supported.
+
+Packets cloned in egress using a clone session configured with
+`clone_port` equal to `PORT_RECIRCULATE` fit into this category.
 
 
 ### User-defined metadata for all egress packets
@@ -812,7 +828,7 @@ with defined contents.  Its value is the one that was assigned to the
 `out` parameter with the same name of the ingress deparser, when the
 clone was created.
 
-For CLONE_I2E packets, the parameter `clone_e2e_meta` is the only one
+For CLONE_E2E packets, the parameter `clone_e2e_meta` is the only one
 with defined contents.  Its value is the one that was assigned to the
 `out` parameter with the same name of the egress deparser, when the
 clone was created.
@@ -971,22 +987,37 @@ its normal destination according to other features implemented by the
 P4 program, and in addition, send a copy of the packet as received to
 another output port, e.g. to a monitoring device.
 
-Packet cloning happens at the end of the ingress and/or egress pipeline. PSA
-specifies the following semantics for clone operation. When the clone
-operation is invoked at the end of the ingress pipeline, the cloned
-packet is a copy of the original packet from ingress port. When the
-clone operation is invoked at the end of egress pipeline, the cloned
-packet is a copy of the modified packet after egress processing. In
-both cases, the cloned packet is submitted to the egress pipeline for
-further processing.
+Packet cloning happens at the end of the ingress and/or egress
+pipeline. PSA specifies the following semantics for the clone
+operation.  When the clone operation is invoked at the end of the
+ingress pipeline, the cloned packet is a copy of the packet as it
+entered the ingress parser.  When the clone operation is invoked at
+the end of egress pipeline, the cloned packet is a copy of the
+modified packet after egress processing, as output by the egress
+deparser.  In both cases, the cloned packet is submitted to the egress
+pipeline for further processing.
 
-Logically, PRE implements the mechanics of copying a packet. PRE reads
-the original packet from ingress port and the modified packet from
-egress deparser. PRE then decides which version of the packet to use
-to generate a copy based on the value of the metadata provided by the
-ingress and egress pipeline.  The metadata fields that control cloning
-are those whose names begin with `clone` in types
-`psa_ingress_output_metadata_t` and `psa_egress_output_metadata_t`.
+Logically, PRE implements the mechanics of copying a packet.  PRE
+reads the original packet as it began ingress parsing, or the modified
+packet from the egress deparser.  PRE then decides which version of
+the packet to use to generate a copy based on the value of the
+metadata provided by the ingress and egress pipeline.  The metadata
+fields that control cloning are those whose names begin with `clone`
+in types `psa_ingress_output_metadata_t` and
+`psa_egress_output_metadata_t`.
+
+~ TBD
+The sentence beginning "PRE then decides which version of the packet
+to use to generate a copy" makes it sound like either you can create a
+clone of a packet in the ingress pipeline, or you can create a clone
+of a packet in the egress pipeline, but you cannot do both for the
+same packet.  The ingress and egress executions of packets, whether
+they occur due to the same original packet or different ones, are
+pretty much independent events, true?
+
+If so, it would be good to reword, or eliminate, that sentence and any
+text that could be misinterpreted in that way.
+~
 
 ```
 bool                     clone;
@@ -1045,8 +1076,8 @@ different actions as opposed to the ones used to process the original
 packet. Further, if a target permits the same packet to be resubmitted
 multiple times, the user program can distinguish the packet
 resubmitted the first time, or second time, by the extra metadata
-associated with the packet. Note the maximum number of packet
-resubmission for a single packet is target-dependent, see section
+associated with the packet.  Note the maximum number of packet
+resubmission for a single packet is target-dependent.  See section
 [#packet-paths].
 
 PSA specifies that the resubmit operation can only be used in the
@@ -1069,12 +1100,12 @@ resubmitted in the first pass with additional metadata to select one
 of the algorithms. Then, the resubmitted packet can be parsed,
 modified and deparsed using the selected algorithm.
 
-To facilitate communication between the first pass and the second pass
-through the ingress pipeline, the resubmission mechanism supports
-attaching optional metadata with the resubmitted packet. The metadata
-is generated during the first pass through the ingress pipeline, and
-used in the second pass. See Section [#sec-open-metadata] for the
-discussion.
+To facilitate communication from the ingress processing pass that
+caused a resubmit to occur, to the next ingress processing pass after
+the resubmit has happened, the resubmission mechanism supports
+attaching optional metadata with the resubmitted packet.  The metadata
+is generated during the pass through the ingress pipeline that chooses
+the resubmit operation, and used in the next pass.
 
 A PSA implementation provides a configuration bit `resubmit` to the
 PRE to enable the resubmission mechanism. If true, the original packet
@@ -1085,30 +1116,30 @@ resubmission mechanism is disabled and no assignments to
 
 ## Packet Recirculation {#sec-recirculate}
 
-Packet recirculation is a mechanism to repeat both ingress and egress
-processing on a packet.
+Packet recirculation is a mechanism to repeat ingress processing on a
+packet, after it has completed egress processing.  Unlike a resubmit,
+where the resubmitted packet contents are identical to the packet that
+arrived at the ingress parser, a recirculated packet may have
+different headers than the packet had before recirculation.  This
+could be useful in implementing features such as multiple levels of
+tunnel encapsulation or decapsulation.
 
-Packet recirculation happens at the end of the egress pipeline. When a
-packet is recirculated, the packet finishes both ingress and egress
-processing and re-enters the ingress parser after being deparsed by
-the egress deparser. The `ingress_port` of the recirculated packet is
-set to `PORT_RECIRCULATE`. The `packet_path` of the recirculated
-packet is changed to `RECIRCULATE`.
+Packet recirculation happens at the end of the egress pipeline, but
+whether a packet is recirculated must be chosen during ingress
+processing, by sending the packet to port `PORT_RECIRCULATE`.  When a
+packet is sent to the recirculate port, the packet finishes egress
+processing, including the egress deparser, and then re-enters the
+ingress parser.  The `ingress_port` of the recirculated packet is set
+to `PORT_RECIRCULATE`. The `packet_path` of the recirculated packet is
+set to `RECIRCULATE`.
 
 Similar to packet resubmission, packet recirculation also supports
-attaching optional metadata with the recirculated packet. The metadata
-is generated during the first pass through the ingress and egress
-pipeline, and used in the second pass. See Section
-[#sec-open-metadata] for the discussion.
+attaching optional metadata with the recirculated packet.  The
+metadata is generated during egress processing, and filled in by
+assigning a value to the `out` parameter `recirculate_meta` of the
+egress deparser.  The metadata is available to the ingress parser
+after the packet is recirculated.
 
-The `recirculate` flag specifies whether a packet should be
-recirculated and it is a read-only value in the egress deparser. The
-`recirculate` flag is set to true if the `egress_port` is set to
-`PORT_RECIRCULATE` in the ingress pipeline, otherwise, the flag is set
-to false. If the `recirculate` flag is true, the processed packet
-should be recirculated at the end of the egress pipeline with the
-optional metadata. If false, the recirculation mechanism is disabled
-and no assignments to `recirc_meta` should be performed.
 
 # PSA Externs
 
@@ -1231,8 +1262,14 @@ The PRE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
 it exactly once, without requiring the user's P4 program to
 instantiate it. The PRE is made available to the `PSA_Switch` package.
-A corresponding Buffering and Queuing Engine (BQE) extern
-is defined for the egress pipeline (see [#sec-bqe]).
+
+~ TBD
+The statement "The PRE extern object has no constructor" is currently
+wrong.  We should either make it correct by changing psa.p4 somehow,
+or update the text above to match psa.p4.
+
+The same comment applies for the BQE section below.
+~
 
 
 ## Buffering Queuing Engine {#sec-bqe}
@@ -1249,6 +1286,7 @@ The BQE extern object has no constructor, and thus it cannot be
 instantiated in the user's P4 program. The architecture instantiates
 it exactly once, without requiring the user's P4 program to
 instantiate it. The BQE is made available to the `PSA_Switch` package.
+
 
 ## Hashes {#sec-hash-algorithms}
 
@@ -2199,26 +2237,6 @@ a common P4 program.
 
 We also need to formalize the interaction of action profiles and action selectors with counters and
 meters.
-
-## Metadata serialization {#sec-open-metadata}
-
-We have several proposals for serializing metadata that is bridged across the PRE between the
-ingress and egress pipelines, or as part of cloned and resubmitted packets. We are actively working
-on building a set of examples to determine what will be the final PSA API for these operations.
-
-~ TBD
-This section needs to be updated.
-~
-
-For the `clone_out` and `resubmit` externs, we are currently discussing the addition of a method,
-`add_metadata`, to enable prepending metadata to the cloned or resubmitted packet. It is
-the responsibility of the programmer to parse these packets such that it correctly extracts the
-attached metadata. The attached metadata may be of type `header`, `header stack`, `header union` or
-`struct` of the above types. Invoking the `add_metadata` method multiple times will attach all
-specified metadata to the same copy of the packet in the order in which the method was called. The
-PSA architecture instantiates the `clone_out` extern in the ingress and egress deparser. It is an
-error to instantiate the `clone_out` extern in blocks other than the deparser block.
-
 
 ## How does PSA interact with multiple pipelines
 

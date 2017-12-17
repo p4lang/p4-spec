@@ -109,7 +109,6 @@ struct psa_ingress_output_metadata_t {
   CloneSessionId_t         clone_session_id; // initial value is undefined
   bool                     drop;             // true
   bool                     resubmit;         // false
-  bool                     recirculate;      // false
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // initial value is undefined
   bool                     truncate;         // false
@@ -120,9 +119,16 @@ struct psa_egress_input_metadata_t {
   ClassOfService_t         class_of_service;
   PortId_t                 egress_port;
   PacketPath_t             packet_path;
-  EgressInstance_t         instance;       /// instance coming from PacketReplicationEngine
+  EgressInstance_t         instance;       /// instance comes from the PacketReplicationEngine
   Timestamp_t              egress_timestamp;
   ParserError_t            parser_error;
+}
+
+/// This struct is an 'in' parameter to the egress deparser.  It
+/// includes enough data for the egress deparser to distinguish
+/// whether the packet should be recirculated or not.
+struct psa_egress_deparser_input_metadata_t {
+  PortId_t                 egress_port;
 }
 // BEGIN:Metadata_egress_output
 struct psa_egress_output_metadata_t {
@@ -130,7 +136,6 @@ struct psa_egress_output_metadata_t {
   // Egress control block begins executing.
   bool                     clone;         // false
   CloneSessionId_t         clone_session_id; // initial value is undefined
-  bool                     recirculate;   // set by environment
   bool                     drop;          // false
   bool                     truncate;      // false
   PacketLength_t           truncate_payload_bytes;  // initial value is undefined
@@ -183,9 +188,11 @@ extern bool psa_clone_e2e(in psa_egress_output_metadata_t istd);
 /// assignments to recirculate_meta in the EgressDeparser, they must
 /// be inside an if statement that only allows those assignments to
 /// execute if psa_recirculate(istd) returns true.  psa_recirculate
-/// can be implemented by returning (!istd.drop && istd.recirculate)
+/// can be implemented by returning (!istd.drop && (edstd.egress_port
+/// == PORT_RECIRCULATE))
 
-extern bool psa_recirculate(in psa_egress_output_metadata_t istd);
+extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
+                            in psa_egress_deparser_input_metadata_t edstd);
 
 
 // BEGIN:Match_kinds
@@ -198,7 +205,7 @@ match_kind {
 // BEGIN:Action_send_to_port
 /// Modify ingress output metadata to cause one packet to be sent to
 /// egress processing, and then to the output port egress_port.
-/// (Egress processing may instead drop or recirculate the packet.)
+/// (Egress processing may choose to drop the packet instead.)
 
 /// This action does not change whether a clone or resubmit operation
 /// will occur.
@@ -258,8 +265,7 @@ action ingress_truncate(inout psa_ingress_output_metadata_t meta,
 /// Modify egress output metadata to cause no packet to be sent out of
 /// the device.
 
-/// This action does not change whether a clone will occur.  It will
-/// prevent a packet from being recirculated.
+/// This action does not change whether a clone will occur.
 
 action egress_drop(inout psa_egress_output_metadata_t meta)
 {
@@ -294,24 +300,6 @@ extern BufferingQueueingEngine {
     // There are no methods for this object callable from a P4
     // program.  See comments for PacketReplicationEngine.
 }
-
-// BEGIN:Resubmit_extern
-extern resubmit {
-  /// Write @hdr into the ingress packet buffer.
-  /// @T can be a header type, a header stack, a header union or a struct
-  /// containing fields with such types.
-  void emit<T>(in T hdr);
-}
-// END:Resubmit_extern
-
-// BEGIN:Recirculate_extern
-extern recirculate {
-  /// Write @hdr into the egress packet.
-  /// @T can be a header type, a header stack, a header union or a struct
-  /// containing fields with such types.
-  void emit<T>(in T hdr);
-}
-// END:Recirculate_extern
 
 // BEGIN:Hash_algorithms
 enum HashAlgorithm_t {
@@ -668,7 +656,8 @@ control EgressDeparser<H, M, CE2EM, RECIRCM>(
     out RECIRCM recirculate_meta,
     inout H hdr,
     in M meta,
-    in psa_egress_output_metadata_t istd);
+    in psa_egress_output_metadata_t istd,
+    in psa_egress_deparser_input_metadata_t edstd);
 
 package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
     IngressParser<IH, IM, RESUBM, RECIRCM> ip,
