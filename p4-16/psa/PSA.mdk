@@ -1215,6 +1215,27 @@ Rationale:
   accessed from only a single pipeline on such a device.
 
 
+## PSA Table Properties
+
+Table [#table-table-properties] lists all P4 table properties defined
+by PSA that are not included in the base P4~16~ language
+specification.
+
+~ TableFigure {#table-table-properties; \
+  caption: Summary of PSA table properties.}
+|-----------------------|------|---------------------------------------|
+| Property name         | Type | See also |
++:----------------------+:-----+:--------------------------------------+
+| `psa_direct_counters` | list of `DirectCounter` instance names | Section [#sec-direct-counter] |
+|-----------------------|----------------------------------------------|
+| `psa_direct_meters` | list of `DirectMeter` instance names | Section [#sec-meters] |
+|-----------------------|----------------------------------------------|
+| `psa_implementation`  | instance name of one `ActionProfile` | Sections [#sec-action-profile], [#sec-action-selector] |
+|                       | or `ActionSelector` |  |
+|-------------------|----------------------------------------------|
+~
+
+
 ## Packet Replication Engine {#sec-pre}
 
 The `PacketReplicationEngine` extern (abbreviated PRE) represents
@@ -1430,7 +1451,7 @@ that they count such erroneous attempted updates, and record other
 information that can help an P4 programmer debug such errors.
 
 
-### Direct Counter
+### Direct Counter {#sec-direct-counter}
 
 ```
 [INCLUDE=psa.p4:DirectCounter_extern]
@@ -1722,7 +1743,7 @@ to generate values.
 ```
 
 
-## Action Profile
+## Action Profile {#sec-action-profile}
 
 Action profiles are used as table implementation attributes.
 
@@ -1730,7 +1751,7 @@ Action profiles provide a mechanism to populate table entries
 with action specifications that have been defined outside the table entry
 specification. An action profile extern can be instantiated as
 a resource in the P4 program. A table that uses this action profile
-must specify its implementation attribute as the action profile
+must specify its `psa_implementation` attribute as the action profile
 instance.
 
 ~ Figure {#fig-ap; caption: "Action profiles in PSA"; page-align: here;}
@@ -1749,7 +1770,7 @@ using a separate table as shown in Figure [#fig-ap] (b).
 A table with an action profile implementation has entries that point to a member
 reference instead of directly defining an action specification. A mapping from
 member references to action specifications is maintained in a separate table
-that is part of the action profile instance defined in the table implementation
+that is part of the action profile instance defined in the table `psa_implementation`
 attribute. When a table with an action profile implementation is applied, the
 member reference is resolved and the corresponding action specification is
 applied to the packet.
@@ -1777,7 +1798,7 @@ action profile implementation.
 ### Action Profile Example
 The P4 control block `Ctrl` in the example below instantiates an
 action profile `ap` that can contain at most 128 member entries. Table
-`indirect` uses this instance by specifying the implementation attribute.
+`indirect` uses this instance by specifying the `psa_implementation` attribute.
 The control plane can add member entries to `ap`, where each member can
 specify either a `foo` or `NoAction` action. Table entries for `indirect`
 table must specify the action using the controller-assigned member reference.
@@ -1792,7 +1813,7 @@ control Ctrl(inout H hdr, inout M meta) {
   table indirect {
     key = {hdr.ipv4.dst_address: exact;}
     actions = { foo; NoAction; }
-    implementation = ap;
+    psa_implementation = ap;
   }
 
   apply {
@@ -1802,7 +1823,7 @@ control Ctrl(inout H hdr, inout M meta) {
 ```
 
 
-## Action Selector
+## Action Selector {#sec-action-selector}
 
 Action selectors are used as table implementation attributes.
 
@@ -1812,7 +1833,7 @@ table entry. They are more powerful than action profiles because they also
 provide the ability to dynamically select the action specification to apply
 upon matching a table entry. An action selector extern can be instantiated as
 a resource in the P4 program, similar to action profiles. Furthermore,
-a table that uses this action selector must specify its implementation attribute
+a table that uses this action selector must specify its `psa_implementation` attribute
 as the action selector instance.
 
 ~ Figure {#fig-as; caption: "Action selectors in PSA"; page-align: here;}
@@ -1877,7 +1898,7 @@ action selector uses a crc16 algorithm with output width of 10 bits
 to select a member entry within a group.
 
 Table `indirect_with_selection` uses this instance by specifying the
-implementation attribute as shown. The control plane can add member and group
+`psa_implementation` table property as shown. The control plane can add member and group
 entries to `as`. Each member can specify either a `foo` or `NoAction` action.
 When programming the table entries, the control plane *does not* include the
 fields of match type `selector` in the match key. The selector match fields are
@@ -1900,7 +1921,7 @@ control Ctrl(inout H hdr, inout M meta) {
       hdr.ipv4.protocol: selector;
     }
     actions = { foo; NoAction; }
-    implementation = as;
+    psa_implementation = as;
   }
 
   apply {
