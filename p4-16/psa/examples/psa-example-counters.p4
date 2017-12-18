@@ -214,6 +214,7 @@ control EgressDeparserImpl(
     }
 }
 
+// BEGIN:Package_Instantiation_Example
 IngressPipeline(IngressParserImpl(),
                 ingress(),
                 IngressDeparserImpl()) ip;
@@ -222,4 +223,5 @@ EgressPipeline(EgressParserImpl(),
                egress(),
                EgressDeparserImpl()) ep;
 
-PSA_SWITCH(ip, ep) main;
+PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
+// END:Package_Instantiation_Example

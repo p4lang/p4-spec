@@ -580,8 +580,8 @@ A similar FIFO property is expected to hold for multicast packets,
 i.e. those that follow the "Make 0 or more copies" path in the
 pseudocode above.  By a short period of time after the control plane
 has stopped modifying the set of members of multicast groups, they
-should be 'stable', and all packets with the same `(ingress_port,`
-`ostd.multicast_group,` `ostd.class_of_service,` `egress_port)` should
+should be 'stable', and all packets with the same (`ingress_port`,
+`ostd.multicast_group`, `ostd.class_of_service`, `egress_port`) should
 pass through the system in FIFO order, and be processed in the
 `Egress` control block in the same relative order that they were
 processed in the `Ingress` control block.
@@ -999,27 +999,10 @@ modified packet after egress processing, as output by the egress
 deparser.  In both cases, the cloned packet is submitted to the egress
 pipeline for further processing.
 
-Logically, PRE implements the mechanics of copying a packet.  PRE
-reads the original packet as it began ingress parsing, or the modified
-packet from the egress deparser.  PRE then decides which version of
-the packet to use to generate a copy based on the value of the
-metadata provided by the ingress and egress pipeline.  The metadata
-fields that control cloning are those whose names begin with `clone`
-in types `psa_ingress_output_metadata_t` and
+Logically, PRE implements the mechanics of copying a packet.  The
+metadata fields that control cloning are those whose names begin with
+`clone` in types `psa_ingress_output_metadata_t` and
 `psa_egress_output_metadata_t`.
-
-~ TBD
-The sentence beginning "PRE then decides which version of the packet
-to use to generate a copy" makes it sound like either you can create a
-clone of a packet in the ingress pipeline, or you can create a clone
-of a packet in the egress pipeline, but you cannot do both for the
-same packet.  The ingress and egress executions of packets, whether
-they occur due to the same original packet or different ones, are
-pretty much independent events, true?
-
-If so, it would be good to reword, or eliminate, that sentence and any
-text that could be misinterpreted in that way.
-~
 
 ```
 bool                     clone;
@@ -1126,9 +1109,9 @@ different headers than the packet had before recirculation.  This
 could be useful in implementing features such as multiple levels of
 tunnel encapsulation or decapsulation.
 
-Packet recirculation happens at the end of the egress pipeline, but
-whether a packet is recirculated must be chosen during ingress
-processing, by sending the packet to port `PORT_RECIRCULATE`.  When a
+Whether a packet is recirculated must be chosen during ingress
+processing, by sending the packet to port `PORT_RECIRCULATE`.  Packet
+recirculation happens at the end of the egress pipeline.  When a
 packet is sent to the recirculate port, the packet finishes egress
 processing, including the egress deparser, and then re-enters the
 ingress parser.  The `ingress_port` of the recirculated packet is set
@@ -1255,23 +1238,26 @@ a part of the PSA pipeline that is not programmable via writing P4
 code.
 
 Even though the PRE can not be programmed using P4, it can be
-configured both directly using control plane APIs and by setting
-intrinsic metadata.  The file `psa.p4` defines some actions
-to help set these metadata fields for some common use cases, described
-in sections [#sec-ingress-actions] and [#sec-egress-actions].
+configured using control plane APIs, e.g. configuring multicast groups
+and clone sessions.  For every packet, your P4 program will typically
+assign values to intrinsic metadata in structs such as those of type
+`psa_ingress_output_metadata_t` and `psa_egress_output_metadata_t`,
+which direct the operation of the PRE on that packet.  The file
+`psa.p4` defines some actions to help set these metadata fields for
+some common use cases, described in sections [#sec-ingress-actions]
+and [#sec-egress-actions].
 
-The PRE extern object has no constructor, and thus it cannot be
-instantiated in the user's P4 program. The architecture instantiates
-it exactly once, without requiring the user's P4 program to
-instantiate it. The PRE is made available to the `PSA_Switch` package.
+The PRE extern must be instantiated exactly once, in the `PSA_Switch`
+package instantiation.  See near the end of Section
+[#sec-programmable-blocks] for the package definitions from `psa.p4`.
+See below for an example of instantiating these packages, including
+the instantiation of one instance of `PacketReplicationEngine` and one
+of `BufferingQueueingEngine` in the `PSA_Switch` package
+instantiation.
 
-~ TBD
-The statement "The PRE extern object has no constructor" is currently
-wrong.  We should either make it correct by changing psa.p4 somehow,
-or update the text above to match psa.p4.
-
-The same comment applies for the BQE section below.
-~
+```
+[INCLUDE=examples/psa-example-counters.p4:Package_Instantiation_Example]
+```
 
 
 ## Buffering Queuing Engine {#sec-bqe}
@@ -1284,10 +1270,8 @@ Even though the BQE can not be programmed using P4, it can be
 configured both directly using control plane APIs and by setting
 intrinsic metadata.
 
-The BQE extern object has no constructor, and thus it cannot be
-instantiated in the user's P4 program. The architecture instantiates
-it exactly once, without requiring the user's P4 program to
-instantiate it. The BQE is made available to the `PSA_Switch` package.
+The BQE extern must be instantiated exactly once, as the PRE must.
+See Section [#sec-pre] for additional discussion and example code.
 
 
 ## Hashes {#sec-hash-algorithms}

@@ -94,20 +94,14 @@ parser IngressParserImpl(
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.RECIRCULATE: parse_recirc_header;
+           PacketPath_t.RECIRCULATE: copy_recirc_meta;
            PacketPath_t.NORMAL: parse_ethernet;
         }
     }
 
-    state parse_recirc_header {
+    state copy_recirc_meta {
         user_meta.recirc_header = recirc_meta;
-        // @hanw - You could write a P4 program like this, but then
-        // recirculated packets would have no headers parsed and valid
-        // during ingress processing, true?  It seems like a much
-        // better and more typical example if we use 'transition
-        // parse_ethernet' instead of 'transition accept' on the next
-        // line.  Do you agree?
-	transition accept;
+	transition parse_ethernet;
     }
 
     state parse_ethernet {
