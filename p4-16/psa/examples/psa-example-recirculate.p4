@@ -1,4 +1,3 @@
-
 /*
 Copyright 2017 Barefoot Networks, Inc.
 
@@ -95,14 +94,14 @@ parser IngressParserImpl(
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.RECIRCULATE: parse_recirc_header;
+           PacketPath_t.RECIRCULATE: copy_recirc_meta;
            PacketPath_t.NORMAL: parse_ethernet;
         }
     }
 
-    state parse_recirc_header {
+    state copy_recirc_meta {
         user_meta.recirc_header = recirc_meta;
-	transition accept;
+	transition parse_ethernet;
     }
 
     state parse_ethernet {
@@ -186,12 +185,13 @@ control EgressDeparserImpl(
     out recirc_metadata_t recirc_meta,
     inout headers hdr,
     in metadata meta,
-    in psa_egress_output_metadata_t istd)
+    in psa_egress_output_metadata_t istd,
+    in psa_egress_deparser_input_metadata_t edstd)
 {
     DeparserImpl() common_deparser;
     apply {
-        if (psa_recirculate(istd)) {
-            recirc_meta.custom_field = 8w1;
+        if (psa_recirculate(istd, edstd)) {
+            recirc_meta.custom_field = 1;
         }
         common_deparser.apply(packet, hdr);
     }

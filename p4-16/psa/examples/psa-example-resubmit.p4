@@ -50,18 +50,20 @@ header header_b_t {
 }
 
 // BEGIN:Resubmit_Example_Part1
-header resubmit_metadata_t {
+struct resubmit_metadata_t {
     bit<8> selector;
+    header_a_t header_a;
+    header_b_t header_b;
 }
 // END:Resubmit_Example_Part1
+
+struct empty_metadata_t {}
 
 struct fwd_metadata_t {
     bit<9> output_port;
 }
 
 struct metadata {
-    header_a_t header_a;
-    header_b_t header_b;
     resubmit_metadata_t resubmit_meta;
     fwd_metadata_t fwd_meta;
 }
@@ -91,51 +93,31 @@ parser CommonParser(packet_in buffer,
     }
 }
 
-parser ResubmitParser(packet_in buffer,
-    in psa_ingress_parser_input_metadata_t istd,
-    inout metadata user_meta)
-{
-    state start {
-        buffer.extract(user_meta.resubmit_meta);
-        transition select(user_meta.resubmit_meta.selector) {
-            8w1 : parse_header_a;
-            8w2 : parse_header_b;
-            default: reject;
-        }
-    }
-    state parse_header_a {
-        buffer.extract(user_meta.header_a);
-        transition accept;
-    }
-    state parse_header_b {
-        buffer.extract(user_meta.header_b);
-        transition accept;
-    }
-}
-
-parser IngressParserImpl(packet_in buffer,
+parser IngressParserImpl(
+    packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
     in psa_ingress_parser_input_metadata_t istd,
+    in resubmit_metadata_t resub_meta,
+    in empty_metadata_t recirculate_meta,
     out psa_parser_output_metadata_t ostd)
 {
     CommonParser() cp;
-    ResubmitParser() rp;
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.RESUBMIT: parse_resubmit;
-           PacketPath_t.NORMAL: parse_ethernet;
+           PacketPath_t.RESUBMIT: copy_resubmit_meta;
+           PacketPath_t.NORMAL: packet_in_parsing;
         }
     }
 
-    state parse_ethernet {
-        cp.apply(buffer, parsed_hdr, user_meta);
-        transition accept;
+    state copy_resubmit_meta {
+        user_meta.resubmit_meta = resub_meta;
+        transition packet_in_parsing;
     }
 
-    state parse_resubmit {
-        rp.apply(buffer, istd, user_meta);
+    state packet_in_parsing {
+        cp.apply(buffer, parsed_hdr, user_meta);
         transition accept;
     }
 }
@@ -157,15 +139,27 @@ control ingress(inout headers hdr,
     }
 
     apply {
+        // Note that this example will resubmit all input packets
+        // forever, until and unless the PSA implementation drops
+        // them.
         t.apply();
+
+        // Note: For a more complete example, there should be
+        // assignments to meta.resubmit_meta.selector, and the
+        // appropriate one of meta.resubmit_meta.header_a or
+        // meta.resubmit_meta.header_b
     }
 }
 // END:Resubmit_Example_Part2
 
-parser EgressParserImpl(packet_in buffer,
+parser EgressParserImpl(
+    packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
     in psa_egress_parser_input_metadata_t istd,
+    in empty_metadata_t normal_meta,
+    in empty_metadata_t clone_i2e_meta,
+    in empty_metadata_t clone_e2e_meta,
     out psa_parser_output_metadata_t ostd)
 {
     CommonParser() cp;
@@ -183,33 +177,46 @@ control egress(inout headers hdr,
     apply { }
 }
 
-control DeparserImpl(packet_out packet, inout headers hdr) {
-    apply { }
-}
-
-// BEGIN:Resubmit_Example_Part3
-control IngressDeparserImpl(packet_out packet,
-    clone_out clone,
-    inout headers hdr,
-    in metadata meta,
-    in psa_ingress_output_metadata_t istd)
-{
-    DeparserImpl() common_deparser;
+control CommonDeparserImpl(packet_out packet, inout headers hdr) {
     apply {
-        common_deparser.apply(packet, hdr);
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
     }
 }
-// END:Resubmit_Example_Part3
 
-control EgressDeparserImpl(packet_out packet,
-    clone_out cl,
+// BEGIN:Resubmit_Example_Part3
+control IngressDeparserImpl(
+    packet_out packet,
+    out empty_metadata_t clone_i2e_meta,
+    out resubmit_metadata_t resubmit_meta,
+    out empty_metadata_t normal_meta,
     inout headers hdr,
     in metadata meta,
-    in psa_egress_output_metadata_t istd)
+    in psa_ingress_output_metadata_t istd)
 {
-    DeparserImpl() common_deparser;
+    CommonDeparserImpl() common_deparser;
+    apply {
+        // Assignments to the out parameter resubmit_meta must be
+        // guarded by this if condition:
+        if (psa_resubmit(istd)) {
+            resubmit_meta = meta.resubmit_meta;
+        }
+
+        common_deparser.apply(packet, hdr);
+    }
+}
+// END:Resubmit_Example_Part3
+
+control EgressDeparserImpl(
+    packet_out packet,
+    out empty_metadata_t clone_e2e_meta,
+    out empty_metadata_t recirculate_meta,
+    inout headers hdr,
+    in metadata meta,
+    in psa_egress_output_metadata_t istd,
+    in psa_egress_deparser_input_metadata_t edstd)
+{
+    CommonDeparserImpl() common_deparser;
     apply {
         common_deparser.apply(packet, hdr);
     }

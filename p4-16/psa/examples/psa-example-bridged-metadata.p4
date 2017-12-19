@@ -338,7 +338,8 @@ control EgressDeparserImpl(
     out recirculate_metadata_t recirculate_meta,
     inout headers hdr,
     in metadata meta,
-    in psa_egress_output_metadata_t istd)
+    in psa_egress_output_metadata_t istd,
+    in psa_egress_deparser_input_metadata_t edstd)
 {
     CommonDeparserImpl() common_deparser;
     apply {
@@ -352,7 +353,7 @@ control EgressDeparserImpl(
 
         // Assignments to the out parameter recirculate_meta must be
         // guarded by this if condition:
-        if (psa_recirculate(istd)) {
+        if (psa_recirculate(istd, edstd)) {
             recirculate_meta.my_meta2 = meta.my_meta2;
             recirculate_meta.my_meta3 = meta.my_meta3;
         }

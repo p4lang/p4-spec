@@ -180,7 +180,8 @@ control EgressDeparserImpl(packet_out packet,
                            clone_out cl,
                            inout headers hdr,
                            in metadata meta,
-                           in psa_egress_output_metadata_t istd)
+                           in psa_egress_output_metadata_t istd,
+                           in psa_egress_deparser_input_metadata_t edstd)
 {
     CommonDeparserImpl() common_deparser;
     apply {

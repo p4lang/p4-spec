@@ -28,7 +28,9 @@ check:
 	${P4C} examples/psa-example-counters.p4
 	${P4C} examples/psa-example-incremental-checksum.p4
 	${P4C} examples/psa-example-parser-checksum.p4
+	${P4C} examples/psa-example-recirculate.p4
 	${P4C} examples/psa-example-register2.p4
+	${P4C} examples/psa-example-resubmit.p4
 	${P4C} examples/psa-example-value-sets.p4
 	${P4C} examples/psa-example-value-sets2.p4
 	${P4C} examples/psa-example-value-sets3.p4
@@ -40,9 +42,6 @@ check-others:
 
 # psa-example-mirror-on-drop.p4 needs updates for latest psa.p4
 #	${P4C} examples/psa-example-mirror-on-drop.p4
-
-# psa-example-resubmit.p4 needs updates for latest psa.p4
-#	${P4C} examples/psa-example-resubmit.p4
 
 # psa-example-incremental-checksum2.p4 fails with latest p4test as of
 # 2017-Dec-04 because of call to InternetChecksum method set_state(),

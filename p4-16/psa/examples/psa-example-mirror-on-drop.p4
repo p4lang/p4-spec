@@ -206,7 +206,9 @@ control EgressDeparserImpl(packet_out packet,
     clone_out clone,
     inout headers hdr,
     in userMetadata meta,
-    in psa_egress_output_metadata_t istd) {
+    in psa_egress_output_metadata_t istd,
+    in psa_egress_deparser_input_metadata_t edstd)
+{
     DeparserImpl() common_deparser;
     apply {
         if (istd.clone) {
