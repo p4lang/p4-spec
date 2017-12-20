@@ -52,14 +52,17 @@ struct headers {
     ipv4_t           ipv4;
 }
 
-struct digest_t {
-    bit<48> srcAddr;
-    bit<9>  ingress_port;
+struct empty_metadata_t {
+}
+
+struct mac_learn_digest_t {
+    EthernetAddress srcAddr;
+    PortId_t        ingress_port;
 }
 
 struct metadata {
-    bit<3>   digest_id;
-    digest_t digest_h;
+    bit<3>             digest_id;
+    mac_learn_digest_t mac_learn_digest;
 }
 
 parser CommonParser(
@@ -84,10 +87,11 @@ parser CommonParser(
 }
 
 parser IngressParserImpl(packet_in buffer,
-                         packed_metadata_in packed_meta,
                          out headers parsed_hdr,
                          inout metadata meta,
                          in psa_ingress_parser_input_metadata_t istd,
+                         in empty_metadata_t resubmit_meta,
+                         in empty_metadata_t recirculate_meta,
                          out psa_parser_output_metadata_t ostd)
 {
     CommonParser() p;
@@ -106,6 +110,9 @@ parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata meta,
                         in psa_egress_parser_input_metadata_t istd,
+                        in empty_metadata_t normal_meta,
+                        in empty_metadata_t clone_i2e_meta,
+                        in empty_metadata_t clone_e2e_meta,
                         out psa_parser_output_metadata_t ostd)
 {
     CommonParser() p;
@@ -122,37 +129,59 @@ parser EgressParserImpl(packet_in buffer,
 
 control ingress(inout headers hdr,
                 inout metadata meta,
-                PacketReplicationEngine pre,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
+    // This is part of the functionality of a typical Ethernet
+    // learning bridge.
+    
+    // The control plane will typically enter the _same_ keys into the
+    // mac_cache and l2_tbl tables.  The entries in l2_tbl are
+    // searched for the packet's dest MAC address, and on a hit the
+    // resulting action tells where to send the packet.
 
-    action do_digest () {
+    // The entries in mac_cache are the same, and the action of every
+    // table entry added is NoAction.  If there is a _miss_ in
+    // mac_cache, we want to send a message to the control plane
+    // software containing the packet's source MAC address, and the
+    // port it arrived on.  The control plane should consider creating
+    // an entry with that packet's source MAC address into both
+    // tables, with the l2_tbl sending future packets out this
+    // packet's ingress_port.
+
+    // Typically a learning bridge would 'flood', i.e. when it gets a
+    // miss in the l2_tbl, it would send a copy of the packet out of
+    // all output ports except the one that it arrived on (and if the
+    // bridge had multiple VLANs, it would limit the sending to all
+    // ports that are allowed to carry packets for that VLAN).  None
+    // of that is implemented in this small example.
+
+    action do_mac_miss () {
         meta.digest_id = 0;
-        meta.digest_h.src_addr = hdr.srcAddr;
-        meta.digest_h.ingress_port = istd.ingress_port;
+        meta.mac_learn_digest.srcAddr = hdr.ethernet.srcAddr;
+        meta.mac_learn_digest.ingress_port = istd.ingress_port;
     }
     table mac_cache {
-        keys = {
-            hdr.srcAddr : exact;
-            meta.ingress_port : exact;
+        key = {
+            hdr.ethernet.srcAddr : exact;
         }
         actions = {
-            do_digest; nop;
+            do_mac_miss; NoAction;
         }
-        default_action = do_digest();
+        default_action = do_mac_miss();
     }
-    action do_switch (bit<9> egress_port) {
-        ostd.egress_port = egress_port;
+
+    action do_switch (PortId_t egress_port) {
+        send_to_port(ostd, egress_port);
     }
     table l2_tbl {
-        keys = {
-            hdr.dstAddr : exact;
+        key = {
+            hdr.ethernet.dstAddr : exact;
         }
         actions = {
-            do_switch; nop;
+            do_switch; NoAction;
         }
-        default_action = nop();
+        default_action = NoAction();
     }
     apply {
         mac_cache.apply();
@@ -160,8 +189,29 @@ control ingress(inout headers hdr,
     }
 }
 
+control egress(inout headers hdr,
+               inout metadata meta,
+               in    psa_egress_input_metadata_t  istd,
+               inout psa_egress_output_metadata_t ostd)
+{
+    apply {
+    }
+}
+
+control CommonDeparserImpl(packet_out packet,
+                           inout headers hdr)
+{
+    apply {
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+    }
+}
+
 /// Expected control plane API for parsing the digest_out metadata.
 control IngressDeparserImpl(packet_out packet,
+                            out empty_metadata_t clone_i2e_meta,
+                            out empty_metadata_t resubmit_meta,
+                            out empty_metadata_t normal_meta,
                             inout headers hdr,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
@@ -170,14 +220,15 @@ control IngressDeparserImpl(packet_out packet,
     CommonDeparserImpl() common_deparser;
     apply {
         if (meta.digest_id == 0) {
-            digest.pack(meta.digest_h);
+            digest.pack(meta.mac_learn_digest);
         }
         common_deparser.apply(packet, hdr);
     }
 }
 
 control EgressDeparserImpl(packet_out packet,
-                           clone_out cl,
+                           out empty_metadata_t clone_e2e_meta,
+                           out empty_metadata_t recirculate_meta,
                            inout headers hdr,
                            in metadata meta,
                            in psa_egress_output_metadata_t istd,
@@ -189,12 +240,15 @@ control EgressDeparserImpl(packet_out packet,
     }
 }
 
-PSA_Switch(IngressParserImpl(),
-           ingress(),
-           IngressDeparserImpl(),
-           EgressParserImpl(),
-           egress(),
-           EgressDeparserImpl()) main;
+IngressPipeline(IngressParserImpl(),
+                ingress(),
+                IngressDeparserImpl()) ip;
+
+EgressPipeline(EgressParserImpl(),
+               egress(),
+               EgressDeparserImpl()) ep;
+
+PSA_SWITCH(ip, ep) main;
 
 // A sketch of how the control plane software could look like
 
