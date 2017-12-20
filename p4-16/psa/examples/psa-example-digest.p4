@@ -216,7 +216,7 @@ control IngressDeparserImpl(packet_out packet,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
 {
-    Digest<mac_learn_digest_t>(0) digest;
+    Digest<mac_learn_digest_t>() digest;
     CommonDeparserImpl() common_deparser;
     apply {
         if (meta.digest_id == 0) {

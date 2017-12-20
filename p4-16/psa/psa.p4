@@ -577,7 +577,7 @@ extern ActionSelector {
 
 // BEGIN:Digest_extern
 extern Digest<T> {
-  Digest(PortId_t receiver);         /// define a digest stream to receiver
+  Digest();                       /// define a digest stream to receiver
   void pack(in T data);           /// emit data into the stream
 
   /*
