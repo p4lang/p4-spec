@@ -99,8 +99,7 @@ parser IngressParserImpl(
     inout metadata user_meta,
     in psa_ingress_parser_input_metadata_t istd,
     in resubmit_metadata_t resub_meta,
-    in empty_metadata_t recirculate_meta,
-    out psa_parser_output_metadata_t ostd)
+    in empty_metadata_t recirculate_meta)
 {
     CommonParser() cp;
 
@@ -159,8 +158,7 @@ parser EgressParserImpl(
     in psa_egress_parser_input_metadata_t istd,
     in empty_metadata_t normal_meta,
     in empty_metadata_t clone_i2e_meta,
-    in empty_metadata_t clone_e2e_meta,
-    out psa_parser_output_metadata_t ostd)
+    in empty_metadata_t clone_e2e_meta)
 {
     CommonParser() cp;
     state start {
