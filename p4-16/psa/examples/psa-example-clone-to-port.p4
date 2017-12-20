@@ -138,8 +138,8 @@ parser EgressParserImpl(
 
     state start {
         transition select (istd.packet_path) {
-           PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
-           PacketPath_t.NORMAL: parse_ethernet;
+           PacketPath_t.PSA_CLONE_I2E: copy_clone_i2e_meta;
+           PacketPath_t.PSA_NORMAL: parse_ethernet;
         }
     }
 

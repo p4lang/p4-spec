@@ -41,8 +41,8 @@ typedef bit<16> EgressInstance_t;
 typedef bit<48> Timestamp_t;
 typedef error   ParserError_t;
 
-const   PortId_t         PORT_RECIRCULATE = 254;
-const   PortId_t         PORT_CPU = 255;
+const   PortId_t         PSA_PORT_RECIRCULATE = 254;
+const   PortId_t         PSA_PORT_CPU = 255;
 
 const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = 0;
 #endif  // PSA_CORE_TYPES
@@ -57,8 +57,8 @@ typedef bit<unspecified> PacketLength_t;
 typedef bit<unspecified> EgressInstance_t;
 typedef bit<unspecified> Timestamp_t;
 
-const   PortId_t         PORT_RECIRCULATE = unspecified;
-const   PortId_t         PORT_CPU = unspecified;
+const   PortId_t         PSA_PORT_RECIRCULATE = unspecified;
+const   PortId_t         PSA_PORT_CPU = unspecified;
 
 const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
 // END:Type_defns
@@ -67,15 +67,15 @@ const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
 
 // BEGIN:Metadata_types
 enum PacketPath_t {
-    NORMAL,     /// Packet received by ingress that is none of the cases below.
-    NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
-    NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
-    CLONE_I2E,  /// Packet created via a clone operation in ingress,
-                /// destined for egress
-    CLONE_E2E,  /// Packet created via a clone operation in egress,
-                /// destined for egress
-    RESUBMIT,   /// Packet arrival is the result of a resubmit operation
-    RECIRCULATE /// Packet arrival is the result of a recirculate operation
+    PSA_NORMAL,     /// Packet received by ingress that is none of the cases below.
+    PSA_NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
+    PSA_NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
+    PSA_CLONE_I2E,  /// Packet created via a clone operation in ingress,
+                    /// destined for egress
+    PSA_CLONE_E2E,  /// Packet created via a clone operation in egress,
+                    /// destined for egress
+    PSA_RESUBMIT,   /// Packet arrival is the result of a resubmit operation
+    PSA_RECIRCULATE /// Packet arrival is the result of a recirculate operation
 }
 
 struct psa_ingress_parser_input_metadata_t {
@@ -181,7 +181,7 @@ extern bool psa_clone_e2e(in psa_egress_output_metadata_t istd);
 /// be inside an if statement that only allows those assignments to
 /// execute if psa_recirculate(istd) returns true.  psa_recirculate
 /// can be implemented by returning (!istd.drop && (edstd.egress_port
-/// == PORT_RECIRCULATE))
+/// == PSA_PORT_RECIRCULATE))
 
 extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
                             in psa_egress_deparser_input_metadata_t edstd);
@@ -267,14 +267,14 @@ extern BufferingQueueingEngine {
 
 // BEGIN:Hash_algorithms
 enum HashAlgorithm_t {
-  IDENTITY,
-  CRC32,
-  CRC32_CUSTOM,
-  CRC16,
-  CRC16_CUSTOM,
-  ONES_COMPLEMENT16,  /// One's complement 16-bit sum used for IPv4 headers,
-                      /// TCP, and UDP.
-  TARGET_DEFAULT      /// target implementation defined
+  PSA_IDENTITY,
+  PSA_CRC32,
+  PSA_CRC32_CUSTOM,
+  PSA_CRC16,
+  PSA_CRC16_CUSTOM,
+  PSA_ONES_COMPLEMENT16,  /// One's complement 16-bit sum used for IPv4 headers,
+                          /// TCP, and UDP.
+  PSA_TARGET_DEFAULT      /// target implementation defined
 }
 // END:Hash_algorithms
 
@@ -316,7 +316,7 @@ extern Checksum<W> {
 // END:Checksum_extern
 
 // BEGIN:InternetChecksum_extern
-// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
+// Checksum based on `PSA_ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
 // Supports incremental updating via `remove` method.
 // See IETF RFC 1624.
 extern InternetChecksum {

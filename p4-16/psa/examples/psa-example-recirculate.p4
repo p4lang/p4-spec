@@ -93,8 +93,8 @@ parser IngressParserImpl(
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.RECIRCULATE: copy_recirc_meta;
-           PacketPath_t.NORMAL: parse_ethernet;
+           PacketPath_t.PSA_RECIRCULATE: copy_recirc_meta;
+           PacketPath_t.PSA_NORMAL: parse_ethernet;
         }
     }
 
@@ -115,7 +115,7 @@ control ingress(inout headers hdr,
                 inout psa_ingress_output_metadata_t ostd)
 {
     action do_recirc (PortId_t port) {
-        send_to_port(ostd, PORT_RECIRCULATE);
+        send_to_port(ostd, PSA_PORT_RECIRCULATE);
     }
     table t {
         key = {
