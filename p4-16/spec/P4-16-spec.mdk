@@ -3281,6 +3281,11 @@ copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
 with a list expression, as discussed in Section [#sec-list-exprs].
 
+Two structs can be compared for equality (==) or inequality (!=) only
+if they have the same type and all of their fields can be recursively
+compared for equality.  Two structures are equal if and only if all
+their corresponding fields are equal.
+
 ## Operations on headers { #sec-ops-on-hdrs }
 
 Headers provide the same operations as `struct`s. Assignment between
@@ -3351,6 +3356,11 @@ header H { bit<32> x; bit<32> y; }
 H h;
 h = { 10, 12 };  // This also makes the header h valid
 ~ End P4Example
+
+Two headers can be compared for equality (==) or inequality (!=) only
+if they have the same type.  Two headers are equal if and only if they
+are both invalid, or they are both valid and all their corresponding
+fields are equal.
 
 ## Operations on header stacks { #sec-expr-hs }
 
@@ -3470,6 +3480,11 @@ void pop_front(int count) {
     // Note: this.last, this.next, and this.lastIndex adjust with this.nextIndex
 }
 ~ End P4Pseudo
+
+Two header stacks can be compared for equality (==) or inequality (!=)
+only if they have the same element type and the same length.  Two
+stacks are equal if and only if all their corresponding elements are
+equal.
 
 ## Operations on header unions { #sec-expr-hu }
 
@@ -3672,6 +3687,10 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
     }
 }
 ~End P4Example
+
+Two header unions can be compared for equality (==) or inequality (!=)
+if they have the exact same type.  The unions are equal if and only if
+all their corresponding fields are equal.
 
 ## Method invocations and function calls { #sec-functions }
 
