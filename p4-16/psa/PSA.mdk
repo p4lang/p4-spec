@@ -396,15 +396,14 @@ to raise an error.
 
 For RESUB packets, `packet_in` is the same as the pre-IngressParser
 contents of `packet_in`, for the packet that caused this resubmitted
-packet to occur (i.e. with NO modifications from any ingress processing).  Truncation is not supported for RESUB packets.
+packet to occur (i.e. with NO modifications from any ingress processing).
 
 ### Initial packet contents for recirculated packets
 
 For RECIRC packets, `packet_in` is created by starting with the
 headers emitted by the egress deparser of the egress packet that was
 recirculated, followed by the payload of that packet, i.e. the part
-that was not parsed by the egress parser.  Truncation is not supported
-for RECIRC packets.
+that was not parsed by the egress parser.
 
 ### User-defined metadata for all ingress packets {#sec-ingress_initial-metadata}
 
@@ -480,20 +479,12 @@ assist P4 developers in debugging their code.
 
     psa_ingress_output_metadata_t ostd;
 
-    if (ostd.class_of_service value is not supported) {
-        ostd.class_of_service = 0;    // use default class 0 instead
-        // Recommended to log error about unsupported
-        // ostd.class_of_service value.
-    }
-    if (ostd.truncate) {
-        Truncate the payload to at most ostd.truncate_payload_bytes long.
-            This affects any copies made below except resubmitted
-            packets, which are not required to support truncation.
-    }
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
             ep = egress_port configured for ostd.clone_session_id in PRE
+            trunc = truncate configured for ostd.clone_session in PRE
+            plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos
@@ -503,7 +494,10 @@ assist P4 developers in debugging their code.
                 create a clone of the packet and send it to the packet
                     buffer with the egress_port ep and
                     class_of_service cos, after which it will start
-                    egress processing.
+                    egress processing.  It will contain at most the
+                    first plen bytes of the packet as received at the
+                    ingress parser if trunc is true, otherwise the
+                    entire packet.
             } else {
                 // Do not create a clone.  Recommended to log error
                 // about unsupported ep value.
@@ -518,6 +512,11 @@ assist P4 developers in debugging their code.
     if (ostd.drop) {
         drop the packet
         return;   // Do not continue below.
+    }
+    if (ostd.class_of_service value is not supported) {
+        ostd.class_of_service = 0;    // use default class 0 instead
+        // Recommended to log error about unsupported
+        // ostd.class_of_service value.
     }
     if (ostd.resubmit) {
         resubmit the packet, i.e. it will go back to starting with the
@@ -539,9 +538,6 @@ assist P4 developers in debugging their code.
         // value.
     }
 ```
-
-Note: Truncation is not currently supported for cloned packets. The functionality of a truncated
-cloned packet can be replaced with sending a digest.
 
 Whenever the pseudocode above indicates that a packet should be sent
 on a particular packet path, a PSA implementation may under some
@@ -720,17 +716,6 @@ Do not send a copy of the packet for normal egress processing.
 [INCLUDE=psa.p4:Action_ingress_drop]
 ```
 
-### Truncate operation {#sec-ingress-truncate}
-
-For all copies of the packet made at the end of ingress processing,
-truncate the payload to be at most the specified number of bytes.
-Specifying 0 is legal, and causes only packet headers to be sent, with
-no payload.
-
-```
-[INCLUDE=psa.p4:Action_ingress_truncate]
-```
-
 
 ## Initial values of packets processed by egress
 
@@ -785,7 +770,6 @@ For NU and NM packets, `packet_in` comes from the ingress packet that
 caused this packet to be sent to egress.  It starts with the packet
 headers as emitted by the ingress deparser, followed by the payload of
 that packet, i.e. the part that was not parsed by the ingress parser.
-Truncation of the payload is supported.
 
 Packets to be recirculated, i.e. those sent to port `PORT_RECIRCULATE`
 via the normal unicast or multicast packet paths, fit into this
@@ -887,15 +871,12 @@ the contents of several metadata fields in the struct
     psa_egress_input_metadata_t  istd;
     psa_egress_output_metadata_t ostd;
 
-    if (ostd.truncate) {
-        Truncate the payload to at most truncate_payload_bytes long.
-            This affects any copies made below except recirculated
-            packets, which are not required to support truncation.
-    }
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
             ep = egress_port configured for ostd.clone_session_id in PRE
+            trunc = truncate configured for ostd.clone_session in PRE
+            plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos
@@ -905,7 +886,10 @@ the contents of several metadata fields in the struct
                 create a clone of the packet and send it to the packet
                     buffer with the egress_port ep and
                     class_of_service cos, after which it will start
-                    egress processing.
+                    egress processing.  It will contain at most the
+                    first plen bytes of the packet as sent out from
+                    the egress deparser if trunc is true, otherwise
+                    the entire packet.
             } else {
                 // Do not create a clone.  Recommended to log error
                 // about unsupported ep value.
@@ -921,16 +905,15 @@ the contents of several metadata fields in the struct
         drop the packet
         return;   // Do not continue below.
     }
-    if (ostd.egress_port == PORT_RECIRCULATE) {
-        recirculate the packet, i.e. it will go back to starting with the
-            ingress parser;
-        return;   // Do not continue below.
-    }
-
     // The value istd.egress_port below is the same one that the
     // packet began its egress processing with, as decided during
     // ingress processing for this packet.  The egress code is not
     // allowed to change it.
+    if (istd.egress_port == PORT_RECIRCULATE) {
+        recirculate the packet, i.e. it will go back to starting with the
+            ingress parser;
+        return;   // Do not continue below.
+    }
     enqueue one packet for output port istd.egress_port
 ```
 
@@ -956,17 +939,6 @@ complete.
 [INCLUDE=psa.p4:Action_egress_drop]
 ```
 
-### Truncate operation {#sec-egress-truncate}
-
-For all copies of the packet made at the end of egress processing,
-truncate the payload to be at most the specified number of bytes.
-Specifying 0 is legal, and causes only packet headers to be sent, with
-no payload.
-
-```
-[INCLUDE=psa.p4:Action_egress_truncate]
-```
-
 
 ## Contents of packets sent out to ports
 
@@ -974,8 +946,7 @@ There is no metadata associated with NTP and NTCPU packets.
 
 They begin with the series of bytes emitted by the egress deparser.
 Following that is the payload, which are those packet bytes that were
-not parsed in the egress parser.  Truncation is supported for these
-packets.
+not parsed in the egress parser.
 
 For Ethernet ports, any padding required to get the packet up to the
 minimum frame size required is done by the implementation, as well as
@@ -1021,15 +992,46 @@ The `clone` flag specifies whether a packet should be cloned.  If
 true, then a cloned packet should be generated at the end of the
 pipeline.  The `clone_session_id` specifies one of several possible
 clone sessions that the control plane may configure in the PRE.  For
-each clone session, the control plane may configure the `egress_port`
-and `class_of_service` values that should be associated with packets
-cloned using that session.
+each clone session, the control plane may configure the following
+values that should be associated with packets cloned using that
+session.
+
+```
+PortId_t         egress_port;
+CloneSessionId_t class_of_service;
+bool             truncate;
+PacketLength_t   packet_length_bytes;  /// only used if truncate is true
+```
 
 The `egress_port` may be any port that can be used for normal unicast
 packets, i.e. any normal port, `PORT_CPU`, or `PORT_RECIRCULATE`.  For
 the latter two values, the cloned packet will be sent to the CPU, or
 recirculated at the end of egress processing, as a normal unicast
 packet would at the end of egress processing.
+
+Truncation of cloned packets is supported as an optimization to
+reduce the bandwidth required to send the beginning of packets.  This
+is sometimes useful in sending packet headers to the control plane, or
+some kinds of data collection system for traffic monitoring.  Here by
+"headers" we simply mean "some number of bytes from the beginning of
+the packet", not headers as defined and parsed in your P4 program.
+
+If `truncate` is false for a clone session, then no truncation is
+performed for packets cloned using that session.
+
+Otherwise, packets are truncated to contain at most the first
+`packet_length_bytes` bytes of the packet, with any additional bytes
+removed.  Truncating a packet has no effect on any metadata that is
+carried along with it, and the size of that metadata is not counted as
+part of the `packet_length_bytes` quantity.  Any truncation is based
+completely upon the length of the packet as passed to the type
+`packet_in` parameter to the ingress parser (for ingress to egress
+clones), or as sent out as the type `packet_out` parameter from the
+egress deparser (for egress to egress clones).
+
+PSA implementations are allowed to support only a restricted set of
+possible values for `packet_length_bytes`, e.g. an implementation
+might choose only to support values that are multiples of 32 bytes.
 
 Since it is an expected common case to clone packets to the CPU, every
 PSA implementation begins with a clone session

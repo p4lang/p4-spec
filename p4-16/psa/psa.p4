@@ -107,8 +107,6 @@ struct psa_ingress_output_metadata_t {
   bool                     resubmit;         // false
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // initial value is undefined
-  bool                     truncate;         // false
-  PacketLength_t           truncate_payload_bytes;  // initial value is undefined
 }
 // END:Metadata_ingress_output
 struct psa_egress_input_metadata_t {
@@ -133,8 +131,6 @@ struct psa_egress_output_metadata_t {
   bool                     clone;         // false
   CloneSessionId_t         clone_session_id; // initial value is undefined
   bool                     drop;          // false
-  bool                     truncate;      // false
-  PacketLength_t           truncate_payload_bytes;  // initial value is undefined
 }
 // END:Metadata_egress_output
 // END:Metadata_types
@@ -243,20 +239,6 @@ action ingress_drop(inout psa_ingress_output_metadata_t meta)
 }
 // END:Action_ingress_drop
 
-// BEGIN:Action_ingress_truncate
-/// For any copies made of this packet at the end of Ingress
-/// processing, truncate the payload to at most payload_bytes bytes in
-/// length.  A PSA implementation need not support truncation for
-/// resubmitted packets.
-
-action ingress_truncate(inout psa_ingress_output_metadata_t meta,
-                        in PacketLength_t payload_bytes)
-{
-    meta.truncate = true;
-    meta.truncate_payload_bytes = payload_bytes;
-}
-// END:Action_ingress_truncate
-
 // BEGIN:Action_egress_drop
 /// Modify egress output metadata to cause no packet to be sent out of
 /// the device.
@@ -268,20 +250,6 @@ action egress_drop(inout psa_egress_output_metadata_t meta)
     meta.drop = true;
 }
 // END:Action_egress_drop
-
-// BEGIN:Action_egress_truncate
-/// For any copies made of this packet at the end of Egress
-/// processing, truncate the payload to at most payload_bytes bytes in
-/// length.  A PSA implementation need not support truncation for
-/// recirculated packets.
-
-action egress_truncate(inout psa_egress_output_metadata_t meta,
-                       in PacketLength_t payload_bytes)
-{
-    meta.truncate = true;
-    meta.truncate_payload_bytes = payload_bytes;
-}
-// END:Action_egress_truncate
 
 extern PacketReplicationEngine {
     PacketReplicationEngine();
