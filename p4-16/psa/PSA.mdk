@@ -476,7 +476,7 @@ assist P4 developers in debugging their code.
             cos = class_of_service configured for ostd.clone_session_id in PRE
             ep = egress_port configured for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session in PRE
-            tlen = truncate_length_bytes configured for ostd.clone_session in PRE
+            plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos
@@ -487,7 +487,7 @@ assist P4 developers in debugging their code.
                     buffer with the egress_port ep and
                     class_of_service cos, after which it will start
                     egress processing.  It will contain at most the
-                    first tlen bytes of the packet as received at the
+                    first plen bytes of the packet as received at the
                     ingress parser if trunc is true, otherwise the
                     entire packet.
             } else {
@@ -868,7 +868,7 @@ the contents of several metadata fields in the struct
             cos = class_of_service configured for ostd.clone_session_id in PRE
             ep = egress_port configured for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session in PRE
-            tlen = truncate_length_bytes configured for ostd.clone_session in PRE
+            plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos
@@ -879,7 +879,7 @@ the contents of several metadata fields in the struct
                     buffer with the egress_port ep and
                     class_of_service cos, after which it will start
                     egress processing.  It will contain at most the
-                    first tlen bytes of the packet as sent out from
+                    first plen bytes of the packet as sent out from
                     the egress deparser if trunc is true, otherwise
                     the entire packet.
             } else {
@@ -992,7 +992,7 @@ session.
 PortId_t         egress_port;
 CloneSessionId_t class_of_service;
 bool             truncate;
-PacketLength_t   truncate_length_bytes;
+PacketLength_t   packet_length_bytes;  /// only used if truncate is true
 ```
 
 The `egress_port` may be any port that can be used for normal unicast
@@ -1001,7 +1001,7 @@ the latter two values, the cloned packet will be sent to the CPU, or
 recirculated at the end of egress processing, as a normal unicast
 packet would at the end of egress processing.
 
-Truncation of cloned packets is supported as an optimization, to
+Truncation of cloned packets is supported as an optimization to
 reduce the bandwidth required to send the beginning of packets.  This
 is sometimes useful in sending packet headers to the control plane, or
 some kinds of data collection system for traffic monitoring.  Here by
@@ -1012,14 +1012,18 @@ If `truncate` is false for a clone session, then no truncation is
 performed for packets cloned using that session.
 
 Otherwise, packets are truncated to contain at most the first
-`truncate_length_bytes` bytes of the packet, with any additional bytes
+`packet_length_bytes` bytes of the packet, with any additional bytes
 removed.  Truncating a packet has no effect on any metadata that is
 carried along with it, and the size of that metadata is not counted as
-part of the `truncate_length_bytes` quantity.  Any truncation is based
+part of the `packet_length_bytes` quantity.  Any truncation is based
 completely upon the length of the packet as passed to the type
 `packet_in` parameter to the ingress parser (for ingress to egress
 clones), or as sent out as the type `packet_out` parameter from the
 egress deparser (for egress to egress clones).
+
+PSA implementations are allowed to support only a restricted set of
+possible values for `packet_length_bytes`, e.g. an implementation
+might choose only to support values that are multiples of 32 bytes.
 
 Since it is an expected common case to clone packets to the CPU, every
 PSA implementation begins with a clone session
