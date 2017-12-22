@@ -20,7 +20,8 @@ clean:
 # regularly occur with these example programs for the 'out
 # psa_parser_output_metadata_t ostd' parameter of the parsers.
 
-P4C=p4test --Wdisable=uninitialized_out_param
+P4C=p4test
+#P4C=p4test --Wdisable=uninitialized_out_param
 
 check:
 	${P4C} examples/psa-example-bridged-metadata.p4

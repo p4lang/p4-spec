@@ -102,8 +102,7 @@ parser CloneParser(packet_in buffer,
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
                          inout metadata user_meta,
-                         in psa_ingress_parser_input_metadata_t istd,
-                         out psa_parser_output_metadata_t ostd)
+                         in psa_ingress_parser_input_metadata_t istd)
 {
     CommonParser() p;
     CloneParser() cp;
@@ -155,8 +154,7 @@ control ingress(inout headers hdr,
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata user_meta,
-                        in psa_egress_parser_input_metadata_t istd,
-                        out psa_parser_output_metadata_t ostd)
+                        in psa_egress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 

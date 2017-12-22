@@ -88,10 +88,6 @@ struct psa_egress_parser_input_metadata_t {
   PacketPath_t             packet_path;
 }
 
-struct psa_parser_output_metadata_t {
-  ParserError_t            parser_error;
-}
-
 struct psa_ingress_input_metadata_t {
   // All of these values are initialized by the architecture before
   // the Ingress control block begins executing.
@@ -618,8 +614,7 @@ parser IngressParser<H, M, RESUBM, RECIRCM>(
     inout M user_meta,
     in psa_ingress_parser_input_metadata_t istd,
     in RESUBM resubmit_meta,
-    in RECIRCM recirculate_meta,
-    out psa_parser_output_metadata_t ostd);
+    in RECIRCM recirculate_meta);
 
 control Ingress<H, M>(
     inout H hdr, inout M user_meta,
@@ -642,8 +637,7 @@ parser EgressParser<H, M, NM, CI2EM, CE2EM>(
     in psa_egress_parser_input_metadata_t istd,
     in NM normal_meta,
     in CI2EM clone_i2e_meta,
-    in CE2EM clone_e2e_meta,
-    out psa_parser_output_metadata_t ostd);
+    in CE2EM clone_e2e_meta);
 
 control Egress<H, M>(
     inout H hdr, inout M user_meta,

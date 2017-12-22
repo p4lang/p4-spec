@@ -171,8 +171,7 @@ parser IngressParserImpl(
     inout metadata meta,
     in psa_ingress_parser_input_metadata_t istd,
     in resubmit_metadata_t resubmit_meta,
-    in recirculate_metadata_t recirculate_meta,
-    out psa_parser_output_metadata_t ostd)
+    in recirculate_metadata_t recirculate_meta)
 {
     CommonParser() p;
 
@@ -208,8 +207,7 @@ parser EgressParserImpl(
     in psa_egress_parser_input_metadata_t istd,
     in metadata normal_meta,
     in clone_i2e_metadata_t clone_i2e_meta,
-    in clone_e2e_metadata_t clone_e2e_meta,
-    out psa_parser_output_metadata_t ostd)
+    in clone_e2e_metadata_t clone_e2e_meta)
 {
     CommonParser() p;
 
