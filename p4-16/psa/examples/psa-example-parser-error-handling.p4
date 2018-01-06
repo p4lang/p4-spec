@@ -565,7 +565,6 @@ control egress(inout headers hdr,
     }
 }
 
-// BEGIN:Compute_New_IPv4_Checksum_Example
 control EgressDeparserImpl(packet_out packet,
                            out clone_e2e_metadata_t clone_e2e_meta,
                            out empty_metadata_t recirculate_meta,
@@ -588,7 +587,6 @@ control EgressDeparserImpl(packet_out packet,
         cd.apply(packet, hdr);
     }
 }
-// END:Compute_New_IPv4_Checksum_Example
 
 IngressPipeline(IngressParserImpl(),
                 ingress(),
