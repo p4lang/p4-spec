@@ -351,9 +351,9 @@ packet contents and metadata when a packet begins ingress processing.
 | IngressParser `istd` fields (type `psa_ingress_parser_input_metadata_t`) |||||
 +--------------+-------------+---------------+--------------+-----+
 | `ingress_port`      | `PortId_t` value of | `PORT_` | copied from    | `PORT_`       |
-|                     | packet's input port | `CPU`   | resub'd packet | `PSA_RECIRCULATE` |
+|                     | packet's input port | `CPU`   | resub'd packet | `RECIRCULATE` |
 +--------------+-------------+---------------+--------------+-----+
-| `packet_path`     | `PSA_NORMAL`            | `PSA_NORMAL` | `PSA_RESUBMIT`    | `PSA_RECIRCULATE`  |
+| `packet_path`     | `NORMAL`            | `NORMAL` | `RESUBMIT`    | `RECIRCULATE`  |
 +--------------+-------------+---------------+--------------+-----+
 +--------------+-------------+---------------+--------------+-----+
 | Ingress `istd` fields (type `psa_ingress_input_metadata_t`)         |||||
@@ -739,7 +739,7 @@ packet contents and metadata when a packet begins egress processing.
 |                   | of ingress packet  | configuration      | of clone session       ||
 |                   |                    | of multicast group |                        ||
 +--------------+-------------+---------------+--------------+-----+
-| `packet_path`   | PSA_NORMAL_ | PSA_NORMAL_   | PSA_CLONE_I2E | PSA_CLONE_E2E |
+| `packet_path`   | NORMAL | NORMAL   | CLONE_I2E | CLONE_E2E |
 |                 | UNICAST | MULTICAST |           |           |
 +--------------+-------------+---------------+--------------+-----+
 +--------------+-------------+---------------+--------------+-----+
@@ -817,12 +817,12 @@ with defined contents.  Its value is the one that was assigned to the
 `out` parameter with the same name of the ingress deparser, when the
 normal packet was completing its ingress processing.
 
-For PSA_CLONE_I2E packets, the parameter `clone_i2e_meta` is the only one
+For CLONE_I2E packets, the parameter `clone_i2e_meta` is the only one
 with defined contents.  Its value is the one that was assigned to the
 `out` parameter with the same name of the ingress deparser, when the
 clone was created.
 
-For PSA_CLONE_E2E packets, the parameter `clone_e2e_meta` is the only one
+For CLONE_E2E packets, the parameter `clone_e2e_meta` is the only one
 with defined contents.  Its value is the one that was assigned to the
 `out` parameter with the same name of the egress deparser, when the
 clone was created.
@@ -1060,7 +1060,7 @@ processing and re-enters the ingress parser without being deparsed. In
 other words, the resubmitted packet has the same header and payload as
 the original packet. The `ingress_port` of the resubmitted packet is
 the same as the original packet. The `packet_path` of the resubmitted
-packet is changed to `PSA_RESUBMIT`.
+packet is changed to `RESUBMIT`.
 
 The ingress parser distinguishes the resubmitted packet from the
 original packet with the `packet_path` field in
@@ -1126,7 +1126,7 @@ packet is sent to the recirculate port, the packet finishes egress
 processing, including the egress deparser, and then re-enters the
 ingress parser.  The `ingress_port` of the recirculated packet is set
 to `PSA_PORT_RECIRCULATE`. The `packet_path` of the recirculated packet is
-set to `PSA_RECIRCULATE`.
+set to `RECIRCULATE`.
 
 Similar to packet resubmission, packet recirculation also supports
 attaching optional metadata with the recirculated packet.  The
@@ -1328,7 +1328,7 @@ Example usage:
 
 ```
 parser P() {
-  Hash<bit<16>>(HashAlgorithm_t.PSA_CRC16) h;
+  Hash<bit<16>>(PSA_HashAlgorithm_t.CRC16) h;
   bit<16> hash_value = h.get_hash(buffer);
 }
 ```
@@ -1365,7 +1365,7 @@ Parameters:
 
 PSA also provides an incremental checksum that comes equipped with an
 additional `subtract` method that can be used to remove data previously
-added. The checksum is computed using the `PSA_ONES_COMPLEMENT16` hash
+added. The checksum is computed using the `ONES_COMPLEMENT16` hash
 algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
 RFC 1624](https://tools.ietf.org/html/rfc1624)
 and section [#appendix-internetchecksum-implementation] for details.
@@ -1613,7 +1613,7 @@ a list of meter instances.
 As for counters, if you call the `execute(idx)` method on an indexed
 meter and `idx` is at least the number of meter states, so `idx` is
 out of range, no meter state is updated.  The `execute` call still
-returns a value of type `MeterColor_t`, but the value is undefined --
+returns a value of type `PSA_MeterColor_t`, but the value is undefined --
 programs that wish to have predictable behavior across implementations
 must not use the undefined value in a way that affects the output
 packet or other side effects.  The example code below shows one way to
@@ -1624,18 +1624,18 @@ index value could never be out of range.
 
 ```
 #define METER1_SIZE 100
-Meter<bit<7>>(METER1_SIZE, MeterType_t.BYTES) meter1;
+Meter<bit<7>>(METER1_SIZE, PSA_MeterType_t.BYTES) meter1;
 bit<7> idx;
-MeterColor_t color1;
+PSA_MeterColor_t color1;
 
 // ... later ...
 
 if (idx < METER1_SIZE) {
-    color1 = meter1.execute(idx, MeterColor_t.GREEN);
+    color1 = meter1.execute(idx, PSA_MeterColor_t.GREEN);
 } else {
     // If idx is out of range, use a default value for color1.  One
     // may also choose to store an error flag in some metadata field.
-    color1 = MeterColor_t.RED;
+    color1 = PSA_MeterColor_t.RED;
 }
 ```
 
@@ -1956,7 +1956,7 @@ control Ctrl(inout H hdr, inout M meta) {
 
   action foo() { meta.foo = 1; }
 
-  ActionSelector(HashAlgorithm_t.CRC16, 128, 10) as;
+  ActionSelector(PSA_HashAlgorithm_t.CRC16, 128, 10) as;
 
   table indirect_with_selection {
     key = {
@@ -2379,11 +2379,11 @@ wrapping or saturating, and adds the values read to larger counters in
 driver memory.
 
 ```
-Counter(bit<32> n_counters, CounterType_t type) {
+Counter(bit<32> n_counters, PSA_CounterType_t type) {
     this.num_counters = n_counters;
     this.counter_vals = new array of size n_counters, each element with type W;
     this.type = type;
-    if (this.type == CounterType_t.PACKETS_AND_BYTES) {
+    if (this.type == PSA_CounterType_t.PACKETS_AND_BYTES) {
         // Packet and byte counts share storage in the same counter
         // state.  Should we have a separate constructor with an
         // additional argument indicating how many of the bits to use
@@ -2395,17 +2395,17 @@ Counter(bit<32> n_counters, CounterType_t type) {
     }
 }
 
-W next_counter_value(W cur_value, CounterType_t type) {
-    if (type == CounterType_t.PACKETS) {
+W next_counter_value(W cur_value, PSA_CounterType_t type) {
+    if (type == PSA_CounterType_t.PACKETS) {
         return (cur_value + 1);
     }
     // Exactly which packet bytes are included in packet_len is
     // implementation-specific.
     PacketLength_t packet_len = <packet length in bytes>;
-    if (type == CounterType_t.BYTES) {
+    if (type == PSA_CounterType_t.BYTES) {
         return (cur_value + packet_len);
     }
-    // type must be CounterType_t.PACKETS_AND_BYTES
+    // type must be PSA_CounterType_t.PACKETS_AND_BYTES
     // In type W, the least significant bits contain the byte
     // count, and most significant bits contain the packet count.
     // This is merely one example storage format.  Implementations

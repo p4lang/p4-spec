@@ -109,8 +109,8 @@ parser IngressParserImpl(packet_in buffer,
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.PSA_CLONE: parse_clone_header; // FIXME: CLONE_I2E or CLONE_E2E
-           PacketPath_t.PSA_NORMAL: parse_ethernet;
+           PSA_PacketPath_t.CLONE: parse_clone_header; // FIXME: CLONE_I2E or CLONE_E2E
+           PSA_PacketPath_t.NORMAL: parse_ethernet;
         }
     }
 

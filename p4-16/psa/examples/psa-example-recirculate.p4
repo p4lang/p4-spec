@@ -93,8 +93,8 @@ parser IngressParserImpl(
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.PSA_RECIRCULATE: copy_recirc_meta;
-           PacketPath_t.PSA_NORMAL: parse_ethernet;
+           PSA_PacketPath_t.RECIRCULATE: copy_recirc_meta;
+           PSA_PacketPath_t.NORMAL: parse_ethernet;
         }
     }
 

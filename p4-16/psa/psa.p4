@@ -66,16 +66,16 @@ const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
 #endif
 
 // BEGIN:Metadata_types
-enum PacketPath_t {
-    PSA_NORMAL,     /// Packet received by ingress that is none of the cases below.
-    PSA_NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
-    PSA_NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
-    PSA_CLONE_I2E,  /// Packet created via a clone operation in ingress,
-                    /// destined for egress
-    PSA_CLONE_E2E,  /// Packet created via a clone operation in egress,
-                    /// destined for egress
-    PSA_RESUBMIT,   /// Packet arrival is the result of a resubmit operation
-    PSA_RECIRCULATE /// Packet arrival is the result of a recirculate operation
+enum PSA_PacketPath_t {
+    NORMAL,     /// Packet received by ingress that is none of the cases below.
+    NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
+    NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
+    CLONE_I2E,  /// Packet created via a clone operation in ingress,
+                /// destined for egress
+    CLONE_E2E,  /// Packet created via a clone operation in egress,
+                /// destined for egress
+    RESUBMIT,   /// Packet arrival is the result of a resubmit operation
+    RECIRCULATE /// Packet arrival is the result of a recirculate operation
 }
 
 struct psa_ingress_parser_input_metadata_t {
@@ -266,15 +266,15 @@ extern BufferingQueueingEngine {
 }
 
 // BEGIN:Hash_algorithms
-enum HashAlgorithm_t {
-  PSA_IDENTITY,
-  PSA_CRC32,
-  PSA_CRC32_CUSTOM,
-  PSA_CRC16,
-  PSA_CRC16_CUSTOM,
-  PSA_ONES_COMPLEMENT16,  /// One's complement 16-bit sum used for IPv4 headers,
-                          /// TCP, and UDP.
-  PSA_TARGET_DEFAULT      /// target implementation defined
+enum PSA_HashAlgorithm_t {
+  IDENTITY,
+  CRC32,
+  CRC32_CUSTOM,
+  CRC16,
+  CRC16_CUSTOM,
+  ONES_COMPLEMENT16,  /// One's complement 16-bit sum used for IPv4 headers,
+                      /// TCP, and UDP.
+  TARGET_DEFAULT      /// target implementation defined
 }
 // END:Hash_algorithms
 
@@ -316,7 +316,7 @@ extern Checksum<W> {
 // END:Checksum_extern
 
 // BEGIN:InternetChecksum_extern
-// Checksum based on `PSA_ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
+// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
 // Supports incremental updating via `remove` method.
 // See IETF RFC 1624.
 extern InternetChecksum {
@@ -354,7 +354,7 @@ extern InternetChecksum {
 // END:InternetChecksum_extern
 
 // BEGIN:CounterType_defn
-enum CounterType_t {
+enum PSA_CounterType_t {
     PACKETS,
     BYTES,
     PACKETS_AND_BYTES
@@ -413,14 +413,14 @@ extern DirectCounter<W> {
 // END:DirectCounter_extern
 
 // BEGIN:MeterType_defn
-enum MeterType_t {
+enum PSA_MeterType_t {
     PACKETS,
     BYTES
 }
 // END:MeterType_defn
 
 // BEGIN:MeterColor_defn
-enum MeterColor_t { RED, GREEN, YELLOW };
+enum PSA_MeterColor_t { RED, GREEN, YELLOW };
 // END:MeterColor_defn
 
 // BEGIN:Meter_extern

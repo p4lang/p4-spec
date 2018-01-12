@@ -110,7 +110,7 @@ struct recirculate_metadata_t {
 }
 
 // This example shows one way to support multiple formats for metadata
-// carried with PSA_CLONE_I2E packets.  It does not use an explicit union.
+// carried with CLONE_I2E packets.  It does not use an explicit union.
 // There is currently no union type in P4_16 that can hold arbitrary
 // value types.  You could use a header_union, but then you would be
 // restricted to carrying fields that can be put into a header,
@@ -177,8 +177,8 @@ parser IngressParserImpl(
 
     state start {
         transition select (istd.packet_path) {
-            PacketPath_t.PSA_RESUBMIT: copy_resubmit_meta;
-            PacketPath_t.PSA_RECIRCULATE: copy_recirculate_meta;
+            PSA_PacketPath_t.RESUBMIT: copy_resubmit_meta;
+            PSA_PacketPath_t.RECIRCULATE: copy_recirculate_meta;
             // No metadata to copy for packets received from port,
             // whether a front panel port or the port from the CPU.
             default: packet_in_parsing;
@@ -213,8 +213,8 @@ parser EgressParserImpl(
 
     state start {
         transition select (istd.packet_path) {
-            PacketPath_t.PSA_CLONE_I2E: copy_clone_i2e_meta;
-            PacketPath_t.PSA_CLONE_E2E: copy_clone_e2e_meta;
+            PSA_PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
+            PSA_PacketPath_t.CLONE_E2E: copy_clone_e2e_meta;
             default: copy_normal_meta;
         }
     }
@@ -344,7 +344,7 @@ control EgressDeparserImpl(
         // Assignments to the out parameter clone_e2e_meta must be
         // guarded by this if condition:
         if (psa_clone_e2e(istd)) {
-            // Metadata to be carried along with PSA_CLONE_E2E packets.
+            // Metadata to be carried along with CLONE_E2E packets.
             clone_e2e_meta.my_meta2 = meta.my_meta2;
             clone_e2e_meta.my_meta5 = meta.my_meta5;
         }

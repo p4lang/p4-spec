@@ -123,9 +123,9 @@ control ingress(inout headers hdr,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
-    Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.BYTES)
+    Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, PSA_CounterType_t.BYTES)
         port_bytes_in;
-    DirectCounter<PacketByteCounter_t>(CounterType_t.PACKETS_AND_BYTES)
+    DirectCounter<PacketByteCounter_t>(PSA_CounterType_t.PACKETS_AND_BYTES)
         per_prefix_pkt_byte_count;
 
     action next_hop(PortId_t oport) {
@@ -161,7 +161,7 @@ control egress(inout headers hdr,
                in    psa_egress_input_metadata_t  istd,
                inout psa_egress_output_metadata_t ostd)
 {
-    Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, CounterType_t.BYTES)
+    Counter<ByteCounter_t, PortId_t>((bit<32>) NUM_PORTS, PSA_CounterType_t.BYTES)
         port_bytes_out;
     apply {
         // By doing these stats updates on egress, then because

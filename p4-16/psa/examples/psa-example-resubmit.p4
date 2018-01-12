@@ -105,8 +105,8 @@ parser IngressParserImpl(
 
     state start {
         transition select(istd.packet_path) {
-           PacketPath_t.PSA_RESUBMIT: copy_resubmit_meta;
-           PacketPath_t.PSA_NORMAL: packet_in_parsing;
+           PSA_PacketPath_t.RESUBMIT: copy_resubmit_meta;
+           PSA_PacketPath_t.NORMAL: packet_in_parsing;
         }
     }
 
