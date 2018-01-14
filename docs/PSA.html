@@ -297,7 +297,7 @@
 <div class="authors align-center" data-line="43" style="text-align:center;width:80%;line-adjust:0"><table class="authorrow columns block" data-line="43" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="43" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="43" style="font-size:large;line-adjust:0"><span data-line="43"></span>The P4.org Architecture Working Group</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2018-01-03</div></div>
+<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2018-01-14</div></div>
 <p class="p noindent para-continued" data-line="36"><span data-line="36"></span><span data-line="36"></span>
 <span data-line="37"></span><span data-line="37"></span>
 <span data-line="38"></span><span data-line="38"></span>
@@ -471,7 +471,7 @@ instances of controls and externs start with lower case and words
 are separated using <span data-line="115"></span><code class="code code1 language-p4 lang-p4 p4 colorized">_</code><span data-line="115"></span>. For example <span data-line="115"></span><code class="code code1 language-p4 lang-p4 p4 colorized">send_to_port</code><span data-line="115"></span>.
 </li>
 <li class="li ul-li list-dash-li compact-li" data-line="116"><span data-line="116"></span>Enum members, const definitions, and <span data-line="116"></span>#<span data-line="116"></span>define constants are all
-caps, with words separated by <span data-line="117"></span><code class="code code1 language-p4 lang-p4 p4 colorized">_</code><span data-line="117"></span>. For example <span data-line="117"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_CPU</code><span data-line="117"></span>.
+caps, with words separated by <span data-line="117"></span><code class="code code1 language-p4 lang-p4 p4 colorized">_</code><span data-line="117"></span>. For example <span data-line="117"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_CPU</code><span data-line="117"></span>.
 </li></ul>
 
 <p class="p noindent" data-line="119"><span data-line="119"></span>Architecture specific metadata (e.g. structs) are prefixed by <span data-line="119"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_</code><span data-line="119"></span>.
@@ -590,7 +590,7 @@ the following to occur, if the P4 program so directed it:
 creates a CI2E clone destined for the CPU port (copy 1), and a
 multicast NM packet to multicast group 18, which is configured in
 the PacketReplicationEngine to have copies made to ports 5 (copy 2)
-and the recirculate port <span data-line="240"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="240"></span> (copy 3).
+and the recirculate port <span data-line="240"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="240"></span> (copy 3).
 </li>
 <li class="li ul-li list-plus-li compact-li" data-line="241"><span data-line="241"></span>Copy 1 performs egress processing, which sends the packet on path
 NTCPU to the CPU port.
@@ -653,11 +653,11 @@ advantage of at most 64 of those bits.
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; EgressInstance_t;
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">typedef</span> <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;unspecified&gt; Timestamp_t;
 
-<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   PortId_t         PORT_RECIRCULATE = unspecified;
-<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   PortId_t         PORT_CPU = unspecified;
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   PortId_t         PSA_PORT_RECIRCULATE = unspecified;
+<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   PortId_t         PSA_PORT_CPU = unspecified;
 
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">const</span>   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;</code></pre><h3 id="sec-psa-supported-metadata-types" class="h2" data-line="297" data-heading-depth="2" style="display:block"><span data-line="297"></span><span class="heading-before"><span class="heading-label">4.2</span>.&#8194;</span><span data-line="297"></span>PSA supported metadata types</h3>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="299" data-line-first="300;psa.p4:136" style="display:block"><code data-line="300;psa.p4:136"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> PacketPath_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="299" data-line-first="300;psa.p4:136" style="display:block"><code data-line="300;psa.p4:136"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> PSA_PacketPath_t {
     NORMAL,     <span style="color:darkgreen">/// Packet received by ingress that is none of the cases below.</span>
     NORMAL_UNICAST,   <span style="color:darkgreen">/// Normal packet received by egress which is unicast</span>
     NORMAL_MULTICAST, <span style="color:darkgreen">/// Normal packet received by egress which is multicast</span>
@@ -842,7 +842,7 @@ packet contents and metadata when a packet begins ingress processing.
 
 <div class="p noindent" data-line="372"><span data-line="372"></span><fig-caption class="figure-caption"><span class="caption-before"><strong class="strong-star2">Table&#160;<span class="table-label">3</span>.</strong>&#160;</span><span class="caption-text">Initial values for packets processed by ingress.</span></fig-caption></div></figure>
 <p class="p indent" data-line="374"><span data-line="374"></span>Note that the <span data-line="374"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_port</code><span data-line="374"></span> value for a resubmitted packet could be
-<span data-line="375"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="375"></span> if a packet was recirculated, and then that
+<span data-line="375"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="375"></span> if a packet was recirculated, and then that
 recirculated packet was resubmitted.
 </p><h4 id="sec-initial-packet-contents-for-packets-from-ports" class="h3" data-line="378" data-heading-depth="3" style="display:block"><span data-line="378"></span><span class="heading-before"><span class="heading-label">6.1.1</span>.&#8194;</span><span data-line="378"></span>Initial packet contents for packets from ports</h4>
 <p class="p noindent" data-line="380"><span data-line="380"></span>For Ethernet ports, <span data-line="380"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packet_in</code><span data-line="380"></span> for FP and NFCPU path packets contains
@@ -915,7 +915,7 @@ type <span data-line="456"></span><code class="code code1 language-p4 lang-p4 p4
 output port for the implementation. It is expected that for some PSA
 implementations there will be bit patterns for a value of type
 <span data-line="459"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="459"></span> that do not correspond to any port. This function returns
-true for both <span data-line="460"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_CPU</code><span data-line="460"></span> and <span data-line="460"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="460"></span>. <span data-line="460"></span><code class="code code1 language-p4 lang-p4 p4 colorized">platform_port_valid</code><span data-line="460"></span>
+true for both <span data-line="460"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_CPU</code><span data-line="460"></span> and <span data-line="460"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="460"></span>. <span data-line="460"></span><code class="code code1 language-p4 lang-p4 p4 colorized">platform_port_valid</code><span data-line="460"></span>
 is not defined in PSA for calling from the P4 data-plane program,
 since there is no known use case for calling it at packet processing
 time. It is intended for describing the behavior in pseudo-code. The
@@ -1117,7 +1117,7 @@ Link Aggregation Group (LAG) interface, which is a set of physical
 ports over which load balancing of traffic is performed.
 </p>
 <p class="p indent" data-line="661"><span data-line="661"></span>A PSA device must support <span data-line="661"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_port</code><span data-line="661"></span> values in a multicast group
-that are equal to <span data-line="662"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_CPU</code><span data-line="662"></span> or <span data-line="662"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="662"></span>.  The copies of a
+that are equal to <span data-line="662"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_CPU</code><span data-line="662"></span> or <span data-line="662"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="662"></span>.  The copies of a
 multicast packet made to those ports will behave the same in egress as
 a unicast packets sent to the corresponding port, i.e. if not dropped,
 those copies will go the the CPU port, or be recirculated back to
@@ -1208,7 +1208,7 @@ packet contents and metadata when a packet begins egress processing.
 <tr><td class="tbody tr-even col cell-border-left col-odd col-first" data-line="739" data-row="6" data-col="1"><span data-line="739"></span>                   </td><td class="tbody tr-even col cell-border-left col-even" data-line="739" data-row="6" data-col="2"><span data-line="739"></span>                    </td><td class="tbody tr-even col cell-border-left col-odd" data-line="739" data-row="6" data-col="3"><span data-line="739"></span> of multicast group </td><td class="tbody tr-even col cell-border-left cell-border-right col-even col-last" data-line="739" data-row="6" colspan="2" data-col="4"><span data-line="739"></span>                        </td></tr>
 <tr><td class="tbody tr-even col cell-border-left cell-line col-odd col-first" data-line="740" data-row="6" data-col="1"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="740" data-row="6" data-col="2"></td><td class="tbody tr-even col cell-border-left cell-line col-odd" data-line="740" data-row="6" data-col="3"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="740" data-row="6" data-col="4"></td><td class="tbody tr-even col cell-border-left cell-border-right cell-line col-odd col-last" data-line="740" data-row="6" data-col="5"></td></tr>
 <tr><td class="tbody tr-odd col cell-border-left col-odd col-first" data-line="741" data-row="7" data-col="1"><span data-line="741"></span> <span data-line="741"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packet_path</code><span data-line="741"></span>   </td><td class="tbody tr-odd col cell-border-left col-even" data-line="741" data-row="7" data-col="2"><span data-line="741"></span> NORMAL<span data-line="741"></span>_<span data-line="741"></span> </td><td class="tbody tr-odd col cell-border-left col-odd" data-line="741" data-row="7" data-col="3"><span data-line="741"></span> NORMAL<span data-line="741"></span>_<span data-line="741"></span>   </td><td class="tbody tr-odd col cell-border-left col-even" data-line="741" data-row="7" data-col="4"><span data-line="741"></span> CLONE<span data-line="741"></span>_<span data-line="741"></span>I2E </td><td class="tbody tr-odd col cell-border-left cell-border-right col-odd col-last" data-line="741" data-row="7" data-col="5"><span data-line="741"></span> CLONE<span data-line="741"></span>_<span data-line="741"></span>E2E </td></tr>
-<tr><td class="tbody tr-even col cell-border-left col-odd col-first" data-line="742" data-row="8" data-col="1"><span data-line="742"></span>                   </td><td class="tbody tr-even col cell-border-left col-even" data-line="742" data-row="8" data-col="2"><span data-line="742"></span> UNICAST </td><td class="tbody tr-even col cell-border-left col-odd" data-line="742" data-row="8" data-col="3"><span data-line="742"></span> MULTICAST </td><td class="tbody tr-even col cell-border-left col-even" data-line="742" data-row="8" data-col="4"><span data-line="742"></span>           </td><td class="tbody tr-even col cell-border-left cell-border-right col-odd col-last" data-line="742" data-row="8" data-col="5"><span data-line="742"></span>           </td></tr>
+<tr><td class="tbody tr-even col cell-border-left col-odd col-first" data-line="742" data-row="8" data-col="1"><span data-line="742"></span>                 </td><td class="tbody tr-even col cell-border-left col-even" data-line="742" data-row="8" data-col="2"><span data-line="742"></span> UNICAST </td><td class="tbody tr-even col cell-border-left col-odd" data-line="742" data-row="8" data-col="3"><span data-line="742"></span> MULTICAST </td><td class="tbody tr-even col cell-border-left col-even" data-line="742" data-row="8" data-col="4"><span data-line="742"></span>           </td><td class="tbody tr-even col cell-border-left cell-border-right col-odd col-last" data-line="742" data-row="8" data-col="5"><span data-line="742"></span>           </td></tr>
 <tr><td class="tbody tr-even col cell-border-left cell-line col-odd col-first" data-line="743" data-row="8" data-col="1"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="743" data-row="8" data-col="2"></td><td class="tbody tr-even col cell-border-left cell-line col-odd" data-line="743" data-row="8" data-col="3"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="743" data-row="8" data-col="4"></td><td class="tbody tr-even col cell-border-left cell-border-right cell-line col-odd col-last" data-line="743" data-row="8" data-col="5"></td></tr>
 <tr><td class="tbody tr-even col cell-border-left cell-line col-odd col-first" data-line="744" data-row="8" data-col="1"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="744" data-row="8" data-col="2"></td><td class="tbody tr-even col cell-border-left cell-line col-odd" data-line="744" data-row="8" data-col="3"></td><td class="tbody tr-even col cell-border-left cell-line col-even" data-line="744" data-row="8" data-col="4"></td><td class="tbody tr-even col cell-border-left cell-border-right cell-line col-odd col-last" data-line="744" data-row="8" data-col="5"></td></tr>
 <tr><td class="tbody tr-odd col cell-border-left cell-border-right col-odd col-last col-first" data-line="745" data-row="9" colspan="5" data-col="1"><span data-line="745"></span> Egress <span data-line="745"></span><code class="code code1 language-p4 lang-p4 p4 colorized">istd</code><span data-line="745"></span> fields (type <span data-line="745"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_egress_input_metadata_t</code><span data-line="745"></span>)   </td></tr>
@@ -1237,7 +1237,7 @@ caused this packet to be sent to egress.  It starts with the packet
 headers as emitted by the ingress deparser, followed by the payload of
 that packet, i.e. the part that was not parsed by the ingress parser.
 </p>
-<p class="p indent" data-line="774"><span data-line="774"></span>Packets to be recirculated, i.e. those sent to port <span data-line="774"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="774"></span>
+<p class="p indent" data-line="774"><span data-line="774"></span>Packets to be recirculated, i.e. those sent to port <span data-line="774"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="774"></span>
 via the normal unicast or multicast packet paths, fit into this
 category.  They are not treated differently by a PSA implementation
 from normal unicast or multicast packets until they reach the egress
@@ -1249,7 +1249,7 @@ contents of <span data-line="784"></span><code class="code code1 language-p4 lan
 from any ingress processing.  Truncation of the payload is supported.
 </p>
 <p class="p indent" data-line="787"><span data-line="787"></span>Packets cloned in ingress using a clone session configured with
-<span data-line="788"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_port</code><span data-line="788"></span> equal to <span data-line="788"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="788"></span> fit into this category.
+<span data-line="788"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_port</code><span data-line="788"></span> equal to <span data-line="788"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="788"></span> fit into this category.
 </p><h4 id="sec-initial-packet-contents-for-packets-cloned-from-egress-to-egress" class="h3" data-line="791" data-heading-depth="3" style="display:block"><span data-line="791"></span><span class="heading-before"><span class="heading-label">6.4.3</span>.&#8194;</span><span data-line="791"></span>Initial packet contents for packets cloned from egress to egress</h4>
 <p class="p noindent" data-line="793"><span data-line="793"></span>For CE2E packets, <span data-line="793"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packet_in</code><span data-line="793"></span> is from the egress packet that caused this
 clone to be created.  It starts with the headers emitted by the egress
@@ -1258,7 +1258,7 @@ was not parsed by the egress parser.  Truncation of the payload is
 supported.
 </p>
 <p class="p indent" data-line="799"><span data-line="799"></span>Packets cloned in egress using a clone session configured with
-<span data-line="800"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_port</code><span data-line="800"></span> equal to <span data-line="800"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="800"></span> fit into this category.
+<span data-line="800"></span><code class="code code1 language-p4 lang-p4 p4 colorized">clone_port</code><span data-line="800"></span> equal to <span data-line="800"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="800"></span> fit into this category.
 </p><h4 id="sec-user-defined-metadata-for-all-egress-packets" class="h3" data-line="803" data-heading-depth="3" style="display:block"><span data-line="803"></span><span class="heading-before"><span class="heading-label">6.4.4</span>.&#8194;</span><span data-line="803"></span>User-defined metadata for all egress packets</h4>
 <p class="p noindent" data-line="805"><span data-line="805"></span>This is very similar to how metadata is initialized for ingress
 packets.  See Section<span data-line="806"></span>&nbsp;<a href="#sec-ingress_initial-metadata" title="6.1.4.&#8194;User-defined metadata for all ingress packets" class="localref" style="target-element:h3"><span class="heading-label">6.1.4</span></a><span data-line="806"></span>.
@@ -1452,7 +1452,7 @@ CloneSessionId_t class_of_service;
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bool</span>             truncate;
 PacketLength_t   packet_length_bytes;  <span style="color:darkgreen">/// only used if truncate is true</span></code></pre>
 <p class="p noindent para-continued" data-line="1006"><span data-line="1006"></span>The <span data-line="1006"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_port</code><span data-line="1006"></span> may be any port that can be used for normal unicast
-packets, i.e. any normal port, <span data-line="1007"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_CPU</code><span data-line="1007"></span>, or <span data-line="1007"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="1007"></span>.  For
+packets, i.e. any normal port, <span data-line="1007"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_CPU</code><span data-line="1007"></span>, or <span data-line="1007"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="1007"></span>.  For
 the latter two values, the cloned packet will be sent to the CPU, or
 recirculated at the end of egress processing, as a normal unicast
 packet would at the end of egress processing.
@@ -1483,7 +1483,7 @@ might choose only to support values that are multiples of 32 bytes.
 </p>
 <p class="p indent" data-line="1036"><span data-line="1036"></span>Since it is an expected common case to clone packets to the CPU, every
 PSA implementation begins with a clone session
-<span data-line="1038"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_CLONE_SESSION_TO_CPU</code><span data-line="1038"></span> initialized with <span data-line="1038"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_port = PORT_CPU</code><span data-line="1038"></span>
+<span data-line="1038"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_CLONE_SESSION_TO_CPU</code><span data-line="1038"></span> initialized with <span data-line="1038"></span><code class="code code1 language-p4 lang-p4 p4 colorized">egress_port = PSA_PORT_CPU</code><span data-line="1038"></span>
 and <span data-line="1039"></span><code class="code code1 language-p4 lang-p4 p4 colorized">class_of_service = <span class="constant" style="color:purple">0</span></code><span data-line="1039"></span>.
 </p><h4 id="sec-clone-examples" class="h3" data-line="1042" data-heading-depth="3" style="display:block"><span data-line="1042"></span><span class="heading-before"><span class="heading-label">6.8.1</span>.&#8194;</span><span data-line="1042"></span>Clone Examples</h4>
 <p class="p noindent" data-line="1044"><span data-line="1044"></span>The partial program below demonstrates how to clone a packet.
@@ -1601,12 +1601,12 @@ could be useful in implementing features such as multiple levels of
 tunnel encapsulation or decapsulation.
 </p>
 <p class="p indent" data-line="1122"><span data-line="1122"></span>Whether a packet is recirculated must be chosen during ingress
-processing, by sending the packet to port <span data-line="1123"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="1123"></span>.  Packet
+processing, by sending the packet to port <span data-line="1123"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="1123"></span>.  Packet
 recirculation happens at the end of the egress pipeline.  When a
 packet is sent to the recirculate port, the packet finishes egress
 processing, including the egress deparser, and then re-enters the
 ingress parser.  The <span data-line="1127"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ingress_port</code><span data-line="1127"></span> of the recirculated packet is set
-to <span data-line="1128"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PORT_RECIRCULATE</code><span data-line="1128"></span>. The <span data-line="1128"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packet_path</code><span data-line="1128"></span> of the recirculated packet is
+to <span data-line="1128"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_PORT_RECIRCULATE</code><span data-line="1128"></span>. The <span data-line="1128"></span><code class="code code1 language-p4 lang-p4 p4 colorized">packet_path</code><span data-line="1128"></span> of the recirculated packet is
 set to <span data-line="1129"></span><code class="code code1 language-p4 lang-p4 p4 colorized">RECIRCULATE</code><span data-line="1129"></span>.
 </p>
 <p class="p indent" data-line="1131"><span data-line="1131"></span>Similar to packet resubmission, packet recirculation also supports
@@ -1791,7 +1791,7 @@ See Section<span data-line="1315"></span>&nbsp;<a href="#sec-pre" title="7.3.&#8
 </p><h3 id="sec-hash-algorithms" class="h2" data-line="1318" data-heading-depth="2" style="display:block"><span data-line="1318"></span><span class="heading-before"><span class="heading-label">7.5</span>.&#8194;</span><span data-line="1318"></span>Hashes</h3>
 <p class="p noindent" data-line="1320"><span data-line="1320"></span>Supported hash algorithms:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1321" data-line-first="1322;psa.p4:279" style="display:block"><code data-line="1322;psa.p4:279"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> HashAlgorithm_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1321" data-line-first="1322;psa.p4:279" style="display:block"><code data-line="1322;psa.p4:279"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> PSA_HashAlgorithm_t {
   IDENTITY,
   CRC<span class="constant" style="color:purple">32</span>,
   CRC<span class="constant" style="color:purple">32</span>_CUSTOM,
@@ -1804,7 +1804,7 @@ See Section<span data-line="1315"></span>&nbsp;<a href="#sec-pre" title="7.3.&#8
 <p class="p noindent" data-line="1327"><span data-line="1327"></span>Example usage:
 </p>
 <pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1329" data-line-first="1330" style="display:block"><code data-line="1330"><span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">parser</span> P() {
-  Hash&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(HashAlgorithm_t.CRC<span class="constant" style="color:purple">16</span>) h;
+  Hash&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt;&gt;(PSA_HashAlgorithm_t.CRC<span class="constant" style="color:purple">16</span>) h;
   <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">16</span>&gt; hash_value = h.get_hash(buffer);
 }</code></pre>
 <p class="p noindent para-continued" data-line="1336"><span data-line="1336"></span>Parameters:
@@ -2204,7 +2204,7 @@ how it determines the packet length used for byte counter updates.
 precise control over the packet length used in a byte counter, you may
 use Registers to achieve that (Section<span data-line="1474"></span>&nbsp;<a href="#sec-registers" title="7.9.&#8194;Registers" class="localref" style="target-element:h2"><span class="heading-label">7.9</span></a><span data-line="1474"></span>).
 </p><h4 id="sec-counter-types" class="h3" data-line="1477" data-heading-depth="3" style="display:block"><span data-line="1477"></span><span class="heading-before"><span class="heading-label">7.7.1</span>.&#8194;</span><span data-line="1477"></span>Counter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1479" data-line-first="1480;psa.p4:362" style="display:block"><code data-line="1480;psa.p4:362"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> CounterType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1479" data-line-first="1480;psa.p4:362" style="display:block"><code data-line="1480;psa.p4:362"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> PSA_CounterType_t {
     PACKETS,
     BYTES,
     PACKETS_AND_BYTES
@@ -2321,9 +2321,9 @@ updating of <span data-line="1547"></span><code class="code code1 language-p4 la
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>    psa_ingress_input_metadata_t  istd,
                 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t ostd)
 {
-    Counter&lt;ByteCounter_t, PortId_t&gt;((<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt;) NUM_PORTS, CounterType_t.BYTES)
+    Counter&lt;ByteCounter_t, PortId_t&gt;((<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt;) NUM_PORTS, PSA_CounterType_t.BYTES)
         port_bytes_in;
-    DirectCounter&lt;PacketByteCounter_t&gt;(CounterType_t.PACKETS_AND_BYTES)
+    DirectCounter&lt;PacketByteCounter_t&gt;(PSA_CounterType_t.PACKETS_AND_BYTES)
         per_prefix_pkt_byte_count;
 
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">action</span> next_hop(PortId_t oport) {
@@ -2359,7 +2359,7 @@ updating of <span data-line="1547"></span><code class="code code1 language-p4 la
                <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span>    psa_egress_input_metadata_t  istd,
                <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_egress_output_metadata_t ostd)
 {
-    Counter&lt;ByteCounter_t, PortId_t&gt;((<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt;) NUM_PORTS, CounterType_t.BYTES)
+    Counter&lt;ByteCounter_t, PortId_t&gt;((<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt;) NUM_PORTS, PSA_CounterType_t.BYTES)
         port_bytes_out;
     <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">apply</span> {
         <span style="color:darkgreen">// By doing these stats updates on egress, then because</span>
@@ -2434,7 +2434,7 @@ a list of meter instances.
 <p class="p indent" data-line="1613"><span data-line="1613"></span>As for counters, if you call the <span data-line="1613"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute(idx)</code><span data-line="1613"></span> method on an indexed
 meter and <span data-line="1614"></span><code class="code code1 language-p4 lang-p4 p4 colorized">idx</code><span data-line="1614"></span> is at least the number of meter states, so <span data-line="1614"></span><code class="code code1 language-p4 lang-p4 p4 colorized">idx</code><span data-line="1614"></span> is
 out of range, no meter state is updated.  The <span data-line="1615"></span><code class="code code1 language-p4 lang-p4 p4 colorized">execute</code><span data-line="1615"></span> call still
-returns a value of type <span data-line="1616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">MeterColor_t</code><span data-line="1616"></span>, but the value is undefined<span data-line="1616"></span> <span data-line="1616"></span>&#8211;<span data-line="1616"></span>
+returns a value of type <span data-line="1616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_MeterColor_t</code><span data-line="1616"></span>, but the value is undefined<span data-line="1616"></span> <span data-line="1616"></span>&#8211;<span data-line="1616"></span>
 programs that wish to have predictable behavior across implementations
 must not use the undefined value in a way that affects the output
 packet or other side effects.  The example code below shows one way to
@@ -2444,18 +2444,18 @@ and the type <span data-line="1622"></span><code class="code code1 language-p4 l
 index value could never be out of range.
 </p>
 <pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1625" data-line-first="1626" style="display:block"><code data-line="1626"><span style="color:navy">#</span><span style="color:navy">define</span><span style="color:maroon"> METER1_SIZE 100</span>
-Meter&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">7</span>&gt;&gt;(METER<span class="constant" style="color:purple">1</span>_SIZE, MeterType_t.BYTES) meter1;
+Meter&lt;<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">7</span>&gt;&gt;(METER<span class="constant" style="color:purple">1</span>_SIZE, PSA_MeterType_t.BYTES) meter1;
 <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">7</span>&gt; idx;
-MeterColor_t color1;
+PSA_MeterColor_t color1;
 
 <span style="color:darkgreen">// ... later ...</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (idx &lt; METER<span class="constant" style="color:purple">1</span>_SIZE) {
-    color1 = meter1.execute(idx, MeterColor_t.GREEN);
+    color1 = meter1.execute(idx, PSA_MeterColor_t.GREEN);
 } <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">else</span> {
     <span style="color:darkgreen">// If idx is out of range, use a default value for color1.  One</span>
     <span style="color:darkgreen">// may also choose to store an error flag in some metadata field.</span>
-    color1 = MeterColor_t.RED;
+    color1 = PSA_MeterColor_t.RED;
 }</code></pre>
 <p class="p noindent para-continued" data-line="1642"><span data-line="1642"></span>Any implementation will have a finite range that can be specified for
 the Peak Burst Size and Committed Burst Size.  An implementation
@@ -2475,11 +2475,11 @@ It is recommended that the maximum rate supported be at least the rate
 of the implementation<span data-line="1657"></span>&#39;<span data-line="1657"></span>s fastest port, and that the actual implemented
 rate should always be within plus or minus 0.1% of the requested rate.
 </p><h4 id="sec-meter-types" class="h3" data-line="1660" data-heading-depth="3" style="display:block"><span data-line="1660"></span><span class="heading-before"><span class="heading-label">7.8.1</span>.&#8194;</span><span data-line="1660"></span>Meter types</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1662" data-line-first="1663;psa.p4:420" style="display:block"><code data-line="1663;psa.p4:420"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterType_t {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1662" data-line-first="1663;psa.p4:420" style="display:block"><code data-line="1663;psa.p4:420"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> PSA_MeterType_t {
     PACKETS,
     BYTES
 }</code></pre><h4 id="sec-meter-colors" class="h3" data-line="1666" data-heading-depth="3" style="display:block"><span data-line="1666"></span><span class="heading-before"><span class="heading-label">7.8.2</span>.&#8194;</span><span data-line="1666"></span>Meter colors</h4>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1668" data-line-first="1669;psa.p4:424" style="display:block"><code data-line="1669;psa.p4:424"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="1672" data-heading-depth="3" style="display:block"><span data-line="1672"></span><span class="heading-before"><span class="heading-label">7.8.3</span>.&#8194;</span><span data-line="1672"></span>Meter</h4>
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1668" data-line-first="1669;psa.p4:424" style="display:block"><code data-line="1669;psa.p4:424"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">enum</span> PSA_MeterColor_t { RED, GREEN, YELLOW };</code></pre><h4 id="sec-meter" class="h3" data-line="1672" data-heading-depth="3" style="display:block"><span data-line="1672"></span><span class="heading-before"><span class="heading-label">7.8.3</span>.&#8194;</span><span data-line="1672"></span>Meter</h4>
 <pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="1674" data-line-first="1675;psa.p4:451" style="display:block"><code data-line="1675;psa.p4:451"><span style="color:darkgreen">// Indexed meter with n_meters independent meter states.</span>
 
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">extern</span> Meter&lt;S&gt; {
@@ -2860,7 +2860,7 @@ by action selector <span data-line="1952"></span><code class="code code1 languag
 
   <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">action</span> foo() { meta.foo = <span class="constant" style="color:purple">1</span>; }
 
-  ActionSelector(HashAlgorithm_t.CRC<span class="constant" style="color:purple">16</span>, <span class="constant" style="color:purple">128</span>, <span class="constant" style="color:purple">10</span>) as;
+  ActionSelector(PSA_HashAlgorithm_t.CRC<span class="constant" style="color:purple">16</span>, <span class="constant" style="color:purple">128</span>, <span class="constant" style="color:purple">10</span>) as;
 
   <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">table</span> indirect_with_selection {
     key = {
@@ -3345,11 +3345,11 @@ invokes this operation frequently enough to prevent counters from ever
 wrapping or saturating, and adds the values read to larger counters in
 driver memory.
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="2381" data-line-first="2382" style="display:block"><code data-line="2382">Counter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_counters, CounterType_t type) {
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="2381" data-line-first="2382" style="display:block"><code data-line="2382">Counter(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">bit</span>&lt;<span class="constant" style="color:purple">32</span>&gt; n_counters, PSA_CounterType_t type) {
     this.num_counters = n_counters;
     this.counter_vals = new array of size n_counters, each element with type W;
     this.type = type;
-    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (this.type == CounterType_t.PACKETS_AND_BYTES) {
+    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (this.type == PSA_CounterType_t.PACKETS_AND_BYTES) {
         <span style="color:darkgreen">// Packet and byte counts share storage in the same counter</span>
         <span style="color:darkgreen">// state.  Should we have a separate constructor with an</span>
         <span style="color:darkgreen">// additional argument indicating how many of the bits to use</span>
@@ -3361,17 +3361,17 @@ driver memory.
     }
 }
 
-W next_counter_value(W cur_value, CounterType_t type) {
-    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (type == CounterType_t.PACKETS) {
+W next_counter_value(W cur_value, PSA_CounterType_t type) {
+    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (type == PSA_CounterType_t.PACKETS) {
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">return</span> (cur_value + <span class="constant" style="color:purple">1</span>);
     }
     <span style="color:darkgreen">// Exactly which packet bytes are included in packet_len is</span>
     <span style="color:darkgreen">// implementation-specific.</span>
     PacketLength_t packet_len = &lt;packet length <span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">in</span> bytes&gt;;
-    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (type == CounterType_t.BYTES) {
+    <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">if</span> (type == PSA_CounterType_t.BYTES) {
         <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">return</span> (cur_value + packet_len);
     }
-    <span style="color:darkgreen">// type must be CounterType_t.PACKETS_AND_BYTES</span>
+    <span style="color:darkgreen">// type must be PSA_CounterType_t.PACKETS_AND_BYTES</span>
     <span style="color:darkgreen">// In type W, the least significant bits contain the byte</span>
     <span style="color:darkgreen">// count, and most significant bits contain the packet count.</span>
     <span style="color:darkgreen">// This is merely one example storage format.  Implementations</span>
