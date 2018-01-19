@@ -80,19 +80,19 @@ enum PSA_PacketPath_t {
 
 struct psa_ingress_parser_input_metadata_t {
   PortId_t                 ingress_port;
-  PacketPath_t             packet_path;
+  PSA_PacketPath_t         packet_path;
 }
 
 struct psa_egress_parser_input_metadata_t {
   PortId_t                 egress_port;
-  PacketPath_t             packet_path;
+  PSA_PacketPath_t         packet_path;
 }
 
 struct psa_ingress_input_metadata_t {
   // All of these values are initialized by the architecture before
   // the Ingress control block begins executing.
   PortId_t                 ingress_port;
-  PacketPath_t             packet_path;
+  PSA_PacketPath_t         packet_path;
   Timestamp_t              ingress_timestamp;
   ParserError_t            parser_error;
 }
@@ -112,7 +112,7 @@ struct psa_ingress_output_metadata_t {
 struct psa_egress_input_metadata_t {
   ClassOfService_t         class_of_service;
   PortId_t                 egress_port;
-  PacketPath_t             packet_path;
+  PSA_PacketPath_t         packet_path;
   EgressInstance_t         instance;       /// instance comes from the PacketReplicationEngine
   Timestamp_t              egress_timestamp;
   ParserError_t            parser_error;
@@ -281,7 +281,7 @@ enum PSA_HashAlgorithm_t {
 // BEGIN:Hash_extern
 extern Hash<O> {
   /// Constructor
-  Hash(HashAlgorithm_t algo);
+  Hash(PSA_HashAlgorithm_t algo);
 
   /// Compute the hash for data.
   /// @param data The data over which to calculate the hash.
@@ -302,7 +302,7 @@ extern Hash<O> {
 // BEGIN:Checksum_extern
 extern Checksum<W> {
   /// Constructor
-  Checksum(HashAlgorithm_t hash);
+  Checksum(PSA_HashAlgorithm_t hash);
 
   /// Reset internal state and prepare unit for computation
   void clear();
@@ -366,7 +366,7 @@ enum PSA_CounterType_t {
 /// every counter value has a data plane size specified by type W.
 
 extern Counter<W, S> {
-  Counter(bit<32> n_counters, CounterType_t type);
+  Counter(bit<32> n_counters, PSA_CounterType_t type);
   void count(in S index);
 
   /*
@@ -395,7 +395,7 @@ extern Counter<W, S> {
 
 // BEGIN:DirectCounter_extern
 extern DirectCounter<W> {
-  DirectCounter(CounterType_t type);
+  DirectCounter(PSA_CounterType_t type);
   void count();
 
   /*
@@ -427,17 +427,17 @@ enum PSA_MeterColor_t { RED, GREEN, YELLOW };
 // Indexed meter with n_meters independent meter states.
 
 extern Meter<S> {
-  Meter(bit<32> n_meters, MeterType_t type);
+  Meter(bit<32> n_meters, PSA_MeterType_t type);
 
   // Use this method call to perform a color aware meter update (see
   // RFC 2698). The color of the packet before the method call was
   // made is specified by the color parameter.
-  MeterColor_t execute(in S index, in MeterColor_t color);
+  PSA_MeterColor_t execute(in S index, in PSA_MeterColor_t color);
 
   // Use this method call to perform a color blind meter update (see
   // RFC 2698).  It may be implemented via a call to execute(index,
   // MeterColor_t.GREEN), which has the same behavior.
-  MeterColor_t execute(in S index);
+  PSA_MeterColor_t execute(in S index);
 
   /*
   @ControlPlaneAPI
@@ -452,10 +452,10 @@ extern Meter<S> {
 
 // BEGIN:DirectMeter_extern
 extern DirectMeter {
-  DirectMeter(MeterType_t type);
+  DirectMeter(PSA_MeterType_t type);
   // See the corresponding methods for extern Meter.
-  MeterColor_t execute(in MeterColor_t color);
-  MeterColor_t execute();
+  PSA_MeterColor_t execute(in PSA_MeterColor_t color);
+  PSA_MeterColor_t execute();
 
   /*
   @ControlPlaneAPI
@@ -522,7 +522,7 @@ extern ActionSelector {
   /// @param algo hash algorithm to select a member in a group
   /// @param size number of entries in the action selector
   /// @param outputWidth size of the key
-  ActionSelector(HashAlgorithm_t algo, bit<32> size, bit<32> outputWidth);
+  ActionSelector(PSA_HashAlgorithm_t algo, bit<32> size, bit<32> outputWidth);
 
   /*
   @ControlPlaneAPI
