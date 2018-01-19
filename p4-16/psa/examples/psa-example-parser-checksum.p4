@@ -149,7 +149,7 @@ control ingress(inout headers hdr,
     // vector encoding of an error into a packet header, e.g. for a
     // packet sent to the control CPU.
 
-    DirectCounter<PacketCounter_t>(CounterType_t.PACKETS) parser_error_counts;
+    DirectCounter<PacketCounter_t>(PSA_CounterType_t.PACKETS) parser_error_counts;
     ErrorIndex_t error_idx;
 
     action set_error_idx (ErrorIndex_t idx) {

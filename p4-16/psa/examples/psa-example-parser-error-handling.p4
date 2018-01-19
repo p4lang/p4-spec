@@ -207,7 +207,7 @@ struct headers {
 
 
 control packet_path_to_bits(out bit<3> packet_path_bits,
-    in PacketPath_t packet_path)
+    in PSA_PacketPath_t packet_path)
 {
     action set_packet_path_bits(bit<3> bits) {
         packet_path_bits = bits;
@@ -221,13 +221,13 @@ control packet_path_to_bits(out bit<3> packet_path_bits,
         }
         default_action = set_packet_path_bits(0);
         const entries = {
-            PacketPath_t.NORMAL           : set_packet_path_bits(1);
-            PacketPath_t.NORMAL_UNICAST   : set_packet_path_bits(2);
-            PacketPath_t.NORMAL_MULTICAST : set_packet_path_bits(3);
-            PacketPath_t.CLONE_I2E        : set_packet_path_bits(4);
-            PacketPath_t.CLONE_E2E        : set_packet_path_bits(5);
-            PacketPath_t.RESUBMIT         : set_packet_path_bits(6);
-            PacketPath_t.RECIRCULATE      : set_packet_path_bits(7);
+            PSA_PacketPath_t.NORMAL           : set_packet_path_bits(1);
+            PSA_PacketPath_t.NORMAL_UNICAST   : set_packet_path_bits(2);
+            PSA_PacketPath_t.NORMAL_MULTICAST : set_packet_path_bits(3);
+            PSA_PacketPath_t.CLONE_I2E        : set_packet_path_bits(4);
+            PSA_PacketPath_t.CLONE_E2E        : set_packet_path_bits(5);
+            PSA_PacketPath_t.RESUBMIT         : set_packet_path_bits(6);
+            PSA_PacketPath_t.RECIRCULATE      : set_packet_path_bits(7);
         }
     }
     apply {
@@ -321,7 +321,7 @@ parser IngressParserImpl(packet_in buffer,
 
 control handle_parser_errors(
     in error parser_error,
-    in PacketPath_t packet_path,
+    in PSA_PacketPath_t packet_path,
     in PortId_t port,
     out CloneReason_t clone_reason,
     out to_cpu_error_header_t to_cpu_error_hdr)
@@ -334,7 +334,7 @@ control handle_parser_errors(
     // vector encoding of an error into a packet header, e.g. for a
     // packet sent to the control CPU.
 
-    DirectCounter<PacketCounter_t>(CounterType_t.PACKETS) parser_error_counts;
+    DirectCounter<PacketCounter_t>(PSA_CounterType_t.PACKETS) parser_error_counts;
     ErrorIndex_t error_idx;
 
     action set_error_idx (ErrorIndex_t idx) {
@@ -466,8 +466,8 @@ parser EgressParserImpl(packet_in buffer,
     state start {
         meta.clone_reason = CloneReason_t.NONE;
         transition select (istd.packet_path) {
-            PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
-            PacketPath_t.CLONE_E2E: copy_clone_e2e_meta;
+            PSA_PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
+            PSA_PacketPath_t.CLONE_E2E: copy_clone_e2e_meta;
             default: packet_in_parsing;
         }
     }
