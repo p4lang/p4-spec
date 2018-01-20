@@ -2280,20 +2280,26 @@ unless the control plane operation explicitly documents otherwise.
 
 In particular, ActionProfile and ActionSelector single operations,
 such as adding a member to a group, removing a member from a group,
-adding an empty group, deleting and empty group, or modifying the
+adding an empty group, deleting an empty group, or modifying the
 action parameters of an action added earlier to a group, should all be
 atomic.
 
 Also, a control plane read, or write, of a single element of a
 Register array should be atomic, and behave as if it occurred before
 or after (but not during) any P4 program's section of code labeled
-with the `@atomic` annotation.  There is _no_ control plane operation
-on a Register that can atomically read, then modify the value, then
-write the modified value.  If you desire such a capability, you should
-write your P4 program in a way such that the desired read, modify, and
-write operation can be done by a packet that your control plane can
-inject into the data plane, e.g. via PacketIn / PacketOut P4 Runtime
-API operations.
+with the `@atomic` annotation.  Note that all P4 `action`s are
+required to behave as if their bodies were labeled with the `@atomic`
+annotation (see Section 16.4.1 "Concurrency model" of the P4~16~
+language specification).  There is _no_ control plane operation on a
+Register that can atomically read an element, then write back a
+modified value.
+
+Advice for P4 developers: If you desire a capability for the control
+plane to atomically read, modify, then write back a Register array
+element, you should write your P4 program such that the desired read,
+modify, and write operation can be done by a packet that your control
+plane can inject into the data plane, e.g. via packet in / packet out
+P4 Runtime API operations.
 
 A high speed PSA implementation might process hundreds or thousands of
 packets between each single control plane operation.  There are common
