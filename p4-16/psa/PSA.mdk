@@ -2793,14 +2793,15 @@ If an implementation satisfies recommendations 1 through 3, then
 unicast traffic assigned to the same class of service will maintain
 its relative order through the device.
 
-Recommendation 4: PRE multicast packets (i.e. those that follow the
-"Make 0 or more copies" path in the pseudocode of section
+Recommendation 4: Consider PRE multicast packets (i.e. those that
+follow the "Make 0 or more copies" path in the pseudocode of section
 [#sec-after-ingress]) that arrived on the same ingress port, did
-ingress processing once, were sent to the PRE with the same pair of
-values (`class_of_service`, `multicast_group`), for copies destined to
-the same egress port, and with the same pair of values for
-(`egress_port`, `instance`), should begin egress processing in the
-same relative order as they began ingress processing.
+ingress processing once, and were sent to the PRE with the same pair
+of values (`class_of_service`, `multicast_group`).  For copies of
+those original packets that are destined to the same egress port, and
+with the same pair of values for (`egress_port`, `instance`), those
+copies should begin egress processing in the same relative order as
+the original packets began ingress processing.
 
 There is no such expectation for multicast packets with different
 `class_of_service` values, again because of separate queues in the PRE
@@ -2838,7 +2839,7 @@ degraded throughput when the network frequently delivers packets to
 the receiver in a different order than they were transmitted.  While
 significant research and development has been done to mitigate this
 issue, e.g. later Linux TCP implementations (since 2011 when version
-2.6.35 was released) are much more resistant to this problem than
+2.6.35 was released) are much more resilient to this problem than
 earlier versions, there are still many commonly deployed TCP
 implementations that suffer from this issue.  See references within
 Kandula et al's work[^Kandula2007] for some of the research done
@@ -2879,8 +2880,8 @@ Some networking protocols add sequence numbers to packets, and require
 either dropping packets that arrive out of sequence number order at a
 later network point (e.g. GRE with sequence numbers enabled), or with
 a looser check that allows some amount of network reordering to occur
-without dropping the packets (e.g. IPsec).  If a device implementing
-these protocols can do the sequence number addition or checking in a
+without dropping the packets (e.g. IPsec).  When a device implementing
+these protocols does the sequence number addition or checking in a
 different order than packets are sent or received on a physical port,
 that is effectively another kind of network reordering that can affect
 the performance of these protocols.
