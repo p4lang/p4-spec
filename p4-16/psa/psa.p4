@@ -304,7 +304,12 @@ extern Checksum<W> {
   /// Constructor
   Checksum(PSA_HashAlgorithm_t hash);
 
-  /// Reset internal state and prepare unit for computation
+  /// Reset internal state and prepare unit for computation.
+  /// Every instance of a Checksum object is automatically initialized as
+  /// if clear() had been called on it. This initialization happens every
+  /// time the object is instantiated, that is, whenever the parser or control
+  /// containing the Checksum object are applied.
+  /// All state maintained by the Checksum object is independent per packet.
   void clear();
 
   /// Add data to checksum
