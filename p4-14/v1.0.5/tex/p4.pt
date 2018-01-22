@@ -704,19 +704,25 @@ depend on the context.
 To help programers write parsers for header stacks, P4 provides two
 keywords, \texttt{next} and \texttt{last}, that may be used to refer
 to header instances within a stack. These references are advanced
-automatically as the parser invokes \texttt{extract} in the parser. It
-is illegal to use these keywords outside of a parser.
-    
-More specifically, the keyword \texttt{next} refers to the header
+automatically as the parser invokes \texttt{extract} in the parser.
+
+More precisely, the keyword \texttt{next} refers to the header
 instance at index \texttt{0} initially, and is advanced each time that
-\texttt{extract} is invoked on an instance within the stack. If
+\texttt{extract} is invoked on any instance within the stack. If
 \texttt{extract} has been invoked more than $N$ times, where $N$ is
 the size of the stack, then evaluating \texttt{next} results in a
 \texttt{p4_pe_index_out_of_bounds} exception. The \texttt{last}
 keyword refers to the instance referred to by \texttt{next} prior to
 the last invocation of \texttt{extract}, if it exists, and otherwise
-results in \texttt{p4_pe_index_out_of_bounds} exception.
-
+results in \texttt{p4_pe_index_out_of_bounds} exception. It is illegal
+to use \texttt{next} and \texttt{last} outside of a parser.
+    
+Note that while it is legal to extract to a constant index in a header
+stack and extract to the element referred by \texttt{next}, it is not
+recommended. It will likely be difficult for programmers to keep track
+of which element in the header stack \texttt{next} refers to when
+operations are combined in this way.
+    
 \SUBSECTION{Field Lists}{fieldlists}
 
 In many cases, it is convenient to specify a sequence of fields. For example, 
@@ -1797,10 +1803,9 @@ Add a header to the packet's Parsed Representation
 \paramdoc{header_instance}{(HDR) The name of the header instance to add.}
 }
 { % Description
-If the \texttt{header_instance} is not an element in a header stack, the indicated 
-header instance is set valid. If the header instance was invalid, all its 
-fields are initialized to 0. If the header instance is already valid, it is 
-not changed.
+The indicated  header instance is set valid. If the header instance was invalid, all its 
+fields are initialized to 0, and if the header instance was already valid, it is 
+not changed. 
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1831,10 +1836,9 @@ Mark a header instance as invalid.
 \paramdoc{header_instance}{(HDR) The name of the header instance to remove.}
 }
 { % Description
-If the \texttt{header_instance} is not an element in a header stack, then the indicated 
-header instance is marked invalid. It will not be available for matching in 
-subsequent \matchaction stages. The header will not be serialized on egress. 
-All field values in the header instance become uninitialized.
+The indicated  header instance is marked invalid. It will not be available for
+matching in subsequent \matchaction stages. The header will not be serialized
+on egress. All field values in the header instance become uninitialized.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2161,7 +2165,7 @@ continues as per the current control function specification.
 
 \primact{push(array, count)}
 { % Summary
-Push all header instances in an array down and add a new invalid header at the top.
+Push all header instances in an array down and add a new valid header at the top.
 }
 { % Parameters
 \paramdoc{array}{(ARR) The name of the instance array to be modified.}
