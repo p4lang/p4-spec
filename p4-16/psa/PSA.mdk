@@ -2115,46 +2115,59 @@ program could discard the most significant bits of the timestamp so
 that the remaining bits wrap every 8 seconds, and store those partial
 timestamps in the `Register` instance.
 
+
 ## Packet Digest
 
-Packet digest is a mechanism to perform a upcall to the control plane.
-A upcall is a way to send information from the lower layer of the
-software stack to an upper layer. In the case of packet digest, the
-information is sent from data-plane to control plane.
+A digest is one mechanism to send a message from the data plane to the
+control plane.  Another is to send a packet to the control plane via
+the port numbered `PSA_PORT_CPU`.  Sending a packet to port
+`PSA_PORT_CPU` typically sends most or all of the original packet
+headers, and perhaps also the payload, each as a separate message to
+be received and processed by the control plane.  The contents of a
+digest for one packet are typically much smaller than the packet.  A
+PSA implementation can take advantage of this, e.g. it might combine
+digests for multiple packets into larger messages, to reduce the
+rate of messages sent to the control plane.
 
-A PSA implementation should provide a digest mechanism. The digest
-contains two pieces of information: the receiver identifier and the
-digest message. The receiver identifier is an opaque id used by the
-control plane to route the digest message to the right receiver. The
-digest message can contain any from the data-plane.
+A digest contains two pieces of information: a name, which is derived
+from the name of the digest object instance in the P4 program, and the
+digest message.  The digest message can contain any values from the
+data plane.
 
-In PSA, digest is performed at the end of the ingress pipeline in the
-deparser.
-~ TBD
-The digest extern provides a `pack` method to specify the
-content in the digest header.
-~
+In PSA, a digest is created by calling the `pack` method on the digest
+instance.  The argument is the value to be included in the digest,
+often a collection of values in a P4 `struct` type.  The compiler
+decides the best serialization format to send the digest contents to a
+local software agent, which is responsible for sending the digest data
+in a form to be defined by the P4 Runtime API working group.
 
-The compiler decides the best serialization format to send the data
-object to the control plane.
+A PSA program can instantiate multiple Digest instances in the same
+ingress control block, and make at most one `pack` call on each
+instance during a single execution of the ingress control block.  The
+same applies independently for the egress control block.  The control
+plane can distinguish each of these messages by the name of the digest
+instance in the P4 program.
 
-On the control plane side, the control plane API calls the `unpack`
-method, and pass in a reference to the data object to be read.
-
-The `unpack` method return 0 if succeed. The field names in the
-control plane API is derived from the field names in the data-plane
-`pack` method.
-
-### Control Plane
-
-The control plane should provide a
-
+Since high speed PSA implementations are expected to be able to
+generate digests much faster than control software can consume them,
+it is expected that loss of such digest messages will occur if the
+data plane generates them too quickly.  It is recommended that PSA
+implementations maintain a count of digest messages that the data
+plane requests, but do not reach the control plane, independently for
+each digest instance.
 
 ```
 [INCLUDE=psa.p4:Digest_extern]
+```
 
+Below is a part of an example program that demonstrates using a digest
+to notify the control plane about source Ethernet MAC addresses and
+ingress ports of packets that have not been seen before.
 
 ```
+[INCLUDE=examples/psa-example-digest.p4:Digest_Example]
+```
+
 
 
 # Atomicity of control plane API operations

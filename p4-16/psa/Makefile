@@ -27,6 +27,7 @@ check:
 	${P4C} examples/psa-example-bridged-metadata.p4
 	${P4C} examples/psa-example-clone-to-port.p4
 	${P4C} examples/psa-example-counters.p4
+	${P4C} examples/psa-example-digest.p4
 	${P4C} examples/psa-example-incremental-checksum.p4
 	${P4C} examples/psa-example-parser-checksum.p4
 	${P4C} examples/psa-example-parser-error-handling.p4
@@ -38,9 +39,6 @@ check:
 	${P4C} examples/psa-example-value-sets3.p4
 
 check-others:
-
-# psa-example-digest.p4 needs updates for latest psa.p4
-#	${P4C} examples/psa-example-digest.p4
 
 # psa-example-mirror-on-drop.p4 needs updates for latest psa.p4
 #	${P4C} examples/psa-example-mirror-on-drop.p4
