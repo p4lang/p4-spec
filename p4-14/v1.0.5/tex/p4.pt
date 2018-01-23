@@ -706,22 +706,22 @@ keywords, \texttt{next} and \texttt{last}, that may be used to refer
 to header instances within a stack. These references are advanced
 automatically as the parser invokes \texttt{extract} in the parser.
 
-More precisely, the keyword \texttt{next} refers to the header
-instance at index \texttt{0} initially, and is advanced each time that
-\texttt{extract} is invoked on any instance within the stack. If
-\texttt{extract} has been invoked more than $N$ times, where $N$ is
-the size of the stack, then evaluating \texttt{next} results in a
-\texttt{p4_pe_index_out_of_bounds} exception. The \texttt{last}
+More precisely, if \texttt{stk} is a header stack, then
+\texttt{stk[next]} initially refers to the header instance in
+\texttt{stk} at index \texttt{0}. The reference automatically advances
+each time that \texttt{extract(stk[next])} is invoked. If
+\texttt{extract(stk[next])} is invoked more than $N$ times, where $N$
+is the size of the stack, then evaluating \texttt{stk[next]} results
+in a \texttt{p4_pe_index_out_of_bounds} exception. The \texttt{last}
 keyword refers to the instance referred to by \texttt{next} prior to
 the last invocation of \texttt{extract}, if it exists, and otherwise
 results in \texttt{p4_pe_index_out_of_bounds} exception. It is illegal
 to use \texttt{next} and \texttt{last} outside of a parser.
     
-Note that while it is legal to extract to a constant index in a header
-stack and extract to the element referred by \texttt{next}, it is not
-recommended. It will likely be difficult for programmers to keep track
-of which element in the header stack \texttt{next} refers to when
-operations are combined in this way.
+Note that while it is legal to extract to a constant index within a
+stack and to the element referred by \texttt{next}, it is not
+recommended to mix these modes of operation, because it is likely to
+be confusing for programmers.
     
 \SUBSECTION{Field Lists}{fieldlists}
 
