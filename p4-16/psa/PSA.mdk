@@ -1756,7 +1756,12 @@ your desired correct behavior.
 
 Individual counter and meter method calls need not be enclosed in
 `@atomic` blocks to be safe -- they guarantee atomic behavior of their
-individual method calls, without losing any updates.
+individual method calls, without losing any updates.  The P4~16~
+language specification requires that every `action` of a table behave
+as if its entire body is annotated by an `@atomic` annotation, so
+there is no benefit to using that annotation with an `action` body
+(Section 16.4.1 "Concurrency model" says "Execution of an action is
+atomic").
 
 As for indexed counters and meters, access to an index of a register
 that is at least the size of the register is out of bounds.  An out of
@@ -2259,6 +2264,13 @@ modifies one table entry, the `apply` operation should behave as if
 that control plane operation has not yet occurred, or as if the
 control plane operation is complete.  The P4 program should never
 behave as if the control plane operation is partially complete.
+
+A PSA implementation should give an error and fail to compile P4
+programs for which it cannot meet this atomicity requirement.  For
+example, perhaps the implementation can only satisfy this requirement
+for tables with actions having at most 128 bits of action parameters,
+and thus gives an error if you attempt to compile a P4 program that
+contains an action with more bits of parameters.
 
 For example, suppose a table `T` has an action `A` with 100 total bits
 of action parameters, and the control plane has added a table entry
