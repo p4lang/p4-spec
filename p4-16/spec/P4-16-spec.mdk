@@ -2982,6 +2982,10 @@ Variable-length bit-strings support a limited set of operations:
 - The `emit` method of a `packet_out` extern object, which
   inserts a variable-sized bit-string with a known dynamic width into
   the packet being constructed (see Section [#sec-deparse]).
+- Comparison for equality or inequality with another `varbit` field.
+  Two `varbit` fields can be compared only if they have the same type.
+  Two varbits are equal if they have the same dynamic width and all
+  the bits up to the dynamic width are the same.
 
 ## Casts { #sec-casts }
 
@@ -3689,8 +3693,10 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
 ~End P4Example
 
 Two header unions can be compared for equality (==) or inequality (!=)
-if they have the exact same type.  The unions are equal if and only if
-all their corresponding fields are equal.
+if they have the same type.  The unions are equal if and only if all
+their corresponding fields are equal (i.e., either all fields are
+invalid in both unions, or in both unions the same field is valid, and
+the values of the valid fields are equal as headers).
 
 ## Method invocations and function calls { #sec-functions }
 
