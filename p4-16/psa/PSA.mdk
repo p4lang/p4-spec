@@ -345,7 +345,7 @@ There are multiple channels of communication over which such values
 might be carried between the controller and the data plane.  These
 channels of communication include:
 
-+ Control plane operations on table, where values of these types may
++ Control plane operations on tables, where values of these types may
   be included as part of the key, or as an action parameter.
 + Packets sent to the CPU ("packet in" from the controller's
   perspective), or received from the CPU ("packet out" from the
@@ -365,17 +365,19 @@ programs to have headers with fields with a total length that is a
 multiple of 8 bits.  To make it possible to define P4 header types
 that meet this restriction, and contain values of fields with these
 PSA-specific types, and be source-compatible across multiple PSA
-implementations, additional types are defined that contain `Bytes` in
-their name.  For example, `PortIdBytes_t` is the same as `PortId_t`,
+implementations, additional types are defined that contain `InHeader` in
+their name.  For example, `PortIdInHeader_t` is the same as `PortId_t`,
 except it must be a multiple of 8 bits long, and contain at least as
-many bits as `PortId_t` does.  Because these types are guaranteed to
+many bits as `PortId_t` does.
+
+Because these types are guaranteed to
 be a multiple of 8 bits long, any combination of them may be included
 in a P4 header type definition, as long as the other fields in the
 header satisfy the multiple of 8 bits restriction.  The controller or
 P4 program generating packets with such headers should fill in any
 most significant "padding" bits with 0.  In a P4 program, this can be
 done with a normal assignment statement, where the value on the right
-hand side is cast to the wider `Bytes` type.
+hand side is cast to the wider `InHeader` type.
 
 Values of type `PortId_t` have a distinctive property in PSA
 implementations.  Because it can make some hardware implementations
