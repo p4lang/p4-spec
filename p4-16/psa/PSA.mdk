@@ -276,7 +276,7 @@ few packets dropped for these reasons (perhaps only one).
 
 # PSA Data types
 
-## PSA type definitions
+## PSA type definitions {#sec-psa-type-definitions}
 
 Each PSA implementation will have specific bit widths for the
 following types.  These widths should be defined in the target
@@ -292,6 +292,7 @@ advantage of at most 64 of those bits.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
+[INCLUDE=psa.p4:Type_defns2]
 ```
 
 ## PSA supported metadata types
@@ -307,6 +308,132 @@ Additional supported match_kind types
 ```
 [INCLUDE=psa.p4:Match_kinds]
 ```
+
+
+## Data plane vs. control plane data representations
+
+A PSA data plane implementation that supports the P4 Runtime
+API[^P4RuntimeAPI] is expected to include software called a "P4
+Runtime API agent" that encapsulates details specific to the PSA
+implementation, enabling a P4 Runtime API controller to more easily
+control multiple devices with different PSA implementations.  We will
+refer to these pieces of software as an "agent" and "controller" for
+brevity.
+
+As mentioned in section [#sec-psa-type-definitions], different PSA
+implementations are expected to differ in the minimum number of bits
+they require for their favored `PortId_t` representation, and the
+other types listed there.
+
+Some PSA implementations are expected to use noticeably fewer
+resources for things like table keys and action parameters if the data
+plane stores only the fewest number of bits required for values of
+these types, for that implementation.  For example, an implementation
+that defines `PortId_t` as `bit<6>` instead of `bit<16>`, and can take
+advantage of this difference, could save 10 Mbits of storage in a
+table with a million entries[^CacheCost].
+
+[^CacheCost]: While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache.  https://en.wikipedia.org/wiki/List_of_Intel_microprocessors
+
+The P4 Runtime API is planning to use 64-bit quantities to hold values
+of the types listed in section [#sec-psa-type-definitions].  For
+control plane operations on tables, any trimming or padding of values
+will be performed in the agent (trimming from controller to device
+direction, padding in device to controller direction).
+
+There are multiple channels of communication over which such values
+might be carried between the controller and the data plane.  These
+channels of communication include:
+
++ Control plane operations on table, where values of these types may
+  be included as part of the key, or as an action parameter.
++ Packets sent to the CPU ("packet in" from the controller's
+  perspective), or received from the CPU ("packet out" from the
+  controller's perspective).
++ Fields in a `Digest` extern notification message (section
+  [#sec-packet-digest]).
++ Fields in the data contents of a `Register` array (section
+  [#sec-registers]).
++ Match fields of an entry in a `ValueSet` extern instance (section
+  [#sec-parser-value-sets]).
+
+Note: There may be other channels not listed above.
+
+For packets between the control plane and the PSA device, there is the
+issue that many PSA implementations are expected to restrict P4
+programs to have headers with fields with a total length that is a
+multiple of 8 bits.  To make it possible to define P4 header types
+that meet this restriction, and contain values of fields with these
+PSA-specific types, and be source-compatible across multiple PSA
+implementations, additional types are defined that contain `Bytes` in
+their name.  For example, `PortIdBytes_t` is the same as `PortId_t`,
+except it must be a multiple of 8 bits long, and contain at least as
+many bits as `PortId_t` does.  Because these types are guaranteed to
+be a multiple of 8 bits long, any combination of them may be included
+in a P4 header type definition, as long as the other fields in the
+header satisfy the multiple of 8 bits restriction.  The controller or
+P4 program generating packets with such headers should fill in any
+most significant "padding" bits with 0.  In a P4 program, this can be
+done with a normal assignment statement, where the value on the right
+hand side is cast to the wider `Bytes` type.
+
+Values of type `PortId_t` have a distinctive property in PSA
+implementations.  Because it can make some hardware implementations
+more straightforward, the numerical values of fields with type
+`PortId_t` in the P4 data plane might not be a simple range of values
+such as 0 through 31, as one might choose when writing control plane
+software for a 32-port device.  The agent is expected to implement
+numerical translation between controller port id values and data plane
+port id values, for each of the channels of communication between the
+controller and data plane described above.
+
+Occurrences of values of type `PortId_t` or `PortIdInHeader_t` must
+include a `port_translation` annotation so the compiler can mark
+occurrences of these values appropriately, so the agent can know which
+values need this translation.  See the example P4 header definition
+below.
+
+```
+[INCLUDE=examples/psa-example-parser-error-handling.p4:PortId_Annotation_Example]
+```
+
+Because of this translation, it is recommended that values of type
+`PortId_t` be treated similarly to values of an `enum` type.
+Comparing two values of this type for equality or inequality is
+reasonable, as well as assigning the values to other variables or
+parameters of the same type, but nearly any other operations are prone
+to error.  When matching values of type `PortId_t` as part of a table
+key, always match a complete value exactly, or wildcard every bit of
+the value (i.e. a `ternary` match kind with all bits wildcard, or an
+`lpm` match kind with prefix length 0).  If you attempt to do any of
+the following things on a value with type `PortId_t`, the numerical
+translation performed may lead to functional errors in your program:
+
++ Do a table key match on a subset of the bits, or a range match.
++ Compare port values with relational operators like `<` or `>`.
++ Perform arithmetic on the value, and expect to get a value that
+  corresponds to another port of the device.  Some numerical values
+  may not correspond to any port of the device, and the values
+  corresponding to ports need not be consecutive.
+
+The list above is not intended to be exhaustive.
+
+~ TBD
+It is not clear yet whether it is reasonable to use a value of type
+`PortId_t` as an index to of a `Register` extern, or of an indexed
+`Counter` or `Meter` extern.  A likely result of attempting to do this
+in a P4 program is that the indexes accessed will be the data plane
+specific values of `PortId_t`, and when the control plane attempts to
+access values in these externs, the numerical translation may not be
+performed on the index.  It should be reasonable to use a
+`DirectCounter` or `DirectMeter` with a table key that includes a
+`PortId_t` field, as long as it is annotated as described above,
+because the agent port translation should be performed for table keys.
+
+If this is not a reasonable thing to do, the example program
+psa-example-counters.p4 should be modified so that it does not do
+this, and scrub all other examples for any similar behavior.
+~
 
 
 # Programmable blocks {#sec-programmable-blocks}

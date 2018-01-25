@@ -165,16 +165,23 @@ struct empty_metadata_t {
 struct fwd_metadata_t {
 }
 
-// This example assumes that PortId_t is at most 20 bits.
-typedef bit<20> ToCpuErrorHeaderPortId_t;
-
+// BEGIN:PortId_Annotation_Example
 header to_cpu_error_header_t {
     bit<8> error_idx;
     bit<1> ingress;
     bit<3> packet_path;
+    bit<4> reserved1;
+
     // port is ingress_port if ingress is 1, else egress_port
-    ToCpuErrorHeaderPortId_t port;
+
+    // This annotation is needed by the P4 compiler and tool chain so
+    // that a P4 Runtime API agent knows that this is a field of type
+    // PortId_t or PortIdInHeader_t that needs its values numerically
+    // translated between the control plane and data plane.
+    @port_translation("controller_port_bitwidth : 32")
+    PortIdInHeader_t port;
 }
+// END:PortId_Annotation_Example
 
 enum CloneReason_t {
     NONE,
@@ -372,7 +379,7 @@ control handle_parser_errors(
         to_cpu_error_hdr.setValid();
         to_cpu_error_hdr.error_idx = error_idx;
         packet_path_to_bits.apply(to_cpu_error_hdr.packet_path, packet_path);
-        to_cpu_error_hdr.port = (ToCpuErrorHeaderPortId_t) port;
+        to_cpu_error_hdr.port = (PortIdInHeader_t) port;
     }
 }
 
