@@ -2595,25 +2595,29 @@ power SRAMs can do 1 read or 1 write per clock cycle.
 
 While there are "multi ported" SRAM designs that can be read and/or
 written multiple times per clock cycle, these have a noticeable
-increase in area and power over the "singled ported" designs that are
+increase in area and power over the "single ported" designs that are
 limited to 1 access per cycle.  If multi ported TCAM designs even
-exist, they are likely even a higher cost premium of single ported
-TCAMs than for SRAMs.  They typical way to achieve higher search rates
-is via parallelism, by creating multiple copies of the desired TCAM,
-which is a linear increase in area and power (at least).
+exist, the cost premium for multi-ported TCAMs is likely to be even
+higher than the cost premium for multi-ported SRAMs.  The typical way
+to achieve higher TCAM search rates is via parallelism, by creating
+multiple copies of the desired TCAM, which is a linear increase in
+area and power (at least).
 
 Due to these issues, if one wishes to create a switch ASIC that
 achieves a packet processing rate of N times the clock rate, e.g. 2
 billion packets per second in a 1 GHz ASIC, the most straightforward
 way to do this is to take advantage of the fact that packet processing
 is (mostly) an embarrasingly parallel
-problem[^EmbarrassinglyParallel], and create a device with N modules,
-each modules processing packets at 1 billion packets per second.
+problem[^EmbarrassinglyParallel], and create a device with N
+pipelines[^PipelineNote], each pipeline processing packets at 1
+billion packets per second.
 
 [^EmbarrassinglyParallel]: https://en.wikipedia.org/wiki/Embarrassingly_parallel
 
+[^PipelineNote]: Here and elsewhere in P4 specification documents, the term "pipeline" is often used for such a thing.  This is by now traditional in P4 specifications, and although we will not try to change that here, note that there are other reasonable hardware designs that can accomplish this goal, e.g. a collection of CPU cores running in parallel, each processing different packets.
+
 A PSA device designed in this way would typically have N ingress
-pipeline modules, plus N egress pipeline modules.  It is common to
+pipelines, plus N egress pipelines.  It is common to
 assign multiple physical ports of the switch ASIC to each pipeline in
 a hard-wired fashion, e.g. a device with 32 100 Gigabit Ethernet ports
 might physically hard-wire ports 0 through 15 to pipeline 0, and ports
@@ -2636,13 +2640,13 @@ is the case, the packet processing behavior is the same even if table
 entries for port X are installed only in the ingress pipeline that
 processes packets from port X.  Installing that table entry in the
 other pipelines would be an unnecessary use of table space, since it
-could never be matched.  Whether the software of such a PSA device
-enables taking advantage of such space savings is implementation
-dependent.
+could never be matched.  Whether the device-dependent control software
+of such a PSA device enables taking advantage of such space savings is
+implementation dependent.
 
 Regardless of this issue, applying tables in P4 is an embarrassingly
 parallel activity, because as long as table entries are installed
-where they might be matched, each pipeline can operate completely
+where they might be matched, pipelines can operate completely
 independently of each other with no communication between them (one
 small exception is described below).  The same is true for most PSA
 externs, e.g. `ActionProfile`, `ActionSelector`, `Checksum`, `Digest`,
@@ -2674,7 +2678,7 @@ to where the shared state is", e.g. recirculating packets to a common
 pipeline where the meter state is kept.  Both of these techniques lead
 to lower packet processing performance, at least in some cases, and
 both add complexity to the system.  It is typical in network switches
-to simply maintain the meter state indendently in each pipeline and
+to simply maintain the meter state independently in each pipeline and
 not coordinate it, and accept the resulting behavior.
 
 This issue is not specific to packet switches.  It falls under the
@@ -2693,10 +2697,14 @@ place where the state is maintained.
 
 Note that the proposed `psa_idle_timeout` table property introduces a
 way by which doing table `apply` operations _does_ update state within
-a P4 table.  If the "last matched time" state of table entries in
+a P4 table.  Each table entry requires at least one, and more likely several, bits of state to represent a "last matched time" value, and this value is updated with every `apply` operation.  If this state in
 tables with this option is not automatically coordinated between
-pipelines, then this state can of course differ for corresponding
+pipelines, then it can differ for corresponding
 table entries in different pipelines.  An entry with key X in one
 pipeline could remain unmatched for longer than the desired timeout,
 at the same time that the corresponding entries with key X are
-frequently matched in other pipelines.
+recently matched in other pipelines.  One possible approach to handle
+this is for the PSA device and its implementation-specific control
+software to make the existence of multiple pipelines explicit to the
+control plane software in some way, e.g. assign each pipeline, and the
+tables and externs it contains, a distinct name.
