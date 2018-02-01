@@ -2265,6 +2265,14 @@ that control plane operation has not yet occurred, or as if the
 control plane operation is complete.  The P4 program should never
 behave as if the control plane operation is partially complete.
 
+Note that this requirement is for every table `apply` operation
+individually.  A PSA implementation is not required to support
+performing multiply `apply` operations on the same table in the same
+invocation of a control block.  If it does support that, it is allowed
+that a control plane update _may_ occur after one `apply` call by a
+packet to a table, but before the next `apply` call by the same
+packet.
+
 A PSA implementation should give an error and fail to compile P4
 programs for which it cannot meet this atomicity requirement.  For
 example, perhaps the implementation can only satisfy this requirement
