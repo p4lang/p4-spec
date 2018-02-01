@@ -561,38 +561,9 @@ of service of packets.  PSA does not mandate a scheduling policy among
 queues that may exist in the packet buffer.  Something at least as
 flexible as weighted fair queuing, with an optional strict high
 priority queue, is recommended for PSA implementations with separate
-queues for each class of service.
-
-Normally all unicast packets (i.e. those that follow the "enqueue one
-packet" path in the pseudocode above) received by a PSA device on the
-same ingress port, and sent to the same output port, will be processed
-by the `Ingress` control block in the same order they are received, and
-then processed by the `Egress` control bock in the same relative order as they
-are processed by the `Ingress` control block, i.e. all such packets go
-through the same FIFO queue in the packet buffer.
-
-It is expected that some PSA implementations will implement the class
-of service mechanism by having a separate FIFO queue per class of
-service, and thus while unicast packets with the same ingress port,
-egress port, and class of service will pass through the system in FIFO
-order, unicast packets with the same ingress and egress port, but
-different classes of service, may be processed by the `Egress` control
-block in a different order than they were processed by the Ingress
-control block.
-
-A similar FIFO property is expected to hold for multicast packets,
-i.e. those that follow the "Make 0 or more copies" path in the
-pseudocode above.  By a short period of time after the control plane
-has stopped modifying the set of members of multicast groups, they
-should be 'stable', and all packets with the same (`ingress_port`,
-`ostd.multicast_group`, `ostd.class_of_service`, `egress_port`) should
-pass through the system in FIFO order, and be processed in the
-`Egress` control block in the same relative order that they were
-processed in the `Ingress` control block.
-
-There is no such expectation for multicast packets with different
-`class_of_service` values, again because of separate queues in the PRE
-for different `class_of_service` values.
+queues for each class of service.  See appendix
+[#appendix-packet-ordering] for more on packet ordering
+recommendations in PSA devices.
 
 The control plane API excerpt below is an example intended to be added as part of
 the P4 Runtime API, and the final version of this message will be defined
@@ -2781,3 +2752,140 @@ For programming multiple pipelines, it is the responsibility of the
 vendor and of target dependent tools to specify how PSA programs are
 mapped to multiple pipelines.  An implementation may use a copy of the
 PSA program on each pipeline, thus keeping pipelines fully isolated.
+
+
+# Appendix: Packet ordering {#appendix-packet-ordering}
+
+This section describes _recommendations_ for PSA implementations on
+the order that packets are processed.  These are not requirements,
+since there are known implementation techniques, especially
+parallelism that can be taken advantage of in a variety of ways, that
+can lead to cheaper implementations if these recommendations are not
+followed.  We recommend that developers selecting P4 devices ask their
+designers about these issues, if those developers consider the issues
+important for their purposes.
+
+Recommendation 1: Packets that arrive on the same input port should
+begin ingress processing in the same relative order as they arrived.
+
+Recommendation 2: Packets that go out on the same output port should
+be transmitted on the port in the same relative order that they began
+egress processing.
+
+Recommendation 3: PRE unicast packets (i.e. those that follow the
+"enqueue one packet" path in the pseudocode of section
+[#sec-after-ingress]) that arrived from the same ingress port, did
+ingress processing once (i.e. were not resubmitted or recirculated),
+were sent to the PRE with the same `class_of_service` value, and
+destined for the same egress port, should begin egress processing in
+the same relative order as they began ingress processing.
+
+It is expected that some PSA implementations will implement the class
+of service mechanism by having a separate FIFO queue per class of
+service, and thus while unicast packets with the same ingress port,
+egress port, and class of service will pass through the system in FIFO
+order if they follow all recommendations above, unicast packets with
+the same ingress and egress port, but different classes of service,
+may be processed by the egress control block in a different order than
+they were processed by the ingress control block.
+
+If an implementation satisfies recommendations 1 through 3, then
+unicast traffic assigned to the same class of service will maintain
+its relative order through the device.
+
+Recommendation 4: Consider PRE multicast packets (i.e. those that
+follow the "Make 0 or more copies" path in the pseudocode of section
+[#sec-after-ingress]) that arrived on the same ingress port, did
+ingress processing once, and were sent to the PRE with the same pair
+of values (`class_of_service`, `multicast_group`).  For copies of
+those original packets that are destined to the same egress port, and
+with the same pair of values for (`egress_port`, `instance`), those
+copies should begin egress processing in the same relative order as
+the original packets began ingress processing.
+
+There is no such expectation for multicast packets with different
+`class_of_service` values, again because of separate queues in the PRE
+for different `class_of_service` values.
+
+It is also understood that for a short period of time after the
+control plane modifies the set of copies to be made for a particular
+`multicast_group` value, that it may be especially difficult to
+satisfy Recommendation 4.  That recommendation is intended to apply
+only when the set of copies to be made for the multicast group has
+remained unchanged for a period of time.
+
+If an implementation satisfies recommendations 1, 2, and 4, then
+multicast traffic assigned to the same class of service will maintain
+its relative order through the device, when multicast group membership
+has been stable for long enough.
+
+Note that there is no recommendation to enforce any relative ingress
+to egress processing order of unicast packets vs. multicast packets.
+Commonly used mechanisms for creating multicast copies in the PRE
+allow unicast packets to "go around" the packet replication logic,
+which is unnecessary for unicast packets, and thus change the relative
+order of such packets there.  Also, it is common in packet buffers to
+use separate queues for multicast traffic versus unicast.
+
+
+We give some motivations for these recommendations below.
+
+1. Expectations of hosts
+
+While the Internet Protocol does not have strong ordering requirements
+for sequences of packets sent by one host to another, there are still
+widely deployed implementations of TCP that lead to significantly
+degraded throughput when the network frequently delivers packets to
+the receiver in a different order than they were transmitted.  While
+significant research and development has been done to mitigate this
+issue, e.g. later Linux TCP implementations (since 2011 when version
+2.6.35 was released) are much more resilient to this problem than
+earlier versions, there are still many commonly deployed TCP
+implementations that suffer from this issue.  See references within
+Kandula et al's work[^Kandula2007] for some of the research done
+towards making TCP more robust in the face of network packet
+reordering.
+
+Such TCP implementations interpret acknowledgements with repeated
+cumulative acknowledgement sequence numbers as a likely indication of
+packet loss in the network, and reduce their sending window in an
+effort to avoid network congestion.
+
+While applications using UDP should also be aware of possible packet
+reordering in a network, some of them behave poorly if this reordering
+becomes common[^LG2002].
+
+These expectations of hosts are a significant reason why ECMP (Equal
+Cost Multi Path) path selection and LAG (Link Aggregation Group) link
+selection are so often done by using a hash of packet header fields
+such as IP source and destination address, and TCP or UDP source and
+destination port.  Choosing among parallel paths in this way helps to
+preserve the order of packets in the same application flow, at the
+cost of not balancing the load as evenly as possible.  If a network
+device's internal implementation reordered packets, it would be an
+independent source of network reordering.
+
+[^Kandula2007]: S. Kandula, D. Katabi, S. Sinha, and A. Berger, "Dynamic load balancing without packet reordering", ACM SIGCOMM Computer Communication Review, Vol. 37, No. 2, April 2007
+[^LG2002]: M. Laor and L. Gendel, "The effect of packet reordering in a backbone link on application throghput", IEEE Network, 2002.
+
+
+2. Implementation of stateful protocols
+
+This reason is much less significant than the previous one.  We
+mention it here primarily so implementers of networking protocols are
+aware of the issue.  This issue is only relevant for a relatively
+small fraction of network protocols.
+
+Some networking protocols add sequence numbers to packets, and require
+either dropping packets that arrive out of sequence number order at a
+later network point (e.g. GRE with sequence numbers enabled), or with
+a looser check that allows some amount of network reordering to occur
+without dropping the packets (e.g. IPsec).  When a device implementing
+these protocols does the sequence number addition or checking in a
+different order than packets are sent or received on a physical port,
+that is effectively another kind of network reordering that can affect
+the performance of these protocols.
+
+Similarly, there are some protocols like IP header compression, where
+multiple variants have been developed, some with more or less
+robustness in the face of network reordering.
