@@ -1170,8 +1170,6 @@ the places mentioned in Table [#table-extern-usage].
 |-------------------|----------------------------------------------|
 | `Register`        | Ingress, Egress |
 |-------------------|----------------------------------------------|
-| `ValueSet`        | IngressParser, EgressParser |
-|-------------------|----------------------------------------------|
 ~
 
 For example, `Counter` being restricted to "Ingress, Egress" means
@@ -1956,81 +1954,9 @@ link failures is outside the scope of the PSA. Fast-failover requires
 information from the control plane and will be addressed as part of the P4
 Runtime API[^P4RuntimeAPI] working group.
 
-## Parser Value Sets
-
-A parser value set is a named set of values that may be used during
-packet header parsing time to make decisions.  You may use control
-plane API calls to add values to a set, and remove values from a set,
-at run time, much like P4 tables.  Unlike tables, they may not have
-actions associated with them.  They may only be used to determine
-whether a particular value is in the set, returning a Boolean value.
-That Boolean value can then be used in a `select` statement to control
-parsing (see examples below).
-
-```
-[INCLUDE=psa.p4:ValueSet_extern]
-```
-
-The control plane API excerpt above is intended to be added as part of
-the P4 Runtime API[^P4RuntimeAPI].
-
 [^P4RuntimeAPI]: The P4 Runtime API, defined as a Google Protocol
     Buffer `.proto` file, can be found at
     <https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto>
-
-The control plane API for a `ValueSet` is similar to that of a table,
-except only match fields may be specified, with no actions.  This
-includes API calls that specify ternary or range matching, although
-for `ValueSet`s these do not require specifying any priority values,
-since the only result of a `ValueSet` `is_member` call is "in the set"
-or "not in the set".
-
-If a PSA target can do so, it should implement control plane API calls
-involving ternary or range matching using ternary or range matching
-capabilities in the target, consuming the minimal table entries
-possible.
-
-However, a PSA target is allowed to implement such control plane API
-calls by "expanding" them into as many exact match entries as needed
-to have the same behavior.  For example, a control plane API call
-adding all values in the range 5 through 8 may be implemented as
-adding the four separate exact match values 5, 6, 7, and 8.
-
-The parser definition below shows an example that uses two `ValueSet`
-instances called `tpid_types` and `trill_types`.
-
-```
-[INCLUDE=examples/psa-example-value-sets.p4:ValueSet_Example_1]
-```
-
-The second example (below) has the same parsing behavior as the
-example above, but combines the two parse states
-`dispatch_tpid_value_set` and `dispatch_trill_value_set` into one.
-
-```
-[INCLUDE=examples/psa-example-value-sets2.p4:ValueSet_Example_2]
-```
-
-The third example (below) demonstrates one way to have a `ValueSet`
-that matches on multiple fields, by making the type `D` a `struct`
-containing multiple bit vectors.
-
-```
-[INCLUDE=examples/psa-example-value-sets3.p4:ValueSet_Example_3]
-```
-
-A PSA compliant implementation is not required to support any use of a
-`ValueSet` `is_member` method call return value, other than directly
-inside of a `select` expression.  For example, a program fragment like
-the one shown below may be rejected, and thus P4 programmers striving
-for maximum portability should avoid writing such code.
-```
-    bool is_tpid = tpid_types.is_member(parsed_hdr.ethernet.etherType);
-
-    is_tpid = is_tpid && (parsed_hdr.ethernet.dstAddr[47:40] == 0xfe);
-    transition select(is_tpid) {
-        // ...
-```
 
 
 ## Timestamps
@@ -2314,6 +2240,12 @@ general setting[^Cernyetal2016].
 As with any work in progress, we have a number of open issues that are under discussion in the
 working group. In addition to the TBDs in the document, there a number of larger issues that are
 summarized here:
+
+## Parser value sets
+
+This is a useful feature of P4~14~ that we plan to define in PSA.
+Multiple proposals have been discussed, but we have not yet come to
+agreement on how they should be represented in P4~16~.
 
 ## Action Selectors
 
@@ -2689,16 +2621,15 @@ where they might be matched, pipelines can operate completely
 independently of each other with no communication between them (one
 small exception is described below).  The same is true for most PSA
 externs, e.g. `ActionProfile`, `ActionSelector`, `Checksum`, `Digest`,
-`Hash`, `Random`, and `ValueSet`.  What P4 tables and these externs
-have in common is: either the P4 program behavior cannot modify their
-state at all (e.g. tables, `ActionProfile`, `ActionSelector`,
-`ValueSet`), or can only modify it in a way that does not affect the
-processing of other packets (e.g. `Checksum`, `Digest`, `Hash`).
-`Random` is a special case here: updating the state of a pseudo-random
-number generator can affect the processing of other packets, but this
-is typically not a concern for the way that pseudo-random numbers are
-used (e.g. randomly choosing packets to drop or mark in Random Early
-Detection).
+`Hash`, and `Random`.  What P4 tables and these externs have in common
+is: either the P4 program behavior cannot modify their state at all
+(e.g. tables, `ActionProfile`, `ActionSelector`), or can only modify
+it in a way that does not affect the processing of other packets
+(e.g. `Checksum`, `Digest`, `Hash`).  `Random` is a special case here:
+updating the state of a pseudo-random number generator can affect the
+processing of other packets, but this is typically not a concern for
+the way that pseudo-random numbers are used (e.g. randomly choosing
+packets to drop or mark in Random Early Detection).
 
 For counters, there is counter state maintained independently in each
 pipeline, but if corresponding counter entries in each pipeline count
