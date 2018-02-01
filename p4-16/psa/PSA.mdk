@@ -1756,7 +1756,12 @@ your desired correct behavior.
 
 Individual counter and meter method calls need not be enclosed in
 `@atomic` blocks to be safe -- they guarantee atomic behavior of their
-individual method calls, without losing any updates.
+individual method calls, without losing any updates.  The P4~16~
+language specification requires that every `action` of a table behave
+as if its entire body is annotated by an `@atomic` annotation, so
+there is no benefit to using that annotation with an `action` body
+(Section 16.4.1 "Concurrency model" says "Execution of an action is
+atomic").
 
 As for indexed counters and meters, access to an index of a register
 that is at least the size of the register is out of bounds.  An out of
@@ -2252,6 +2257,85 @@ The control plane should provide a
 
 
 ```
+
+
+# Atomicity of control plane API operations
+
+All table add, delete, and modify operations must be atomic relative
+to packet forwarding.  That is, for every table `apply` operation, and
+every control plane operation on a table that adds, deletes, or
+modifies one table entry, the `apply` operation should behave as if
+that control plane operation has not yet occurred, or as if the
+control plane operation is complete.  The P4 program should never
+behave as if the control plane operation is partially complete.
+
+Note that this requirement is for every table `apply` operation
+individually.  A PSA implementation is not required to support
+performing multiply `apply` operations on the same table in the same
+invocation of a control block.  If it does support that, it is allowed
+that a control plane update _may_ occur after one `apply` call by a
+packet to a table, but before the next `apply` call by the same
+packet.
+
+A PSA implementation should give an error and fail to compile P4
+programs for which it cannot meet this atomicity requirement.  For
+example, perhaps the implementation can only satisfy this requirement
+for tables with actions having at most 128 bits of action parameters,
+and thus gives an error if you attempt to compile a P4 program that
+contains an action with more bits of parameters.
+
+For example, suppose a table `T` has an action `A` with 100 total bits
+of action parameters, and the control plane has added a table entry
+with a search key `K` and action `A`.  Later the control plane
+performs an update operation on the entry with key `K` that leaves the
+key `K` the same, but changes the 100 bits of action parameters.
+Every packet doing an `apply` on table `T` and matching the entry with
+key `K` should execute action `A` with either the old 100 bits of
+action parameters, or the new 100 bits of action parameters.
+
+The P4 Runtime API may define individual API calls that can perform
+more than one single operation, as defined here.  If so, a PSA
+implementation need only ensure that each single operation is atomic.
+There is no requirement that a sequence of _multiple_ table entry add,
+delete, or update operations should be atomic.
+
+The same applies for all control plane API operations on externs,
+unless the control plane operation explicitly documents otherwise.
+
+In particular, ActionProfile and ActionSelector single operations,
+such as adding a member to a group, removing a member from a group,
+adding an empty group, deleting an empty group, or modifying the
+action parameters of an action added earlier to a group, should all be
+atomic.
+
+Also, a control plane read, or write, of a single element of a
+Register array should be atomic, and behave as if it occurred before
+or after (but not during) any P4 program's section of code labeled
+with the `@atomic` annotation.  Note that all P4 `action`s are
+required to behave as if their bodies were labeled with the `@atomic`
+annotation (see Section 16.4.1 "Concurrency model" of the P4~16~
+language specification).  There is _no_ control plane operation on a
+Register that can atomically read an element, then write back a
+modified value.
+
+Advice for P4 developers: If you desire a capability for the control
+plane to atomically read, modify, then write back a Register array
+element, you should write your P4 program such that the desired read,
+modify, and write operation can be done by a packet that your control
+plane can inject into the data plane, e.g. via packet in / packet out
+P4 Runtime API operations.
+
+A high speed PSA implementation might process hundreds or thousands of
+packets between each single control plane operation.  There are common
+"write tables from later to earlier in the data flow", sometimes also
+called "back to front" or "pointer flipping", techniques used by
+existing control planes to achieve an effect that is similar to making
+a sequence of many table entry operations atomic relative to packet
+forwarding.  Recent research analyzes these techniques in a more
+general setting[^Cernyetal2016].
+
+[^Cernyetal2016]: Pavol Cerny, Nate Foster, Nilesh Jagnik, and Jedidiah McClurg, "Consistent Network Updates in Polynomial Time".  International Symposium on Distributed Computing (DISC), Paris, France, September 2016.
+
 
 # Appendix: Open Issues {@h1:"A"}
 
