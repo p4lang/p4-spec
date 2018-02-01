@@ -1239,6 +1239,7 @@ Rationale:
   (e.g. table, counter, etc.) to be accessed at a packet rate higher
   than that of a single pipeline.  Thus each stateful object should be
   accessed from only a single pipeline on such a device.
+  See appendix [#appendix-multi-pipeline-psa-devices].
 
 
 ## PSA Table Properties
@@ -2269,23 +2270,6 @@ a common P4 program.
 We also need to formalize the interaction of action profiles and action selectors with counters and
 meters.
 
-## How does PSA interact with multiple pipelines
-
-As presented, the PSA describes the operation of a single packet processing pipeline. However,
-programmable devices typically support multiple pipelines. It is unlikely that high performance
-devices implement any form of coherency across pipelines, even though forwarding across pipelines
-may happen.
-
-In the current specification, each extern has its own resources and they are constrained to a
-single pipeline, i.e., not shared across pipelines and not maintained coherent with any other
-externs even if attached to the same logical table. It is the responsibility of the programmer to
-maintain state across pipelines using control-plane operations, if so desired.
-
-Likewise, for programming multiple pipelines, it is the responsibility of the vendor and of target
-dependent tools to specify how PSA programs are mapped to multiple pipelines. A simple
-implementation may use a copy of the PSA program on each pipeline, and thus keeping pipelines fully
-isolated. We will continue to discuss and refine our position.
-
 ## PSA profiles
 
 We are considering whether to specify different limits that a certain PSA implementation has to have in order for the implementation to be considered compliant. The main point of PSA is to enable a variety of devices, and thus limits may be artificial. On the other hand, for most interesting applications, it is necessary to support a minimum of functionality.
@@ -2578,7 +2562,7 @@ scheduling algorithm implementations are all built with a finite
 maximum packet scheduling rate.
 
 
-# Appendix: Multi-pipeline PSA devices
+# Appendix: Multi-pipeline PSA devices {#appendix-multi-pipeline-psa-devices}
 
 The highest packet rate network devices today are ASICs running at a
 clock rate on the order of 1 to 2 GHz.  This discussion will assume 1
@@ -2614,7 +2598,7 @@ billion packets per second.
 
 [^EmbarrassinglyParallel]: https://en.wikipedia.org/wiki/Embarrassingly_parallel
 
-[^PipelineNote]: Here and elsewhere in P4 specification documents, the term "pipeline" is often used for such a thing.  This is by now traditional in P4 specifications, and although we will not try to change that here, note that there are other reasonable hardware designs that can accomplish this goal, e.g. a collection of CPU cores running in parallel, each processing different packets.
+[^PipelineNote]: Here and elsewhere in P4 specification documents, the term "pipeline" refers to a portion of a P4 implementation that implements, for example, the behavior of IngressParser, Ingress, then IngressDeparser in PSA.  This is by now traditional in P4 specifications, and although we will not try to change that here, note that there are other reasonable hardware designs that can accomplish this goal that few would call a pipeline, e.g. a collection of CPU cores running in parallel, each processing different packets.
 
 A PSA device designed in this way would typically have N ingress
 pipelines, plus N egress pipelines.  It is common to
@@ -2708,3 +2692,8 @@ this is for the PSA device and its implementation-specific control
 software to make the existence of multiple pipelines explicit to the
 control plane software in some way, e.g. assign each pipeline, and the
 tables and externs it contains, a distinct name.
+
+For programming multiple pipelines, it is the responsibility of the
+vendor and of target dependent tools to specify how PSA programs are
+mapped to multiple pipelines.  An implementation may use a copy of the
+PSA program on each pipeline, thus keeping pipelines fully isolated.
