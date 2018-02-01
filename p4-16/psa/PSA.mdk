@@ -1239,6 +1239,7 @@ Rationale:
   (e.g. table, counter, etc.) to be accessed at a packet rate higher
   than that of a single pipeline.  Thus each stateful object should be
   accessed from only a single pipeline on such a device.
+  See appendix [#appendix-multi-pipeline-psa-devices].
 
 
 ## PSA Table Properties
@@ -2353,23 +2354,6 @@ a common P4 program.
 We also need to formalize the interaction of action profiles and action selectors with counters and
 meters.
 
-## How does PSA interact with multiple pipelines
-
-As presented, the PSA describes the operation of a single packet processing pipeline. However,
-programmable devices typically support multiple pipelines. It is unlikely that high performance
-devices implement any form of coherency across pipelines, even though forwarding across pipelines
-may happen.
-
-In the current specification, each extern has its own resources and they are constrained to a
-single pipeline, i.e., not shared across pipelines and not maintained coherent with any other
-externs even if attached to the same logical table. It is the responsibility of the programmer to
-maintain state across pipelines using control-plane operations, if so desired.
-
-Likewise, for programming multiple pipelines, it is the responsibility of the vendor and of target
-dependent tools to specify how PSA programs are mapped to multiple pipelines. A simple
-implementation may use a copy of the PSA program on each pipeline, and thus keeping pipelines fully
-isolated. We will continue to discuss and refine our position.
-
 ## PSA profiles
 
 We are considering whether to specify different limits that a certain PSA implementation has to have in order for the implementation to be considered compliant. The main point of PSA is to enable a variety of devices, and thus limits may be artificial. On the other hand, for most interesting applications, it is necessary to support a minimum of functionality.
@@ -2660,3 +2644,140 @@ Certainly if there are long durations of time when egress decides to
 drop all packets to an output port, that port will go idle.  The
 scheduling algorithm implementations are all built with a finite
 maximum packet scheduling rate.
+
+
+# Appendix: Multi-pipeline PSA devices {#appendix-multi-pipeline-psa-devices}
+
+The highest packet rate network devices today are ASICs running at a
+clock rate on the order of 1 to 2 GHz.  This discussion will assume 1
+GHz for the sake of a concrete numerical example, but everything
+discussed here scales linearly with the clock rate.
+
+It is common to design a portion of a network ASIC such that it can
+start processing a new packet once every clock cycle, and finish a
+packet every clock cycle.  The latency might be hundreds of clock
+cycles from starting a packet until it is complete.  P4 tables in such
+ASICs are typically implemented using logic such as TCAMs and SRAMs.
+TCAM designs can do 1 search per clock cycle.  The lowest area and
+power SRAMs can do 1 read or 1 write per clock cycle.
+
+While there are "multi ported" SRAM designs that can be read and/or
+written multiple times per clock cycle, these have a noticeable
+increase in area and power over the "single ported" designs that are
+limited to 1 access per cycle.  If multi ported TCAM designs even
+exist, the cost premium for multi-ported TCAMs is likely to be even
+higher than the cost premium for multi-ported SRAMs.  The typical way
+to achieve higher TCAM search rates is via parallelism, by creating
+multiple copies of the desired TCAM, which is a linear increase in
+area and power (at least).
+
+Due to these issues, if one wishes to create a switch ASIC that
+achieves a packet processing rate of N times the clock rate, e.g. 2
+billion packets per second in a 1 GHz ASIC, the most straightforward
+way to do this is to take advantage of the fact that packet processing
+is (mostly) an embarrasingly parallel
+problem[^EmbarrassinglyParallel], and create a device with N
+pipelines[^PipelineNote], each pipeline processing packets at 1
+billion packets per second.
+
+[^EmbarrassinglyParallel]: https://en.wikipedia.org/wiki/Embarrassingly_parallel
+
+[^PipelineNote]: Here and elsewhere in P4 specification documents, the term "pipeline" refers to a portion of a P4 implementation that implements, for example, the behavior of IngressParser, Ingress, then IngressDeparser in PSA.  This is by now traditional in P4 specifications, and although we will not try to change that here, note that there are other reasonable hardware designs that can accomplish this goal that few would call a pipeline, e.g. a collection of CPU cores running in parallel, each processing different packets.
+
+A PSA device designed in this way would typically have N ingress
+pipelines, plus N egress pipelines.  It is common to
+assign multiple physical ports of the switch ASIC to each pipeline in
+a hard-wired fashion, e.g. a device with 32 100 Gigabit Ethernet ports
+might physically hard-wire ports 0 through 15 to pipeline 0, and ports
+16 through 31 to pipeline 1.  All packets received on ports 0 through
+15 will be processed by ingress pipeline 0, then go to the packet
+buffer (if they were not dropped in ingress), then go to egress
+pipeline 0 if ingress chose output port 0 through 15, or go to egress
+pipeline 1 if ingress chose output port 16 through 31.
+
+In such a device, typically you will want the same P4 program to be
+run on every one of these N ingress pipelines, and every one of the N
+egress pipelines.
+
+It is physically possible in such a device for the control plane to
+install different table entries in the different pipelines, and there
+are use cases where this can help achieve higher scale in number of
+usable table entries.  For example, perhaps you have an ingress table
+with the ingress port as one of the fields in its search key.  If this
+is the case, the packet processing behavior is the same even if table
+entries for port X are installed only in the ingress pipeline that
+processes packets from port X.  Installing that table entry in the
+other pipelines would be an unnecessary use of table space, since it
+could never be matched.  Whether the device-dependent control software
+of such a PSA device enables taking advantage of such space savings is
+implementation dependent.
+
+Regardless of this issue, applying tables in P4 is an embarrassingly
+parallel activity, because as long as table entries are installed
+where they might be matched, pipelines can operate completely
+independently of each other with no communication between them (one
+small exception is described below).  The same is true for most PSA
+externs, e.g. `ActionProfile`, `ActionSelector`, `Checksum`, `Digest`,
+`Hash`, `Random`, and `ValueSet`.  What P4 tables and these externs
+have in common is: either the P4 program behavior cannot modify their
+state at all (e.g. tables, `ActionProfile`, `ActionSelector`,
+`ValueSet`), or can only modify it in a way that does not affect the
+processing of other packets (e.g. `Checksum`, `Digest`, `Hash`).
+`Random` is a special case here: updating the state of a pseudo-random
+number generator can affect the processing of other packets, but this
+is typically not a concern for the way that pseudo-random numbers are
+used (e.g. randomly choosing packets to drop or mark in Random Early
+Detection).
+
+For counters, there is counter state maintained independently in each
+pipeline, but if corresponding counter entries in each pipeline count
+"the same thing" (e.g. packets matching a table entry with key X
+installed in all pipelines), then it is straightforward to add up the
+corresponding counter values from all pipelines.
+
+Consider a device where meter state is maintained independently in
+each pipeline.  If you have a multi-pipeline PSA device, and wish to
+achieve the effect: "meter all packets matching table entry X to at
+most Y bytes per second", this is _not_ an embarrassingly parallel
+problem.  It could be done by coordinating state between the
+pipelines, e.g. using something like cache coherency protocols
+commonly implemented within multi-core CPUs, or by "moving the packets
+to where the shared state is", e.g. recirculating packets to a common
+pipeline where the meter state is kept.  Both of these techniques lead
+to lower packet processing performance, at least in some cases, and
+both add complexity to the system.  It is typical in network switches
+to simply maintain the meter state independently in each pipeline and
+not coordinate it, and accept the resulting behavior.
+
+This issue is not specific to packet switches.  It falls under the
+category of accessing mutable state in a distributed system, with not
+only correctness concerns, but very strong performance concerns.
+
+The `Register` extern is more general in its capability than meters,
+and the same potential issue of state being split across multiple
+pipelines exists.  It is recommended that you talk to your PSA device
+vendor about this issue if it could affect features you wish to write
+in your P4 program.  If a PSA device does not implement automatic
+coherency for such state, common strategies are the same as mentioned
+above for meters: accept the resulting behavior of the independently
+maintained state in each pipeline, or move the relevant packets to one
+place where the state is maintained.
+
+Note that the proposed `psa_idle_timeout` table property introduces a
+way by which doing table `apply` operations _does_ update state within
+a P4 table.  Each table entry requires at least one, and more likely several, bits of state to represent a "last matched time" value, and this value is updated with every `apply` operation.  If this state in
+tables with this option is not automatically coordinated between
+pipelines, then it can differ for corresponding
+table entries in different pipelines.  An entry with key X in one
+pipeline could remain unmatched for longer than the desired timeout,
+at the same time that the corresponding entries with key X are
+recently matched in other pipelines.  One possible approach to handle
+this is for the PSA device and its implementation-specific control
+software to make the existence of multiple pipelines explicit to the
+control plane software in some way, e.g. assign each pipeline, and the
+tables and externs it contains, a distinct name.
+
+For programming multiple pipelines, it is the responsibility of the
+vendor and of target dependent tools to specify how PSA programs are
+mapped to multiple pipelines.  An implementation may use a copy of the
+PSA program on each pipeline, thus keeping pipelines fully isolated.
