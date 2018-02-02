@@ -1744,11 +1744,13 @@ your desired correct behavior.
 Individual counter and meter method calls need not be enclosed in
 `@atomic` blocks to be safe -- they guarantee atomic behavior of their
 individual method calls, without losing any updates.  Even though the
-P4~16~ v1.0.0 language specification requires that every `action` of a
-table behave as if its entire body is annotated by an `@atomic`
-annotation, it is recommended to do so, since (a) it is harmless, and
-(b) this requirement may be removed in a near future revision of the
-language specification.
+P4~16~ v1.0.0 language specification currently requires that every
+`action` of a table behave as if its entire body is annotated by an
+`@atomic` annotation, it is recommended to explicitly use `@atomic`
+annotations inside of action bodies as if this were not the case,
+since (a) it is harmless, and more importantly (b) this requirement
+may be removed in a near future revision of the language
+specification.
 
 As for indexed counters and meters, access to an index of a register
 that is at least the size of the register is out of bounds.  An out of
