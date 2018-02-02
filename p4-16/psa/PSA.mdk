@@ -280,15 +280,11 @@ few packets dropped for these reasons (perhaps only one).
 
 Each PSA implementation will have specific bit widths for the
 following types.  These widths should be defined in the target
-specific implementation of the PSA file.
+specific implementation of the `psa.p4` include file.
 
-The P4 Runtime API plans to use 64-bit values to hold values of these
-types.  Typical PSA implementations are expected to choose
-significantly smaller sizes than 64 bits for the data plane
-implementation of these types.  If for some reason a PSA
-implementation chooses to use more than 64 bits for one or more of
-these types, note that the P4 Runtime API will be able to take
-advantage of at most 64 of those bits.
+The P4 Runtime API uses 64-bit values to hold values of these types.
+All PSA implementations must use sizes for these types no wider than
+the corresponding types with `InHeader_t` in their names shown below.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -313,12 +309,11 @@ Additional supported match_kind types
 ## Data plane vs. control plane data representations
 
 A PSA data plane implementation that supports the P4 Runtime
-API[^P4RuntimeAPI] is expected to include software called a "P4
-Runtime API agent" that encapsulates details specific to the PSA
-implementation, enabling a P4 Runtime API controller to more easily
-control multiple devices with different PSA implementations.  We will
-refer to these pieces of software as an "agent" and "controller" for
-brevity.
+API[^P4RuntimeAPI] includes software called a "P4 Runtime Agent" that
+enables runtime programming of the PSA device from a controller.  A
+controller may control multiple devices with different PSA
+implementations.  We will refer to these pieces of software as an
+"agent" and "controller" for brevity.
 
 As mentioned in section [#sec-psa-type-definitions], different PSA
 implementations are expected to customize the size of the data types
@@ -335,11 +330,12 @@ table with a million entries[^CacheCost].
 
 [^CacheCost]: While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache.  https://en.wikipedia.org/wiki/List_of_Intel_microprocessors
 
-The P4 Runtime API is planning to use 64-bit quantities to hold values
-of the types listed in section [#sec-psa-type-definitions].  For
-control plane operations on tables, any trimming or padding of values
-will be performed in the agent (trimming from controller to device
-direction, padding in device to controller direction).
+The P4 Runtime API uses 64-bit quantities to hold values of the types
+listed in section [#sec-psa-type-definitions] to simplify the
+manipulation of these values in the agent software.  For control plane
+operations on tables, any trimming or padding of values will be
+performed in the agent (trimming from controller to device direction,
+padding in device to controller direction).
 
 There are multiple channels of communication over which such values
 might be carried between the controller and the data plane.  These
@@ -354,8 +350,6 @@ channels of communication include:
   [#sec-packet-digest]).
 + Fields in the data contents of a `Register` array (section
   [#sec-registers]).
-+ Match fields of an entry in a `ValueSet` extern instance (section
-  [#sec-parser-value-sets]).
 
 Note: There may be other channels not listed above.
 
@@ -370,14 +364,17 @@ their name.  For example, `PortIdInHeader_t` is the same as `PortId_t`,
 except it must be a multiple of 8 bits long, and contain at least as
 many bits as `PortId_t` does.
 
-Because these types are guaranteed to
-be a multiple of 8 bits long, any combination of them may be included
-in a P4 header type definition, as long as the other fields in the
-header satisfy the multiple of 8 bits restriction.  The controller or
-P4 program generating packets with such headers should fill in any
-most significant "padding" bits with 0.  In a P4 program, this can be
-done with a normal assignment statement, where the value on the right
-hand side is cast to the wider `InHeader` type.
+Because these types are guaranteed to be a multiple of 8 bits long,
+you may include any combination of them in a P4 header type
+definition, as long as the other fields in the header satisfy the
+multiple of 8 bits restriction.  The controller or P4 program
+generating packets with such headers should fill in any most
+significant "padding" bits with 0.  You may do this with a normal
+assignment in statement in your P4 program, where the value on the
+right hand side is cast to the wider `InHeader` type.  Similarly,
+casting a value of a wider type such as `PortIdInHeader_t` to the
+corresponding narrower type `PortId_t` truncates the excess most
+significant bits as part of the cast.
 
 Values of type `PortId_t` have a distinctive property in PSA
 implementations.  Because it can make some hardware implementations
@@ -399,7 +396,7 @@ below.
 [INCLUDE=examples/psa-example-parser-error-handling.p4:PortId_Annotation_Example]
 ```
 
-Because of this translation, it is recommended that values of type
+Because of this translation, we recommend that values of type
 `PortId_t` be treated similarly to values of an `enum` type.
 Comparing two values of this type for equality or inequality is
 reasonable, as well as assigning the values to other variables or
@@ -419,6 +416,27 @@ translation performed may lead to functional errors in your program:
   corresponding to ports need not be consecutive.
 
 The list above is not intended to be exhaustive.
+
+All of the comments above apply to all types where numerical
+translation occurs between the controller and the data plane.
+Below is a complete list of such types, and an example of the
+annotation to use in your P4 program.
+
++ `PortId_t` or `PortIdInHeader_t` - annotation `port_translation`
++ `ClassOfService_t` or `ClassOfServiceInHeader_t` - annotation `cos_translation`
+
+For the types listed below, no numerical translation occurs, and the
+data plane must support all numerical values from 0 up to the maximum
+value that it supports.  Except for `Timestamp_t` values, the number
+of values supported by the data plane need not be a power of 2.
+Controllers must have a way to discover each PSA device's maximum
+supported value for each of these types.
+
++ `MulticastGroup_t`
++ `CloneSessionId_t`
++ `PacketLength_t`
++ `EgressInstance_t`
++ `Timestamp_t`
 
 ~ TBD
 It is not clear yet whether it is reasonable to use a value of type
