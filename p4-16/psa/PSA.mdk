@@ -392,6 +392,15 @@ The PSA does not put further restrictions on `packet_in.length()`
 as defined in the P4~16~ spec. Targets that do not support it, should provide mechanisms
 to raise an error.
 
+The P4 Runtime has a "Packet Out" capability to send a packet from the
+controller to a PSA device.  Such packets are sent into the PSA device
+as NFCPU path packets.  There is no metadata associated with such
+packets, only the contents of the packet that are parsed normally by
+the P4 program's IngressParser code.  There may be some translation of
+header field values, as described in Section
+[#sec-psa-type-definitions].
+
+
 ### Initial packet contents for resubmitted packets
 
 For RESUB packets, `packet_in` is the same as the pre-IngressParser
@@ -928,6 +937,14 @@ avoid sending packets larger than a port's maximum frame size.  A
 typical implementation will drop frames larger than this maximum
 supported size.  It is recommended that they maintain error counters
 for such dropped frames.
+
+The P4 Runtime has a "Packet In" capability to receive packets sent by
+a PSA device to the port `PSA_PORT_CPU`.  There is no metadata
+associated with such packets, only the contents of the packet that are
+emitted normally by the P4 program's EgressDeparser code.  There may
+be some translation of header field values, as described in Section
+[#sec-psa-type-definitions].
+
 
 ## Packet Cloning  {#sec-clone}
 
@@ -1726,12 +1743,12 @@ your desired correct behavior.
 
 Individual counter and meter method calls need not be enclosed in
 `@atomic` blocks to be safe -- they guarantee atomic behavior of their
-individual method calls, without losing any updates.  The P4~16~
-language specification requires that every `action` of a table behave
-as if its entire body is annotated by an `@atomic` annotation, so
-there is no benefit to using that annotation with an `action` body
-(Section 16.4.1 "Concurrency model" says "Execution of an action is
-atomic").
+individual method calls, without losing any updates.  Even though the
+P4~16~ v1.0.0 language specification requires that every `action` of a
+table behave as if its entire body is annotated by an `@atomic`
+annotation, it is recommended to do so, since (a) it is harmless, and
+(b) this requirement may be removed in a near future revision of the
+language specification.
 
 As for indexed counters and meters, access to an index of a register
 that is at least the size of the register is out of bounds.  An out of
@@ -2209,11 +2226,8 @@ atomic.
 Also, a control plane read, or write, of a single element of a
 Register array should be atomic, and behave as if it occurred before
 or after (but not during) any P4 program's section of code labeled
-with the `@atomic` annotation.  Note that all P4 `action`s are
-required to behave as if their bodies were labeled with the `@atomic`
-annotation (see Section 16.4.1 "Concurrency model" of the P4~16~
-language specification).  There is _no_ control plane operation on a
-Register that can atomically read an element, then write back a
+with the `@atomic` annotation.  There is _no_ control plane operation
+on a Register that can atomically read an element, then write back a
 modified value.
 
 Advice for P4 developers: If you desire a capability for the control
