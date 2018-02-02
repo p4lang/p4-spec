@@ -56,8 +56,17 @@ struct headers {
 struct empty_metadata_t {
 }
 
-struct metadata {
+// BEGIN:Digest_Example_Part1
+struct mac_learn_digest_t {
+    EthernetAddress srcAddr;
+    PortId_t        ingress_port;
 }
+
+struct metadata {
+    bool               send_mac_learn_msg;
+    mac_learn_digest_t mac_learn_msg;
+}
+// END:Digest_Example_Part1
 
 parser CommonParser(
     packet_in buffer,
@@ -119,7 +128,7 @@ parser EgressParserImpl(packet_in buffer,
     }
 }
 
-// BEGIN:Digest_Example
+// BEGIN:Digest_Example_Part2
 // This is part of the functionality of a typical Ethernet learning bridge.
 
 // The control plane will typically enter the _same_ keys into the
@@ -139,31 +148,21 @@ parser EgressParserImpl(packet_in buffer,
 // "flooding" shown here, typical when a learning bridge gets a miss when
 // looking up the dest MAC address of a packet.
 
-struct mac_learn_digest_t {
-    EthernetAddress srcAddr;
-    PortId_t        ingress_port;
-}
-
 control ingress(inout headers hdr,
                 inout metadata meta,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
-    Digest<mac_learn_digest_t>() mac_learn_digest;
-
     action unknown_source () {
-        mac_learn_digest_t tmp;
-        tmp.srcAddr = hdr.ethernet.srcAddr;
-        tmp.ingress_port = istd.ingress_port;
-        mac_learn_digest.pack(tmp);
+        meta.send_mac_learn_msg = true;
+        meta.mac_learn_msg.srcAddr = hdr.ethernet.srcAddr;
+        meta.mac_learn_msg.ingress_port = istd.ingress_port;
+        // meta.mac_learn_msg will be sent to control plane in
+        // IngressDeparser control block
     }
     table learned_sources {
-        key = {
-            hdr.ethernet.srcAddr : exact;
-        }
-        actions = {
-            NoAction; unknown_source;
-        }
+        key = { hdr.ethernet.srcAddr : exact; }
+        actions = { NoAction; unknown_source; }
         default_action = unknown_source();
     }
 
@@ -171,20 +170,17 @@ control ingress(inout headers hdr,
         send_to_port(ostd, egress_port);
     }
     table l2_tbl {
-        key = {
-            hdr.ethernet.dstAddr : exact;
-        }
-        actions = {
-            do_L2_forward; NoAction;
-        }
+        key = { hdr.ethernet.dstAddr : exact; }
+        actions = { do_L2_forward; NoAction; }
         default_action = NoAction();
     }
     apply {
+        meta.send_mac_learn_msg = false;
         learned_sources.apply();
         l2_tbl.apply();
     }
 }
-// END:Digest_Example
+// END:Digest_Example_Part2
 
 control egress(inout headers hdr,
                inout metadata meta,
@@ -204,6 +200,7 @@ control CommonDeparserImpl(packet_out packet,
     }
 }
 
+// BEGIN:Digest_Example_Part3
 control IngressDeparserImpl(packet_out packet,
                             out empty_metadata_t clone_i2e_meta,
                             out empty_metadata_t resubmit_meta,
@@ -213,10 +210,15 @@ control IngressDeparserImpl(packet_out packet,
                             in psa_ingress_output_metadata_t istd)
 {
     CommonDeparserImpl() common_deparser;
+    Digest<mac_learn_digest_t>() mac_learn_digest;
     apply {
+        if (meta.send_mac_learn_msg) {
+            mac_learn_digest.pack(meta.mac_learn_msg);
+        }
         common_deparser.apply(packet, hdr);
     }
 }
+// END:Digest_Example_Part3
 
 control EgressDeparserImpl(packet_out packet,
                            out empty_metadata_t clone_e2e_meta,

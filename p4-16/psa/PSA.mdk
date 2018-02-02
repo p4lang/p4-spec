@@ -1154,7 +1154,7 @@ the places mentioned in Table [#table-extern-usage].
 |-------------------|----------------------------------------------|
 | `Counter`         | Ingress, Egress |
 |-------------------|----------------------------------------------|
-| `Digest`          | Ingress, Egress |
+| `Digest`          | IngressDeparser, EgressDeparser |
 |-------------------|----------------------------------------------|
 | `DirectCounter`   | Ingress, Egress |
 |-------------------|----------------------------------------------|
@@ -2116,7 +2116,7 @@ that the remaining bits wrap every 8 seconds, and store those partial
 timestamps in the `Register` instance.
 
 
-## Packet Digest
+## Packet Digest {#sec-packet-digest}
 
 A digest is one mechanism to send a message from the data plane to the
 control plane.  Another is to send a packet to the control plane via
@@ -2143,9 +2143,9 @@ local software agent, which is responsible for sending the digest data
 in a form to be defined by the P4 Runtime API working group.
 
 A PSA program can instantiate multiple Digest instances in the same
-ingress control block, and make at most one `pack` call on each
-instance during a single execution of the ingress control block.  The
-same applies independently for the egress control block.
+IngressDeparser control block, and make at most one `pack` call on
+each instance during a single execution of this control block.  The
+same applies independently for the EgressDeparser control block.
 
 There is no requirement that if multiple Digest messages are created
 while processing the same packet, that these messages must be "bundled
@@ -2179,7 +2179,11 @@ to notify the control plane about source Ethernet MAC addresses and
 ingress ports of packets that have not been seen before.
 
 ```
-[INCLUDE=examples/psa-example-digest.p4:Digest_Example]
+[INCLUDE=examples/psa-example-digest.p4:Digest_Example_Part1]
+
+[INCLUDE=examples/psa-example-digest.p4:Digest_Example_Part2]
+
+[INCLUDE=examples/psa-example-digest.p4:Digest_Example_Part3]
 ```
 
 
