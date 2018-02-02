@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 /**
- * This example implements a simplified MAC-learning switch in a 'reactive'
- * fashion. Whenever a new MAC appears on the switch, a digest is sent to
- * the control plane which 'learn's the new MAC and populates the L2 table
- * with the learned MAC address and its ingress port.
+ * This example implements a simplified MAC-learning switch in a
+ * 'reactive' fashion.  Whenever a new MAC appears on the switch, a
+ * digest is sent to the control plane which 'learn's the new MAC and
+ * populates the L2 table with the learned MAC address and its ingress
+ * port.
  */
 
 #include <core.p4>
@@ -55,15 +56,17 @@ struct headers {
 struct empty_metadata_t {
 }
 
+// BEGIN:Digest_Example_Part1
 struct mac_learn_digest_t {
     EthernetAddress srcAddr;
     PortId_t        ingress_port;
 }
 
 struct metadata {
-    bit<3>             digest_id;
-    mac_learn_digest_t mac_learn_digest;
+    bool               send_mac_learn_msg;
+    mac_learn_digest_t mac_learn_msg;
 }
+// END:Digest_Example_Part1
 
 parser CommonParser(
     packet_in buffer,
@@ -125,67 +128,59 @@ parser EgressParserImpl(packet_in buffer,
     }
 }
 
+// BEGIN:Digest_Example_Part2
+// This is part of the functionality of a typical Ethernet learning bridge.
+
+// The control plane will typically enter the _same_ keys into the
+// learned_sources and l2_tbl tables.  The entries in l2_tbl are searched for
+// the packet's dest MAC address, and on a hit the resulting action tells
+// where to send the packet.
+
+// The entries in learned_sources are the same, and the action of every table
+// entry added is NoAction.  If there is a _miss_ in learned_sources, we want
+// to send a message to the control plane software containing the packet's
+// source MAC address, and the port it arrived on.  The control plane will
+// make a decision about creating an entry with that packet's source MAC
+// address into both tables, with the l2_tbl sending future packets out this
+// packet's ingress_port.
+
+// This is only a simple example, e.g. there is no implementation of
+// "flooding" shown here, typical when a learning bridge gets a miss when
+// looking up the dest MAC address of a packet.
+
 control ingress(inout headers hdr,
                 inout metadata meta,
                 in    psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
-    // This is part of the functionality of a typical Ethernet
-    // learning bridge.
-    
-    // The control plane will typically enter the _same_ keys into the
-    // mac_cache and l2_tbl tables.  The entries in l2_tbl are
-    // searched for the packet's dest MAC address, and on a hit the
-    // resulting action tells where to send the packet.
-
-    // The entries in mac_cache are the same, and the action of every
-    // table entry added is NoAction.  If there is a _miss_ in
-    // mac_cache, we want to send a message to the control plane
-    // software containing the packet's source MAC address, and the
-    // port it arrived on.  The control plane should consider creating
-    // an entry with that packet's source MAC address into both
-    // tables, with the l2_tbl sending future packets out this
-    // packet's ingress_port.
-
-    // Typically a learning bridge would 'flood', i.e. when it gets a
-    // miss in the l2_tbl, it would send a copy of the packet out of
-    // all output ports except the one that it arrived on (and if the
-    // bridge had multiple VLANs, it would limit the sending to all
-    // ports that are allowed to carry packets for that VLAN).  None
-    // of that is implemented in this small example.
-
-    action do_mac_miss () {
-        meta.digest_id = 0;
-        meta.mac_learn_digest.srcAddr = hdr.ethernet.srcAddr;
-        meta.mac_learn_digest.ingress_port = istd.ingress_port;
+    action unknown_source () {
+        meta.send_mac_learn_msg = true;
+        meta.mac_learn_msg.srcAddr = hdr.ethernet.srcAddr;
+        meta.mac_learn_msg.ingress_port = istd.ingress_port;
+        // meta.mac_learn_msg will be sent to control plane in
+        // IngressDeparser control block
     }
-    table mac_cache {
-        key = {
-            hdr.ethernet.srcAddr : exact;
-        }
-        actions = {
-            do_mac_miss; NoAction;
-        }
-        default_action = do_mac_miss();
+    table learned_sources {
+        key = { hdr.ethernet.srcAddr : exact; }
+        actions = { NoAction; unknown_source; }
+        default_action = unknown_source();
     }
 
-    action do_switch (PortId_t egress_port) {
+    action do_L2_forward (PortId_t egress_port) {
         send_to_port(ostd, egress_port);
     }
     table l2_tbl {
-        key = {
-            hdr.ethernet.dstAddr : exact;
-        }
-        actions = {
-            do_switch; NoAction;
-        }
+        key = { hdr.ethernet.dstAddr : exact; }
+        actions = { do_L2_forward; NoAction; }
         default_action = NoAction();
     }
     apply {
-        mac_cache.apply();
+        meta.send_mac_learn_msg = false;
+        learned_sources.apply();
         l2_tbl.apply();
     }
 }
+// END:Digest_Example_Part2
 
 control egress(inout headers hdr,
                inout metadata meta,
@@ -205,7 +200,7 @@ control CommonDeparserImpl(packet_out packet,
     }
 }
 
-/// Expected control plane API for parsing the digest_out metadata.
+// BEGIN:Digest_Example_Part3
 control IngressDeparserImpl(packet_out packet,
                             out empty_metadata_t clone_i2e_meta,
                             out empty_metadata_t resubmit_meta,
@@ -214,15 +209,16 @@ control IngressDeparserImpl(packet_out packet,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
 {
-    Digest<mac_learn_digest_t>() digest;
     CommonDeparserImpl() common_deparser;
+    Digest<mac_learn_digest_t>() mac_learn_digest;
     apply {
-        if (meta.digest_id == 0) {
-            digest.pack(meta.mac_learn_digest);
+        if (meta.send_mac_learn_msg) {
+            mac_learn_digest.pack(meta.mac_learn_msg);
         }
         common_deparser.apply(packet, hdr);
     }
 }
+// END:Digest_Example_Part3
 
 control EgressDeparserImpl(packet_out packet,
                            out empty_metadata_t clone_e2e_meta,
