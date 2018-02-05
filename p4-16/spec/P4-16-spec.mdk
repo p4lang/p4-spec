@@ -2661,8 +2661,13 @@ typeArgumentList
 See Appendix [#sec-grammar] for the complete P4 grammar.
 
 This grammar does not indicate the precedence of the various
-operators. The precedence follows exactly the C precedence
-rules. Concatenation (`++`) has the same precedence as infix
+operators.  The precedence mostly follows the C precedence
+rules, with one change and some additions.  The precedence of
+the bitwise operators `&` `|` and `^` is higher than the precedence
+of relation operators `<`, `<=`, `>`, `>=`.  This is more natural given
+the addition of a true boolean type in the type system, as bitwise
+operators cannot be applied to boolean types.
+Concatenation (`++`) has the same precedence as infix
 addition. Bit-slicing `a[m:l]` has the same precedence as array
 indexing (`a[i]`).
 An additional semantic check is required for right shift to check
