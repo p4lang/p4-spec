@@ -178,7 +178,7 @@ header to_cpu_error_header_t {
     // that a P4 Runtime API agent knows that this is a field of type
     // PortId_t or PortIdInHeader_t that needs its values numerically
     // translated between the control plane and data plane.
-    @port_translation("controller_port_bitwidth : 32")
+    @p4runtime_translation("port")
     PortIdInHeader_t port;
 }
 // END:PortId_Annotation_Example
