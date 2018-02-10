@@ -293,7 +293,10 @@ extern Hash<O> {
   /// @param data The data over which to calculate the hash.
   /// @param max The hash value is divided by max to get modulo.
   ///        An implementation may limit the largest value supported,
-  ///        e.g. to a value like 32, or 256.
+  ///        e.g. to a value like 32, or 256, and may also only
+  ///        support powers of 2 for this value.  P4 developers should
+  ///        limit their choice to such values if they wish to
+  ///        maximize portability.
   /// @return (base + (h % max)) where h is the hash value.
   O get_hash<T, D>(in T base, in D data, in T max);
 }
@@ -498,6 +501,12 @@ extern Register<T, S> {
 
 // BEGIN:Random_extern
 extern Random<T> {
+
+  /// Return a random value in the range [min, max], inclusive.
+  /// Implementations are allowed to support only ranges where (max -
+  /// min + 1) is a power of 2.  P4 developers should limit their
+  /// arguments to such values if they wish to maximize portability.
+
   Random(T min, T max);
   T read();
 
