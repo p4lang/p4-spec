@@ -65,6 +65,28 @@ const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
 
 #endif
 
+// BEGIN:Type_defns2
+
+/* Note: All of the widths for types with `InHeader` in their name are
+ * intended only to carry values of the corresponding types in packet
+ * headers between a controller and a PSA device.  The widths are
+ * intended to be large enough for all PSA devices, so that a
+ * controller can fill in headers with these fields in a common way
+ * for all PSA devices.
+ *
+ * All widths must be a multiple of 8, so that any subset of these
+ * fields may be used in a single P4 header definition, even on P4
+ * implementations that restrict headers to contain fields with a
+ * total length that is a multiple of 8 bits. */
+typedef bit<16> PortIdInHeader_t;
+typedef bit<32> MulticastGroupInHeader_t;
+typedef bit<16> CloneSessionIdInHeader_t;
+typedef bit<8>  ClassOfServiceInHeader_t;
+typedef bit<16> PacketLengthInHeader_t;
+typedef bit<16> EgressInstanceInHeader_t;
+typedef bit<64> TimestampInHeader_t;
+// END:Type_defns2
+
 // BEGIN:Metadata_types
 enum PSA_PacketPath_t {
     NORMAL,     /// Packet received by ingress that is none of the cases below.
