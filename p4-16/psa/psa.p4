@@ -212,7 +212,7 @@ extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
 // BEGIN:Match_kinds
 match_kind {
     range,   /// Used to represent min..max intervals
-    selector /// Used for implementing dynamic_action_selection
+    selector /// Used for dynamic action selection via the ActionSelector extern
 }
 // END:Match_kinds
 
@@ -347,7 +347,7 @@ extern Checksum<W> {
 
 // BEGIN:InternetChecksum_extern
 // Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
-// Supports incremental updating via `remove` method.
+// Supports incremental updating via `subtract` method.
 // See IETF RFC 1624.
 extern InternetChecksum {
   /// Constructor

@@ -306,7 +306,7 @@ Additional supported match_kind types
 ```
 
 
-## Data plane vs. control plane data representations
+## Data plane vs. control plane data representations {#sec-data-plane-vs-control-plane-values}
 
 A PSA data plane implementation that supports the P4 Runtime
 API[^P4RuntimeAPI] includes software called a "P4 Runtime Agent" that
@@ -497,8 +497,8 @@ packet contents and metadata when a packet begins ingress processing.
 +--------------+-------------+---------------+--------------+-----+
 | IngressParser `istd` fields (type `psa_ingress_parser_input_metadata_t`) |||||
 +--------------+-------------+---------------+--------------+-----+
-| `ingress_port`      | `PortId_t` value of | `PORT_` | copied from    | `PORT_`       |
-|                     | packet's input port | `CPU`   | resub'd packet | `RECIRCULATE` |
+| `ingress_port`      | `PortId_t` value of | `PSA_PORT_` | copied from    | `PSA_PORT_`   |
+|                     | packet's input port | `CPU`       | resub'd packet | `RECIRCULATE` |
 +--------------+-------------+---------------+--------------+-----+
 | `packet_path`     | `NORMAL`            | `NORMAL` | `RESUBMIT`    | `RECIRCULATE`  |
 +--------------+-------------+---------------+--------------+-----+
@@ -545,7 +545,7 @@ as NFCPU path packets.  There is no metadata associated with such
 packets, only the contents of the packet that are parsed normally by
 the P4 program's IngressParser code.  There may be some translation of
 header field values, as described in Section
-[#sec-psa-type-definitions].
+[#sec-data-plane-vs-control-plane-values].
 
 
 ### Initial packet contents for resubmitted packets
@@ -616,7 +616,7 @@ implementations there will be bit patterns for a value of type
 true for both `PSA_PORT_CPU` and `PSA_PORT_RECIRCULATE`. `platform_port_valid`
 is not defined in PSA for calling from the P4 data-plane program,
 since there is no known use case for calling it at packet processing
-time. It is intended for describing the behavior in pseudo-code. The
+time. It is intended for describing the behavior in pseudocode.  The
 control plane is expected to configure tables with valid port numbers.
 
 A comment saying "recommended to log error" is not a requirement, but
@@ -632,7 +632,30 @@ assist P4 developers in debugging their code.
 
 ```
 [INCLUDE=psa.p4:Metadata_ingress_output]
+```
 
+First we give an outline of behavior, for quick reference of the
+relative priority of the possible actions.  This outline is only for
+reader convenience -- it is not the specification for the behavior.
+
+```
+    psa_ingress_output_metadata_t ostd;
+
+    if (ostd.clone) {
+        create ingress to egress clone, with options as configured by
+            the PRE clone session numbered ostd.clone_session_id;
+    } else { no clone; }
+
+    if (ostd.drop) { drop packet; }
+    else if (ostd.resubmit) { resubmit packet; }
+    else if (ostd.multicast_group != 0) { PRE multicast replicates packet; }
+    else { PRE sends one copy of packet to ostd.egress_port; }
+```
+
+The pseucode below defines the behavior a PSA implementation must
+follow.
+
+```
     psa_ingress_output_metadata_t ostd;
 
     if (ostd.clone) {
@@ -643,8 +666,7 @@ assist P4 developers in debugging their code.
             plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
                 cos = 0;
-                // Recommmended to log error about unsupported cos
-                // value.
+                // Recommmended to log error about unsupported cos value.
             }
             if (platform_port_valid(ep)) {
                 create a clone of the packet and send it to the packet
@@ -690,8 +712,7 @@ assist P4 developers in debugging their code.
             of service ostd.class_of_service
     } else {
         drop the packet
-        // Recommended to log error about unsupported ostd.egress_port
-        // value.
+        // Recommended to log error about unsupported ostd.egress_port value.
     }
 ```
 
@@ -721,29 +742,9 @@ queues for each class of service.  See appendix
 [#appendix-packet-ordering] for more on packet ordering
 recommendations in PSA devices.
 
-The control plane API excerpt below is an example intended to be added as part of
-the P4 Runtime API, and the final version of this message will be defined
-by the P4 Runtime WG.
-
-```
-// The ClassOfServiceInfo message should be added to the "oneof"
-// inside of message "Entity".
-
-// ClassOfServiceInfo is only intended to be read.  Attempts to update
-// this entity have no effect, and should return an error status that
-// the entity is read only.
-
-message ClassOfServiceInfo {
-  // The number of class of service queues per output port that are
-  // available in this PSA implementation.
-  uint32 class_of_service_queues_per_output_port = 1;
-  // The list of values of type ClassOfService_t that are supported by
-  // this PSA implementation.  It is recommended that they be a
-  // contiguous range from 0 up to
-  // (class_of_service_queues_per_output_port - 1).
-  repeated uint32 class_of_service_id = 2;
-}
-```
+The P4 Runtime API specification defines how a controller may discover
+the number of distinct class of service values that a PSA device
+supports.
 
 
 ### Multicast replication
@@ -757,10 +758,12 @@ pairs from a group that were added earlier.
 
 Suppose a multicast group contains the following set of pairs:
 
+```
     (egress_port[0], instance[0]),
     (egress_port[1], instance[1]),
     ...,
     (egress_port[N-1], instance[N-1])
+```
 
 When a packet is sent to that group, `N` copies of the packet are
 made.  Copy number `i` that is sent to egress processing will have its
@@ -768,9 +771,9 @@ made.  Copy number `i` that is sent to egress processing will have its
 field `egress_port` equal to `egress_port[i]`, and the field
 `instance` filled in with `instance[i]`.  Note: A multicast group is a
 set of pairs, and it is not required that an implementation create
-copies in an order that the control plane can enforce.  However, see
-the ordering constraints for multicast described in
-[#sec-after-ingress].
+copies in an order that the control plane can enforce.  See appendix
+[#appendix-packet-ordering] for more on packet ordering
+recommendations in PSA devices.
 
 Within a single multicast group, the pairs `(egress_port, instance)`
 must be different from each other, but it is allowed for any number of
@@ -796,7 +799,7 @@ ingress.
 ## Actions for directing packets during ingress {#sec-ingress-actions}
 
 All of these actions modify one or more metadata fields in the struct
-with type `psa_ingress_output_metadata_t` that is an `out` parameter
+with type `psa_ingress_output_metadata_t` that is an `inout` parameter
 of the `Ingress` control block.  None of these actions have any other
 immediate effect.  What happens to the packet is determined by the
 value of all fields in that struct when ingress processing is
@@ -1036,7 +1039,7 @@ the contents of several metadata fields in the struct
     // packet began its egress processing with, as decided during
     // ingress processing for this packet.  The egress code is not
     // allowed to change it.
-    if (istd.egress_port == PORT_RECIRCULATE) {
+    if (istd.egress_port == PSA_PORT_RECIRCULATE) {
         recirculate the packet, i.e. it will go back to starting with the
             ingress parser;
         return;   // Do not continue below.
@@ -1133,7 +1136,7 @@ session.
 
 ```
 PortId_t         egress_port;
-CloneSessionId_t class_of_service;
+ClassOfService_t class_of_service;
 bool             truncate;
 PacketLength_t   packet_length_bytes;  /// only used if truncate is true
 ```
@@ -1170,8 +1173,8 @@ might choose only to support values that are multiples of 32 bytes.
 
 Since it is an expected common case to clone packets to the CPU, every
 PSA implementation begins with a clone session
-`PSA_CLONE_SESSION_TO_CPU` initialized with `egress_port = PSA_PORT_CPU`
-and `class_of_service = 0`.
+`PSA_CLONE_SESSION_TO_CPU` initialized with `egress_port =
+PSA_PORT_CPU`, `class_of_service = 0`, and `truncate = false`.
 
 
 ### Clone Examples {#sec-clone-examples}
@@ -1546,7 +1549,8 @@ changes might have been made to the IPv4 header fields in the Ingress
 As a final example, we can use the `InternetChecksum` to compute an
 incremental checksum for the TCP header. Recall the TCP checksum is
 computed over the _entire_ packet, including the payload. Because the
-packet payload is not available in P4, we assume that the TCP checksum
+packet payload need not be available in a PSA implementation, we
+assume that the TCP checksum
 on the original packet is correct, and update it incrementally by
 invoking `subtract` and then `add` on any fields that are modified by
 the program. For example, the `Ingress` control in the program below
@@ -1828,11 +1832,13 @@ keys, you may use the `read()` method call on the right-hand side of
 an assignment statement, which retrieves the current value of the
 register.  You may copy the register value into metadata, and it is
 then available for matching in subsequent tables.
-The value returned by an uninitialized register is undefined. If a target
-implementation chooses to return some value, the PSA recommends the
-value should be 0.
 
-A simple usage example might be to verify that a "first packet" was
+There are two different constructors for Register instances.  The
+value returned for the uninitialized variant is undefined.  The value
+returned for the initialized variant is the one specified by the
+`initial_value` parameter of the constructor.
+
+A simple usage example is to verify that a "first packet" was
 seen for a particular type of flow.  A register cell would be
 allocated to the flow, initialized to "clear".  When the protocol
 signaled a "first packet", the table would match on this value and
@@ -2263,7 +2269,8 @@ you can always calculate the number of ticks that have elapsed from
 timestamp $t1$ until timestamp $t2$ using the expression $(t2 - t1)$
 (if more than $2^W$ ticks have elapsed, there will be aliasing of the
 result).  For example, if timestamps were $W >= 4$ bits in size,
-$t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.
+$t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.  There is thus no need for
+conditional execution to calculate such elapsed times.
 
 It is sometimes useful to minimize storage costs by discarding some
 bits of a timestamp value in a P4 program for use cases that do not
@@ -2306,7 +2313,7 @@ instance.  The argument is the value to be included in the digest,
 often a collection of values in a P4 `struct` type.  The compiler
 decides the best serialization format to send the digest contents to a
 local software agent, which is responsible for sending the digest data
-in a form to be defined by the P4 Runtime API working group.
+in a form defined by the P4 Runtime API specification.
 
 A PSA program can instantiate multiple Digest instances in the same
 IngressDeparser control block, and make at most one `pack` call on
@@ -2333,7 +2340,7 @@ generate digests much faster than control software can consume them,
 it is expected that loss of such digest messages will occur if the
 data plane generates them too quickly.  It is recommended that PSA
 implementations maintain a count of digest messages that the data
-plane requests, but do not reach the control plane, independently for
+plane creates, but do not reach the control plane, independently for
 each digest instance.
 
 ```
@@ -2388,7 +2395,7 @@ Every packet doing an `apply` on table `T` and matching the entry with
 key `K` should execute action `A` with either the old 100 bits of
 action parameters, or the new 100 bits of action parameters.
 
-The P4 Runtime API may define individual API calls that can perform
+The P4 Runtime API enables controllers to create "batch" messages that perform
 more than one single operation, as defined here.  If so, a PSA
 implementation need only ensure that each single operation is atomic.
 There is no requirement that a sequence of _multiple_ table entry add,
@@ -3007,7 +3014,7 @@ either dropping packets that arrive out of sequence number order at a
 later network point (e.g. GRE with sequence numbers enabled), or with
 a looser check that allows some amount of network reordering to occur
 without dropping the packets (e.g. IPsec).  When a device implementing
-these protocols does the sequence number addition or checking in a
+these protocols does the sequence number insertion or checking in a
 different order than packets are sent or received on a physical port,
 that is effectively another kind of network reordering that can affect
 the performance of these protocols.
