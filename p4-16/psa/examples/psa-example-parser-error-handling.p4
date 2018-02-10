@@ -243,7 +243,6 @@ control packet_path_to_bits(out bit<3> packet_path_bits,
 }
 
 
-// BEGIN:Parse_Error_Example
 // Define additional error values, one of them for packets with
 // incorrect IPv4 header checksums.
 error {
@@ -406,7 +405,6 @@ control ingress(inout headers hdr,
         // Do normal packet processing here.
     }
 }
-// END:Parse_Error_Example
 
 control CommonDeparserImpl(packet_out packet, inout headers hdr) {
     InternetChecksum() ck;
