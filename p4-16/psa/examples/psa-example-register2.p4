@@ -62,8 +62,11 @@ const PortId_t NUM_PORTS = 512;
 // It would be more convenient to use a struct type to represent the
 // state of a combined packet and byte count, and many other compound
 // values one might wish to store in a Register instance.  However,
-// the latest p4test as of 2017-Aug-13 does not allow a struct type to
+// the latest p4test as of 2018-Feb-10 does not allow a struct type to
 // be returned from a method call like Register.read().
+
+// Refer to this Github issue for status of generalizing this:
+// https://github.com/p4lang/p4-spec/issues/383
 
 #define PACKET_COUNT_WIDTH 32
 #define BYTE_COUNT_WIDTH 48
