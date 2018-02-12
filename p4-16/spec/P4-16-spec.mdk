@@ -5783,7 +5783,7 @@ The evaluation of a P4 program is done in two stages:
 - **static evaluation**: at compile time the P4 program is
   analyzed and all stateful blocks are instantiated.
 - **dynamic evaluation**: at runtime each P4 functional block is
-  executed atomically, in isolation, when it receives control from the
+  executed to completion, in isolation, when it receives control from the
   architecture
 
 ## Compile-time known values { #sec-ct-constants }
@@ -6179,7 +6179,7 @@ access to state (e.g., counters, registers)---i.e., the methods of
 the `extern` block read and write state, these stateful operations
 are subject to data races. P4 mandates the following behaviors:
 
-- Execution of an action is atomic---i.e., the other threads can "see"
+- Execution of every table action is atomic---i.e., the other threads can "see"
   the state as it is either before the start of the action or after
   the completion of the action.
 - Execution of a method call on an extern instance is atomic.
@@ -6187,6 +6187,9 @@ are subject to data races. P4 mandates the following behaviors:
 To allow users to express atomic execution of larger code blocks, P4
 provides an `@atomic` annotation, which can be applied to block
 statements, parser states, control blocks, or whole parsers.
+It would be redundant to use the `@atomic` annoation in table action
+definitions, since the first bullet item above implies that every
+action definition effectively has the `@atomic` annotation on its entire body.
 
 Consider the following example:
 
