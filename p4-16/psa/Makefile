@@ -1,17 +1,17 @@
+.PHONY: charter
 
 SPEC=PSA
-CHARTER=P4_Arch_Charter
 
-all: build/${SPEC}.pdf build/${CHARTER}.pdf
+all: build/${SPEC}.pdf charter
 
 build/${SPEC}.pdf: ${SPEC}.mdk
-	madoko --pdf -vv --odir=build $<
-
-build/${CHARTER}.pdf: charter/${CHARTER}.mdk
-	madoko -vv --odir=build $<
+	madoko --pdf -vv --png --odir=build $<
 
 build/${SPEC}.pdf: p4.json
 build/${SPEC}.pdf: psa.p4
+
+charter:
+	$(MAKE) -C charter
 
 clean:
 	${RM} -rf build
@@ -38,7 +38,7 @@ check:
 	${P4C} examples/psa-example-value-sets2.p4
 	${P4C} examples/psa-example-value-sets3.p4
 
-check-others:
+# check-others:
 
 # psa-example-mirror-on-drop.p4 needs updates for latest psa.p4
 #	${P4C} examples/psa-example-mirror-on-drop.p4
