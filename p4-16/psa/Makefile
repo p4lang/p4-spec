@@ -34,9 +34,6 @@ check:
 	${P4C} examples/psa-example-recirculate.p4
 	${P4C} examples/psa-example-register2.p4
 	${P4C} examples/psa-example-resubmit.p4
-	${P4C} examples/psa-example-value-sets.p4
-	${P4C} examples/psa-example-value-sets2.p4
-	${P4C} examples/psa-example-value-sets3.p4
 
 check-others:
 
@@ -55,3 +52,11 @@ check-others:
 # of 2017-Dec-04, the latest version of p4test gives an error if you
 # attempt this.
 #	${P4C} examples/psa-example-register1.p4
+
+# These have been moved to the examples/historical directory for now,
+# and may be removed, given that it seems likely that parser value
+# sets will be created as a P4_16 language built-in construct, like
+# tables, rather than as a PSA-specific feature.
+#	${P4C} examples/psa-example-value-sets.p4
+#	${P4C} examples/psa-example-value-sets2.p4
+#	${P4C} examples/psa-example-value-sets3.p4
