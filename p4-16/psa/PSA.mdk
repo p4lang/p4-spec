@@ -2473,6 +2473,56 @@ a common P4 program.
 We also need to formalize the interaction of action profiles and action selectors with counters and
 meters.
 
+## Observation and control of congestion
+
+The current PSA does not provide any mechanisms to observe if
+particular output ports or queues are leading to congestion in the
+packet buffer.  Thus it is not possible without using mechanisms
+defined outside of PSA to implement a feature like Explicit Congestion
+Notification (ECN)[^ECN].  One possibility here is to define a small
+field, perhaps only 1 bit, that is part of the metadata associated
+with each packet as it begins egress processing.  This field would
+indicate "how much congestion" the packet experienced in the packet
+buffer.
+
+[^ECN]: https://en.wikipedia.org/wiki/Explicit_Congestion_Notification
+
+There is also currently no way defined in PSA for ingress P4 code to
+send information about a packet to the packet buffer that might
+influence the behavior of a congestion control algorithm, such as
+Approximate Fair Drop (AFD).  This is partly because of the variety of
+congestion control mechanisms in use by switches today.
+
+It would be desirable to define in PSA a small set of fields about a
+packet that would be useful inputs to multiple congestion control
+algorithms.  One possibility is a hash of the packet's "flow id",
+often implemented as a hash of packet header fields like IP source and
+destination address, IP protocol, and optionally TCP/UDP source and
+destination ports.  Given that P4 programmable devices can implement
+network protocols other than IP, including custom ones, a more general
+mechanism is desirable in PSA devices.
+
+
+## Enabling full implementation of In-band Network Telemetry
+
+One promising use case for P4 programmable network devices is to
+implement In-band Network Telemetry[^INT].  While PSA mechanisms such
+as timestamps enable a significant portion of INT features to be
+implemented, they do not yet define any mechanisms to access
+information such as egress port link utilization or queue
+occupancy[^PSA_INT_Issue].
+
+[^PSA_INT_Issue]: https://github.com/p4lang/p4-spec/issues/510
+
+
+## Table entry timeout notification
+
+PSA does not yet define an option for tables to maintain a "last match
+time" per entry, with notifications from the PSA device to a
+controller when a configurable time has passed since an entry was last
+matched.
+
+
 ## PSA profiles
 
 We are considering whether to specify different limits that a certain PSA implementation has to have in order for the implementation to be considered compliant. The main point of PSA is to enable a variety of devices, and thus limits may be artificial. On the other hand, for most interesting applications, it is necessary to support a minimum of functionality.
