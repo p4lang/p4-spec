@@ -6495,8 +6495,8 @@ calls that can be made.  Many of them are described earlier in this
 document, but are collected here for easy reference.
 
 The stateful types of objects in P4~16~ are packages, parsers,
-controls, externs, and tables.  All other types are referred to as
-"value types" here.
+controls, externs, tables, and `value_set`s.  All other types are
+referred to as "value types" here.
 
 Some guiding principles:
 
@@ -6534,6 +6534,7 @@ constructor parameters to other types.
 | control     | yes     |  no    | yes     |  no    |
 | extern      | yes     | yes    | yes     | yes    |
 | table       |  no     |  no    |  no     |  no    |
+| value_set   |  no     |  no    |  no     |  no    |
 | value types | yes     | yes    | yes     | yes    |
 |-------------|---------|--------|---------|--------|
 
@@ -6566,6 +6567,7 @@ program, but constants may.
 | control     |  no       |  no     | no      | yes     |  no    |
 | extern      | yes       |  no     | yes     | yes     |  no    |
 | table       |  no       |  no     | no      | yes     |  no    |
+| value_set   |  no       |  no     | yes     | no      |  no    |
 | value types | N/A       | N/A     |N/A      |N/A      | N/A    |
 |-------------|-----------|---------|---------|---------|--------|
 
@@ -6583,6 +6585,7 @@ parameters: parsers, controls, extern methods, and actions.
 | control     |  no       |  no     | no      | no      |
 | extern      | yes       | yes     | yes     | no      |
 | table       |  no       |  no     | no      | no      |
+| value_set   |  no       |  no     | no      | no      |
 | value types | yes       | yes     | yes     | yes     |
 |-------------|-----------|---------|---------|---------|
 
@@ -6591,8 +6594,10 @@ type, or no value at all (specified by a return type of `void`).
 
 The next table lists restrictions on what kinds of calls can be made
 from which places in a P4 program.  Calling a parser, control, or
-table means invoking its `apply()` method.  The row for `extern`
-describes where extern method calls can be made from.
+table means invoking its `apply()` method.  Calling a `value_set`
+means using it as a key set expression inside of a `select`
+expression.  The row for `extern` describes where extern method calls
+can be made from.
 
 One way that an extern can be called from the top level of a parser or
 control is in an initializer expression for a declared variable,
@@ -6611,6 +6616,7 @@ e.g. `bit<32> x = rand.get();`.
 | extern      | yes       | yes     | yes       | yes     | no     |
 | table       |  no       | yes     | no        | no      | no     |
 | action      |  no       | yes     | no        | yes     | no     |
+| value_set   | yes       |  no     | no        | no      | no     |
 | value types | N/A       | N/A     | N/A       | N/A     | N/A    |
 |-------------|-----------|---------|-----------|---------|--------|
 
