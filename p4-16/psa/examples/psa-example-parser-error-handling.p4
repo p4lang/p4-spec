@@ -365,7 +365,7 @@ control handle_parser_errors(
             error.BadIPv4HeaderChecksum : set_error_idx(7);
             error.UnhandledIPv4Options  : set_error_idx(8);
         }
-        psa_direct_counters = { parser_error_counts };
+        psa_direct_counter = parser_error_counts;
     }
     apply {
         // Example code showing how to count number of times each
