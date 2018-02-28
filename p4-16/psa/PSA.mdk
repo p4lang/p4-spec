@@ -1403,9 +1403,9 @@ specification.
 |-----------------------|------|---------------------------------------|
 | Property name         | Type | See also |
 +:----------------------+:-----+:--------------------------------------+
-| `psa_direct_counters` | list of `DirectCounter` instance names | Section [#sec-direct-counter] |
+| `psa_direct_counter` | one `DirectCounter` instance name | Section [#sec-direct-counter] |
 |-----------------------|----------------------------------------------|
-| `psa_direct_meters` | list of `DirectMeter` instance names | Section [#sec-meters] |
+| `psa_direct_meter` | one `DirectMeter` instance name | Section [#sec-meters] |
 |-----------------------|----------------------------------------------|
 | `psa_implementation`  | instance name of one `ActionProfile` | Sections [#sec-action-profile], [#sec-action-selector] |
 |                       | or `ActionSelector` |  |
@@ -1413,14 +1413,14 @@ specification.
 ~
 
 A PSA implementation need not support both of a `psa_implementation`
-and `psa_direct_counters` property on the same table.
+and `psa_direct_counter` property on the same table.
 
 Similarly, a PSA implementation need not support both of a
-`psa_implementation` and `psa_direct_meters` property on the same
+`psa_implementation` and `psa_direct_meter` property on the same
 table.
 
 A PSA implementation must implement tables that have both a
-`psa_direct_counters` and `psa_direct_meters` property.
+`psa_direct_counter` and `psa_direct_meter` property.
 
 
 ## Packet Replication Engine {#sec-pre}
@@ -1653,8 +1653,8 @@ information that can help an P4 programmer debug such errors.
 [INCLUDE=psa.p4:DirectCounter_extern]
 ```
 
-A `DirectCounter` instance must appear in the list of values of the
-`psa_direct_counters` table attribute for exactly one table.  We call
+A `DirectCounter` instance must appear as the value of the
+`psa_direct_counter` table attribute for at most one table.  We call
 this table the `DirectCounter` instance's "owner".  It is an error to
 call the `count` method for a `DirectCounter` instance anywhere except
 inside an action of its owner table.
@@ -1759,8 +1759,8 @@ include:
   a default action is assigned to the table.
 
 The table attribute to specify that a table owns a `DirectMeter`
-instance is `psa_direct_meters`.  The value of this table attribute is
-a list of meter instances.
+instance is `psa_direct_meter`.  The value of this table attribute is
+a `DirectMeter` instance name.
 
 As for counters, if you call the `execute(idx)` method on an indexed
 meter and `idx` is at least the number of meter states, so `idx` is
