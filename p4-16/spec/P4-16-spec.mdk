@@ -5,7 +5,7 @@ Author: The P4 Language Consortium
 Heading depth: 5
 Pdf Latex: xelatex
 Document Class: [11pt]article
-Package: [top=1in, bottom=1.25in, left=1in, right=1in]{geometry}
+Package: [top=1in, bottom=1.25in, left=1in, right=1in]{geometry
 Package: fancyhdr
 
 Tex Header:
@@ -1460,7 +1460,7 @@ lvalue
 The following is a legal l-value: `headers.stack[4].field`.  Note
 that method and function calls cannot return l-values.
 
-## Named parameters {#sec-named-params}
+## Named parameters { #sec-named-params }
 
 P4 supports named parameters to enable invoking constructors, controls,
 parsers, and externs with a subset of the arguments when appropriate default
@@ -1516,9 +1516,13 @@ Default values for the different types of arguments:
 
 #### Controls
 
-Consider the definition of the PSA IngressParser (in psa-example-resubmit.p4). It includes mulitple metadata arguments, to ensure that the parser can handle normal packets, as well as resubmitted and recirculated packets. Using named parameters, the declaration becomes:
+Consider the definition of the PSA IngressParser (in
+psa-example-resubmit.p4). It includes mulitple metadata arguments, to
+ensure that the parser can handle normal packets, as well as
+resubmitted and recirculated packets. Using named parameters, the
+declaration becomes:
 
-```
+~ Begin P4Example
 parser IngressParser<H, M, RESUBM, RECIRCM>(
     packet_in buffer,
     out H parsed_hdr,
@@ -1526,56 +1530,65 @@ parser IngressParser<H, M, RESUBM, RECIRCM>(
     in psa_ingress_parser_input_metadata_t istd,
     in RESUBM resubmit_meta = None,
     in RECIRCM recirculate_meta = None);
-```
+~ End P4Example
 
 If the data-plane program is only processing normal packets, the parser
 implementation is:
 
-```
+~ Begin P4Example
 parser IngressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
     in psa_ingress_parser_input_metadata_t istd) { ... }
-```
+~ End P4Example
 
-However, if the program also processes recirculated packets, its declaration will be:
-```
+However, if the program also processes recirculated packets, its
+declaration will be:
+
+~ Begin P4Example
 parser IngressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
     in psa_ingress_parser_input_metadata_t istd)
     in recirculate_metadata_t recirc_meta) { ... }
-```
+~ End P4Example
 
 #### Package definitions
 
 The PSA package definition is an example of providing default values.
-```
+
+~ Begin P4Example
 package PSA_Switch<IH, IM, EH, EM, NM, CI2EM, CE2EM, RESUBM, RECIRCM> (
     IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM> ingress,
     PacketReplicationEngine pre = _,
     EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM> egress = _,
     BufferingQueueingEngine bqe = _);
-```
+~ End P4Example
 
-The `PacketReplicationEngine` and the `BufferingQueueingEngine`are two externs
-that are instantiated by the architecture. They are required for the pipeline
-definition, however, the only action that the user can take is to provide an
-instance of these externs constructed with empty parameters, e.g,
-`PacketReplicationEngine pre()`. The compiler automatically substitutes an instance of the extern for `_`. As we mentioned above, the order of parameters is mandatory, and mandatory parameters must precede the optional parameters. Therefore, the `EgressPipeline` is also declared optional, and the compiler substitutes `_` with an empty control.
+The `PacketReplicationEngine` and the `BufferingQueueingEngine`are two
+externs that are instantiated by the architecture. They are required
+for the pipeline definition, however, the only action that the user
+can take is to provide an instance of these externs constructed with
+empty parameters, e.g, `PacketReplicationEngine pre()`. The compiler
+automatically substitutes an instance of the extern for `_`. As we
+mentioned above, the order of parameters is mandatory, and mandatory
+parameters must precede the optional parameters. Therefore, the
+`EgressPipeline` is also declared optional, and the compiler
+substitutes `_` with an empty control.
 
-Multiple versions of a PSA switch can now be instantiated for any combination
-of the pipeline without the need of instantiating all the controls:
+Multiple versions of a PSA switch can now be instantiated for any
+combination of the pipeline without the need of instantiating all the
+controls:
 
-```
+~ Begin P4Example
 PSA_Switch(my_ingress) main;
-```
+~ End P4Example
 
-```
+~ Begin P4Example
 PSA_Switch(ingress = my_ingress, egress = my_egress) main;
-```
+~ End P4Example
 
 ## Calling convention: call by copy in/copy out { #sec-calling-convention }
 
