@@ -1403,6 +1403,7 @@ that may retain information across packets:
 
 - `table`s: Tables are read-only for the data plane, but their
   entries can be modified by the control-plane,
+
 - `extern` objects: many objects have state that can be read and
   written by the control plane and data plane. All constructs from the P4~14~ language
   version that encapsulate state (e.g., counters, meters, registers) are
@@ -4197,6 +4198,7 @@ instantiate a `control` block within a `parser`.
 parserLocalElement
     : constantDeclaration
     | variableDeclaration
+    | valueSetDeclaration
     | instantiation
     ;
 ~ End P4Grammar
@@ -4814,6 +4816,38 @@ If a parser aborts execution dynamically because it exceeded
 the time budget allocated for parsing, the parser should transition to
 `reject` and set
 the standard error `error.ParserTimeout`.
+
+##  Parser Value Sets { #sec-value-set }
+
+In some cases, the values that determine the transition from one parser state
+to another need to be determined at run time. MPLS is one example where the
+value of the MPLS label field is used to determine what headers follow the MPLS
+tag and this mapping may change dynamically at run time. To support this
+functionality, P4 supports the notion of a Parser Value Set. This is a named
+set of values with a run time API to add and remove values from the set. The
+set name may be referenced in parse state transition conditions (the value list
+in a case entry).
+
+Parser Value Sets contain values only, no header types or state transition
+information. All values in a value set must correspond to the same transition.
+For example, all MPLS labels corresponding to an IPv4 transition would exist in
+one set, while all MPLS labels corresponding to an IPv6 transition would exist
+in a different set.
+
+Value sets are declared locally within a parser. They should be declared before
+being referenced in parser `keysetExpression`.
+
+Given a type `T` for the type parameter of the value set, the type of the value
+set is `set<T>`. The type of the value set must match to the type of all other
+`keysetExpression` in the same `select` expression. If there is a mismatch, the
+compiler must raise an error.
+
+Parser Value Sets support a `size` annotation to provide hints to the compiler
+to reserve hardware resource to implement the value set. The semantics of the
+size annotation is TBD.
+
+The run time API for updating parser value sets must allow value and mask pairs
+to be specified together.
 
 # Control blocks { #sec-control }
 
