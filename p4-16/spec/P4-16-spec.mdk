@@ -2092,36 +2092,49 @@ else
 
 #### Using saturating arithmetic example
 
-We demonstrate the use of saturating arithmetic for preventing both
-underflow when decrementing `ttl`, and caping the value at maximum
+The most common use case for saturating arithmetic is staturating counters.
+Below is an example of using the PSA `Counter`extern as a saturating counter:
+
+~ Begin P4Example
+#ifdef HAVE_SATURATING
+typedef saturating_bit<16> ByteCounterT;
+#else
+typedef bit<16> ByteCounterT;
+#endif
+
+control C(in psa_ingress_input_metadata_t  istd) {
+  Counter<ByteCounterT, bit<10>> (1023, PSA_CounterType_t.BYTES) byte_counter;
+
+  apply {
+    byte_counter.count(istd.ingress_port);
+  }
+}
+~ End P4Example
+
+The counter will max out at `0xFFFF` bits rather than overflowing and giving a
+distorted result.
+
+
+We also illustrate the use of saturating arithmetic for preventing both
+underflow when decrementing fields, and caping the value at maximum
 when using addition.
 
 ~ Begin P4Example
-header ipv4_t {
-        bit<4>  version;
-        bit<4>  ihl;
-        bit<8>  diffserv;
-        bit<16> totalLen;
-        saturating_bit<16> identification;
-        bit<3>  flags : 3;
-        bit<13> fragOffset;
-        saturating_bit<8> ttl;
-        bit<8>  protocol;
-        bit<16> hdrChecksum;
-        bit<32> srcAddr;
-        bit<32> dstAddr;
+header foo {
+        saturating_bit<16> a;
+        saturating_bit<8> s;
     }
 }
 
 control ingress(...) {
     action a(in saturating_bit<16> value) {
-        // even if ttl == 0, following the decrement operation,
-        // ttl will continue to be 0
-        ttl = ttl - saturating_bit<8>(1);
+        // even if s == 0, following the decrement operation,
+        // s will continue to be 0
+        s = s - 8sw1;
 
-        // assuming identification == 0xFFE0, adding value = 0x0FFF
-        // will result in identification == 0xFFFF
-        identification = identification + value;
+        // assuming a == 0xFFE0, adding value = 0x0FFF
+        // will result in a == 0xFFFF
+        a = a + value;
     }
     ...
 }
