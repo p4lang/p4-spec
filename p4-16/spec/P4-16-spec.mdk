@@ -1801,7 +1801,7 @@ for a table when generating the control-plane API:
 @name("acl") table t1 { ...}
 ~ End P4Example
 
-### Integers (signed and unsigned) { #sec-integers }
+### Integers (signed, unsigned, and saturating) { #sec-integers }
 
 P4 supports arbitrary-size integer values. The typing rules for the
 integer types are chosen according to the following principles:
@@ -1931,6 +1931,215 @@ described below.
 All operations that can be performed on infinite-precision integers
 are described in Section [#sec-varint-ops].
 
+#### Saturating integers
+
+This integer data type enables performing saturating arithmetic, for
+bot signed and unsigned integer types.  All operations such as
+addition and multiplication are limited to a fixed range between a
+minimum and maximum value. Saturating arithmetic has advantages, in
+particular when used as counters. The the result of a saturating
+counter max-ing out is much closer to the real result than a counter
+that overflows and wraps around. According to Wikipedia
+(https://en.wikipedia.org/wiki/Saturation_arithmetic) saturating
+arithmetic is as numerically close to the true answer as possible; for
+8-bit binary signed arithmetic, when the correct answer is 130, it is
+considerably less surprising to get an answer of 127 from saturating
+arithmetic than to get an answer of −126 from modular arithmetic.
+Likewise, for 8-bit binary unsigned arithmetic, when the correct
+answer is 258, it is less surprising to get an answer of 255 from
+saturating arithmetic than to get an answer of 2 from modular
+arithmetic.
+
+P4 supports two data types for saturating arithmetic in P4_16,
+`saturating_bit<W>` and `saturating_int<W>`, for unsigned and signed
+fixed-width saturating integers, respectively.
+
+Saturating arithmetic is supported for a limited set of operations:
+addition, subtraction, and multiplication, as well as equality,
+inequality, and comparison operations. P4 does not support saturating
+division. Bitwise operations are not supported on saturating data
+types.
+
+Explicit casting is allowed between saturating and modular integers,
+with appropriate sign extension, clamping, or truncation. P4 allows
+constant literals to be automatically converted by the compiler, or
+explicitly specified using the `ss` or `sw` suffix. For example, `1ss`
+denotes a saturating_int with value 1.
+
+#### Fixed-width unsigned saturating integers
+
+A saturating unsigned integer is declared using
+`saturating_bit<W>`. It has a bit-width of `W`, and thus will have a
+minimum value of `0` and a maximum value of `2^W-1`. `W` must be a
+compile-time known value.
+
+##### Operations on fixed-width unsigned saturating integers
+
+As opposed to the modular arithmetic supported with `bit<W>`,
+saturating arithmetic will clamp the value of the result to either the
+minimum or maximum value supported by the data type.
+
+All binary operations require both operands to have the same exact
+type, saturating, signedness, and width. Supplying operands of
+different types produces a compile-time error. No implicit casts
+(conversions) are inserted by the compiler to equalize the types. P4
+does not support any binary operations that combine saturating and
+modular arithmetic, except cast.
+
+The `saturating_bit<W>` datatype supports the following operations:
+
+- Addition, denoted by `+`. Example:
+
+~ Begin P4Example
+saturating_bit<W> a, b;
+int tmp = a + b;
+if (tmp < a.min)      // a.min = 0
+    a.min
+else if (tmp > a.max) // a.max = 2^W - 1
+    a.max
+else
+    tmp
+~ End P4Example
+
+- Subtraction, denoted by `-`.
+- Multiplication, denoted by `*`. Result has the same width as the
+  operands. P4 architectures may impose additional
+  restrictions---e.g., they may only allow multiplication by a power
+  of two.  Multiplication semantics is equivalent to repeated
+  addition.
+- Comparison for equality and inequality, denoted `==` and `!=`
+  respectively. These operations produce a Boolean result.
+- Numeric comparisons, denoted by `<,<=,>,` and `>=`. These operations
+  produce a Boolean result.
+
+- Casting between saturating and non-saturating unsigned integers:
+  - Widening between saturating or saturating and non-saturating:
+    extend the width of the type. The result has the same value as
+    before, with the new wider type (saturating or non-saturating).
+  - Narrowing
+    - from saturating -> non-saturating: truncate the result to the
+      width of the desired type. If the value was larger that the
+      width of the resulting type maximum, the result is truncated.
+    - from saturating/non-saturating -> saturating: truncate and clamp
+      the result to the width of the desired type. If the value was
+      larger, the result will be clamped to the maximum.
+
+#### Fixed-width signed saturating integers
+
+A saturating integer is declared using `saturating_int<W>`. It has a
+bit-width of `W`, and thus will have a minimum value of `-2^(W-1)` and
+a maximum value of `2^(W-1)-1`. The most significant bit (bit `W-1`)
+is the sign bit. `W` must be a compile-time known value.
+
+##### Operations on fixed-width signed saturating integers
+
+As opposed to the modular arithmetic supported with `int<W>`,
+saturating arithmetic will clamp the value of the result to either the
+minimum or maximum value supported by the data type.
+
+All binary operations require both operands to have the same exact
+type, saturating, signedness, and width. Supplying operands of
+different types produces a compile-time error. No implicit casts
+(conversions) are inserted by the compiler to equalize the types. P4
+does not support any binary operations that combine saturating and
+modular arithmetic, except cast.
+
+The `saturating_int<W>` datatype supports the following operations:
+
+- Negation, denoted by unary `-`.
+- Unary plus, denoted by `+`. This operation behaves like a no-op.
+- Addition, denoted by `+`. Example:
+
+~ Begin P4Example
+saturating_int<W> a, b;
+int tmp = a + b;
+if (tmp < a.min)       // a.min = -2^(W-1)
+    a.min
+else if (tmp > a.max)  // a.max = 2^(W-1) - 1
+    a.max
+else
+    tmp
+~ End P4Example
+
+- Subtraction, denoted by `-`.
+- Multiplication, denoted by `*`. Result has the same width as the
+  operands. P4 architectures may impose additional
+  restrictions---e.g., they may only allow multiplication by a power
+  of two.  Multiplication semantics is equivalent to repeated
+  addition.
+- Comparison for equality and inequality, denoted `==` and `!=`
+  respectively. These operations produce a Boolean result.
+- Numeric comparisons, denoted by `<,<=,>,` and `>=`. These operations
+  produce a Boolean result.
+- Casting between saturating and non-saturating signed integers:
+  - Widening between saturating or saturating and non-saturating
+    signed: sign extend and extend the width of the type. The result
+    has the same value as before, with the new wider type (saturating
+    or non-saturating).
+  - Narrowing
+    - from saturating -> non-saturating: truncate the result to the
+      width of the desired type, while preserving the sign. If the
+      value was larger/smaller, the result will be truncated to the
+      maximum/minimum value on the narrower width with the appropriate
+      sign. Essentially, the same operation as a W-1 unsigned with the
+      preserved sign.
+    - from saturating/non-saturating -> saturating: truncate and clamp
+      the result to the width of the desired type, while preserving
+      the sign. If the value was larger/smaller, the result will be
+      clamped to the maximum/minimum on the narrower width with the
+      appropriate sign. Essentially, the same operation as a W-1
+      unsigned with the preserved sign.
+
+#### Using saturating arithmetic example
+
+The most common use case for saturating arithmetic is staturating counters.
+Below is an example of using the PSA `Counter`extern as a saturating counter:
+
+~ Begin P4Example
+#ifdef HAVE_SATURATING
+typedef saturating_bit<16> ByteCounterT;
+#else
+typedef bit<16> ByteCounterT;
+#endif
+
+control C(in psa_ingress_input_metadata_t  istd) {
+  Counter<ByteCounterT, bit<10>> (1023, PSA_CounterType_t.BYTES) byte_counter;
+
+  apply {
+    byte_counter.count(istd.ingress_port);
+  }
+}
+~ End P4Example
+
+The counter will max out at `0xFFFF` bits rather than overflowing and giving a
+distorted result.
+
+
+We also illustrate the use of saturating arithmetic for preventing both
+underflow when decrementing fields, and caping the value at maximum
+when using addition.
+
+~ Begin P4Example
+header foo {
+        saturating_bit<16> a;
+        saturating_bit<8> s;
+    }
+}
+
+control ingress(...) {
+    action a(in saturating_bit<16> value) {
+        // even if s == 0, following the decrement operation,
+        // s will continue to be 0
+        s = s - 8sw1;
+
+        // assuming a == 0xFFE0, adding value = 0x0FFF
+        // will result in a == 0xFFFF
+        a = a + value;
+    }
+    ...
+}
+~ End P4Example
+
 #### Integer literal types
 
 The types of integer literals (constants) are as follows:
@@ -1954,7 +2163,10 @@ types. For additional examples of literals see Section
 | `2s3`   | Type is `int<2>`, value is -1 (last 2 bits), overflow warning |
 | `1w10`  | Type is `bit<1>`, value is 0 (last bit), overflow warning |
 | `1s10`  | Error: 1-bit signed type is illegal |
+|  `8sw10` | Type is `saturating_bit<8>, value is 10` |
+|  `8ss10` | Type is `saturating_int<8>, value is 10` |
 |----------|--------------------|
+
 
 ## Derived types { #sec-derived-types }
 
