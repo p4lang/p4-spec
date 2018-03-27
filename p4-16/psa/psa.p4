@@ -78,7 +78,7 @@ const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
  * fields may be used in a single P4 header definition, even on P4
  * implementations that restrict headers to contain fields with a
  * total length that is a multiple of 8 bits. */
-typedef bit<16> PortIdInHeader_t;
+typedef bit<32> PortIdInHeader_t;
 typedef bit<32> MulticastGroupInHeader_t;
 typedef bit<16> CloneSessionIdInHeader_t;
 typedef bit<8>  ClassOfServiceInHeader_t;
