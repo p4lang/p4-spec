@@ -49,11 +49,15 @@ header header_b_t {
     bit<16> field_c;
 }
 
+header_union resubmit_h {
+    header_a_t h_a;
+    header_b_t h_b;
+}
+
 // BEGIN:Resubmit_Example_Part1
 struct resubmit_metadata_t {
     bit<8> selector;
-    header_a_t header_a;
-    header_b_t header_b;
+    resubmit_h h_u;
 }
 // END:Resubmit_Example_Part1
 
@@ -64,7 +68,9 @@ struct fwd_metadata_t {
 }
 
 struct metadata {
-    resubmit_metadata_t resubmit_meta;
+    header_a_t h_a;
+    header_b_t h_b;
+    bit<8> resubmit_id;
     fwd_metadata_t fwd_meta;
 }
 
@@ -111,7 +117,19 @@ parser IngressParserImpl(
     }
 
     state copy_resubmit_meta {
-        user_meta.resubmit_meta = resub_meta;
+        transition select(resub_meta.selector) {
+           8w0 : parse_resubmit_0;
+           8w1 : parse_resubmit_1;
+        }
+    }
+
+    state parse_resubmit_0 {
+        user_meta.h_a = resub_meta.h_u.h_a;
+        transition packet_in_parsing;
+    }
+
+    state parse_resubmit_1 {
+        user_meta.h_b = resub_meta.h_u.h_b;
         transition packet_in_parsing;
     }
 
@@ -127,8 +145,9 @@ control ingress(inout headers hdr,
     in  psa_ingress_input_metadata_t  istd,
     inout psa_ingress_output_metadata_t ostd)
 {
-    action do_resubmit (PortId_t port) {
+    action do_resubmit (PortId_t port, bit<8> resubmit_id) {
         ostd.resubmit = true;
+        user_meta.resubmit_id = resubmit_id;
     }
     table t {
         key = {
@@ -197,9 +216,14 @@ control IngressDeparserImpl(
         // Assignments to the out parameter resubmit_meta must be
         // guarded by this if condition:
         if (psa_resubmit(istd)) {
-            resubmit_meta = meta.resubmit_meta;
+            if (meta.resubmit_id == 8w10) {
+                resubmit_meta.selector = 8w0;
+                resubmit_meta.h_u.h_a = meta.h_a;
+            } else if (meta.resubmit_id == 8w01) {
+                resubmit_meta.selector = 8w1;
+                resubmit_meta.h_u.h_b = meta.h_b;
+            }
         }
-
         common_deparser.apply(packet, hdr);
     }
 }
