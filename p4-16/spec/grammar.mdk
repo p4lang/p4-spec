@@ -240,6 +240,11 @@ typeRef
     | tupleType
     ;
 
+namedType
+    : typeName                         { $$ = $1; }
+    | specializedType                  { $$ = $1; }
+    ;
+
 prefixedType
     : TYPE
     | dotPrefix TYPE
@@ -597,7 +602,7 @@ expression
     | expression '?' expression ':' expression
     | expression '<' typeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
-    | typeRef '(' argumentList ')'
+    | namedType '(' argumentList ')'
     | '(' typeRef ')' expression
     ;
 ~ End P4Grammar
