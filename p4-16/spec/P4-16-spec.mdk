@@ -4414,6 +4414,26 @@ select (p.tcp.port) {
 The expression `16w0 &&& 16w0xFC00` describes the set of 16-bit
 values whose most significant six bits are zero.
 
+Some targets may support parser value set, see Section [#sec-value-set]. Given
+a type `T` for the type parameter of the value set, the type of the value set
+is `set<T>`. The type of the value set must match to the type of all other
+`keysetExpression` in the same `select` expression. If there is a mismatch, the
+compiler must raise an error.
+
+For example, to allow control plane API to specify TCP reserved ports at
+runtime, one could write:
+
+~ Begin P4Example
+value_set<bit<16>>(4) pvs;
+select (p.tcp.port) {
+    pvs: runtime_defined_port;
+    _: other_port;
+}
+~ End P4Example
+
+The above example allows the runtime API to populate upto 4 different
+`keysetExpression`s in the `value_set`.
+
 ## verify { #sec-verify }
 
 The `verify` statement provides a simple form of error
@@ -4824,30 +4844,22 @@ to another need to be determined at run time. MPLS is one example where the
 value of the MPLS label field is used to determine what headers follow the MPLS
 tag and this mapping may change dynamically at run time. To support this
 functionality, P4 supports the notion of a Parser Value Set. This is a named
-set of values with a run time API to add and remove values from the set. The
-set name may be referenced in parse state transition conditions (the value list
-in a case entry).
-
-Parser Value Sets contain values only, no header types or state transition
-information. All values in a value set must correspond to the same transition.
-For example, all MPLS labels corresponding to an IPv4 transition would exist in
-one set, while all MPLS labels corresponding to an IPv6 transition would exist
-in a different set.
+set of values with a run time API to add and remove values from the set.
 
 Value sets are declared locally within a parser. They should be declared before
 being referenced in parser `keysetExpression`.
 
-Given a type `T` for the type parameter of the value set, the type of the value
-set is `set<T>`. The type of the value set must match to the type of all other
-`keysetExpression` in the same `select` expression. If there is a mismatch, the
-compiler must raise an error.
+Parser Value Sets support a `size` argument to provide hints to the compiler to
+reserve hardware resource to implement the value set. The semantics of the
+`size` argument is similar to the `size` property of a table. If a value set
+has a `size` argument with value `N`, it is recommended that a compiler should
+choose a data plane implementation that is capable of storing `N` value set
+entries. See "Size property of P4 tables and parser value sets"
+[^P4SizeProperty] for further discussion on the implementation of parser value
+set size.
 
-Parser Value Sets support a `size` annotation to provide hints to the compiler
-to reserve hardware resource to implement the value set. The semantics of the
-size annotation is TBD.
-
-The run time API for updating parser value sets must allow value and mask pairs
-to be specified together.
+The value set is populated by the control-plane by methods specified in the
+P4 Runtime specification.
 
 # Control blocks { #sec-control }
 
