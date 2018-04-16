@@ -2777,6 +2777,22 @@ keep the least-significant W bits of the value). In particular, P4
 does not have arithmetic exceptions---the result of an arithmetic
 operation is defined for all possible inputs.
 
+P4 target architectures may also support saturating arithmetic. All saturating
+operations are limited to a fixed range between a minimum and maximum value.
+Saturating arithmetic has advantages, in particular when used as counters. The
+the result of a saturating counter max-ing out is much closer to the real
+result than a counter that overflows and wraps around. According to Wikipedia
+(https://en.wikipedia.org/wiki/Saturation_arithmetic) saturating arithmetic is
+as numerically close to the true answer as possible; for 8-bit binary signed
+arithmetic, when the correct answer is 130, it is considerably less surprising
+to get an answer of 127 from saturating arithmetic than to get an answer of
+−126 from modular arithmetic. Likewise, for 8-bit binary unsigned arithmetic,
+when the correct answer is 258, it is less surprising to get an answer of 255
+from saturating arithmetic than to get an answer of 2 from modular arithmetic.
+At this time, P4 defines saturating operations only for multiplication and
+addition. For an unsigned integer with bit-width of `W`, the minimum value is `0`
+and the maximum value is `2^W-1`.
+
 All binary operations (except shifts) require both operands to have
 the same exact type and width; supplying operands with different
 widths produces an error at compile time. No implicit casts are
@@ -2815,6 +2831,8 @@ to bit-strings of the same width:
   by `|`.
 - Bitwise "complement" of a single bit-string, denoted by `~`.
 - Bitwise "xor" of two bit-strings of the same width, denoted by `^`.
+- Saturating addition, denoted by `|+|`.
+- Saturating subtraction, denoted by `|-|`.
 
 Bit-strings also support the following operations:
 
@@ -2852,6 +2870,10 @@ operations simply "wrap around", similar to C operations on unsigned values.
 Hence, attempting to represent large values using `W` bits will only keep
 the least-significant `W` bits of the value.
 
+P4 also supports saturating arithmetic (addition and subtraction) for signed
+integers. For a signed integer with bit-width of `W`, the minimum value is
+`-2^(W-1)` and the maximum value is `2^(W-1)-1`.
+
 P4 also does not support arithmetic exceptions. The runtime result of an
 arithmetic operation is defined for all combinations of input
 arguments.
@@ -2880,6 +2902,8 @@ type. The result always has the same width as the left operand.
 - Multiplication, denoted by `*`. Result has the same width as the
   operands. P4 architectures may impose additional restrictions---e.g., they may
   only allow multiplication by a power of two.
+- Saturating addition, denoted by `|+|`.
+- Saturating subtraction, denoted by `|-|`.
 - Arithmetic shift left and right denoted by `<<` and `>>`.
   The left operand is signed and the right operand must be either an
   unsigned number of type `bit<S>` or a non-negative
@@ -2965,6 +2989,8 @@ significant bits to be lost, the compiler should emit a warning.
 Note: bitwise-operations (`|`,`&`,`^`,`~`) are not
 defined on expressions of type `int`. In addition, it is illegal
 to apply division and modulo to negative values.
+
+Note: saturating arithmetic is not supported for arbitrary-precision integers.
 
 ## Operations on variable-size bit types { #sec-varbit-string }
 
