@@ -216,9 +216,12 @@ control EgressDeparserImpl(packet_out packet,
     }
 }
 
-PSA_Switch(IngressParserImpl(),
-           ingress(),
-           IngressDeparserImpl(),
-           EgressParserImpl(),
-           egress(),
-           EgressDeparserImpl()) main;
+IngressPipeline(IngressParserImpl(),
+                ingress(),
+                IngressDeparserImpl()) ip;
+
+EgressPipeline(EgressParserImpl(),
+               egress(),
+               EgressDeparserImpl()) ep;
+
+PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
