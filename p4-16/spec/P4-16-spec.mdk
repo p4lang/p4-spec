@@ -6124,14 +6124,8 @@ the control plane in the following ways.
 - The `@name` annotation may be used to change the local name of a
   controllable entity.
 
-- The `@globalname` annotation my be used to change the global
-  name of a controllable entity.
-
 Programs that yield the same fully-qualified name for two different
-controllable entities are invalid.  Care must be taken with `@globalname`
-in particular: If a type contains a `@globalname` annotation and
-is instantiated twice, the two instances will have the same
-fully-qualified name.
+controllable entities are invalid.
 
 ### Recommendations
 
@@ -6315,19 +6309,6 @@ control c( ... )() {
 c() c_inst;
 ~ End P4Example
 
-The `@globalname` annotation acts like the `@name` annotation,
-except it overrides the fully-qualified name (not just the local name)
-for the annotated element.  In the following example, the
-fully-qualified name of the table is `foo.bar`.
-
-~ Begin P4Example
-control c( ... )() {
-    @globalname("foo.bar") table t { ... }
-    apply { ... }
-}
-c() c_inst;
-~ End P4Example
-
 The `@hidden` annotation hides a controllable entity, e.g. a table,
 key, action, or extern, from the control plane.  This effectively
 removes its fully-qualified name (Section [#sec-cp-names]).  It does
@@ -6335,27 +6316,28 @@ not take any arguments.
 
 #### Restrictions
 
-Each element may be annotated with at most one `@name`, `@globalname`,
+Each element may be annotated with at most one `@name`
 or `@hidden` annotation, and each control plane name must refer to
 at most one controllable entity.  This is of special concern when
-using the `@globalname` annotation: If a type containing a `@globalname`
-annotation is instantiated more than once, it will result in the same
-global name referring to two controllable entities.
+using absolute `@name` annotation: If a type containing an `@name`
+annotation with an absolute pathname (i.e., starting with a dot)
+is instantiated more than once, it will result in the same
+name referring to two controllable entities.
 
 ~ Begin P4Example
 control noargs();
 package top(noargs c1, noargs c2);
 
 control c() {
-    @globalname("foo.bar") table t { ... }
+    @name(".foo.bar") table t { ... }
     apply { ... }
 }
 top(c(), c()) main;
 ~ End P4Example
 
-Without the `@globalname` annotation, this program would produce
+Without the `@name` annotation, this program would produce
 two controllable entities with fully-qualified names `main.c1.t` and `main.c2.t`.
-However, the `@globalname("foo.bar")` annotation renames table `t`
+However, the `@name(".foo.bar")` annotation renames table `t`
 in both instances to `foo.bar`, resulting in one name that refers
 to two controllable entities, which is illegal.
 
