@@ -2792,6 +2792,8 @@ from saturating arithmetic than to get an answer of 2 from modular arithmetic.
 At this time, P4 defines saturating operations only for addition and
 subtraction. For an unsigned integer with bit-width of `W`, the minimum value
 is `0` and the maximum value is `2^W-1`.
+The precedence of saturating addition and subtraction operations is the
+same as for modulo arithmetic addition and subtraction.
 
 All binary operations (except shifts) require both operands to have
 the same exact type and width; supplying operands with different
@@ -2870,8 +2872,9 @@ operations simply "wrap around", similar to C operations on unsigned values.
 Hence, attempting to represent large values using `W` bits will only keep
 the least-significant `W` bits of the value.
 
-P4 also supports saturating arithmetic (addition and subtraction) for signed
-integers. For a signed integer with bit-width of `W`, the minimum value is
+P4 supports saturating arithmetic (addition and subtraction) for signed
+integers. Targets may optionally reject programs using saturating arithmetic.
+For a signed integer with bit-width of `W`, the minimum value is
 `-2^(W-1)` and the maximum value is `2^(W-1)-1`.
 
 P4 also does not support arithmetic exceptions. The runtime result of an
