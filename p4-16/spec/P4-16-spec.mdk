@@ -2026,11 +2026,21 @@ An enumeration type is defined using the following syntax:
 ~ Begin P4Grammar
 enumDeclaration
     : optAnnotations ENUM name '{' identifierList '}'
+    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
     ;
 
 identifierList
     : name
     | identifierList ',' name
+    ;
+
+specifiedIdentifierList
+    : specifiedIdentifier
+    | specifiedIdentifierList ', ' specifiedIdentifier
+    ;
+
+specifiedIdentifier
+    : name '=' initializer
     ;
 ~ End P4Grammar
 
@@ -2043,10 +2053,47 @@ enum Suits { Clubs, Diamonds, Hearths, Spades }
 introduces a new enumeration type, which contains four
 constants---e.g., `Suits.Clubs`. An `enum` declaration
 introduces a new identifier in the current scope for naming the
-created type. The underlying representation of such values is not
+created type.  The underlying representation of the `Suits` enum is not
 specified, so their "size" in bits is not specified (it is
 target-specific).
 
+It is also possible to specify an `enum` with an underlying representation.
+This requires the programmer provide both the numeric type and an associated
+numeric value for each symbolic entry in the enumeration.  For example, the
+declaration
+
+~ Begin P4Example
+enum bit<16> EtherType {
+  VLAN      = 0x8100,
+  QINQ      = 0x9100,
+  MPLS      = 0x8847,
+  IPV4      = 0x0800,
+  IPV6      = 0x86dd
+  // ...
+}
+~ End P4Example
+
+introduces a new enumeration type, which contains five constants---e.g.,
+`EtherType.IPV4`.  This `enum` declaration specifies the numeric representation
+for each entry in the `enum` and provides a backing type: `bit<16>`.
+Implementations are expected to raise an error if the numeric representation
+for an enumeration entry falls outside the representation range of the backing
+type.
+
+For example, the declaration
+
+~ Begin P4Example
+enum bit<8> FailingExample {
+  first           = 1,
+  second          = 2,
+  third           = 3,
+  unrepresentable = 300
+}
+~ End P4Example
+
+would result in an error because the numeric value associated with
+`FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
+ 
 Annotations, represented by the non-terminal `optAnnotations`, are
 described in Section [#sec-annotations].
 
@@ -2278,13 +2325,16 @@ infinite-precision integer, without a width specified.
 | `error`        | error     | error   |  allowed |
 | `match_kind`   | error     | error   |  error   |
 | `bool`         | error     | error   |  allowed |
-| `enum`         | error     | error   |  allowed |
+| `enum`         | allowed[^enum_header]     | error   |  allowed |
 | `header`       | error     | allowed |  allowed |
 | header stack   | error     | error   |  allowed |
 | `header_union` | error     | error   |  allowed |
 | `struct`       | error     | error   |  allowed |
 | `tuple`        | error     | error   |  allowed |
 |----------------|-----------|---------|----------|
+
+[^enum_header]: an `enum` type used as a field in a `header` must specify a
+    backing type and representation for `enum` elements.
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
@@ -2717,12 +2767,63 @@ X.v1  // reference to v1
 v1    // error - v1 is not in the top-level namespace
 ~ End P4Example
 
-Similar to errors, `enum` expressions only support equality (`==`)
-and inequality (`!=`) comparisons. Expressions whose type is an `enum`
+Similar to errors, `enum` expressions without a specified backing type only support equality (`==`)
+and inequality (`!=`) comparisons. Expressions whose type is an `enum` without a specified backing type
 cannot be cast to or from any other type.
 
-Note that if an `enum` value appears in the control-plane API, the
+An `enum` that specifies a backing type, such as the following:
+
+~ Begin P4Example
+enum bit<8> E {
+  e1 = 0,
+  e2 = 1,
+  e3 = 2
+}
+~ End P4Example
+
+also supports explicit casts to and from the backing type.  For instance, the
+following code:
+
+~ Begin P4Example
+bit<8> x;
+E e1 = E.e2;
+E e2;
+
+x  = (bit<8>) e1; // sets x to 1
+e2 = (E) x;       // sets e to E.e2
+~ End P4Example
+
+casts `e1`, which was initialized to `E.e2` to a `bit<8>`, using the specified
+numeric representation for `E.e2`, `1`.  The variable `e2` is then set to the
+symbolic value `E.e2`, which corresponds to the numeric value `1`.
+
+Note that while it is always safe to cast from an `enum` to its numeric type,
+it may not be th case that every numeric value specified by the backing type
+has a related symbol in the `enum`.  For instance, the following code:
+
+~ Begin P4Example
+bit<8> x = 5;
+E e = (E) x; // sets e to an unspecified value
+~ End P4Example
+
+sets `e` to an unknown value, since there is no symbol corresponding to the
+numeric value `5`.  While the value of `e` is unspecified, it must not
+correspond to any symbol defined within enum `E`.  This is because casting from
+a numeric type to an `enum` type is required obey the following semantics:
+
+Given an enum type $E$ with underlying type `bit<W>` and the set of mappings
+of $(s, n)$ where $S$ is the set of symbols ($s$) and $N$ is the set of numeric
+representations ($n$), the following properties must hold:
+
+1. if an integer $x \notin N$ then $\forall e \in S$, `(E)x != e`
+1. $\forall x \in [0, 2^W]$, `(bit<W>)(E)x == x`
+1. $\forall e \in S$, `(E)(bit<W>)e == e`
+
+Note that if an `enum` value lacking a backing representation appears in the control-plane API, the
 compiler must select a suitable serialization data type and
+representation.
+For `enum` values with a backing type and representations, the compiler should
+use the specified backing type as the serialization data type and
 representation.
 
 ## Expressions on Booleans { #sec-bool-exprs }
