@@ -4991,10 +4991,11 @@ The standard table properties include:
   is computed.
 - `actions`: A list of all actions that may be found in the table.
 
-In addition, the tables may optionally define the following property,
+In addition, the tables may optionally define the following properties,
 
 - `default_action`: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
+- `size`: an integer specifying the desired size of the table.
 
 The compiler may set the `default_action` to `NoAction`
 (and also insert it into the list of `actions`) for tables that do
@@ -5007,7 +5008,7 @@ In addition, tables may contain architecture-specific properties (see
 Section [#sec-additional-table-properties]).
 
 A property marked as `const` cannot be changed dynamically by the
-control-plane. The `key` and `actions` properties are always
+control-plane. The `key`, `actions`, and `size` properties are always
 constant, so the `const` keyword is not needed for these.
 
 ### Table properties { #sec-table-props }
@@ -5305,6 +5306,34 @@ In this example we define a set of 6 entries that cause the invocation
 of action `a_with_control_params`. Once the program is loaded,
 these entries are installed in the table in the order they are
 enumerated in the program.
+
+#### Size {#sec-size-table-property}
+
+The `size` is an optional property of a table.  When present, its
+value is always an integer compile-time known value.  It is specified
+in units of number of table entries.
+
+If a table has a `size` value specified for it with value `N`, it is
+recommended that a compiler should choose a data plane implementation
+that is capable of storing `N` table entries.  This does not guarantee
+that an _arbitrary_ set of `N` entries can always be inserted in such
+a table, only that there is _some_ set of `N` entries that can be
+inserted.  For example, attempts to add some combinations of `N`
+entries may fail because the compiler selected a hash table with
+`O(1)` guaranteed search time.  See "Size property of P4 tables and
+parser value sets"[^P4SizeProperty] for further discussion on some P4
+table implementations and what they are able to guarantee.
+
+[^P4SizeProperty]: <https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/p4-table-and-parser-value-set-sizes.md>
+
+If a P4 implementation must dimension table resources at compile time,
+they may treat it as an error if they encounter a table with no `size`
+property.
+
+Some P4 implementations may be able to dynamically dimension table
+resources at run time.  If a `size` value is specified in the P4
+program, it is recommended that such an implementation uses the `size`
+value as the initial capacity of the table.
 
 #### Additional properties {#sec-additional-table-properties}
 
