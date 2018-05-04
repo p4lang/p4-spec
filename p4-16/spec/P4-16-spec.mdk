@@ -5,7 +5,7 @@ Author: The P4 Language Consortium
 Heading depth: 5
 Pdf Latex: xelatex
 Document Class: [11pt]article
-Package: [top=1in, bottom=1.25in, left=1in, right=1in]{geometry}
+Package: [top=1in, bottom=1.25in, left=1in, right=1in]geometry
 Package: fancyhdr
 
 Tex Header:
@@ -2058,8 +2058,8 @@ specified, so their "size" in bits is not specified (it is
 target-specific).
 
 It is also possible to specify an `enum` with an underlying representation.
-This requires the programmer provide both the numeric type and an associated
-numeric value for each symbolic entry in the enumeration.  For example, the
+This requires the programmer provide both the fixed-width integer type and an associated
+fixed-width integer value for each symbolic entry in the enumeration.  For example, the
 declaration
 
 ~ Begin P4Example
@@ -2074,10 +2074,10 @@ enum bit<16> EtherType {
 ~ End P4Example
 
 introduces a new enumeration type, which contains five constants---e.g.,
-`EtherType.IPV4`.  This `enum` declaration specifies the numeric representation
-for each entry in the `enum` and provides a backing type: `bit<16>`.
-Implementations are expected to raise an error if the numeric representation
-for an enumeration entry falls outside the representation range of the backing
+`EtherType.IPV4`.  This `enum` declaration specifies the fixed-width integer representation
+for each entry in the `enum` and provides an underlying type: `bit<16>`.
+Compiler implementations are expected to raise an error if the fixed-width integer representation
+for an enumeration entry falls outside the representation range of the underlying
 type.
 
 For example, the declaration
@@ -2091,7 +2091,7 @@ enum bit<8> FailingExample {
 }
 ~ End P4Example
 
-would result in an error because the numeric value associated with
+would result in an error because the fixed-width integer value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
  
 Annotations, represented by the non-terminal `optAnnotations`, are
@@ -2334,7 +2334,7 @@ infinite-precision integer, without a width specified.
 |----------------|-----------|---------|----------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
-    backing type and representation for `enum` elements.
+    underlying type and representation for `enum` elements.
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
@@ -2767,11 +2767,11 @@ X.v1  // reference to v1
 v1    // error - v1 is not in the top-level namespace
 ~ End P4Example
 
-Similar to errors, `enum` expressions without a specified backing type only support equality (`==`)
-and inequality (`!=`) comparisons. Expressions whose type is an `enum` without a specified backing type
+Similar to errors, `enum` expressions without a specified underlying type only support equality (`==`)
+and inequality (`!=`) comparisons. Expressions whose type is an `enum` without a specified underlying type
 cannot be cast to or from any other type.
 
-An `enum` that specifies a backing type, such as the following:
+An `enum` may also specify an underlying type, such as the following:
 
 ~ Begin P4Example
 enum bit<8> E {
@@ -2781,24 +2781,37 @@ enum bit<8> E {
 }
 ~ End P4Example
 
-also supports explicit casts to and from the backing type.  For instance, the
-following code:
+Note that each symbolic value in the enum must map to a unique fixed-width integer
+representation, for example the `enum` in the following example would result in
+error:
+
+~ Begin P4Example
+enum bit<8> Bad {
+  b1 = 0,
+  b2 = 1,  // Error: b2 and b3 both map to 1
+  b3 = 1,  // one must be changed.
+  b4 = 2
+}
+~ End P4Example
+
+An `enum` with an underlying type also supports explicit casts to and from the
+underlying type.  For instance, the following code:
 
 ~ Begin P4Example
 bit<8> x;
-E e1 = E.e2;
-E e2;
+E a = E.e2;
+E b;
 
-x  = (bit<8>) e1; // sets x to 1
-e2 = (E) x;       // sets e to E.e2
+x = (bit<8>) a; // sets x to 1
+b = (E) x;      // sets e to E.e2
 ~ End P4Example
 
-casts `e1`, which was initialized to `E.e2` to a `bit<8>`, using the specified
-numeric representation for `E.e2`, `1`.  The variable `e2` is then set to the
-symbolic value `E.e2`, which corresponds to the numeric value `1`.
+casts `a`, which was initialized to `E.e2` to a `bit<8>`, using the specified
+fixed-width integer representation for `E.e2`, `1`.  The variable `b` is then set to the
+symbolic value `E.e2`, which corresponds to the fixed-width integer value `1`.
 
-Note that while it is always safe to cast from an `enum` to its numeric type,
-it may not be th case that every numeric value specified by the backing type
+Note that while it is always safe to cast from an `enum` to its fixed-width integer type,
+it may not be the case that every fixed-width integer value specified by the underlying type
 has a related symbol in the `enum`.  For instance, the following code:
 
 ~ Begin P4Example
@@ -2807,24 +2820,39 @@ E e = (E) x; // sets e to an unspecified value
 ~ End P4Example
 
 sets `e` to an unknown value, since there is no symbol corresponding to the
-numeric value `5`.  While the value of `e` is unspecified, it must not
+fixed-width integer value `5`.  While the value of `e` is unspecified, it must not
 correspond to any symbol defined within enum `E`.  This is because casting from
-a numeric type to an `enum` type is required obey the following semantics:
+a fixed-width integer type to an `enum` type is required to obey the following semantics:
 
 Given an enum type $E$ with underlying type `bit<W>` and the set of mappings
-of $(s, n)$ where $S$ is the set of symbols ($s$) and $N$ is the set of numeric
+of $(s, n)$ where $S$ is the set of symbols ($s$) and $N$ is the set of fixed-width integer
 representations ($n$), the following properties must hold:
 
 1. if an integer $x \notin N$ then $\forall e \in S$, `(E)x != e`
 1. $\forall x \in [0, 2^W]$, `(bit<W>)(E)x == x`
 1. $\forall e \in S$, `(E)(bit<W>)e == e`
 
-Note that if an `enum` value lacking a backing representation appears in the control-plane API, the
+Note that if an `enum` value lacking an underlying type appears in the control-plane API, the
 compiler must select a suitable serialization data type and
 representation.
-For `enum` values with a backing type and representations, the compiler should
-use the specified backing type as the serialization data type and
+For `enum` values with an underlying type and representations, the compiler should
+use the specified underlying type as the serialization data type and
 representation.
+
+In addition to these operations a P4 implementation may choose to implement
+externs for explicitly checking that a fixed-width integer value corresponds to
+a symbolic representation within an `enum` or provide a checked conversion
+extern.
+
+~ Begin P4Example
+extern bool is_valid<Enum, Int>(Int x);
+extern Enum convert<Enum, Int>(Int x, Enum default);
+~ End P4Example
+
+The `is_valid` extern returns `true` for integer values that correspond to
+symbols in the supplied `Enum` type parameter.  The `convert` function returns
+either the symbolic value associated with `x` in `Enum` when one exists, or the
+provided `default`.
 
 ## Expressions on Booleans { #sec-bool-exprs }
 
