@@ -4418,13 +4418,17 @@ Some targets may support parser value set, see Section [#sec-value-set]. Given
 a type `T` for the type parameter of the value set, the type of the value set
 is `set<T>`. The type of the value set must match to the type of all other
 `keysetExpression` in the same `select` expression. If there is a mismatch, the
-compiler must raise an error.
+compiler must raise an error. A parser value set accepts bit type, tuple type
+and struct type as `T` for the type parameter.
 
 For example, to allow control plane API to specify TCP reserved ports at
 runtime, one could write:
 
 ~ Begin P4Example
-value_set<bit<16>>(4) pvs;
+struct vsk_t {
+    bit<16> port;
+}
+value_set<vsk_t>(4) pvs;
 select (p.tcp.port) {
     pvs: runtime_defined_port;
     _: other_port;
@@ -4432,7 +4436,9 @@ select (p.tcp.port) {
 ~ End P4Example
 
 The above example allows the runtime API to populate upto 4 different
-`keysetExpression`s in the `value_set`.
+`keysetExpression`s in the `value_set`. If the `value_set` takes a struct
+as type parameter, the runtime API can use the struct field names to
+name the objects in the value set.
 
 ## verify { #sec-verify }
 
