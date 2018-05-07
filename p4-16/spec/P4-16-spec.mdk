@@ -2076,6 +2076,14 @@ enum bit<16> EtherType {
 introduces a new enumeration type, which contains five constants---e.g.,
 `EtherType.IPV4`.  This `enum` declaration specifies the fixed-width integer representation
 for each entry in the `enum` and provides an underlying type: `bit<16>`.
+This type of `enum` declaration can be thought of as declaring a new `bit<16>`
+type, where variables or fields of this type are expected to be unsigned 16-bit
+integer values, and the mapping of symbolic to numeric values defined by the
+`enum` are effectively constants defined as a part of this type.  In this way,
+an `enum` with an underlying type can be thought of as being a type derived
+from the underlying type carrying equality, assignment, and casts to/from the
+underlying type.
+
 Compiler implementations are expected to raise an error if the fixed-width integer representation
 for an enumeration entry falls outside the representation range of the underlying
 type.
@@ -2831,6 +2839,77 @@ representations ($n$), the following properties must hold:
 1. if an integer $x \notin N$ then $\forall e \in S$, `(E)x != e`
 1. $\forall x \in [0, 2^W]$, `(bit<W>)(E)x == x`
 1. $\forall e \in S$, `(E)(bit<W>)e == e`
+
+For example, in the following code, the `else` clause of the `if/else if/else`
+block can be reached even though the matches on `x` are complete with respect
+to the symbols defined in `MyPartialEnum_t`:
+
+~ Begin P4Example
+enum bit<2> MyPartialEnum_t {
+    VALUE_A = 2w0,
+    VALUE_B = 2w1,
+    VALUE_C = 2w2
+}
+
+bit<2> y = < some value >;
+MyPartialEnum_t x = (MyPartialEnum_t)y;
+
+if (x == MyPartialEnum_t.VALUE_A) {
+    // some code here
+} else if (x == MyPartialEnum_t.VALUE_B) {
+    // some code here
+} else if (x == MyPartialEnum_t.VALUE_C) {
+    // some code here
+} else {
+    // A P4 compiler MUST ASSUME that this branch can be executed
+    // some code here
+}
+~ End P4Example
+
+Additionally, if an enumeration is used as a field of a header, we would expect
+the `transition select` to match `default` when the parsed integer value does
+not match one of the symbolic values of `EtherType` in the following example:
+
+~ Begin P4Example
+enum bit<16> EtherType {
+  VLAN      = 0x8100,
+  IPV4      = 0x0800,
+  IPV6      = 0x86dd
+}
+
+header ethernet {
+  ...
+  EtherType etherType;
+  ...
+}
+
+parser my_parser(...) {
+  state parse_ethernet {
+    packet.extract(hdr.ethernet);
+    transition select(hdr.ethernet.etherType) {
+      EtherType.VLAN : parse_vlan;
+      EtherType.IPV4 : parse_ipv4;
+      EtherType.IPV6: parse_ipv6;
+      default: reject;
+  }
+}
+~ End P4Example
+
+Any `enum` that contains an unspecifed value, whether as the result of a cast
+to an `enum` with an underlying type, parse into the field of an `enum` with an
+underlying type, or simply the declaration of any `enum` without a specified
+initial value might not be equal to any of the values defined for that
+type.  Such an unspecified value should still lead to predictable
+behavior in cases where any legal value would match, e.g. it should
+match in any of these situations:
+
+- If used in a `select` expression, it should match `default` or `_`
+  in a key set expression.
+- If used as a key with `match_kind` `ternary` in a table, it should
+  match a table entry where the field has all bit positions "don't
+  care".
+- If used as a key with `match_kind` `lpm` in a table, it should match
+  a table entry where the field has a prefix length of 0.
 
 Note that if an `enum` value lacking an underlying type appears in the control-plane API, the
 compiler must select a suitable serialization data type and
