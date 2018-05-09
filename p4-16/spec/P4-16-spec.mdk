@@ -4418,8 +4418,8 @@ Some targets may support parser value set, see Section [#sec-value-set]. Given
 a type `T` for the type parameter of the value set, the type of the value set
 is `set<T>`. The type of the value set must match to the type of all other
 `keysetExpression` in the same `select` expression. If there is a mismatch, the
-compiler must raise an error. A parser value set accepts bit type, tuple type
-and struct type as `T` for the type parameter.
+compiler must raise an error. The type of the values in the set must be one of
+bit<>, tuple, and struct.
 
 For example, to allow control plane API to specify TCP reserved ports at
 runtime, one could write:
@@ -4854,16 +4854,25 @@ functionality, P4 supports the notion of a Parser Value Set. This is a named
 set of values with a run time API to add and remove values from the set.
 
 Value sets are declared locally within a parser. They should be declared before
-being referenced in parser `keysetExpression`.
+being referenced in parser `keysetExpression` and can be used as a label in a
+select expression.
 
 Parser Value Sets support a `size` argument to provide hints to the compiler to
-reserve hardware resource to implement the value set. The semantics of the
-`size` argument is similar to the `size` property of a table. If a value set
-has a `size` argument with value `N`, it is recommended that a compiler should
-choose a data plane implementation that is capable of storing `N` value set
-entries. See "Size property of P4 tables and parser value sets"
-[^P4SizeProperty] for further discussion on the implementation of parser value
-set size.
+reserve hardware resource to implement the value set. For example, this parser
+value set:
+
+~ Begin P4Example
+value_set<bit<16>>(4) pvs;
+~ End P4Example
+
+creates a value_set of size 4 with entries of type `bit<16>`.
+
+The semantics of the `size` argument is similar to the `size` property of a
+table. If a value set has a `size` argument with value `N`, it is recommended
+that a compiler should choose a data plane implementation that is capable of
+storing `N` value set entries. See "Size property of P4 tables and parser value
+sets" [^P4SizeProperty] for further discussion on the implementation of parser
+value set size.
 
 The value set is populated by the control-plane by methods specified in the
 P4 Runtime specification.
