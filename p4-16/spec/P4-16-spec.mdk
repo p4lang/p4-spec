@@ -2099,8 +2099,10 @@ enum bit<8> FailingExample {
 }
 ~ End P4Example
 
-would result in an error because the fixed-width integer value associated with
+would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
+
+The `initializer` expression must be a compile-time known value.
  
 Annotations, represented by the non-terminal `optAnnotations`, are
 described in Section [#sec-annotations].
@@ -2789,15 +2791,26 @@ enum bit<8> E {
 }
 ~ End P4Example
 
-Note that each symbolic value in the enum must map to a unique fixed-width integer
-representation, for example the `enum` in the following example would result in
-error:
+More than one symbolic value in an `enum` may map to the same fixed-with
+integer value.
 
 ~ Begin P4Example
-enum bit<8> Bad {
+enum bit<8> NonUnique {
   b1 = 0,
-  b2 = 1,  // Error: b2 and b3 both map to 1
-  b3 = 1,  // one must be changed.
+  b2 = 1,  // Note, both b2 and b3 map to the same value.
+  b3 = 1,  
+  b4 = 2
+}
+~ End P4Example
+
+Additionally, within an `enum` declaration, earlier symbols may be referred to in later
+symbol declarations, so `NonUnique` could also be defined as follows.
+
+~ Begin P4Example
+enum bit<8> NonUnique {
+  b1 = 0,
+  b2 = 1,  // Note, both b2 and b3 map to the same value.
+  b3 = b2,  
   b4 = 2
 }
 ~ End P4Example
@@ -2828,17 +2841,7 @@ E e = (E) x; // sets e to an unnamed value
 ~ End P4Example
 
 sets `e` to an unnamed value, since there is no symbol corresponding to the
-fixed-width integer value `5`.  While the value of `e` is unspecified, it must not
-correspond to any symbol defined within enum `E`.  This is because casting from
-a fixed-width integer type to an `enum` type is required to obey the following semantics:
-
-Given an enum type $E$ with underlying type `bit<W>` and the set of mappings
-of $(s, n)$ where $S$ is the set of symbols ($s$) and $N$ is the set of fixed-width integer
-representations ($n$), the following properties must hold:
-
-1. if an integer $x \notin N$ then $\forall e \in S$, `(E)x != e`
-1. $\forall x \in [0, 2^W]$, `(bit<W>)(E)x == x`
-1. $\forall e \in S$, `(E)(bit<W>)e == e`
+fixed-width integer value `5`.  
 
 For example, in the following code, the `else` clause of the `if/else if/else`
 block can be reached even though the matches on `x` are complete with respect
@@ -2895,7 +2898,7 @@ parser my_parser(...) {
 }
 ~ End P4Example
 
-Any `enum` that contains an unspecifed value, whether as the result of a cast
+Any `enum` that contains an unnamed value, whether as the result of a cast
 to an `enum` with an underlying type, parse into the field of an `enum` with an
 underlying type, or simply the declaration of any `enum` without a specified
 initial value might not be equal to any of the values defined for that
@@ -2917,21 +2920,6 @@ representation.
 For `enum` values with an underlying type and representations, the compiler should
 use the specified underlying type as the serialization data type and
 representation.
-
-In addition to these operations a P4 implementation may choose to implement
-externs for explicitly checking that a fixed-width integer value corresponds to
-a symbolic representation within an `enum` or provide a checked conversion
-extern.
-
-~ Begin P4Example
-extern bool is_valid<Enum, Int>(Int x);
-extern Enum convert<Enum, Int>(Int x, Enum default);
-~ End P4Example
-
-The `is_valid` extern returns `true` for integer values that correspond to
-symbols in the supplied `Enum` type parameter.  The `convert` function returns
-either the symbolic value associated with `x` in `Enum` when one exists, or the
-provided `default`.
 
 ## Expressions on Booleans { #sec-bool-exprs }
 
