@@ -379,7 +379,7 @@ extern InternetChecksum {
   /// returned from an earlier call to the get_state method.  This
   /// state could have been returned from the same instance of the
   /// InternetChecksum extern, or a different one.
-  void set_state(bit<16> checksum_state);
+  void set_state(in bit<16> checksum_state);
 }
 // END:InternetChecksum_extern
 
@@ -433,7 +433,7 @@ extern DirectCounter<W> {
   {
     W    read<W>      (in TableEntry key);
     W    sync_read<W> (in TableEntry key);
-    void set          (in W seed);
+    void set          (in TableEntry key, in W seed);
     void reset        (in TableEntry key);
     void start        (in TableEntry key);
     void stop         (in TableEntry key);
