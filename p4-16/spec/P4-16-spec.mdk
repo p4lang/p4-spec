@@ -2636,6 +2636,46 @@ The two types are treated as synonyms, and all operations that can be
 executed using the original type can be also executed using the newly
 created type.
 
+## Introducing new types { #sec-newtype }
+
+Similarly to `typedef`, the keyword `type` can be used to introduce a
+new type.
+
+~ Begin P4Grammar
+    | optAnnotations T_TYPE typeRef name
+    | optAnnotations T_TYPE derivedTypeDeclaration name
+~ End P4Grammar
+
+(In the grammar `T_TYPE` token is the string `type`; the TYPE token is already
+ used to denote a keyword that the lexer already identifies as a type.)
+
+~ Begin P4Example
+type bit<32> U32;
+U32 x = (U32)0;
+~ End P4Example
+
+While similar to `typedef`, the `type` keyword introduces in fact a
+new type, which is not a synonym with the original type: values of the
+original type and the newly introduced type cannot be mixed in
+expressions.
+
+One important use of such types is in describing P4 values that need
+to be exchanged with the control-plane through communication channels
+(e.g., through the control-plane API or through network packets sent
+to the control-plane).  For example, a P4 architecture may define a
+type for the switch ports:
+
+~Begin P4Example
+type bit<9> PortId_t;
+~End P4Example
+
+This declaration will prevent `PortId_t` values from being used in
+arithmetic expressions.  Moreover, this declaration may enable special
+manipulation or such values by software that lies outside of the
+datapath (e.g., a target specific tool-chain could include software
+that automatically converts values of type `PortId_t` to a different
+representation when exchanged with the control-plane software).
+
 # Expressions { #sec-exprs }
 
 This section describes all expressions that can be used in P4,
@@ -3245,6 +3285,7 @@ The following casts are legal in P4:
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
 - casts between two types that are introduced by `typedef` and are equivalent to one of the above combinations.
+- casts are allowed between a type introduced by `type` and the original type.
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -4002,6 +4043,24 @@ table tbl {
     actions = { ... }
     implementation = ActionProfile(1024);  // constructor invocation
 }
+~ End P4Example
+
+## Operations on types introduced by `type` { #sec-newtype-operations }
+
+Values with a type introduced by the `type` keywork provide only few operations:
+
+- assignment to left-values of the same type
+- comparisons for equality and inequality if the original type supported such comparisons
+- casts to and from the original type
+
+~ Begin P4Example
+type bit<32> U32;
+U32 x = (U32)0;  // cast needed
+U32 y = (U32) ((bit<32>)x + 1);  // casts needed for arithmetic
+bit<32> z = 1;
+bool b0 = x == (U32)z; // cast needed
+bool b1 = (bit<32>)x == z;  // cast needed
+bool b2 = x == y;  // no cast needed
 ~ End P4Example
 
 # Constants and variable declarations { #sec-consts-and-vars }
