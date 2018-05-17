@@ -4421,7 +4421,7 @@ is `set<T>`. The type of the value set must match to the type of all other
 compiler must raise an error. The type of the values in the set must be one of
 bit<>, tuple, and struct.
 
-For example, to allow control plane API to specify TCP reserved ports at
+For example, to allow the control plane API to specify TCP reserved ports at
 runtime, one could write:
 
 ~ Begin P4Example
@@ -4436,10 +4436,14 @@ select (p.tcp.port) {
 }
 ~ End P4Example
 
-The above example allows the runtime API to populate upto 4 different
+The above example allows the runtime API to populate up to 4 different
 `keysetExpression`s in the `value_set`. If the `value_set` takes a struct
 as type parameter, the runtime API can use the struct field names to
-name the objects in the value set.
+name the objects in the value set. The match type of the struct field is
+specified with the `@match` annotation. If the `@match` annotation is not
+specified on a struct field, by default it is assumed to be `@match(exact)`.
+A single non-exact field must be placed into a struct by itself, with the
+desired `@match` annotation.
 
 ## verify { #sec-verify }
 
@@ -6626,9 +6630,9 @@ This appendix summarizes restrictions on compile time and run time
 calls that can be made.  Many of them are described earlier in this
 document, but are collected here for easy reference.
 
-The stateful types of objects in P4~16~ are packages, parsers,
-controls, externs, and tables.  All other types are referred to as
-"value types" here.
+The stateful types of objects in P4~16~ are packages, parsers, controls,
+externs, tables, and value-sets.  All other types are referred to as "value
+types" here.
 
 Some guiding principles:
 
@@ -6645,6 +6649,9 @@ Some guiding principles:
   and cannot be instantiated at the top level.  There is no syntax for
   specifying parameters that are tables.  Tables are only intended to
   be used from within the control where they are defined.
+- Value-sets can be instantiated in an enclosing parser or at the top level.
+  There is no syntax for specifying parameters that are value-sets. Value-sets
+  can be shared between the parsers as long as they are in the scope.
 
 A note on recursion: It is expected that some architectures will
 define capabilities for recirculating a packet to be processed again
@@ -6666,6 +6673,7 @@ constructor parameters to other types.
 | control     | yes     |  no    | yes     |  no    |
 | extern      | yes     | yes    | yes     | yes    |
 | table       |  no     |  no    |  no     |  no    |
+| value-set   |  no     |  no    |  no     |  no    |
 | value types | yes     | yes    | yes     | yes    |
 |-------------|---------|--------|---------|--------|
 
@@ -6698,6 +6706,7 @@ program, but constants may.
 | control     |  no       |  no     | no      | yes     |  no    |
 | extern      | yes       |  no     | yes     | yes     |  no    |
 | table       |  no       |  no     | no      | yes     |  no    |
+| value-set   | yes       |  no     | yes     | no      |  no    |
 | value types | N/A       | N/A     |N/A      |N/A      | N/A    |
 |-------------|-----------|---------|---------|---------|--------|
 
@@ -6715,6 +6724,7 @@ parameters: parsers, controls, extern methods, and actions.
 | control     |  no       |  no     | no      | no      |
 | extern      | yes       | yes     | yes     | no      |
 | table       |  no       |  no     | no      | no      |
+| value-set   |  no       |  no     | no      | no      |
 | value types | yes       | yes     | yes     | yes     |
 |-------------|-----------|---------|---------|---------|
 
@@ -6742,6 +6752,7 @@ e.g. `bit<32> x = rand.get();`.
 | control     |  no       | yes     | no        | no      | no     |
 | extern      | yes       | yes     | yes       | yes     | no     |
 | table       |  no       | yes     | no        | no      | no     |
+| value-set   |  no       | no      | no        | no      | no     |
 | action      |  no       | yes     | no        | yes     | no     |
 | value types | N/A       | N/A     | N/A       | N/A     | N/A    |
 |-------------|-----------|---------|-----------|---------|--------|
