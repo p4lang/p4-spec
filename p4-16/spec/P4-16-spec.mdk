@@ -1362,6 +1362,7 @@ declaration
     | instantiation
     | errorDeclaration
     | matchKindDeclaration
+    | functionDeclaration
     ;
 ~ End P4Grammar
 
@@ -3598,7 +3599,7 @@ select(hdr.ipv4.ihl, hdr.ipv4.protocol) {
 
 The type of a product of sets is a set of tuples.
 
-## Operations on `struct` types { #sec-ops-on-structs }
+## Operations on struct types { #sec-ops-on-structs }
 
 The only operation defined on expressions whose type is a `struct` is
 field access, written using dot (".") notation---e.g., `s.field`. If
@@ -4141,6 +4142,33 @@ bool b0 = x == (U32)z; // cast needed
 bool b1 = (bit<32>)x == z;  // cast needed
 bool b2 = x == y;  // no cast needed
 ~ End P4Example
+
+# Function declarations { #sec-functions }
+
+Functions can be declared only at the top-level.  Functions are very
+similar to functions in languages such as C or Java.  However, P4 does
+not permit recursive functions.
+
+~ Begin P4Grammar
+functionDeclaration
+    : functionPrototype blockStatement
+    ;
+~ End P4Grammar
+
+Here is an example of a function that returns the maximum of two 32-bit values:
+
+~ Begin P4Example
+bit<32> max(in bit<32> left, in bit<32> right) {
+   if (left > right)
+      return left;
+   return right;
+}
+~ End P4Example
+
+A function returns a value using the `return` statement.  A function
+that returns `void` can simply use the `return` statement with no
+arguments.  A function with a non-void return type must return a value
+of the suitable type on all possible execution paths.
 
 # Constants and variable declarations { #sec-consts-and-vars }
 
