@@ -6388,6 +6388,17 @@ annotations
 annotation
     : '@' name
     | '@' name '(' expressionList ')'
+    | '@' name '(' kvList ')'
+    ;
+...    
+kvPair
+    : IDENTIFIER '=' expression
+    ;
+
+kvList
+    : /* empty */
+    | kvPair
+    | kvList ',' kvPair
     ;
 ~ End P4Grammar
 
@@ -6395,12 +6406,50 @@ annotation
 
 Annotation names that start with lowercase letters are reserved for
 the standard library and architecture.  This document pre-defines a
-set of "standard" annotations.  We expect that this list will grow.
+set of "standard" annotations, see Appendix [#sec-p4-reserved-annotations].  We expect that this list will grow.
 We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., an organization named X would use
 annotations named like `@X_annotation`
+## Key-Value Pairs in Annotations
 
-### Annotations on the table action list
+One useful variant of annotations is a comma-separated list of key-value (k-v)
+pairs. This can be used to assign multiple properties to an entity in a more concise and readable way.
+Multiple annotations of either form may be used and are cumulative, i.e. the list of k-v pairs will accumulate.
+If a given key appears more than once, then the latest value will replace all earlier ones.
+The following sections illustrate two ways of writing the same list of annotations.
+
+### Multiple Annotation Statements Each using Single K-V Expression
+In this form, multiple `@pkginfo` annotations are declared. The effect is to build a list of annotations
+for the `main()` object.
+~ Begin P4Example
+@pkginfo(version="1.2.3")
+@pkginfo(brief="A program to demonstrate documentation")
+@pkginfo(description="A longer description, can span lines.\
+    Second line of longer description.")
+@pkginfo(arch="PSA 1.0")
+@pkginfo(organization="P4.org")
+@pkginfo(contact="support@p4.org")
+@pkginfo(url="https://github.com/p4lang")
+V1Switch(...) main;  // Entity being annotated
+~ End P4Example
+### Single Annotation Statement Using Multiple K-V Expressions
+In this form, a single `@pkginfo` annotation is declared. The effect is identical to the example
+above using multiple declarations.
+~ Begin P4Example
+@pkginfo(
+    version="1.2.3",
+    brief="A program to demonstrate documentation",
+    description="A longer description, can span lines.\
+        Second line of longer description.",
+    arch="PSA 1.0",
+    organization="P4.org",
+    contact="support@p4.org",
+    url="https://github.com/p4lang"
+)
+V1Switch(...) main;  // Entity being annotated
+~ End P4Example
+
+### Annotations on the table action list { #sec-table-action-anno }
 
 The following two annotations can be used to give additional
 information to the compiler and control-plane about actions in a
@@ -6475,6 +6524,25 @@ to two controllable entities, which is illegal.
 The `@atomic` annotation, described in Section [#sec-concurrency]
 can be used to enforce the atomic execution of a code block.
 
+## Package Documentation Annotations { #sec-package-anno }
+Package-level metadata can be declared by annotating the `main()` function with the `pkginfo` annotation. Multiple k-v pairs
+can be assigned. These can be extracted by the compiler into P4Info and used for package
+management. An example is given below. Key names are not controlled by the P4 Language specification.
+Implementers or other bodies may establish conventions, for example the P4-API working group.
+~ Begin P4Example
+@pkginfo(
+    version="1.2.3",
+    brief="A program to demonstrate documentation",
+    description="A longer description, can span lines.\
+        Second line of longer description.",
+    arch="PSA 1.0",
+    organization="P4.org",
+    contact="support@p4.org",
+    url="https://github.com/p4lang"
+)
+V1Switch(...) main;  // Entity being annotated
+~ End P4Example
+
 ## Target-specific annotations
 
 Each P4 compiler implementation can define additional annotations
@@ -6506,6 +6574,21 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `table`   | `transition` |  `true` |  `tuple` |
 | `typedef` | `varbit`  | `verify` | `void`       |
 |------|------|------|------|
+
+# Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
+
+The following table shows all P4 reserved annotations.
+
+|---------------|----------------------------------------------------|--------------------------|
+| Annotation    | Purpose                                            | See Section              |
++---------------+:---------------------------------------------------+:-------------------------+
+| `atomic`      | specify atomic execution                           | [#sec-concurrency]       |
+| `defaultonly` | actions can only appear in the default action      | [#sec-table-action-anno] |
+| `hidden`      | hides a controllable entity from the control plane | [#sec-name-annotations]  |
+| `name`        | assign local control-plane name                    | [#sec-name-annotations]  |
+| `pkginfo`     | assign package-level metadata properties           | [#sec-package-anno]      |
+| `tableonly`   | actions can only appear within a table             | [#sec-table-action-anno] |
+|---------------|----------------------------------------------------|--------------------------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
 
