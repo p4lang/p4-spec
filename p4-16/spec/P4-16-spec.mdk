@@ -2026,7 +2026,7 @@ An enumeration type is defined using the following syntax:
 ~ Begin P4Grammar
 enumDeclaration
     : optAnnotations ENUM name '{' identifierList '}'
-    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
+    | optAnnotations ENUM BIT '<' INTEGER '>' name '{' specifiedIdentifierList '}'
     ;
 
 identifierList
@@ -2058,8 +2058,8 @@ specified, so their "size" in bits is not specified (it is
 target-specific).
 
 It is also possible to specify an `enum` with an underlying representation.
-This requires the programmer provide both the fixed-width integer type and an associated
-fixed-width integer value for each symbolic entry in the enumeration.  For example, the
+This requires the programmer provide both the fixed-width unsigned integer type and an associated
+fixed-width unsigned integer value for each symbolic entry in the enumeration.  For example, the
 declaration
 
 ~ Begin P4Example
@@ -2074,7 +2074,7 @@ enum bit<16> EtherType {
 ~ End P4Example
 
 introduces a new enumeration type, which contains five constants---e.g.,
-`EtherType.IPV4`.  This `enum` declaration specifies the fixed-width integer representation
+`EtherType.IPV4`.  This `enum` declaration specifies the fixed-width unsigned integer representation
 for each entry in the `enum` and provides an underlying type: `bit<16>`.
 This type of `enum` declaration can be thought of as declaring a new `bit<16>`
 type, where variables or fields of this type are expected to be unsigned 16-bit
@@ -2084,7 +2084,7 @@ an `enum` with an underlying type can be thought of as being a type derived
 from the underlying type carrying equality, assignment, and casts to/from the
 underlying type.
 
-Compiler implementations are expected to raise an error if the fixed-width integer representation
+Compiler implementations are expected to raise an error if the fixed-width unsigned integer representation
 for an enumeration entry falls outside the representation range of the underlying
 type.
 
@@ -2816,11 +2816,11 @@ b = (E) x;      // sets b to E.e2
 ~ End P4Example
 
 casts `a`, which was initialized to `E.e2` to a `bit<8>`, using the specified
-fixed-width integer representation for `E.e2`, `1`.  The variable `b` is then set to the
-symbolic value `E.e2`, which corresponds to the fixed-width integer value `1`.
+fixed-width unsigned integer representation for `E.e2`, `1`.  The variable `b` is then set to the
+symbolic value `E.e2`, which corresponds to the fixed-width unsigned integer value `1`.
 
-Note that while it is always safe to cast from an `enum` to its fixed-width integer type,
-and vice versa, there may be cases where casting a fixed-width integer value to
+Note that while it is always safe to cast from an `enum` to its fixed-width unsigned integer type,
+and vice versa, there may be cases where casting a fixed-width unsigned integer value to
 its related `enum` type produces an unnamed value.
 
 ~ Begin P4Example
@@ -2829,7 +2829,7 @@ E e = (E) x; // sets e to an unnamed value
 ~ End P4Example
 
 sets `e` to an unnamed value, since there is no symbol corresponding to the
-fixed-width integer value `5`.  
+fixed-width unsigned integer value `5`.
 
 For example, in the following code, the `else` clause of the `if/else if/else`
 block can be reached even though the matches on `x` are complete with respect
