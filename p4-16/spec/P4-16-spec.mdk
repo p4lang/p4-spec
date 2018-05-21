@@ -2803,18 +2803,6 @@ enum bit<8> NonUnique {
 }
 ~ End P4Example
 
-Additionally, within an `enum` declaration, earlier symbols may be referred to in later
-symbol declarations, so `NonUnique` could also be defined as follows.
-
-~ Begin P4Example
-enum bit<8> NonUnique {
-  b1 = 0,
-  b2 = 1,  // Note, both b2 and b3 map to the same value.
-  b3 = b2,  
-  b4 = 2
-}
-~ End P4Example
-
 An `enum` with an underlying type also supports explicit casts to and from the
 underlying type.  For instance, the following code:
 
@@ -2832,8 +2820,8 @@ fixed-width integer representation for `E.e2`, `1`.  The variable `b` is then se
 symbolic value `E.e2`, which corresponds to the fixed-width integer value `1`.
 
 Note that while it is always safe to cast from an `enum` to its fixed-width integer type,
-it may not be the case that every fixed-width integer value specified by the underlying type
-has a related symbol in the `enum`.  For instance, the following code:
+and vice versa, there may be cases where casting a fixed-width integer value to
+its related `enum` type produces an unnamed value.
 
 ~ Begin P4Example
 bit<8> x = 5;
@@ -2898,11 +2886,11 @@ parser my_parser(...) {
 }
 ~ End P4Example
 
-Any `enum` that contains an unnamed value, whether as the result of a cast
+Any variable with an `enum` type that contains an unnamed value, whether as the result of a cast
 to an `enum` with an underlying type, parse into the field of an `enum` with an
 underlying type, or simply the declaration of any `enum` without a specified
-initial value might not be equal to any of the values defined for that
-type.  Such an unspecified value should still lead to predictable
+initial value will not be equal to any of the values defined for that
+type.  Such an unnamed value should still lead to predictable
 behavior in cases where any legal value would match, e.g. it should
 match in any of these situations:
 
