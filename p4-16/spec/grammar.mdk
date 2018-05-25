@@ -339,6 +339,7 @@ structField
 
 enumDeclaration
     : optAnnotations ENUM name '{' identifierList '}'
+    | optAnnotations ENUM BIT '<' INTEGER '>' name '{' specifiedIdentifierList '}'
     ;
 
 errorDeclaration
@@ -352,6 +353,15 @@ matchKindDeclaration
 identifierList
     : name
     | identifierList ',' name
+    ;
+
+specifiedIdentifierList
+    : specifiedIdentifier
+    | specifiedIdentifierList ', ' specifiedIdentifier
+    ;
+
+specifiedIdentifier
+    : name '=' initializer
     ;
 
 typedefDeclaration
