@@ -25,6 +25,9 @@ Files:
 - ```Makefile``` builds documentation in the build subdirectory
 
 ## Building
+Follow the instructions for various platforms below.
+
+HINT: For *nix builds using make, you can use use `make html` for quicker turnarounds and `make` for the final htlp + PDF output.
 
 ### MacOS
 
@@ -46,7 +49,13 @@ install them on a Mac using Font Book:
 UtopiaStd-Regular.otf
 luximr.ttf
 ```
-
+### Linux
+```
+sudo apt-get install nodejs
+sudo npm install madoko -g
+make
+```
+In particular (on Ubuntu 16.04 at least), don't try `sudo apt-get install npm` because `npm` is already included and this will yield a bunch of confusing error messages from `apt-get`.
 ### Windows
 
 You need to install miktex [http://miktex.org/], madoko
