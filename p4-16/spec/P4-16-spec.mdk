@@ -1518,17 +1518,19 @@ the same result):
 
 1.	Arguments are evaluated from left to right as they appear in the
       function call expression.
-2.	For each `out` and `inout` argument the corresponding
+2.      If a parameter has a default value and no corresponding argument is
+      supplied, the default value is used as an argument.
+3.	For each `out` and `inout` argument the corresponding
       l-value is saved (so it cannot be changed by the evaluation of
       the following arguments). This is important if the argument
       contains indexing operations into a header stack.
-3.	The value of each argument is saved into a temporary.
-4.	The function is invoked with the temporaries as arguments. We are
+4.	The value of each argument is saved into a temporary.
+5.	The function is invoked with the temporaries as arguments. We are
       guaranteed that the temporaries that are passed as arguments are
       never aliased to each other, so this "generated" function call
       can be implemented using call-by-reference if supported by the
       architecture.
-5.	On function return, the temporaries that correspond to `out`
+6.	On function return, the temporaries that correspond to `out`
       or `inout` arguments are copied in order from left to right
       into the l-values saved in step 2.
 
@@ -1608,6 +1610,7 @@ nonEmptyParameterList
 
 parameter
     : optAnnotations direction typeRef name
+    | optAnnotations direction typeRef name '=' expression
     ;
 
 direction
@@ -1639,6 +1642,60 @@ directions:
   including values for the directionless parameters. The directionless
   parameters in this case behave like `in` parameters.
   See Section [#sec-invoke-actions] for further details.
+- Default parameter values are only allowed for 'in' or direction-less parameters;
+  these values must evaluate to compile-time constants.
+
+### Optional parameters
+
+A parameter that is annotated with the `@optional` annotation is
+optional: the user may supply no value for that parameter in an
+invocation.  Optional parameters can only appear for arguments of:
+packages, extern functions, extern methods, and extern object
+constructors.  Optional parameters cannot have default values.  If a
+procedure-like construct has both optional parameters and default values then it
+can only be called using named arguments.  It is recommended, but not
+mandatory, for all optional parameters to be at the end of a parameter
+list.
+
+The implementation of such objects is not expressed in P4, so the
+meaning and implementation of optional parameters should be specified
+by the target architecture.  For example, we can imagine a two-stage
+switch architecture where the second stage is optional.  This could be
+declared as a package with an optional parameter:
+
+~Begin P4Example
+package pipeline(...);
+package switch(pipeline first, @optional pipeline second);
+
+...
+pipeline(...) ingress;
+switch(ingress) main;   // a switch with a single-stage pipeline
+~End P4Example
+
+The following example shows optional parameters and parameters with
+default values.
+
+~Begin P4Example
+extern void h(in bit<32> a, in bool b = true);  // default value
+
+// function calls
+h(10);  // same as h(10, true);
+h(a = 10);  // same as h(10, true);
+h(a = 10, b = true);
+
+struct Empty {}
+control nothing(inout Empty h, inout Empty m) {
+   apply {}
+}
+
+parser parserProto<H, M>(packet_in p, out Header h, inout Meta m);
+control controlProto<H, M>(inout Header h, inout Meta m);
+
+package pack<HP, MP, HC, MC>(@optional parserProto<HP, MP> _parser,  // optional parameter
+                             controlProto<HC, MC> _control = nothing()); // default parameter value
+
+pack() main;   // No value for _parser, _control is an instance of nothing()
+~End P4Example
 
 ## Name resolution { #sec-name-resolution }
 
@@ -2109,7 +2166,7 @@ would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
 
 The `initializer` expression must be a compile-time known value.
- 
+
 Annotations, represented by the non-terminal `optAnnotations`, are
 described in Section [#sec-annotations].
 
@@ -2493,9 +2550,11 @@ control d(packet_out b, in Hdr h) {
 
 Functions and methods are the only P4 constructs that support
 overloading: there can exist multiple methods with the same name in
-the same scope. Even so, two functions (or methods of an `extern`
-object) can have the same name only if they have a different number of
-parameters.
+the same scope.  Whe overloading is used, the compiler must be able to
+disambiguate at compile-time which method or function is being called,
+either by the number of arguments or by the names of the arguments,
+when calls are specifying argument names.  Argument type information
+is not used in disambiguating calls.
 
 ### Type specialization { #sec-type-spec }
 
@@ -2804,7 +2863,7 @@ integer value.
 enum bit<8> NonUnique {
   b1 = 0,
   b2 = 1,  // Note, both b2 and b3 map to the same value.
-  b3 = 1,  
+  b3 = 1,
   b4 = 2
 }
 ~ End P4Example
@@ -3924,8 +3983,8 @@ the values of the valid fields are equal as headers).
 
 ## Method invocations and function calls { #sec-functions }
 
-Method invocations and function calls can be invoked using standard
-syntax.
+Method invocations and function calls can be invoked using the
+following syntax:
 
 ~ Begin P4Grammar
 expression
@@ -3944,7 +4003,8 @@ nonEmptyArgList
     ;
 
 argument
-    : expression
+    : expression  /* positional argument */
+    | name '=' expression  /* named argument */
     | DONTCARE
     ;
 
@@ -3954,12 +4014,32 @@ typeArgumentList
     ;
 ~ End P4Grammar
 
-Function arguments are evaluated in order, left to right, before the
-function invocation takes place. The calling convention is
-copy-in/copy-out (Section [#sec-calling-convention]). For generic functions the type
-arguments can be explicitly specified in the function call. The compiler does not
-insert implicit casts for the arguments to methods or functions---the argument types
-must match the parameter types exactly.
+A function call or method invocation can optionally specify for each
+argument the corresponding parameter name.  It is illegal to use names
+only for some arguments: either all or no arguments should specify
+the parameter name.  Function arguments are evaluated in the order
+they appear, left to right, before the function invocation takes
+place.
+
+~ Begin P4Example
+extern void f(in bit<32> x, out bit<16> y);
+bit<32> xa = 0;
+bit<16> ya;
+f(xa, ya);  // match arguments by position
+f(x = xa, y = ya);  // match arguments by name
+f(y = ya, x = xa);  // match arguments by name in any order
+//f(x = xa);  -- error: enough arguments
+//f(x = xa, x = ya);  -- error: argument specified twice
+//f(x = xa, ya);  -- error: some arguments specified by name
+//f(z = xa, w = yz);  -- error: no parameter named z or w
+//f(x = xa, y = 0);  -- error: y must be a left-value
+~ End P4Example
+
+The calling convention is copy-in/copy-out (Section
+[#sec-calling-convention]).  For generic functions the type arguments
+can be explicitly specified in the function call. The compiler does
+not insert implicit casts for the arguments to methods or
+functions---the argument types must match the parameter types exactly.
 
 The result returned by a function call is discarded when the function
 call is used as a statement.
@@ -3986,8 +4066,9 @@ Allocation of such objects can be performed in two ways:
   object of the corresponding type.
 - Using instantiations, described in Section [#sec-instantiations].
 
-The syntax for a constructor invocation is similar to a function call.
-Constructors are evaluated entirely at compilation-time (see Section
+The syntax for a constructor invocation is similar to a function call;
+constructors can also be called using named arguments.  Constructors
+are evaluated entirely at compilation-time (see Section
 [#sec-p4-abstract-mach]). In consequence, all constructor arguments
 must also be expressions that can be evaluated at compilation time.
 
@@ -4095,7 +4176,7 @@ An instantiation is written as a constructor invocation followed by a
 name.  Instantiations are always executed at compilation-time (Section
 [#sec-ct-constants]). The effect is to allocate an object with the
 specified name, and to bind it to the result of the constructor
-invocation.
+invocation.  Note that instantiation arguments can be specified by name.
 
 For example, a hypothetical bank of counter objects can be
 instantiated as follows:
@@ -6574,7 +6655,7 @@ annotation
     | '@' name '(' expressionList ')'
     | '@' name '(' keyValueList ')'
     ;
-...    
+...
 keyValuePair
     : IDENTIFIER '=' expression
     ;
@@ -6634,7 +6715,15 @@ We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., an organization named X would use
 annotations named like `@X_annotation`
 
-### Annotations on the table action list { #sec-table-action-anno }
+### Optional parameter annotations
+
+A parameter to a package, extern method, extern function or extern
+object constructor can be annotated with `@optional` to indicate that
+the user does not need to provide a corresponding argument for that
+parameter.  The meaning of parameter with no supplied value is
+target-dependent.
+
+### Annotations on the table action list  { #sec-table-action-anno }
 
 The following two annotations can be used to give additional
 information to the compiler and control-plane about actions in a
