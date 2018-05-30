@@ -1207,7 +1207,7 @@ The lexer recognizes the following kinds of terminals:
 
 - `IDENTIFIER`: start with a letter or underscore, and contain
   letters, digits and underscores
-- `TYPE`: identifier that denotes a type name
+- `TYPE_IDENTIFIER`: identifier that denotes a type name
 - `INTEGER`: integer literals
 - `DONTCARE`: a single underscore
 - Keywords such as `RETURN`. By convention, each keyword terminal corresponds to a
@@ -1235,7 +1235,7 @@ nonTypeName
 
 name
     : nonTypeName
-    | TYPE
+    | TYPE_IDENTIFIER
     ;
 ~ End P4Grammar
 
@@ -2016,8 +2016,8 @@ namedType
     ;
 
 prefixedType
-    : TYPE
-    | dotPrefix TYPE
+    : TYPE_IDENTIFIER
+    | dotPrefix TYPE_IDENTIFIER
     ;
 
 typeName
@@ -2109,7 +2109,7 @@ would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
 
 The `initializer` expression must be a compile-time known value.
- 
+
 Annotations, represented by the non-terminal `optAnnotations`, are
 described in Section [#sec-annotations].
 
@@ -2454,7 +2454,7 @@ methodPrototypes
 
 methodPrototype
     : optAnnotations functionPrototype ';'
-    | optAnnotations TYPE '(' parameterList ')' ';' //constructor
+    | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';' //constructor
     ;
 
 typeOrVoid
@@ -2642,12 +2642,9 @@ Similarly to `typedef`, the keyword `type` can be used to introduce a
 new type.
 
 ~ Begin P4Grammar
-    | optAnnotations T_TYPE typeRef name
-    | optAnnotations T_TYPE derivedTypeDeclaration name
+    | optAnnotations TYPE_IDENTIFIER typeRef name
+    | optAnnotations TYPE_IDENTIFIER derivedTypeDeclaration name
 ~ End P4Grammar
-
-(In the grammar `T_TYPE` token is the string `type`; the TYPE token is already
- used to denote a keyword that the lexer already identifies as a type.)
 
 ~ Begin P4Example
 type bit<32> U32;
@@ -2844,7 +2841,7 @@ integer value.
 enum bit<8> NonUnique {
   b1 = 0,
   b2 = 1,  // Note, both b2 and b3 map to the same value.
-  b3 = 1,  
+  b3 = 1,
   b4 = 2
 }
 ~ End P4Example
@@ -6633,7 +6630,7 @@ annotation
     | '@' name '(' expressionList ')'
     | '@' name '(' keyValueList ')'
     ;
-...    
+...
 keyValuePair
     : IDENTIFIER '=' expression
     ;
@@ -7226,7 +7223,7 @@ The grammar is actually ambiguous, so the lexer and the parser must
 collaborate for parsing the language. In particular, the lexer must be
 able to distinguish two kinds of identifiers:
 
-- Type names previously introduced (`TYPE` tokens)
+- Type names previously introduced (`TYPE_IDENTIFIER` tokens)
 - Regular identifiers (`IDENTIFIER` token)
 
 The parser has to use a symbol table to indicate to the lexer how to
@@ -7241,10 +7238,10 @@ parser p(bit<8> b) { ... }
 ~ End P4Example
 The lexer has to return the following terminal kinds:
 ~ Begin P4Example
-t - TYPE
-s - TYPE
+t - TYPE_IDENTIFIER
+s - TYPE_IDENTIFIER
 x - IDENTIFIER
-p - TYPE
+p - TYPE_IDENTIFIER
 b - IDENTIFIER
 ~ End P4Example
 
