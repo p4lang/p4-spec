@@ -6737,18 +6737,23 @@ annotations
 
 annotation
     : '@' name
-    | '@' name '(' expressionList ')'
-    | '@' name '(' keyValueList ')'
+    | '@' name '(' argumentList ')'
     ;
 ...
-keyValuePair
-    : IDENTIFIER '=' expression
+argumentList
+    : /* empty */
+    | nonEmptyArgList
     ;
 
-keyValueList
-    : /* empty */
-    | keyValuePair
-    | keyValueList ',' keyValuePair
+nonEmptyArgList
+    : argument
+    | nonEmptyArgList ',' argument
+    ;
+
+argument
+    : expression          /* positional argument to the annotation */
+    | name '=' expression /* key-value pair for the annotation */
+    | DONTCARE
     ;
 ~ End P4Grammar
 
