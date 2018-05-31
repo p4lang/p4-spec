@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.0.0
+Title Note: version 1.1.0-rc
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -141,7 +141,7 @@ p4grammar {
 P4 is a language for programming the data plane of network
 devices. This document provides a precise definition of the P4~16~
 language, which is the 2016 revision of the P4 language
-<http://p4.org>.  The target audience for this document includes
+(<http://p4.org>). The target audience for this document includes
 developers who want to write compilers, simulators, IDEs, and
 debuggers for P4 programs. This document may also be of interest to P4
 programmers who are interested in understanding the syntax and
@@ -6917,7 +6917,47 @@ The P4 compiler should provide:
   of the wrong type
 - Warnings for unknown annotations.
 
-# Appendix: P4 reserved keywords { #sec-p4-keywords; @h1:"A" }
+# Appendix: Revision History { #sec-revision-history; @h1:"A" }
+
+|:---{width:12%}---|:---{width:12%}---|:---{width:76%}---|
+| **Release** | **Release Date** | **Summary of Changes** |
+|-----|-----|-----|
+| 1.0.0 | May 17, 2017 | Initial version. |
+|-----|-----|-----|
+| 1.1.0 | June 5, 2018 | Added top-level functions, optional and named parameters, `enum` | 
+|       |          | representations, parser value sets, type definitions, saturating | 
+|       |          | saturating arithmetic, and structured annotations. | 
+|       |          | Removed `globalname` annotation and added a table `size` property. |
+|       |          | Clarified semantics of operations on invalid headers, added restrictions |
+|       |          | on arguments to calls, and modified precedence of bitwise operators. | 
+|-----|-----|-----|
+
+## Summary of changes made in version 1.1.0
+
+* Top-level functions (Section [#sec-functions])
+    - Functions may be declared at the top-level of a P4 program with data-plane arguments.
+* Optional and named parameters (Section [#sec-calling-conventions])
+    - Parameters may be specified by name, with a default value, or designated as optional.
+* `enum` representations (Section [#sec-enum-exprs])
+    - `enum` values to be specified with a concrete representation.
+* Type definitions (Section [#sec-newtype])
+    - New types may be introduced in programs.
+* Saturating arithmetic (Section [#sec-bit-ops])
+    - Saturating arithmetic is supported on some targets.
+* Structured annotations (Section [#sec-annotations])
+    - Annotations may be specified as lists of key-value pairs
+* Globalname (Section [#sec-name-annotations])
+    - The reserved `globalname` annotation has been removed. 
+* Table `size` property (Section [#sec-table-size-property])
+    - Tables may support an optional `size` property. 
+* Invalid headers (Section [#sec-ops-on-hdrs])
+    - Clarified semantics of operations on invalid headers.
+* Calling restrictions (Section [#sec-calling-restrictions])
+    - Added restrictions on kinds of values that may be passed as arguments to calls.
+* Bitwise operator precedence (Section [#sec-grammar])
+    - Modified precedence conventions so that bitwise operators `&` `|` and `^` have higher precedence than relation operators `<` `>` `<=` `>=`.
+
+# Appendix: P4 reserved keywords { #sec-p4-keywords }
 
 The following table shows all P4 reserved keywords. Some identifiers
 are treated as keywords only in specific contexts (e.g., the keyword `actions`).
@@ -7066,7 +7106,7 @@ h.ipv4.hdrChecksum = ck16.get();
 ~ End P4Example
 
 
-# Appendix: Restrictions on compile time and run time calls
+# Appendix: Restrictions on compile time and run time calls { #sec-calling-restrictions }
 
 This appendix summarizes restrictions on compile time and run time
 calls that can be made.  Many of them are described earlier in this
