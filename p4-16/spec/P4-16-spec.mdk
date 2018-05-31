@@ -1648,7 +1648,7 @@ directions:
 ### Optional parameters
 
 A parameter that is annotated with the `@optional` annotation is
-optional: the user may supply no value for that parameter in an
+optional: the user may omit the value for that parameter in an
 invocation.  Optional parameters can only appear for arguments of:
 packages, extern functions, extern methods, and extern object
 constructors.  Optional parameters cannot have default values.  If a
@@ -1660,19 +1660,20 @@ list.
 The implementation of such objects is not expressed in P4, so the
 meaning and implementation of optional parameters should be specified
 by the target architecture.  For example, we can imagine a two-stage
-switch architecture where the second stage is optional.  This could be
+switch architecture where the second stage is optional. This could be
 declared as a package with an optional parameter:
 
 ~Begin P4Example
 package pipeline(...);
 package switch(pipeline first, @optional pipeline second);
-
 ...
 pipeline(...) ingress;
 switch(ingress) main;   // a switch with a single-stage pipeline
 ~End P4Example
 
-The following example shows optional parameters and parameters with
+Here the target architecture could implement the elided optional argument using an empty pipeline.
+
+The following example shows optional parameters and parameters with 
 default values.
 
 ~Begin P4Example
