@@ -27,7 +27,7 @@ nonTypeName
 
 name
     : nonTypeName
-    | TYPE
+    | TYPE_IDENTIFIER
     ;
 
 optAnnotations
@@ -228,7 +228,7 @@ functionPrototype
 
 methodPrototype
     : optAnnotations functionPrototype ';'
-    | optAnnotations TYPE '(' parameterList ')' ';'
+    | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';'
     ;
 
 /************************** TYPES ****************************/
@@ -247,8 +247,8 @@ namedType
     ;
 
 prefixedType
-    : TYPE
-    | dotPrefix TYPE
+    : TYPE_IDENTIFIER
+    | dotPrefix TYPE_IDENTIFIER
     ;
 
 typeName
@@ -368,6 +368,8 @@ specifiedIdentifier
 typedefDeclaration
     : optAnnotations TYPEDEF typeRef name ';'
     | optAnnotations TYPEDEF derivedTypeDeclaration name ';'
+    | optAnnotations TYPE typeRef name ';'
+    | optAnnotations TYPE derivedTypeDeclaration name ';'
     ;
 
 /*************************** STATEMENTS *************************/

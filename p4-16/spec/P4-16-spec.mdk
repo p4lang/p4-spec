@@ -1207,7 +1207,7 @@ The lexer recognizes the following kinds of terminals:
 
 - `IDENTIFIER`: start with a letter or underscore, and contain
   letters, digits and underscores
-- `TYPE`: identifier that denotes a type name
+- `TYPE_IDENTIFIER`: identifier that denotes a type name
 - `INTEGER`: integer literals
 - `DONTCARE`: a single underscore
 - Keywords such as `RETURN`. By convention, each keyword terminal corresponds to a
@@ -1235,7 +1235,7 @@ nonTypeName
 
 name
     : nonTypeName
-    | TYPE
+    | TYPE_IDENTIFIER
     ;
 ~ End P4Grammar
 
@@ -2016,8 +2016,8 @@ namedType
     ;
 
 prefixedType
-    : TYPE
-    | dotPrefix TYPE
+    : TYPE_IDENTIFIER
+    | dotPrefix TYPE_IDENTIFIER
     ;
 
 typeName
@@ -2109,7 +2109,7 @@ would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
 
 The `initializer` expression must be a compile-time known value.
- 
+
 Annotations, represented by the non-terminal `optAnnotations`, are
 described in Section [#sec-annotations].
 
@@ -2454,7 +2454,7 @@ methodPrototypes
 
 methodPrototype
     : optAnnotations functionPrototype ';'
-    | optAnnotations TYPE '(' parameterList ')' ';' //constructor
+    | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';' //constructor
     ;
 
 typeOrVoid
@@ -2636,6 +2636,43 @@ The two types are treated as synonyms, and all operations that can be
 executed using the original type can be also executed using the newly
 created type.
 
+## Introducing new types { #sec-newtype }
+
+Similarly to `typedef`, the keyword `type` can be used to introduce a
+new type.
+
+~ Begin P4Grammar
+    | optAnnotations TYPE_IDENTIFIER typeRef name
+    | optAnnotations TYPE_IDENTIFIER derivedTypeDeclaration name
+~ End P4Grammar
+
+~ Begin P4Example
+type bit<32> U32;
+U32 x = (U32)0;
+~ End P4Example
+
+While similar to `typedef`, the `type` keyword introduces in fact a
+new type, which is not a synonym with the original type: values of the
+original type and the newly introduced type cannot be mixed in
+expressions.
+
+One important use of such types is in describing P4 values that need
+to be exchanged with the control-plane through communication channels
+(e.g., through the control-plane API or through network packets sent
+to the control-plane).  For example, a P4 architecture may define a
+type for the switch ports:
+
+~Begin P4Example
+type bit<9> PortId_t;
+~End P4Example
+
+This declaration will prevent `PortId_t` values from being used in
+arithmetic expressions.  Moreover, this declaration may enable special
+manipulation or such values by software that lies outside of the
+datapath (e.g., a target specific tool-chain could include software
+that automatically converts values of type `PortId_t` to a different
+representation when exchanged with the control-plane software).
+
 # Expressions { #sec-exprs }
 
 This section describes all expressions that can be used in P4,
@@ -2804,7 +2841,7 @@ integer value.
 enum bit<8> NonUnique {
   b1 = 0,
   b2 = 1,  // Note, both b2 and b3 map to the same value.
-  b3 = 1,  
+  b3 = 1,
   b4 = 2
 }
 ~ End P4Example
@@ -3245,6 +3282,7 @@ The following casts are legal in P4:
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
 - casts between two types that are introduced by `typedef` and are equivalent to one of the above combinations.
+- casts are allowed between a type introduced by `type` and the original type.
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -4002,6 +4040,24 @@ table tbl {
     actions = { ... }
     implementation = ActionProfile(1024);  // constructor invocation
 }
+~ End P4Example
+
+## Operations on types introduced by `type` { #sec-newtype-operations }
+
+Values with a type introduced by the `type` keywork provide only few operations:
+
+- assignment to left-values of the same type
+- comparisons for equality and inequality if the original type supported such comparisons
+- casts to and from the original type
+
+~ Begin P4Example
+type bit<32> U32;
+U32 x = (U32)0;  // cast needed
+U32 y = (U32) ((bit<32>)x + 1);  // casts needed for arithmetic
+bit<32> z = 1;
+bool b0 = x == (U32)z; // cast needed
+bool b1 = (bit<32>)x == z;  // cast needed
+bool b2 = x == y;  // no cast needed
 ~ End P4Example
 
 # Constants and variable declarations { #sec-consts-and-vars }
@@ -6574,7 +6630,7 @@ annotation
     | '@' name '(' expressionList ')'
     | '@' name '(' keyValueList ')'
     ;
-...    
+...
 keyValuePair
     : IDENTIFIER '=' expression
     ;
@@ -7167,7 +7223,7 @@ The grammar is actually ambiguous, so the lexer and the parser must
 collaborate for parsing the language. In particular, the lexer must be
 able to distinguish two kinds of identifiers:
 
-- Type names previously introduced (`TYPE` tokens)
+- Type names previously introduced (`TYPE_IDENTIFIER` tokens)
 - Regular identifiers (`IDENTIFIER` token)
 
 The parser has to use a symbol table to indicate to the lexer how to
@@ -7182,10 +7238,10 @@ parser p(bit<8> b) { ... }
 ~ End P4Example
 The lexer has to return the following terminal kinds:
 ~ Begin P4Example
-t - TYPE
-s - TYPE
+t - TYPE_IDENTIFIER
+s - TYPE_IDENTIFIER
 x - IDENTIFIER
-p - TYPE
+p - TYPE_IDENTIFIER
 b - IDENTIFIER
 ~ End P4Example
 
