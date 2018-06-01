@@ -5211,6 +5211,18 @@ Value sets are declared locally within a parser. They should be declared before
 being referenced in parser `keysetExpression` and can be used as a label in a
 select expression.
 
+The syntax for declaring value sets is:
+
+~ Begin P4Grammar
+valueSetDeclaration
+  : optAnnotations
+      VALUESET "<" baseType ">" "(" expression ")" name ";"
+  | optAnnotations
+      VALUESET "<" tupleType ">" "(" expression ")" name ";"
+  | optAnnotations
+      VALUESET "<" typeName ">" "(" expression ")" name ";"
+~ End P4Grammar
+
 Parser Value Sets support a `size` argument to provide hints to the compiler to
 reserve hardware resource to implement the value set. For example, this parser
 value set:
