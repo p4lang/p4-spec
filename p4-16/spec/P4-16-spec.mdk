@@ -1646,7 +1646,7 @@ directions:
 - Default parameter values are only allowed for 'in' or direction-less parameters;
   these values must evaluate to compile-time constants.
 
-### Optional parameters
+### Optional parameters { #sec-optional-parameters }
 
 A parameter that is annotated with the `@optional` annotation is
 optional: the user may omit the value for that parameter in an
@@ -1674,7 +1674,7 @@ switch(ingress) main;   // a switch with a single-stage pipeline
 
 Here the target architecture could implement the elided optional argument using an empty pipeline.
 
-The following example shows optional parameters and parameters with 
+The following example shows optional parameters and parameters with
 default values.
 
 ~Begin P4Example
@@ -4145,7 +4145,7 @@ bool b2 = x == y;  // no cast needed
 
 # Function declarations { #sec-functions }
 
-Functions can only be declared at the top-level and all parameters must have a direction. 
+Functions can only be declared at the top-level and all parameters must have a direction.
 P4 functions are modeled after functions as found in most other programming languages,
 however, the language does not permit recursive functions.
 
@@ -6935,24 +6935,24 @@ The P4 compiler should provide:
 |-----|-----|-----|
 | 1.0.0 | May 17, 2017 | Initial version. |
 |-----|-----|-----|
-| 1.1.0 | June 5, 2018 | Added top-level functions, optional and named parameters, `enum` | 
-|       |          | representations, parser value sets, type definitions, saturating | 
-|       |          | saturating arithmetic, and structured annotations. | 
+| 1.1.0 | June 5, 2018 | Added top-level functions, optional and named parameters, `enum` |
+|       |          | representations, parser value sets, type definitions, saturating |
+|       |          | saturating arithmetic, and structured annotations. |
 |       |          | Removed `globalname` annotation and added a table `size` property. |
 |       |          | Clarified semantics of operations on invalid headers, added restrictions |
-|       |          | on arguments to calls, and modified precedence of bitwise operators. | 
+|       |          | on arguments to calls, and modified precedence of bitwise operators. |
 |-----|-----|-----|
 
 ## Summary of changes made in version 1.1.0
 
 * Top-level functions (Section [#sec-functions])
-    - Functions may be declared at the top-level of a P4 program with data-plane arguments.
+    - Functions may be declared at the top-level of a P4 program.
 * Optional and named parameters (Section [#sec-calling-convention])
     - Parameters may be specified by name, with a default value, or designated as optional.
 * `enum` representations (Section [#sec-enum-exprs])
     - `enum` values to be specified with a concrete representation.
 * Parser values sets (Section [#sec-value-set])
-    - Parsers include a `value_set` extern in `select` statements.
+    - `value_set` objects for control-plane programmable `select` labels.
 * Type definitions (Section [#sec-newtype])
     - New types may be introduced in programs.
 * Saturating arithmetic (Section [#sec-bit-ops])
@@ -6960,9 +6960,9 @@ The P4 compiler should provide:
 * Structured annotations (Section [#sec-annotations])
     - Annotations may be specified as lists of key-value pairs
 * Globalname (Section [#sec-name-annotations])
-    - The reserved `globalname` annotation has been removed. 
+    - The reserved `globalname` annotation has been removed.
 * Table `size` property (Section [#sec-size-table-property])
-    - Tables may support an optional `size` property. 
+    - Meaning of optional `size` property for tables has been defined.
 * Invalid headers (Section [#sec-ops-on-hdrs])
     - Clarified semantics of operations on invalid headers.
 * Calling restrictions (Section [#sec-calling-restrictions])
@@ -6995,11 +6995,12 @@ The following table shows all P4 reserved annotations.
 | Annotation    | Purpose                                            | See Section              |
 +---------------+:---------------------------------------------------+:-------------------------+
 | `atomic`      | specify atomic execution                           | [#sec-concurrency]       |
-| `defaultonly` | actions can only appear in the default action      | [#sec-table-action-anno] |
+| `defaultonly` | action can only appear in the default action       | [#sec-table-action-anno] |
 | `hidden`      | hides a controllable entity from the control plane | [#sec-name-annotations]  |
 | `name`        | assign local control-plane name                    | [#sec-name-annotations]  |
+| `optional`    | parameter is optional                              | [#sec-optional-parameters] |
 | `pkginfo`     | assign package-level metadata properties           | [#sec-package-anno]      |
-| `tableonly`   | actions can only appear within a table             | [#sec-table-action-anno] |
+| `tableonly`   | action cannot be a defalt_action                   | [#sec-table-action-anno] |
 |---------------|----------------------------------------------------|--------------------------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
