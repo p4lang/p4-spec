@@ -1774,6 +1774,9 @@ baseType
     | BIT '<' INTEGER '>'
     | INT '<' INTEGER '>'
     | VARBIT '<' INTEGER '>'
+    | BIT '<' '(' expression ')' '>'
+    | INT '<' '(' expression ')' '>'
+    | VARBIT '<' '(' expression ')' '>'
     ;
 ~ End P4Grammar
 
@@ -1914,9 +1917,16 @@ behavior should match this specification.
 
 An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width `W` is
-declared as: `bit<W>`. `W` must be a compile-time known value
-(see Section [#sec-ct-constants]) that evaluates to a positive integer
-greater than 0.
+declared as: `bit<W>`. `W` must be an expression that evaluates to a
+compile-time known value (see Section [#sec-ct-constants]) that is a
+positive integer greater than 0.  When using an expression for the
+size they must be parenthesized.
+
+~ Begin P4Example
+const bit<32> x = 10;   // 32-bit constant with value 10.
+const bit<(x + 2)> y = 15;  // 12-bit constant with value 15.
+                            // expression for width must use ()
+~ End P4Example
 
 Bits within a bit-string are numbered from `0` to `W-1`. Bit `0`
 is the least significant, and bit `W-1` is the most significant.
@@ -1938,8 +1948,8 @@ described in Section [#sec-bit-ops].
 #### Signed Integers
 
 Signed integers are represented using two's complement. An integer with `W`
-bits is declared as: `int<W>`. `W` must be a compile-time known value
-evaluating to a positive integer greater than 1.
+bits is declared as: `int<W>`. `W` must be an expression that evaluates to
+a compile-time known value that is a positive integer greater than 1.
 
 Bits within an integer are numbered from `0` to `W-1`. Bit `0`
 is the least significant, and bit `W-1` is the sign bit.
