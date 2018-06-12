@@ -4384,12 +4384,17 @@ statementOrDeclaration
 
 ## Return statement { #sec-return-stmt }
 
-The `return` statement immediately terminates the execution of the `action`
-or `control` containing it. `return` statements are not allowed within parsers.
+The `return` statement immediately terminates the execution of the
+`action`, `function` or `control` containing it. `return` statements
+are not allowed within parsers.  `return` statements followed by an
+expression are only allowed within functions that return values; in
+this case the type of the expression must match the return type of the
+function.
 
 ~ Begin P4Grammar
 returnStatement
     : RETURN ';'
+    | RETURN expression ';'
     ;
 ~ End P4Grammar
 
