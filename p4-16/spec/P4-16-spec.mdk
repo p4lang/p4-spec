@@ -2782,7 +2782,7 @@ expression
     | expression AND expression      // AND is &&
     | expression OR expression       // OR is ||
     | expression '?' expression ':' expression
-    | expression '<' typeArgumentList '>' '(' argumentList ')'
+    | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
     | namedType '(' argumentList ')'
     | '(' typeRef ')' expression
@@ -2815,6 +2815,7 @@ argument
 typeArg
     : DONTCARE
     | typeRef
+    | nonTypeName
     ;
 
 typeArgumentList
@@ -4031,7 +4032,7 @@ following syntax:
 ~ Begin P4Grammar
 expression
     : ...
-    | expression '<' typeArgumentList '>' '(' argumentList ')'
+    | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
 
 argumentList
@@ -4050,9 +4051,14 @@ argument
     | DONTCARE
     ;
 
-typeArgumentList
-    : typeRef
-    | typeArgumentList ',' typeRef
+realTypeArgumentList
+    : realTypeArg
+    | realTypeArgumentList ',' typeArg
+    ;
+
+realTypeArg
+    : DONTCARE
+    | typeRef
     ;
 ~ End P4Grammar
 

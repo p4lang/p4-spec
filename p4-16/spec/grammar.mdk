@@ -305,9 +305,20 @@ typeParameterList
     | typeParameterList ',' name
     ;
 
+realTypeArg
+    : DONTCARE
+    | typeRef
+    ;
+
 typeArg
     : DONTCARE
     | typeRef
+    | nonTypeName
+    ;
+
+realTypeArgumentList
+    : realTypeArg
+    | realTypeArgumentList COMMA typeArg
     ;
 
 typeArgumentList
@@ -643,7 +654,7 @@ expression
     | expression AND expression        // &&
     | expression OR expression         // ||
     | expression '?' expression ':' expression
-    | expression '<' typeArgumentList '>' '(' argumentList ')'
+    | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
     | namedType '(' argumentList ')'
     | '(' typeRef ')' expression
