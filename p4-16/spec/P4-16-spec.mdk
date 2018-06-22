@@ -2103,7 +2103,7 @@ identifierList
 
 specifiedIdentifierList
     : specifiedIdentifier
-    | specifiedIdentifierList ', ' specifiedIdentifier
+    | specifiedIdentifierList ',' specifiedIdentifier
     ;
 
 specifiedIdentifier
@@ -5238,6 +5238,7 @@ valueSetDeclaration
       VALUESET '<' tupleType '>' '(' expression ')' name ';'
   | optAnnotations
       VALUESET '<' typeName '>' '(' expression ')' name ';'
+  ;
 ~ End P4Grammar
 
 Parser Value Sets support a `size` argument to provide hints to the compiler to
@@ -5672,10 +5673,11 @@ tableProperty
 entriesList
  : entry
  | entriesList entry
+ ;
 
 entry
  : keysetExpression ':' actionRef optAnnotations ';'
-
+ ;
 ~ End P4Grammar
 
 Table entries are immutable (const)---i.e., they can only be read and
