@@ -33,6 +33,14 @@ name
     | TYPE_IDENTIFIER
     ;
 
+nonTableKwName
+   : IDENTIFIER
+   | TYPE_IDENTIFIER
+   | APPLY
+   | STATE
+   | TYPE
+   ;
+
 optAnnotations
     : /* empty */
     | annotations
@@ -488,8 +496,8 @@ tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
     | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
-    | optAnnotations CONST IDENTIFIER '=' initializer ';'
-    | optAnnotations IDENTIFIER '=' initializer ';'
+    | optAnnotations CONST nonTableKwName '=' initializer ';'
+    | optAnnotations nonTableKwName '=' initializer ';'
     ;
 
 keyElementList
