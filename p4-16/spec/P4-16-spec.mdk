@@ -5431,9 +5431,17 @@ tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
     | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
-    | optAnnotations CONST IDENTIFIER '=' initializer ';'
-    | optAnnotations IDENTIFIER '=' initializer ';'
+    | optAnnotations CONST nonTableKwName '=' initializer ';'
+    | optAnnotations nonTableKwName '=' initializer ';'
     ;
+
+nonTableKwName
+   : IDENTIFIER
+   | TYPE_IDENTIFIER
+   | APPLY
+   | STATE
+   | TYPE
+   ;
 ~ End P4Grammar
 
 The standard table properties include:
