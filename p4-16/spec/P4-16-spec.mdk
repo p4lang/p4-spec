@@ -2483,6 +2483,64 @@ struct Parsed_headers {
 }
 ~ End P4Example
 
+### Structure overlays { #sec-overlays }
+
+An overlay allows the access to fields or subfields of a `struct` or
+`header` using alternative names.  An overlay is constructed by a
+special `overlay` function, that establishes a connection between the
+fields of the source and destination structure.
+
+In the following example we have two structure types: `Addresses` and
+`Fields`.  The overlay named `sourceQuads` is given a structure of
+type `Addresses` and allows accesses to its fields through a structure
+of type `Fields`.  The first four fields of `Fields` are individual
+bytes of `Addresses.source`, and the field `Fields.all` is the
+concatenation of `Source.source` and `Source.destination`.
+
+A variable of type `Addresses` named `a` is instantiated, and an
+overlay named `q` is created using the `sourceQuads` overlay.  Now
+fields of the `a` structure can be accessed read-write using fields of
+the `q` structure.
+
+~ Begin P4Example
+struct Addresses {
+    bit<32> source;
+    bit<32> destination;
+}
+
+struct Fields {
+    bit<8> q0;
+    bit<8> q1;
+    bit<8> q2;
+    bit<8> q3;
+    bit<64> all;
+}
+
+overlay Fields sourceQuads(Addresses add) {
+   q0 = source.source[31:24];
+   q1 = source.source[23:16];
+   q2 = source.source[15:8];
+   q3 = source.source[7:0];
+   all = source.source ++ source.destination;
+}
+
+Addresses a = { 0x01234567, 0x89ABCDEF };
+Fields    q = sourceQuads(a);  // q is { 0x01, 0x23, 0x45, 0x67, 0x0123456789ABCDEF };
+q.q0 = 0;   // q is { 0x00, 0x23, 0x45, 0x67, 0x0023456789ABCDEF }, a is { 0x00234567, 0x89ABCDEF }
+q.q1 = a.destination[7:0]; // q is { 0x00, 0xEF, 0x45, 0x67, 0x00EF456789ABCDEF }, a is { 0x00EF4567, 0x89ABCDEF }
+~ End P4Example
+
+Applying an overlay to a left-value produces a left-value.
+
+Overlays can only be applied to `struct` and `header` objects, and
+they can only produce `struct` objects.  A struct produced by an
+overlay can only contain fields of the base types: `bit`, `int`, and
+`bool`.  The only expressions allowed within an overlay are field
+access, bit slicing and concatenation.  Referring to `header_union`
+fields within an overlay is not allowed.
+
+TODO: add P4 grammar.
+
 ### Tuple types { #sec-tuple-types }
 
 A tuple is similar to a `struct`, in that it holds multiple
