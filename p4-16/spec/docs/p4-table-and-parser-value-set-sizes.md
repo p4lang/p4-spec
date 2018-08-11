@@ -101,7 +101,7 @@ control plane software is dependent on the particular ranges used.
 
 ## Cases where capacity is not predictable with 100% certainty
 
-There is only one remaining case.  Not that the majority of the tables
+There is only one remaining case.  Note that the majority of the tables
 in the example open source program `switch.p4` are likely to fall into
 this case in a practical implementation.  While it is _possible_ for a
 P4 target to use table implementations with predictable capacity like
