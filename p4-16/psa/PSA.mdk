@@ -676,6 +676,7 @@ follow.
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
             ep = egress_port configured for ostd.clone_session_id in PRE
+	    mcast_grp = multicast_group configured for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session in PRE
             plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
@@ -761,7 +762,7 @@ the number of distinct class of service values that a PSA device
 supports.
 
 
-### Multicast replication
+### Multicast replication {#sec-multicast}
 
 The control plane may configure each `multicast_group` in the PRE to
 create the desired copies of packets sent to that group.  Each group
@@ -1019,8 +1020,9 @@ the contents of several metadata fields in the struct
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
             ep = egress_port configured for ostd.clone_session_id in PRE
-            trunc = truncate configured for ostd.clone_session in PRE
-            plen = packet_length_bytes configured for ostd.clone_session in PRE
+            mcast_grp = multicast_group configured for ostd.clone_session_id in PRE
+            trunc = truncate configured for ostd.clone_session_id in PRE
+            plen = packet_length_bytes configured for ostd.clone_session_id in PRE
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos
@@ -1150,16 +1152,32 @@ session.
 
 ```
 PortId_t         egress_port;
+MulticastGroup_t multicast_group;
 ClassOfService_t class_of_service;
 bool             truncate;
 PacketLength_t   packet_length_bytes;  /// only used if truncate is true
 ```
 
 The `egress_port` may be any port that can be used for normal unicast
-packets, i.e. any normal port, `PSA_PORT_CPU`, or `PSA_PORT_RECIRCULATE`.  For
-the latter two values, the cloned packet will be sent to the CPU, or
-recirculated at the end of egress processing, as a normal unicast
-packet would at the end of egress processing.
+packets, i.e. any normal port, `PSA_PORT_CPU`, or
+`PSA_PORT_RECIRCULATE`. For the latter two values, the cloned packet
+will be sent to the CPU, or recirculated at the end of egress
+processing, as a normal unicast packet would at the end of egress
+processing.
+
+The `multicast_group` may be any multicast group configured by the
+control plane in the PRE. Sending a packet to a clone session with a
+multicast group configured would cause the cloned packet to be
+replicated to each `egress_port` in the multicast group. If the
+`multicast_group` specified in a clone session is not configured in
+the PRE by the control plane, the cloned packet will not be
+multicasted. A PSA target may need extra effort to check the validity
+of the multicast group in a clone session. Therefore, sending a packet
+to a clone session with un-configured multicast group may have
+performance impact. A clone session can configure both `egress_port`
+and `multicast_group` simultaneously. In addition, an `egress_port`
+may appear multiple times in the same `multicast_group`. Refer to
+section [#sec-multicast] on the details of multicast replication.
 
 Truncation of cloned packets is supported as an optimization to
 reduce the bandwidth required to send the beginning of packets.  This
