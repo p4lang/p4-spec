@@ -2076,13 +2076,27 @@ the same group to have different action parameter values.  PSA
 implementations must also allow the action names of different groups
 in a selector to be different.
 
-PSA implementations are allowed to support adding entries in a table
-that point at groups which currently have no members, but they are
-also allowed to have non-portable implementation specific behavior if
-this occurs in the data plane.  This limitation of a PSA data plane
-may be hidden from controller software by a P4Runtime server
-implementation using a technique described in appendix
-[#appendix-empty-action-selector-groups].
+Consider the situation where controller software wishes to have an
+entry with key `K` in a table with an action selector implementation,
+that point at a group `G` that currently has no members.  This could
+occur because `G` was empty when table entry `(key K, group G)` was
+added, or because `G` formerly had one or more members, and its
+members were then removed.
+
+It is recommended, but not required, that a PSA data plane
+implementation perform the current default action for the table if a
+packet applies the table and matches the entry `(K, G)`, just as it
+would if a packet applies the table and no table entry is matched.
+Note that the default action might have a different action name than
+`G` contained before, if earlier `G` was non-empty.  We will consider
+requiring such support in future versions of PSA.
+
+Until then, implementations are allowed to have non-portable
+implementation specific behavior if this occurs in the data plane.  In
+some cases, it may be possible for the combination of a PSA data plane
+plus its P4Runtime server software to achieve this desired behavior,
+as far as the P4Runtime client controller software can observe.  See
+Appendix [#appendix-empty-action-selector-groups].
 
 An action selector instance may be shared across multiple tables only if all such
 tables define the same set of actions in their `actions` attribute. Furthermore,
@@ -2436,11 +2450,7 @@ In particular, ActionProfile and ActionSelector single operations,
 such as adding a member to a group, removing a member from a group,
 adding an empty group, deleting an empty group, or modifying the
 action parameters of an action added earlier to a group, should all be
-atomic.  One possible exception is a PSA implementation that uses the
-technique described in appendix
-[#appendix-empty-action-selector-groups] to implement default actions
-for empty groups of action selectors.  See the details there for
-atomicity constraints.
+atomic.
 
 Also, a control plane read, or write, of a single element of a
 Register array should be atomic, and behave as if it occurred before
@@ -3169,6 +3179,33 @@ perspective is: issue the P4Runtime command to remove the last member
 from the group, and have a default action of "drop the packet" take
 effect for any packets applying the table and selecting the empty
 group.
+
+Fully supporting empty action groups should meet all of these
+requirements:
+
+- All P4Runtime API operations such as adding a member to a group
+  (even when changing from empty to 1 member), removing a member from
+  a group (even when changing from 1 member to empty), modifying the
+  action associated with a member, etc. should be atomic relative to
+  data packet processing.  That is, every packet should be processed
+  as if the table was in the old state, or the new state, with no
+  undefined packet processing behavior.
+- The default action that is executed when the matching table entry
+  points at an empty group, may have an action name that is the same
+  as, or different than, the action name used by the group when it was
+  non-empty (if it was non-empty, and then became empty by removing
+  its last member).
+
+Achieving all of these requirements seems not to be possible with a
+PSA data plane implementation that meets only the minimum requirements
+for action selectors, i.e. one that restricts members of a group to
+all have the same action name, and that does not natively support
+predictable behavior if a group is empty in the data plane.
+
+Below we describe one way that nearly achieves the goals above, except
+that it requires the default action to have the same name as the
+non-empty groups of the action selector.  This may be too onerous of a
+restriction on system developers to be worth implementing.
 
 This behavior can be implemented via a small extra bit of logic in the
 P4Runtime server implementation (hereafter called the agent).  The
