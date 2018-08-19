@@ -293,12 +293,15 @@ few packets dropped for these reasons (perhaps only one).
 ## PSA type definitions {#sec-psa-type-definitions}
 
 Each PSA implementation will have specific bit widths for the
-following types.  These widths should be defined in the target
-specific implementation of the `psa.p4` include file.
+following types in the data plane.  These widths should be defined in
+the target specific `psa.p4` include file.  They are expected to
+differ from one PSA implementation to another.
 
-The P4 Runtime API uses 64-bit values to hold values of these types.
-All PSA implementations must use sizes for these types no wider than
-the corresponding types with `InHeader_t` in their names shown below.
+For each one of these types, the P4 Runtime API uses values with the
+bit width of the corresponding `InHeader_t` type below to hold a value
+of that type, independent of the target.  All PSA implementations must
+use sizes for these types no wider than the corresponding types with
+`InHeader_t` in their names shown below.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -331,8 +334,8 @@ implementations.  We will refer to these pieces of software as an
 
 As mentioned in section [#sec-psa-type-definitions], different PSA
 implementations are expected to customize the size of the data types
-that refer directly to those objects, i.e. ports, multicast group ids,
-etc.
+that refer directly to those objects in the data plane, i.e. ports,
+multicast group ids, etc.
 
 Some PSA implementations are expected to use noticeably fewer
 resources for things like table keys and action parameters if the data
@@ -344,8 +347,8 @@ table with a million entries[^CacheCost].
 
 [^CacheCost]: While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache.  <https://en.wikipedia.org/wiki/List_of_Intel_microprocessors>
 
-The P4 Runtime API uses 64-bit quantities to hold values of the types
-listed in section [#sec-psa-type-definitions] to simplify the
+The P4 Runtime API uses quantities with bit widths independent of the target device to hold values of the types
+listed in section [#sec-psa-type-definitions], to simplify the
 manipulation of these values in the agent software.  For control plane
 operations on tables, any trimming or padding of values will be
 performed in the agent (trimming from controller to device direction,
@@ -357,6 +360,8 @@ channels of communication include:
 
 + Control plane operations on tables, where values of these types may
   be included as part of the key, or as an action parameter.
++ Control plane operations on parser value sets, where values of these
+  types may be included as part of the key.
 + Packets sent to the CPU ("packet in" from the controller's
   perspective), or received from the CPU ("packet out" from the
   controller's perspective).
@@ -401,7 +406,7 @@ port id values, for each of the channels of communication between the
 controller and data plane described above.
 
 Occurrences of values of type `PortId_t` or `PortIdInHeader_t` must
-include a `port_translation` annotation so the compiler can mark
+include a `p4runtime_translation` annotation so the compiler can mark
 occurrences of these values appropriately, so the agent can know which
 values need this translation.  See the example P4 header definition
 below.
@@ -424,6 +429,15 @@ translation performed may lead to functional errors in your program:
 
 + Do a table key match on a subset of the bits, or a range match.
 + Compare port values with relational operators like `<` or `>`.
++ Compare port values to specific numeric literal values like 0 or
+  0xff.  It is recommended instead to compare their values by using
+  them as table key fields, or parser value set key fields, against
+  values installed by the control plane (which have been translated to
+  the corresponding device-specific value as determined by the
+  device's agent software).  It is also reasonable to compare port
+  values for equality against the symbolic constant values
+  `PSA_PORT_CPU` or `PSA_PORT_RECIRCULATE`, which have target-specific
+  numeric values.
 + Perform arithmetic on the value, and expect to get a value that
   corresponds to another port of the device.  Some numerical values
   may not correspond to any port of the device, and the values
@@ -451,6 +465,12 @@ supported value for each of these types.
 + `PacketLength_t`
 + `EgressInstance_t`
 + `Timestamp_t`
+
+~ TBD
+Values of type `Timestamp_t` are being considered for numerical
+translation in the agent software, between target-specific values, and
+a value with a common unit and 0 value reference across all targts.
+~
 
 ~ TBD
 It is not clear yet whether it is reasonable to use a value of type
