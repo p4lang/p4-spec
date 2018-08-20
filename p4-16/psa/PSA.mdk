@@ -3190,8 +3190,8 @@ to physical port numbers, using an action selector to implement LAG
 only one physical port in a LAG that was enabled, and that port goes
 down?  A straightforward desired behavior from the controller's
 perspective is: issue the P4Runtime command to remove the last member
-from the group, and have a default action of "drop the packet" take
-effect for any packets applying the table and selecting the empty
+from the group, and have an empty group action of "drop the packet"
+take effect for any packets applying the table and selecting the empty
 group.
 
 Fully supporting empty action groups should meet all of these
@@ -3204,11 +3204,11 @@ requirements:
   data packet processing.  That is, every packet should be processed
   as if the table was in the old state, or the new state, with no
   undefined packet processing behavior.
-- The default action that is executed when the matching table entry
-  points at an empty group, may have an action name that is the same
-  as, or different than, the action name used by the group when it was
-  non-empty (if it was non-empty, and then became empty by removing
-  its last member).
+- The empty group action that is executed when the matching table
+  entry points at an empty group, may have an action name that is the
+  same as, or different than, the action name used by the group when
+  it was non-empty (if it was non-empty, and then became empty by
+  removing its last member).
 
 Achieving all of these requirements seems not to be possible with a
 PSA data plane implementation that meets only the minimum requirements
@@ -3217,7 +3217,7 @@ all have the same action name, and that does not natively support
 predictable behavior if a group is empty in the data plane.
 
 Below we describe one way that nearly achieves the goals above, except
-that it requires the default action to have the same name as the
+that it requires the empty group action to have the same name as the
 non-empty groups of the action selector.  This may be too onerous of a
 restriction on system developers to be worth implementing.
 
@@ -3228,10 +3228,10 @@ action parameter values) to be performed when the group is empty.  The
 details of the message are left for the P4Runtime API specification to
 give, but since PSA allows different groups to use different action
 types, it seems best to allow the controller to specify a different
-default action per group.
+empty group action per group.
 
 If no table entry currently "points at" an empty group G, then G's
-default action need not be installed anywhere in the data plane.
+empty group action need not be installed anywhere in the data plane.
 Similarly if G is currently non-empty, and there are table entries
 currently pointing at G.
 
@@ -3242,22 +3242,22 @@ only member from G.
 The agent can implement this command by the following sequence of
 changes in the data plane:
 
-1. Add to G a new member, which is the default action that the
+1. Add to G a new member, which is the empty group action that the
    controller earlier configured for G.  Now in the data plane, for a
    short time, G contains two members.
 2. Remove from G the member that the controller requested to be
    removed.  Now the data plane version of G has only one member
-   containing the default action, so all packets using G will execute
+   containing the empty group action, so all packets using G will execute
    that action.
 
 When G is currently empty as far as the controller is concerned (but
-contains one member pointing at the default action in the data plane),
+contains one member pointing at the empty group action in the data plane),
 and the controller adds one member to it, the agent can implement this
 via these steps:
 
 1. Add to G the member requested by the controller.  The data plane
-   temporarily has two members for G, including the default action.
-2. Remove from G the default action.  Now G in the data plane is back
+   temporarily has two members for G, including the empty group action.
+2. Remove from G the empty group action.  Now G in the data plane is back
    to the one member that the controller wants.
 
 A PSA implementation with an agent that implements empty action
@@ -3313,7 +3313,7 @@ there are likely to be other approaches not mentioned here.
 Pick a value of type `PortId_t` that corresponds to no valid physical
 port of the device (TBD whether PSA should define such a value with a
 name -- it currently doesn't guarantee that such a value even exists
-for type `PortId_t`) and use that value for the default action of an
+for type `PortId_t`) and use that value for the empty group action of an
 empty group.  In the code after `lag.apply`, add an `if` statement
 checking for that invalid value, like this:
 
