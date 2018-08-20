@@ -2110,7 +2110,10 @@ The `psa_empty_group_action` property of a table is similar to the
 + They may have a `const` modifier, indicating that control software
   is not allowed to change this action.
 + In the absence of a `const` modifier, the control software is
-  allowed to change the action.
+  allowed to change the action.  The P4 API working group has no plans
+  to define a message for modifying a table's empty group action in
+  version 1.0 of the P4Runtime API specification, but such a message
+  might be added in a later version.
 
 An action selector instance may be shared across multiple tables only if all such
 tables define the same set of actions in their `actions` attribute. Furthermore,
@@ -3210,6 +3213,11 @@ requirements:
   it was non-empty (if it was non-empty, and then became empty by
   removing its last member).
 
+A high performance implementation will also be able to make changes to
+group membership using a number of data plane update operations that
+does not grow with the number of table entries that point at the
+group.
+
 Achieving all of these requirements seems not to be possible with a
 PSA data plane implementation that meets only the minimum requirements
 for action selectors, i.e. one that restricts members of a group to
@@ -3223,12 +3231,9 @@ restriction on system developers to be worth implementing.
 
 This behavior can be implemented via a small extra bit of logic in the
 P4Runtime server implementation (hereafter called the agent).  The
-basic idea is that first the controller specifies the action (with
-action parameter values) to be performed when the group is empty.  The
-details of the message are left for the P4Runtime API specification to
-give, but since PSA allows different groups to use different action
-types, it seems best to allow the controller to specify a different
-empty group action per group.
+basic idea is that the agent obtains the empty group action, with
+action parameter values, e.g. from the compiled representation of the
+P4 program.
 
 If no table entry currently "points at" an empty group G, then G's
 empty group action need not be installed anywhere in the data plane.
