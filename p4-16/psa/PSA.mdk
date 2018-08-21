@@ -3223,12 +3223,16 @@ PSA data plane implementation that meets only the minimum requirements
 for action selectors, i.e. one that restricts members of a group to
 all have the same action name, and that does not natively support
 predictable behavior if a group is empty in the data plane.
+data plane that supports multiple different action names in the same
+group at the same time.
 
-Below we describe one way that nearly achieves the goals above, except
-that it requires the empty group action to have the same action name
-as the non-empty groups of the action selector.  This may be too
-onerous of a restriction on system developers to be worth
-implementing.
+Below we describe one way that achieves the goals above, but only for
+a data plane implementation that supports multiple different action
+names in the same group at the same time.  For a data plane that does
+not support this, the idea only _nearly_ achieves the goal.  It
+requires the empty group action to have the same action name as the
+non-empty groups of the action selector.  This may be too onerous of a
+restriction on system developers to be worth implementing.
 
 This behavior can be implemented via a small extra bit of logic in the
 P4Runtime server implementation (hereafter called the agent).  The
@@ -3272,6 +3276,12 @@ such transitions in an atomic way, as described in Section
 [#sec-atomicity-of-control-plane-api-operations], but it is allowed
 for one or more packets to be processed in the intermediate state that
 exists between the two steps.
+
+If a PSA implementation supports multiple different action names in
+the same group at the same time, then there is no need to read
+further.  Below we only describe what might be done for a data plane
+that restricts each group to contain only actions with the same action
+name.
 
 Because a PSA implementation need not support multiple different
 action types in the same action selector group at the same time
