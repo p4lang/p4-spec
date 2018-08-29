@@ -3223,8 +3223,6 @@ PSA data plane implementation that meets only the minimum requirements
 for action selectors, i.e. one that restricts members of a group to
 all have the same action name, and that does not natively support
 predictable behavior if a group is empty in the data plane.
-data plane that supports multiple different action names in the same
-group at the same time.
 
 Below we describe one way that achieves the goals above, but only for
 a data plane implementation that supports multiple different action
@@ -3252,18 +3250,17 @@ only member from G.
 The agent can implement this command by the following sequence of
 changes in the data plane:
 
-1. Add to G a new member, which is the empty group action that the
-   controller earlier configured for G.  Now in the data plane, for a
-   short time, G contains two members.
+1. Add to G a new member, which is the empty group action.  Now in the
+   data plane, for a short time, G contains two members.
 2. Remove from G the member that the controller requested to be
    removed.  Now the data plane version of G has only one member
    containing the empty group action, so all packets using G will execute
    that action.
 
 When G is currently empty as far as the controller is concerned (but
-contains one member pointing at the empty group action in the data plane),
-and the controller adds one member to it, the agent can implement this
-via these steps:
+contains one member pointing at the empty group action in the data
+plane), and the controller adds one member to it, the agent can
+implement this via these steps:
 
 1. Add to G the member requested by the controller.  The data plane
    temporarily has two members for G, including the empty group action.
