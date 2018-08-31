@@ -1429,6 +1429,8 @@ specification.
 |-----------------------|----------------------------------------------|
 | `psa_implementation`  | instance name of one `ActionProfile` | Sections [#sec-action-profile], [#sec-action-selector] |
 |                       | or `ActionSelector` |  |
+|-----------------------|----------------------------------------------|
+| `psa_empty_group_action` | action | Section [#sec-action-selector] |
 |-------------------|----------------------------------------------|
 ~
 
@@ -2086,10 +2088,47 @@ to select a member from the group, and the action specification
 corresponding to that member is applied. The dynamic selection algorithm is
 specified as a parameter when instantiating the action selector.
 
-Action selector members may only specify action types defined
-in the `actions` attribute of the implemented table. All actions in a group must be
-of the same type. The action parameters for actions in the same group are allowed
-to differ, and the action of different groups in a selector may be different.
+Action selector members may only specify action types defined in the
+`actions` attribute of the implemented table.
+
+Minimum requirements for a PSA implementation of action selectors:
+
++ Support non-empty groups where every action in the same group has
+  the same action name.
++ Within the same group, support arbitrary action parameter values
+  among different members of the group.
++ Support different action names in different groups.
++ No predictable data plane behavior is required if a table entry is
+  matched that points at an empty group.
+
+Optional extensions:
+
++ Support non-empty groups where in the same group, different actions
+  can have different action names, as well as arbitrary action
+  parameter values.
++ Support table entries that point at an empty group.  When the entry
+  is matched, execute the action assigned to the table property
+  `psa_empty_group_action`.
+
+The `psa_empty_group_action` property of a table is similar to the
+`default_action` property in the following ways:
+
++ They both have actions as their values.
++ The P4 source code specifies the initial value.
++ If the table property `psa_empty_group_action` is not given in the
+  P4 source code, its value is `NoAction()`.
++ They may have a `const` modifier, indicating that control software
+  is not allowed to change this action.
++ In the absence of a `const` modifier, the control software is
+  allowed to change the action assigned to `psa_empty_group_action`.
+
+PSA implementers should note that supporting empty groups with
+predictable data plane behavior may be required in a future version of
+PSA.  In some cases, it may be possible for the combination of a PSA
+data plane plus its P4Runtime server software to achieve this desired
+behavior, as far as the P4Runtime client controller software can
+observe.  See Appendix [#appendix-empty-action-selector-groups].
+
 An action selector instance may be shared across multiple tables only if all such
 tables define the same set of actions in their `actions` attribute. Furthermore,
 the selector match fields for such tables must be identical and must be specified
@@ -2395,7 +2434,7 @@ ingress ports of packets that have not been seen before.
 
 
 
-# Atomicity of control plane API operations
+# Atomicity of control plane API operations {#sec-atomicity-of-control-plane-api-operations}
 
 All table add, delete, and modify operations must be atomic relative
 to packet forwarding.  That is, for every table `apply` operation, and
@@ -3148,3 +3187,202 @@ the performance of these protocols.
 Similarly, there are some protocols like IP header compression, where
 multiple variants have been developed, some with more or less
 robustness in the face of network reordering.
+
+
+# Appendix: Supporting empty action selector groups {#appendix-empty-action-selector-groups}
+
+As mentioned in Section [#sec-action-selector], a PSA data plane
+implementation need not implement any specific defined behavior if one
+attempts to add a table entry for a key that points at a group that is
+currently empty.
+
+Some P4 users have expressed an interest in enabling a P4Runtime
+client (hereafter called the controller) to remove the last member of
+an action selector group, and have the data plane behave in a
+predictable way.
+
+For example, if one has a table that maps logical interface id numbers
+to physical port numbers, using an action selector to implement LAG
+(Link Aggregation Group), what should the controller do when there was
+only one physical port in a LAG that was enabled, and that port goes
+down?  A straightforward desired behavior from the controller's
+perspective is: issue the P4Runtime command to remove the last member
+from the group, and have an empty group action of "drop the packet"
+take effect for any packets applying the table and selecting the empty
+group.
+
+Fully supporting empty action groups should meet all of these
+requirements:
+
+- All P4Runtime API operations such as adding a member to a group
+  (even when changing from empty to 1 member), removing a member from
+  a group (even when changing from 1 member to empty), modifying the
+  action associated with a member, etc. should be atomic relative to
+  data packet processing.  That is, every packet should be processed
+  as if the table was in the old state, or the new state, with no
+  undefined packet processing behavior.
+- The empty group action that is executed when the matching table
+  entry points at an empty group, may have an action name that is the
+  same as, or different than, the action name used by the group when
+  it was non-empty (if it was non-empty, and then became empty by
+  removing its last member).
+
+A high performance implementation will also be able to make changes to
+group membership using a number of data plane update operations that
+does not grow with the number of table entries that point at the
+group.
+
+Achieving all of these requirements seems not to be possible with a
+PSA data plane implementation that meets only the minimum requirements
+for action selectors, i.e. one that restricts members of a group to
+all have the same action name, and that does not natively support
+predictable behavior if a group is empty in the data plane.
+
+Below we describe one way that achieves the goals above, but only for
+a data plane implementation that supports multiple different action
+names in the same group at the same time.  For a data plane that does
+not support this, the idea only _nearly_ achieves the goal.  It
+requires the empty group action to have the same action name as the
+non-empty groups of the action selector.  This may be too onerous of a
+restriction on system developers to be worth implementing.
+
+This behavior can be implemented via a small extra bit of logic in the
+P4Runtime server implementation (hereafter called the agent).  The
+basic idea is that the agent obtains the empty group action, with
+action parameter values, e.g. from the compiled representation of the
+P4 program.
+
+If no table entry currently "points at" an empty group G, then G's
+empty group action need not be installed anywhere in the data plane.
+Similarly if G is currently non-empty, and there are table entries
+currently pointing at G.
+
+Suppose there is currently one member in G, and G is pointed at by at
+least one table entry.  The controller issues a command to remove that
+only member from G.
+
+The agent can implement this command by the following sequence of
+changes in the data plane:
+
+1. Add to G a new member, which is the empty group action.  Now in the
+   data plane, for a short time, G contains two members.
+2. Remove from G the member that the controller requested to be
+   removed.  Now the data plane version of G has only one member
+   containing the empty group action, so all packets using G will execute
+   that action.
+
+When G is currently empty as far as the controller is concerned (but
+contains one member pointing at the empty group action in the data
+plane), and the controller adds one member to it, the agent can
+implement this via these steps:
+
+1. Add to G the member requested by the controller.  The data plane
+   temporarily has two members for G, including the empty group action.
+2. Remove from G the empty group action.  Now G in the data plane is back
+   to the one member that the controller wants.
+
+A PSA implementation with an agent that implements empty action
+selector groups in this way must implement each of the two steps for
+such transitions in an atomic way, as described in Section
+[#sec-atomicity-of-control-plane-api-operations], but it is allowed
+for one or more packets to be processed in the intermediate state that
+exists between the two steps.
+
+If a PSA implementation supports multiple different action names in
+the same group at the same time, then there is no need to read
+further.  Below we only describe what might be done for a data plane
+that restricts each group to contain only actions with the same action
+name.
+
+Because a PSA implementation need not support multiple different
+action types in the same action selector group at the same time
+(mentioned in Section [#sec-action-selector]), a developer wishing to
+take advantage of this in a portable way may need to modify one or
+more of the actions used in their tables that use action selectors.
+
+For example, if in the LAG port selection example mentioned earlier,
+there was only one action for a table `lag` defined like this:
+
+```
+    action set_output_port (PortId_t p) {
+        user_meta.out_port = p;
+    }
+    ActionProfile(128) ap;
+    table lag {
+        key = {
+            // ... key fields go here ...
+        }
+        actions = { set_output_port; }
+        psa_implementation = ap;
+    }
+
+    control cIngress (
+                inout headers hdr,
+                inout metadata user_meta,
+                in    psa_ingress_input_metadata_t  istd_meta,
+                inout psa_ingress_output_metadata_t ostd_meta
+    ) {
+        apply {
+            // ... earlier ingress code goes here ...
+            lag.apply();
+            send_to_port(ostd_meta, user_meta.out_port);
+            // ... later ingress code goes here ...
+        }
+    }
+```
+
+with a single action parameter equal to a physical port number of the
+device, one of the following approaches could be used, and of course
+there are likely to be other approaches not mentioned here.
+
++ Approach 1: Use an invalid port number
+
+Pick a value of type `PortId_t` that corresponds to no valid physical
+port of the device (TBD whether PSA should define such a value with a
+name -- it currently doesn't guarantee that such a value even exists
+for type `PortId_t`) and use that value for the empty group action of an
+empty group.  In the code after `lag.apply`, add an `if` statement
+checking for that invalid value, like this:
+
+```
+        apply {
+            // ... earlier ingress code goes here ...
+            lag.apply();
+            if (user_meta.out_port == PORT_INVALID_VALUE) {
+                ingress_drop(ostd_meta);
+            } else {
+                send_to_port(ostd_meta, user_meta.out_port);
+            }
+            // ... later ingress code goes here ...
+        }
+```
+
++ Approach 2: Add extra parameters to the action
+
+In this case, add a 1-bit parameter indicating whether to drop the
+packet later.  An `if` statement is still needed after applying the
+table.
+
+```
+    action set_output_port (PortId_t p, bit<1> drop) {
+        user_meta.out_port = p;
+        user_meta.drop = drop;
+    }
+
+    // ...
+
+        apply {
+            // ... earlier ingress code goes here ...
+            lag.apply();
+            if (user_meta.drop == 1) {
+                ingress_drop(ostd_meta);
+            } else {
+                send_to_port(ostd_meta, user_meta.out_port);
+            }
+            // ... later ingress code goes here ...
+        }
+```
+
+In either case, an implementation might also support putting the `if`
+statement inside of the action `set_output_port`, but this is not
+required by PSA.
