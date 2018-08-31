@@ -2073,7 +2073,7 @@ In this example, the table has a match key consisting of an LPM on header field
 `h.f`. A second match type `selector` is used to define the fields that are
 used to look up the action specification from the selector at runtime.
 
-A table with an action action selector implementation consists of entries that
+A table with an action selector implementation consists of entries that
 point to either an action profile member reference or an action profile group
 reference. An action selector instance can be logically visualized as two tables
 as shown in Figure [#fig-as]. The first table contains a mapping from group
@@ -2145,7 +2145,10 @@ implementation. It is illegal to define a `selector` type match field if the
 table does not have an action selector implementation.
 
 The control plane can add, modify or delete member and group entries for a
-given action selector instance. An action selector instance may hold at most
+given action selector instance.
+The control plane must never allow an empty group (one with 0 members)
+to be associated with any table entry.
+An action selector instance may hold at most
 `size` member entries as defined in the constructor parameter. The number of
 groups may be at most the size of the table that is implemented by the selector.
 Table entries must specify the action using a reference to the desired member
