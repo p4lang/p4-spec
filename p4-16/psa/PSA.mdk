@@ -2069,51 +2069,45 @@ corresponding to that member is applied. The dynamic selection algorithm is
 specified as a parameter when instantiating the action selector.
 
 Action selector members may only specify action types defined in the
-`actions` attribute of the implemented table.  PSA implementations are
-allowed to restrict all actions in a group to have the same action
-name, but they may allow more general configurations, i.e. different
-action names among members of the same group.  If a PSA implementation
-does have this restriction, it must still allow different members of
-the same group to have different action parameter values.  PSA
-implementations must also allow the action names of different groups
-in a selector to be different.
+`actions` attribute of the implemented table.
 
-Consider the situation where controller software wishes to have an
-entry with key `K` in a table with an action selector implementation,
-that points at a group `G` that currently has no members.  This could
-occur because `G` was empty when table entry `(key K, group G)` was
-added, or because `G` formerly had one or more members, and its
-members were then removed.
+Minimum requirements for a PSA implementation of action selectors:
 
-It is recommended, but not required, that a PSA data plane
-implementation perform the action specified as the value of the
-`psa_empty_group_action` table property if a packet applies the table
-and matches the entry `(K, G)`.  Note that the empty group action
-might have a different action name than `G` contained before, if
-earlier `G` was non-empty.  We will consider requiring such support in
-future versions of PSA.
++ Support non-empty groups where every action in the same group has
+  the same action name.
++ Within the same group, support arbitrary action parameter values
+  among different members of the group.
++ Support different action names in different groups.
++ No predictable data plane behavior is required if a table entry is
+  matched that points at an empty group.
 
-Until then, implementations are allowed to have non-portable
-implementation specific behavior if this occurs in the data plane.  In
-some cases, it may be possible for the combination of a PSA data plane
-plus its P4Runtime server software to achieve this desired behavior,
-as far as the P4Runtime client controller software can observe.  See
-Appendix [#appendix-empty-action-selector-groups].
+Optional extensions:
+
++ Support non-empty groups where in the same group, different actions
+  can have diferent action names, as well as arbitrary action
+  parameter values.
++ Support table entries with that point at an empty group.  When the
+  entry is matched, execute the action assigned to the table property
+  `psa_empty_group_action`.
 
 The `psa_empty_group_action` property of a table is similar to the
 `default_action` property in the following ways:
 
 + They both have actions as their values.
 + The P4 source code specifies the initial value.
-+ If the table property is not given in the P4 source code, its value
-  is `NoAction()`.
++ If the table property `psa_empty_group_action` is not given in the
+  P4 source code, its value is `NoAction()`.
 + They may have a `const` modifier, indicating that control software
   is not allowed to change this action.
 + In the absence of a `const` modifier, the control software is
-  allowed to change the action.  The P4 API working group has no plans
-  to define a message for modifying a table's empty group action in
-  version 1.0 of the P4Runtime API specification, but such a message
-  might be added in a later version.
+  allowed to change the action assigned to `psa_empty_group_action`.
+
+PSA implementers should note that supporting empty groups with
+predictable data plane behavior may be required in a future version of
+PSA.  In some cases, it may be possible for the combination of a PSA
+data plane plus its P4Runtime server software to achieve this desired
+behavior, as far as the P4Runtime client controller software can
+observe.  See Appendix [#appendix-empty-action-selector-groups].
 
 An action selector instance may be shared across multiple tables only if all such
 tables define the same set of actions in their `actions` attribute. Furthermore,
