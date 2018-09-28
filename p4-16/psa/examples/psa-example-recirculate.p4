@@ -115,8 +115,6 @@ control ingress(inout headers hdr,
                 inout psa_ingress_output_metadata_t ostd)
 {
     action do_recirc (PortId_t port) {
-        // With open source p4test as of 2018-Sep-27, the following
-        // line causes a 'typechecker mutated program' error:
         send_to_port(ostd, PSA_PORT_RECIRCULATE);
     }
     table t {

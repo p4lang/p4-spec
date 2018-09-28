@@ -398,9 +398,6 @@ control ingress(inout headers hdr,
             meta.to_cpu_error_hdr.ingress = 1;
             ingress_drop(ostd);
             ostd.clone = true;
-            // With open source p4test as of 2018-Sep-27, the
-            // following line causes a 'typechecker mutated program'
-            // error:
             ostd.clone_session_id = PSA_CLONE_SESSION_TO_CPU;
             exit;
         }
@@ -566,9 +563,6 @@ control egress(inout headers hdr,
             meta.to_cpu_error_hdr.ingress = 0;
             egress_drop(ostd);
             ostd.clone = true;
-            // With open source p4test as of 2018-Sep-27, the
-            // following line causes a 'typechecker mutated program'
-            // error:
             ostd.clone_session_id = PSA_CLONE_SESSION_TO_CPU;
             exit;
         }
