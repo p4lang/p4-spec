@@ -293,15 +293,24 @@ few packets dropped for these reasons (perhaps only one).
 ## PSA type definitions {#sec-psa-type-definitions}
 
 Each PSA implementation will have specific bit widths for the
-following types in the data plane.  These widths should be defined in
-the target specific `psa.p4` include file.  They are expected to
-differ from one PSA implementation to another.
+following types in the data plane.  These widths are defined in the
+target specific `psa.p4` include file.  They are expected to differ
+from one PSA implementation to another[^PSAP4TargetSpecific].
 
-For each one of these types, the P4 Runtime API uses values with the
-bit width of the corresponding `InHeader_t` type below to hold a value
-of that type, independent of the target.  All PSA implementations must
-use sizes for these types no wider than the corresponding types with
-`InHeader_t` in their names shown below.
+[^PSAP4TargetSpecific]: It is expected that `psa.p4` include files for
+    different targets will typically be nearly identical to each
+    other.  Besides the possibility of differing bit widths for these
+    PSA types, the only expected differences between `psa.p4` files
+    for different targets would be annotations on externs, etc. that
+    the P4 compiler for that target needs to do its job.
+
+For each of these types, the P4 Runtime API[^P4RuntimeAPI] uses bit
+widths independent of the targets, large enough to hold a value for
+any target.  These widths are defined by the P4 Runtime API
+specification, but they are expected to be at least as large as the
+corresponding `InHeader_t` type below.  All PSA implementations must
+use data plane sizes for these types no wider than the corresponding
+types with `InHeader_t` in their names.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -328,8 +337,8 @@ Additional supported match_kind types
 A PSA data plane implementation that supports the P4 Runtime
 API[^P4RuntimeAPI] includes software called a "P4 Runtime Server" that
 enables runtime programming of the PSA device from one or more "P4
-Runtime Clients".  We will call a P4 Runtime Server an "agent", and a
-P4 Runtime Client a "controller", here for brevity.  A controller may
+Runtime Clients".  For brevity, here we will call a P4 Runtime Server
+an "agent", and a P4 Runtime Client a "controller".  A controller may
 control multiple devices with different PSA implementations.
 
 As mentioned in section [#sec-psa-type-definitions], different PSA
@@ -386,7 +395,7 @@ their name.  For example, `PortIdInHeader_t` is the same as `PortId_t`,
 except it must be a multiple of 8 bits long, and contain at least as
 many bits as `PortId_t` does.
 
-Because these types are guaranteed to be a multiple of 8 bits long,
+Because these `InHeader` types are guaranteed to be a multiple of 8 bits long,
 you may include any combination of them in a P4 header type
 definition, as long as the other fields in the header satisfy the
 multiple of 8 bits restriction.  The controller or P4 program
@@ -408,15 +417,23 @@ numerical translation between controller port id values and data plane
 port id values, for each of the channels of communication between the
 controller and data plane described above.
 
-The `psa.p4` contains an annotation `p4runtime_translation` on the
-`type` definition of types `PortId_t` or `PortIdInHeader_t`.  This
-enables the compiler to mark all uses of values of these types that
-are accessible from the P4Runtime API, so the agent software knows to
-translate them.
+The file `psa.p4` contains an annotation `p4runtime_translation` on
+the `type` definition of types `PortId_t` and `PortIdInHeader_t`.
+This enables the compiler to mark all uses of values of these types
+that are accessible from the P4Runtime API, so the agent software
+knows to translate them.  The benefit is that you do not need to put
+any special markings on your uses of values of these types throughout
+your P4 program.
 
-```
-[INCLUDE=examples/psa-example-parser-error-handling.p4:PortId_Annotation_Example]
-```
+The cost of this approach is: if you want to do arithmetic on values
+of these types, you must explicitly cast them to a normal `bit<W>`
+type.  The `psa.p4` include file defines `PortIdUint_t` as a `typedef`
+with exactly the same width in bits as `type` `PortId_t`, so you can
+cast values of type `PortId_t` to type `PortIdUint_t`, and then you
+can perform all P4 arithmetic operations on the value.  The result
+must be explicitly cast back to type `PortId_t` if you wish to assign
+it to a metadata field with that type.  Corresponding types with
+`Uint` in their name are defined for all PSA types.
 
 Because of this translation, we recommend that values of type
 `PortId_t` be treated similarly to values of an `enum` type.
@@ -451,20 +468,31 @@ The list above is not intended to be exhaustive.
 
 All of the comments above apply to all types where numerical
 translation occurs between the controller and the data plane.
-Below is a complete list of such types, and an example of the
-annotation to use in your P4 program.
+Below is a complete list of such types planned for numerical
+translation by default with PSA, and have an annotation
+`p4runtime_translation` in the `psa.p4` include file:
 
 + `PortId_t` or `PortIdInHeader_t`
 + `ClassOfService_t` or `ClassOfServiceInHeader_t`
 
-For the types listed below, no numerical translation occurs, and the
+For the types listed below, no numerical translation occurs by
+default[^P4CNumericTranslationOptions].  A PSA
 data plane must support all numerical values from 0 up to the maximum
 value that it supports.  Except for `Timestamp_t` values, the number
 of values supported by the data plane need not be a power of 2.
 Controllers must have a way to discover each PSA device's maximum
 supported value for each of these types.
 
-+ `MulticastGroup_t`
+[^P4CNumericTranslationOptions]: The open source `p4c` P4 compiler is
+    planned to support an option to enable numerical translation for
+    additional types, without modifying your P4 program, nor the
+    `psa.p4` include file.  These additional types would be specified
+    by their name.
+
++ `MulticastGroup_t` - 0 is a special value that indicates no
+  multicast replication is to be performed for a packet, so this type
+  is an exception to the rule above that 0 must be supported in the
+  data plane.
 + `CloneSessionId_t`
 + `PacketLength_t`
 + `EgressInstance_t`
@@ -2203,9 +2231,10 @@ link failures is outside the scope of the PSA. Fast-failover requires
 information from the control plane and will be addressed as part of the P4
 Runtime API[^P4RuntimeAPI] working group.
 
-[^P4RuntimeAPI]: The P4 Runtime API, defined as a Google Protocol
-    Buffer `.proto` file, can be found at
-    <https://github.com/p4lang/PI/blob/master/proto/p4/p4runtime.proto>
+[^P4RuntimeAPI]: The P4 Runtime API is defined as a Google Protocol
+    Buffer `.proto` file and an accompanying English specification document
+    here:
+    <https://github.com/p4lang/p4runtime>
 
 
 ## Timestamps
