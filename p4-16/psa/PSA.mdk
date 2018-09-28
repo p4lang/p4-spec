@@ -326,11 +326,11 @@ Additional supported match_kind types
 ## Data plane vs. control plane data representations {#sec-data-plane-vs-control-plane-values}
 
 A PSA data plane implementation that supports the P4 Runtime
-API[^P4RuntimeAPI] includes software called a "P4 Runtime Agent" that
-enables runtime programming of the PSA device from a controller.  A
-controller may control multiple devices with different PSA
-implementations.  We will refer to these pieces of software as an
-"agent" and "controller" for brevity.
+API[^P4RuntimeAPI] includes software called a "P4 Runtime Server" that
+enables runtime programming of the PSA device from one or more "P4
+Runtime Clients".  We will call a P4 Runtime Server an "agent", and a
+P4 Runtime Client a "controller", here for brevity.  A controller may
+control multiple devices with different PSA implementations.
 
 As mentioned in section [#sec-psa-type-definitions], different PSA
 implementations are expected to customize the size of the data types
@@ -347,12 +347,15 @@ table with a million entries[^CacheCost].
 
 [^CacheCost]: While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache.  <https://en.wikipedia.org/wiki/List_of_Intel_microprocessors>
 
-The P4 Runtime API uses quantities with bit widths independent of the target device to hold values of the types
+The P4 Runtime API uses quantities with bit widths independent
+of the target device to hold values of the types
 listed in section [#sec-psa-type-definitions], to simplify the
-manipulation of these values in the agent software.  For control plane
+manipulation of these values in the controller and agent software.
+For control plane
 operations on tables, any trimming or padding of values will be
-performed in the agent (trimming from controller to device direction,
-padding in device to controller direction).
+performed in the agent (usually trimming in the direction from
+controller to device, and padding in the direction from device
+to controller).
 
 There are multiple channels of communication over which such values
 might be carried between the controller and the data plane.  These
@@ -389,7 +392,7 @@ definition, as long as the other fields in the header satisfy the
 multiple of 8 bits restriction.  The controller or P4 program
 generating packets with such headers should fill in any most
 significant "padding" bits with 0.  You may do this with a normal
-assignment in statement in your P4 program, where the value on the
+assignment statement in your P4 program, where the value on the
 right hand side is cast to the wider `InHeader` type.  Similarly,
 casting a value of a wider type such as `PortIdInHeader_t` to the
 corresponding narrower type `PortId_t` truncates the excess most
@@ -405,11 +408,11 @@ numerical translation between controller port id values and data plane
 port id values, for each of the channels of communication between the
 controller and data plane described above.
 
-Occurrences of values of type `PortId_t` or `PortIdInHeader_t` must
-include a `p4runtime_translation` annotation so the compiler can mark
-occurrences of these values appropriately, so the agent can know which
-values need this translation.  See the example P4 header definition
-below.
+The `psa.p4` contains an annotation `p4runtime_translation` on the
+`type` definition of types `PortId_t` or `PortIdInHeader_t`.  This
+enables the compiler to mark all uses of values of these types that
+are accessible from the P4Runtime API, so the agent software knows to
+translate them.
 
 ```
 [INCLUDE=examples/psa-example-parser-error-handling.p4:PortId_Annotation_Example]
@@ -417,15 +420,16 @@ below.
 
 Because of this translation, we recommend that values of type
 `PortId_t` be treated similarly to values of an `enum` type.
-Comparing two values of this type for equality or inequality is
+Comparing two values of this type for equality or "not equal to" is
 reasonable, as well as assigning the values to other variables or
 parameters of the same type, but nearly any other operations are prone
 to error.  When matching values of type `PortId_t` as part of a table
 key, always match a complete value exactly, or wildcard every bit of
 the value (i.e. a `ternary` match kind with all bits wildcard, or an
 `lpm` match kind with prefix length 0).  If you attempt to do any of
-the following things on a value with type `PortId_t`, the numerical
-translation performed may lead to functional errors in your program:
+the following things on a value with type `PortId_t` or
+`PortIdInHeader_t`, the numerical translation performed may lead to
+functional errors in your program:
 
 + Do a table key match on a subset of the bits, or a range match.
 + Compare port values with relational operators like `<` or `>`.
@@ -450,8 +454,8 @@ translation occurs between the controller and the data plane.
 Below is a complete list of such types, and an example of the
 annotation to use in your P4 program.
 
-+ `PortId_t` or `PortIdInHeader_t` - annotation `@p4runtime_translation("port")`
-+ `ClassOfService_t` or `ClassOfServiceInHeader_t` - annotation `@p4runtime_translation("cos")`
++ `PortId_t` or `PortIdInHeader_t`
++ `ClassOfService_t` or `ClassOfServiceInHeader_t`
 
 For the types listed below, no numerical translation occurs, and the
 data plane must support all numerical values from 0 up to the maximum
@@ -479,10 +483,10 @@ It is not clear yet whether it is reasonable to use a value of type
 in a P4 program is that the indexes accessed will be the data plane
 specific values of `PortId_t`, and when the control plane attempts to
 access values in these externs, the numerical translation may not be
-performed on the index.  It should be reasonable to use a
-`DirectCounter` or `DirectMeter` with a table key that includes a
-`PortId_t` field, as long as it is annotated as described above,
-because the agent port translation should be performed for table keys.
+performed on the index.  It is reasonable to use a `DirectCounter` or
+`DirectMeter` with a table key that includes a `PortId_t` field, as
+long as it is annotated as described above, because the agent port
+translation will be performed for table keys.
 
 If this is not a reasonable thing to do, the example program
 psa-example-counters.p4 should be modified so that it does not do

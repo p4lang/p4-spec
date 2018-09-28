@@ -174,11 +174,10 @@ header to_cpu_error_header_t {
 
     // port is ingress_port if ingress is 1, else egress_port
 
-    // This annotation is needed by the P4 compiler and tool chain so
-    // that a P4 Runtime API agent knows that this is a field of type
-    // PortId_t or PortIdInHeader_t that needs its values numerically
-    // translated between the control plane and data plane.
-    @p4runtime_translation("port")
+    // Note that no annotation is needed on this or any other values
+    // of type `PortIdInHeader_t` or `PortId_t`, because `psa.p4` has
+    // an annotation on the `type` definition that the compiler can
+    // propagate to all variables of these types.
     PortIdInHeader_t port;
 }
 // END:PortId_Annotation_Example
@@ -378,7 +377,7 @@ control handle_parser_errors(
         to_cpu_error_hdr.setValid();
         to_cpu_error_hdr.error_idx = error_idx;
         packet_path_to_bits.apply(to_cpu_error_hdr.packet_path, packet_path);
-        to_cpu_error_hdr.port = (PortIdInHeader_t) port;
+        to_cpu_error_hdr.port = PSA_PORT_ID_INT_TO_HEADER(port);
     }
 }
 
@@ -399,6 +398,9 @@ control ingress(inout headers hdr,
             meta.to_cpu_error_hdr.ingress = 1;
             ingress_drop(ostd);
             ostd.clone = true;
+            // With open source p4test as of 2018-Sep-27, the
+            // following line causes a 'typechecker mutated program'
+            // error:
             ostd.clone_session_id = PSA_CLONE_SESSION_TO_CPU;
             exit;
         }
@@ -564,6 +566,9 @@ control egress(inout headers hdr,
             meta.to_cpu_error_hdr.ingress = 0;
             egress_drop(ostd);
             ostd.clone = true;
+            // With open source p4test as of 2018-Sep-27, the
+            // following line causes a 'typechecker mutated program'
+            // error:
             ostd.clone_session_id = PSA_CLONE_SESSION_TO_CPU;
             exit;
         }

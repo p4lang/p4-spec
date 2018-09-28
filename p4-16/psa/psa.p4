@@ -29,46 +29,97 @@ limitations under the License.
  * These types need to be defined before including the architecture file
  * and the macro protecting them should be defined.
  */
-#define PSA_CORE_TYPES
-#ifdef PSA_CORE_TYPES
+#define PSA_EXAMPLE_CORE_TYPES
+#ifdef PSA_EXAMPLE_CORE_TYPES
 /* The bit widths shown below are only examples.  Each PSA
  * implementation is free to use its own custom width in bits for
  * those types that are bit<W> for some W.  The only reason that there
  * are example numerical widths in this file is so that we can easily
  * compile this file, and example PSA P4 programs that include it. */
 
-typedef bit<10> PortId_t;
-typedef bit<10> MulticastGroup_t;
-typedef bit<10> CloneSessionId_t;
-typedef bit<3>  ClassOfService_t;
-typedef bit<14> PacketLength_t;
-typedef bit<16> EgressInstance_t;
-typedef bit<48> Timestamp_t;
+@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
+type bit<10> PortId_t;
+type bit<10> MulticastGroup_t;
+type bit<10> CloneSessionId_t;
+@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
+type bit<3>  ClassOfService_t;
+type bit<14> PacketLength_t;
+type bit<16> EgressInstance_t;
+type bit<48> Timestamp_t;
 typedef error   ParserError_t;
 
-const   PortId_t         PSA_PORT_RECIRCULATE = 254;
-const   PortId_t         PSA_PORT_CPU = 255;
+const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 254;
+const PortId_t PSA_PORT_CPU = (PortId_t) 255;
 
-const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = 0;
-#endif  // PSA_CORE_TYPES
-#ifndef PSA_CORE_TYPES
-#error "Please define the following types for PSA and the PSA_CORE_TYPES macro"
+const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessionId_t) 0;
+
+/* These are defined using typedef, not type, so they are truly just
+ * different names for the type bit<W> for the particular width W
+ * shown.  Unlike the type definitions above, values declared with the
+ * types below can be freely mingled in expressions the same as any
+ * value declared with type bit<W> can.  Values declared with one of
+ * the `type` types above _cannot_ be so freely mingled, unless you
+ * cast them to one of these types first.  While that may be
+ * inconvenient when you need to do arithmetic on such values, it is
+ * the price to pay for having all occurrences of values of these
+ * types marked as such in the automatically generated control plane
+ * API.
+ *
+ * Note that the width of typedef <name>Uint_t must be exactly the
+ * same as the width of type <name>_t, which in P4_16 allows values of
+ * that pair of types to be cast to each other. */
+typedef bit<10> PortIdUint_t;
+typedef bit<10> MulticastGroupUint_t;
+typedef bit<10> CloneSessionIdUint_t;
+typedef bit<3>  ClassOfServiceUint_t;
+typedef bit<14> PacketLengthUint_t;
+typedef bit<16> EgressInstanceUint_t;
+typedef bit<48> TimestampUint_t;
+
+#endif  // PSA_EXAMPLE_CORE_TYPES
+
+#ifndef PSA_EXAMPLE_CORE_TYPES
+#error "Please define the following types for PSA and the PSA_EXAMPLE_CORE_TYPES macro"
 // BEGIN:Type_defns
-typedef bit<unspecified> PortId_t;
-typedef bit<unspecified> MulticastGroup_t;
-typedef bit<unspecified> CloneSessionId_t;
-typedef bit<unspecified> ClassOfService_t;
-typedef bit<unspecified> PacketLength_t;
-typedef bit<unspecified> EgressInstance_t;
-typedef bit<unspecified> Timestamp_t;
+@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
+type bit<unspecified> PortId_t;
+type bit<unspecified> MulticastGroup_t;
+type bit<unspecified> CloneSessionId_t;
+@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
+type bit<unspecified> ClassOfService_t;
+type bit<unspecified> PacketLength_t;
+type bit<unspecified> EgressInstance_t;
+type bit<unspecified> Timestamp_t;
 
-const   PortId_t         PSA_PORT_RECIRCULATE = unspecified;
-const   PortId_t         PSA_PORT_CPU = unspecified;
+const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
+const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
 
-const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
+const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessiontId_t) unspecified;
+
+/* These are defined using typedef, not type, so they are truly just
+ * different names for the type bit<W> for the particular width W
+ * shown.  Unlike the type definitions above, values declared with the
+ * types below can be freely mingled in expressions the same as any
+ * value declared with type bit<W> can.  Values declared with one of
+ * the `type` types above _cannot_ be so freely mingled, unless you
+ * cast them to one of these types first.  While that may be
+ * inconvenient when you need to do arithmetic on such values, it is
+ * the price to pay for having all occurrences of values of these
+ * types marked as such in the automatically generated control plane
+ * API.
+ *
+ * Note that the width of typedef <name>Uint_t must be exactly the
+ * same as the width of type <name>_t, which in P4_16 allows values of
+ * that pair of types to be cast to each other. */
+typedef bit<unspecified> PortIdUint_t;
+typedef bit<unspecified> MulticastGroupUint_t;
+typedef bit<unspecified> CloneSessionIdUint_t;
+typedef bit<unspecified> ClassOfServiceUint_t;
+typedef bit<unspecified> PacketLengthUint_t;
+typedef bit<unspecified> EgressInstanceUint_t;
+typedef bit<unspecified> TimestampUint_t;
 // END:Type_defns
-
-#endif
+#endif  // #ifndef PSA_EXAMPLE_CORE_TYPES
 
 // BEGIN:Type_defns2
 
@@ -83,14 +134,63 @@ const   CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = unspecified;
  * fields may be used in a single P4 header definition, even on P4
  * implementations that restrict headers to contain fields with a
  * total length that is a multiple of 8 bits. */
-typedef bit<32> PortIdInHeader_t;
-typedef bit<32> MulticastGroupInHeader_t;
-typedef bit<16> CloneSessionIdInHeader_t;
-typedef bit<8>  ClassOfServiceInHeader_t;
-typedef bit<16> PacketLengthInHeader_t;
-typedef bit<16> EgressInstanceInHeader_t;
-typedef bit<64> TimestampInHeader_t;
+@p4runtime_translation("p4.org/psa/v1/PortIdInHeader_t", 32)
+type bit<32> PortIdInHeader_t;
+type bit<32> MulticastGroupInHeader_t;
+type bit<16> CloneSessionIdInHeader_t;
+@p4runtime_translation("p4.org/psa/v1/ClassOfServiceInHeader_t", 8)
+type bit<8>  ClassOfServiceInHeader_t;
+type bit<16> PacketLengthInHeader_t;
+type bit<16> EgressInstanceInHeader_t;
+type bit<64> TimestampInHeader_t;
+
+/* See the comments near the definition of PortIdUint_t for why these
+ * typedef definitions exist. */
+typedef bit<32> PortIdInHeaderUint_t;
+typedef bit<32> MulticastGroupInHeaderUint_t;
+typedef bit<16> CloneSessionIdInHeaderUint_t;
+typedef bit<8>  ClassOfServiceInHeaderUint_t;
+typedef bit<16> PacketLengthInHeaderUint_t;
+typedef bit<16> EgressInstanceInHeaderUint_t;
+typedef bit<64> TimestampInHeaderUint_t;
 // END:Type_defns2
+
+/* The INT_TO_HEADER macros exist for use in those cases when one has
+ * a value of type <name>_t (an value INTernal to the data path) and
+ * you wish to assign it to a field of type <name>InHeader_t inside a
+ * header that will be sent to the CPU port.
+ *
+ * The HEADER_TO_INT macros exist for assigning in the opposite
+ * direction, typically for assigning a value in a header received
+ * from the CPU port, to a value you wish to use in the rest of your
+ * code, which uses less storage space.
+ *
+ * The reason that three casts are needed is that each of the original
+ * and target types is declared via P4_16 'type', so without a cast
+ * they can only be assigned to values of that identical type.  The
+ * first cast changes it from the original 'type' to a 'bit<W1>' value
+ * of the same bit width W1.  The second cast changes its bit width,
+ * either prepending 0s if it becomes wider, or discarding the most
+ * significant bits if it becomes narrower.  The third cast changes it
+ * from a 'bit<W2>' value to the final 'type', with the same width
+ * W2. */
+
+#define PSA_PORT_ID_HEADER_TO_INT(x) ((PortId_t) (PortIdUint_t) (PortIdInHeaderUint_t) (x))
+#define PSA_MULTICAST_GROUP_HEADER_TO_INT(x) ((MulticastGroup_t) (MulticastGroupUint_t) (MulticastGroupInHeaderUint_t) (x))
+#define PSA_CLONE_SESSION_HEADER_TO_INT(x) ((CloneSessionId_t) (CloneSessionIdUint_t) (CloneSessionIdInHeaderUint_t) (x))
+#define PSA_CLASS_OF_SERVICE_HEADER_TO_INT(x) ((ClassOfService_t) (ClassOfServiceUint_t) (ClassOfServiceInHeaderUint_t) (x))
+#define PSA_PACKET_LENGTH_HEADER_TO_INT(x) ((PacketLength_t) (PacketLengthUint_t) (PacketLengthInHeaderUint_t) (x))
+#define PSA_EGRESS_INSTANCE_HEADER_TO_INT(x) ((EgressInstance_t) (EgressInstanceUint_t) (EgressInstanceInHeaderUint_t) (x))
+#define PSA_TIMESTAMP_HEADER_TO_INT(x) ((Timestamp_t) (TimestampUint_t) (TimestampInHeaderUint_t) (x))
+
+#define PSA_PORT_ID_INT_TO_HEADER(x) ((PortIdInHeader_t) ((PortIdInHeaderUint_t) ((PortIdUint_t) (x))))
+#define PSA_MULTICAST_GROUP_INT_TO_HEADER(x) ((MulticastGroupInHeader_t) (MulticastGroupInHeaderUint_t) (MulticastGroupUint_t) (x))
+#define PSA_CLONE_SESSION_INT_TO_HEADER(x) ((CloneSessionIdInHeader_t) (CloneSessionIdInHeaderUint_t) (CloneSessionIdUint_t) (x))
+#define PSA_CLASS_OF_SERVICE_INT_TO_HEADER(x) ((ClassOfServiceInHeader_t) (ClassOfServiceInHeaderUint_t) (ClassOfServiceUint_t) (x))
+#define PSA_PACKET_LENGTH_INT_TO_HEADER(x) ((PacketLengthInHeader_t) (PacketLengthInHeaderUint_t) (PacketLengthUint_t) (x))
+#define PSA_EGRESS_INSTANCE_INT_TO_HEADER(x) ((EgressInstanceInHeader_t) (EgressInstanceInHeaderUint_t) (EgressInstanceUint_t) (x))
+#define PSA_TIMESTAMP_INT_TO_HEADER(x) ((TimestampInHeader_t) (TimestampInHeaderUint_t) (TimestampUint_t) (x))
+
 
 // BEGIN:Metadata_types
 enum PSA_PacketPath_t {
@@ -233,7 +333,7 @@ action send_to_port(inout psa_ingress_output_metadata_t meta,
                     in PortId_t egress_port)
 {
     meta.drop = false;
-    meta.multicast_group = 0;
+    meta.multicast_group = (MulticastGroup_t) 0;
     meta.egress_port = egress_port;
 }
 // END:Action_send_to_port
