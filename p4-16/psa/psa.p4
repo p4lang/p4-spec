@@ -90,6 +90,7 @@ type bit<unspecified> ClassOfService_t;
 type bit<unspecified> PacketLength_t;
 type bit<unspecified> EgressInstance_t;
 type bit<unspecified> Timestamp_t;
+typedef error   ParserError_t;
 
 const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
 const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
