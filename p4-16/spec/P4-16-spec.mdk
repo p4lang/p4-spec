@@ -7154,9 +7154,11 @@ This appendix summarizes restrictions on compile time and run time
 calls that can be made.  Many of them are described earlier in this
 document, but are collected here for easy reference.
 
-The stateful types of objects in P4~16~ are packages, parsers, controls,
-externs, tables, and value-sets.  All other types are referred to as "value
-types" here.
+The stateful types of objects in P4~16~ are packages, parsers,
+controls, externs, tables, and value-sets.  P4~16~ functions are also
+considered to be in that group, even if they happen to be pure
+functions of their arguments.  All other types are referred to as
+"value types" here.
 
 Some guiding principles:
 
@@ -7196,10 +7198,15 @@ constructor parameters to other types.
 | parser      | yes     | yes    |  no     |  no    |
 | control     | yes     |  no    | yes     |  no    |
 | extern      | yes     | yes    | yes     | yes    |
+| function    |  no     |  no    |  no     |  no    |
 | table       |  no     |  no    |  no     |  no    |
 | value-set   |  no     |  no    |  no     |  no    |
 | value types | yes     | yes    | yes     | yes    |
 |-------------|---------|--------|---------|--------|
+
+Note: There is work under way that may add to P4~16~ the ability to
+define a function within a table definition, e.g. to calculate a
+custom hash function for a PSA action selector.
 
 The next table lists restrictions on where one may perform
 instantiations (see Section [#sec-instantiations]) of different types.
@@ -7214,43 +7221,46 @@ implementation.  Thus there is no place to instantiate objects within
 an extern.
 
 You may declare variables and constants of any of the value types
-within a parser or control (see Section [#sec-variables] for more
+within a parser, control, or function (see Section [#sec-variables] for more
 details).  Declaring a variable or constant is not the same as
 instantiation, hence the answer "N/A" (for not applicable) in those
 table entries.  Variables may not be declared at the top level of your
 program, but constants may.
 
 |-------------|-------------------------------------------------|
-|             | can be instantiated in this place |||||
-|             |-----------|---------|---------|---------|--------|
-| This type   | top level | package | parser  | control | extern |
-+-------------+:---------:+:-------:+:-------:+:-------:+:------:+
-| package     | yes       |  no     | no      | no      |  no    |
-| parser      |  no       |  no     | yes     | no      |  no    |
-| control     |  no       |  no     | no      | yes     |  no    |
-| extern      | yes       |  no     | yes     | yes     |  no    |
-| table       |  no       |  no     | no      | yes     |  no    |
-| value-set   | yes       |  no     | yes     | no      |  no    |
-| value types | N/A       | N/A     |N/A      |N/A      | N/A    |
-|-------------|-----------|---------|---------|---------|--------|
+|             | can be instantiated in this place ||||||
+|             |-----------|---------|---------|---------|--------|----------|
+| This type   | top level | package | parser  | control | extern | function |
++-------------+:---------:+:-------:+:-------:+:-------:+:------:+:--------:+
+| package     | yes       |  no     | no      | no      |  no    |  no      |
+| parser      |  no       |  no     | yes     | no      |  no    |  no      |
+| control     |  no       |  no     | no      | yes     |  no    |  no      |
+| extern      | yes       |  no     | yes     | yes     |  no    |  no      |
+| function    | yes       |  no     | no      | no      |  no    |  no      |
+| table       |  no       |  no     | no      | yes     |  no    |  no      |
+| value-set   | yes       |  no     | yes     | no      |  no    |  no      |
+| value types | N/A       | N/A     | N/A     | N/A     | N/A    | N/A      |
+|-------------|-----------|---------|---------|---------|--------|----------|
 
 The next table lists restrictions on what types can be passed as
 run-time parameters to other callable things that have run-time
-parameters: parsers, controls, extern methods, and actions.
+parameters: parsers, controls, extern methods, actions, and functions.
 
 |-------------|-------------------------------------------------|
-|             | can be a run-time parameter to this callable thing ||||
-|             |-----------|---------|---------|---------|
-| This type   | parser    | control | method  | action  |
-+-------------+:---------:+:-------:+:-------:+:-------:+
-| package     |  no       |  no     | no      | no      |
-| parser      |  no       |  no     | no      | no      |
-| control     |  no       |  no     | no      | no      |
-| extern      | yes       | yes     | yes     | no      |
-| table       |  no       |  no     | no      | no      |
-| value-set   |  no       |  no     | no      | no      |
-| value types | yes       | yes     | yes     | yes     |
-|-------------|-----------|---------|---------|---------|
+|             | can be a run-time parameter to this callable thing |||||
+|             |-----------|---------|---------|---------|----------|
+| This type   | parser    | control | method  | action  | function |
++-------------+:---------:+:-------:+:-------:+:-------:+:--------:+
+| package     |  no       |  no     | no      | no      |  no      |
+| parser      |  no       |  no     | no      | no      |  no      |
+| control     |  no       |  no     | no      | no      |  no      |
+| extern      | yes       | yes     | yes     | no      |  no      |
+| table       |  no       |  no     | no      | no      |  no      |
+| value-set   |  no       |  no     | no      | no      |  no      |
+| action      |  no       |  no     | no      | no      |  no      |
+| function    |  no       |  no     | no      | no      |  no      |
+| value types | yes       | yes     | yes     | yes     | yes      |
+|-------------|-----------|---------|---------|---------|----------|
 
 Extern method calls may return only return a value that is a value
 type, or no value at all (specified by a return type of `void`).
@@ -7266,21 +7276,22 @@ control is in an initializer expression for a declared variable,
 e.g. `bit<32> x = rand.get();`.
 
 |-------------|-------------------------------------------------|
-|             | can be called at run time from this place in a P4 program |||||
-|             |-----------|---------|-----------|---------|--------|
-|             |           | control | parser or |         |        |
-|             | parser    | apply   | control   |         |        |
-| This type   | state     | block   | top level | action  | extern |
-+-------------+:---------:+:-------:+:---------:+:-------:+:------:+
-| package     | N/A       | N/A     | N/A       | N/A     | N/A    |
-| parser      | yes       |  no     | no        | no      | no     |
-| control     |  no       | yes     | no        | no      | no     |
-| extern      | yes       | yes     | yes       | yes     | no     |
-| table       |  no       | yes     | no        | no      | no     |
-| value-set   | yes       | no      | no        | no      | no     |
-| action      |  no       | yes     | no        | yes     | no     |
-| value types | N/A       | N/A     | N/A       | N/A     | N/A    |
-|-------------|-----------|---------|-----------|---------|--------|
+|             | can be called at run time from this place in a P4 program ||||||
+|             |-----------|---------|-----------|---------|--------|----------|
+|             |           | control | parser or |         |        |          |
+|             | parser    | apply   | control   |         |        |          |
+| This type   | state     | block   | top level | action  | extern | function |
++-------------+:---------:+:-------:+:---------:+:-------:+:------:+:--------:+
+| package     | N/A       | N/A     | N/A       | N/A     | N/A    | N/A      |
+| parser      | yes       |  no     | no        | no      | no     | no       |
+| control     |  no       | yes     | no        | no      | no     | no       |
+| extern      | yes       | yes     | yes       | yes     | no     | no       |
+| table       |  no       | yes     | no        | no      | no     | no       |
+| value-set   | yes       | no      | no        | no      | no     | no       |
+| action      |  no       | yes     | no        | yes     | no     | no       |
+| function    | yes       | yes     | no        | yes     | no     | yes      |
+| value types | N/A       | N/A     | N/A       | N/A     | N/A    | N/A      |
+|-------------|-----------|---------|-----------|---------|--------|----------|
 
 There may not be any recursion in calls, neither by a thing calling
 itself directly, nor mutual recursion.
