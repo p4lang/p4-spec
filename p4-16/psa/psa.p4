@@ -156,15 +156,15 @@ typedef bit<16> EgressInstanceInHeaderUint_t;
 typedef bit<64> TimestampInHeaderUint_t;
 // END:Type_defns2
 
-/* The INT_TO_HEADER macros exist for use in those cases when one has
- * a value of type <name>_t (an value INTernal to the data path) and
- * you wish to assign it to a field of type <name>InHeader_t inside a
- * header that will be sent to the CPU port.
+/* The _int_to_header functions were written to convert a value of
+ * type <name>_t (a value INTernal to the data path) to a value of
+ * type <name>InHeader_t inside a header that will be sent to the CPU
+ * port.
  *
- * The HEADER_TO_INT macros exist for assigning in the opposite
- * direction, typically for assigning a value in a header received
- * from the CPU port, to a value you wish to use in the rest of your
- * code, which uses less storage space.
+ * The _header_to_int functions were written to convert values in the
+ * opposite direction, typically for assigning a value in a header
+ * received from the CPU port, to a value you wish to use in the rest
+ * of your code.
  *
  * The reason that three casts are needed is that each of the original
  * and target types is declared via P4_16 'type', so without a cast
@@ -176,22 +176,49 @@ typedef bit<64> TimestampInHeaderUint_t;
  * from a 'bit<W2>' value to the final 'type', with the same width
  * W2. */
 
-#define PSA_PORT_ID_HEADER_TO_INT(x) ((PortId_t) (PortIdUint_t) (PortIdInHeaderUint_t) (x))
-#define PSA_MULTICAST_GROUP_HEADER_TO_INT(x) ((MulticastGroup_t) (MulticastGroupUint_t) (MulticastGroupInHeaderUint_t) (x))
-#define PSA_CLONE_SESSION_HEADER_TO_INT(x) ((CloneSessionId_t) (CloneSessionIdUint_t) (CloneSessionIdInHeaderUint_t) (x))
-#define PSA_CLASS_OF_SERVICE_HEADER_TO_INT(x) ((ClassOfService_t) (ClassOfServiceUint_t) (ClassOfServiceInHeaderUint_t) (x))
-#define PSA_PACKET_LENGTH_HEADER_TO_INT(x) ((PacketLength_t) (PacketLengthUint_t) (PacketLengthInHeaderUint_t) (x))
-#define PSA_EGRESS_INSTANCE_HEADER_TO_INT(x) ((EgressInstance_t) (EgressInstanceUint_t) (EgressInstanceInHeaderUint_t) (x))
-#define PSA_TIMESTAMP_HEADER_TO_INT(x) ((Timestamp_t) (TimestampUint_t) (TimestampInHeaderUint_t) (x))
+PortId_t psa_PortId_header_to_int (in PortIdInHeader_t x) {
+    return (PortId_t) (PortIdUint_t) (PortIdInHeaderUint_t) x;
+}
+MulticastGroup_t psa_MulticastGroup_header_to_int (in MulticastGroupInHeader_t x) {
+    return (MulticastGroup_t) (MulticastGroupUint_t) (MulticastGroupInHeaderUint_t) x;
+}
+CloneSessionId_t psa_CloneSessionId_header_to_int (in CloneSessionIdInHeader_t x) {
+    return (CloneSessionId_t) (CloneSessionIdUint_t) (CloneSessionIdInHeaderUint_t) x;
+}
+ClassOfService_t psa_ClassOfService_header_to_int (in ClassOfServiceInHeader_t x) {
+    return (ClassOfService_t) (ClassOfServiceUint_t) (ClassOfServiceInHeaderUint_t) x;
+}
+PacketLength_t psa_PacketLength_header_to_int (in PacketLengthInHeader_t x) {
+    return (PacketLength_t) (PacketLengthUint_t) (PacketLengthInHeaderUint_t) x;
+}
+EgressInstance_t psa_EgressInstance_header_to_int (in EgressInstanceInHeader_t x) {
+    return (EgressInstance_t) (EgressInstanceUint_t) (EgressInstanceInHeaderUint_t) x;
+}
+Timestamp_t psa_Timestamp_header_to_int (in TimestampInHeader_t x) {
+    return (Timestamp_t) (TimestampUint_t) (TimestampInHeaderUint_t) x;
+}
 
-#define PSA_PORT_ID_INT_TO_HEADER(x) ((PortIdInHeader_t) ((PortIdInHeaderUint_t) ((PortIdUint_t) (x))))
-#define PSA_MULTICAST_GROUP_INT_TO_HEADER(x) ((MulticastGroupInHeader_t) (MulticastGroupInHeaderUint_t) (MulticastGroupUint_t) (x))
-#define PSA_CLONE_SESSION_INT_TO_HEADER(x) ((CloneSessionIdInHeader_t) (CloneSessionIdInHeaderUint_t) (CloneSessionIdUint_t) (x))
-#define PSA_CLASS_OF_SERVICE_INT_TO_HEADER(x) ((ClassOfServiceInHeader_t) (ClassOfServiceInHeaderUint_t) (ClassOfServiceUint_t) (x))
-#define PSA_PACKET_LENGTH_INT_TO_HEADER(x) ((PacketLengthInHeader_t) (PacketLengthInHeaderUint_t) (PacketLengthUint_t) (x))
-#define PSA_EGRESS_INSTANCE_INT_TO_HEADER(x) ((EgressInstanceInHeader_t) (EgressInstanceInHeaderUint_t) (EgressInstanceUint_t) (x))
-#define PSA_TIMESTAMP_INT_TO_HEADER(x) ((TimestampInHeader_t) (TimestampInHeaderUint_t) (TimestampUint_t) (x))
-
+PortIdInHeader_t psa_PortId_int_to_header (in PortId_t x) {
+    return (PortIdInHeader_t) (PortIdInHeaderUint_t) (PortIdUint_t) x;
+}
+MulticastGroupInHeader_t psa_MulticastGroup_int_to_header (in MulticastGroup_t x) {
+    return (MulticastGroupInHeader_t) (MulticastGroupInHeaderUint_t) (MulticastGroupUint_t) x;
+}
+CloneSessionIdInHeader_t psa_CloneSessionId_int_to_header (in CloneSessionId_t x) {
+    return (CloneSessionIdInHeader_t) (CloneSessionIdInHeaderUint_t) (CloneSessionIdUint_t) x;
+}
+ClassOfServiceInHeader_t psa_ClassOfService_int_to_header (in ClassOfService_t x) {
+    return (ClassOfServiceInHeader_t) (ClassOfServiceInHeaderUint_t) (ClassOfServiceUint_t) x;
+}
+PacketLengthInHeader_t psa_PacketLength_int_to_header (in PacketLength_t x) {
+    return (PacketLengthInHeader_t) (PacketLengthInHeaderUint_t) (PacketLengthUint_t) x;
+}
+EgressInstanceInHeader_t psa_EgressInstance_int_to_header (in EgressInstance_t x) {
+    return (EgressInstanceInHeader_t) (EgressInstanceInHeaderUint_t) (EgressInstanceUint_t) x;
+}
+TimestampInHeader_t psa_Timestamp_int_to_header (in Timestamp_t x) {
+    return (TimestampInHeader_t) (TimestampInHeaderUint_t) (TimestampUint_t) x;
+}
 
 // BEGIN:Metadata_types
 enum PSA_PacketPath_t {

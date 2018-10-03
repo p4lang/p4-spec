@@ -305,12 +305,12 @@ from one PSA implementation to another[^PSAP4TargetSpecific].
     the P4 compiler for that target needs to do its job.
 
 For each of these types, the P4 Runtime API[^P4RuntimeAPI] uses bit
-widths independent of the targets, large enough to hold a value for
-any target.  These widths are defined by the P4 Runtime API
-specification, but they are expected to be at least as large as the
-corresponding `InHeader_t` type below.  All PSA implementations must
-use data plane sizes for these types no wider than the corresponding
-types with `InHeader_t` in their names.
+widths independent of the targets.  These widths are defined by the P4
+Runtime API specification, and they are expected to be at least as
+large as the corresponding `InHeader_t` type below, such that they
+hold a value for any target.  All PSA implementations must use data
+plane sizes for these types no wider than the corresponding
+`InHeader_t`-defined types.
 
 ```
 [INCLUDE=psa.p4:Type_defns]
@@ -421,12 +421,13 @@ The file `psa.p4` contains an annotation `p4runtime_translation` on
 the `type` definition of types `PortId_t` and `PortIdInHeader_t`.
 This enables the compiler to mark all uses of values of these types
 that are accessible from the P4Runtime API, so the agent software
-knows to translate them.  The benefit is that you do not need to put
-any special markings on your uses of values of these types throughout
-your P4 program.
+knows that it must translate them, and what kind of translation to
+perform.  The benefit is that you do not need to put any special
+markings on your uses of values of these types throughout your P4
+program.
 
 The cost of this approach is: if you want to do arithmetic on values
-of these types, you must explicitly cast them to a normal `bit<W>`
+of these types, you must explicitly cast them to a `bit<W>`
 type.  The `psa.p4` include file defines `PortIdUint_t` as a `typedef`
 with exactly the same width in bits as `type` `PortId_t`, so you can
 cast values of type `PortId_t` to type `PortIdUint_t`, and then you

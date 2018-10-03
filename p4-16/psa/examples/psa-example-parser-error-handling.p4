@@ -377,7 +377,7 @@ control handle_parser_errors(
         to_cpu_error_hdr.setValid();
         to_cpu_error_hdr.error_idx = error_idx;
         packet_path_to_bits.apply(to_cpu_error_hdr.packet_path, packet_path);
-        to_cpu_error_hdr.port = PSA_PORT_ID_INT_TO_HEADER(port);
+        to_cpu_error_hdr.port = psa_PortId_int_to_header(port);
     }
 }
 
