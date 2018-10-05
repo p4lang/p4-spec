@@ -37,37 +37,20 @@ limitations under the License.
  * are example numerical widths in this file is so that we can easily
  * compile this file, and example PSA P4 programs that include it. */
 
-@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
-type bit<10> PortId_t;
-type bit<10> MulticastGroup_t;
-type bit<10> CloneSessionId_t;
-@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
-type bit<3>  ClassOfService_t;
-type bit<14> PacketLength_t;
-type bit<16> EgressInstance_t;
-type bit<48> Timestamp_t;
-typedef error   ParserError_t;
-
-const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 254;
-const PortId_t PSA_PORT_CPU = (PortId_t) 255;
-
-const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessionId_t) 0;
-
-/* These are defined using typedef, not type, so they are truly just
- * different names for the type bit<W> for the particular width W
- * shown.  Unlike the type definitions above, values declared with the
- * types below can be freely mingled in expressions the same as any
- * value declared with type bit<W> can.  Values declared with one of
- * the `type` types above _cannot_ be so freely mingled, unless you
- * cast them to one of these types first.  While that may be
- * inconvenient when you need to do arithmetic on such values, it is
- * the price to pay for having all occurrences of values of these
- * types marked as such in the automatically generated control plane
- * API.
+/* These are defined using `typedef`, not `type`, so they are truly
+ * just different names for the type bit<W> for the particular width W
+ * shown.  Unlike the `type` definitions below, values declared with
+ * the `typedef` type names can be freely mingled in expressions, just
+ * as any value declared with type bit<W> can.  Values declared with
+ * one of the `type` names below _cannot_ be so freely mingled, unless
+ * you first cast them to the corresponding `typedef` type.  While
+ * that may be inconvenient when you need to do arithmetic on such
+ * values, it is the price to pay for having all occurrences of values
+ * of the `type` types marked as such in the automatically generated
+ * control plane API.
  *
- * Note that the width of typedef <name>Uint_t must be exactly the
- * same as the width of type <name>_t, which in P4_16 allows values of
- * that pair of types to be cast to each other. */
+ * Note that the width of typedef <name>Uint_t will always be the same
+ * as the width of type <name>_t. */
 typedef bit<10> PortIdUint_t;
 typedef bit<10> MulticastGroupUint_t;
 typedef bit<10> CloneSessionIdUint_t;
@@ -76,42 +59,41 @@ typedef bit<14> PacketLengthUint_t;
 typedef bit<16> EgressInstanceUint_t;
 typedef bit<48> TimestampUint_t;
 
+@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
+type PortIdUint_t         PortId_t;
+type MulticastGroupUint_t MulticastGroup_t;
+type CloneSessionIdUint_t CloneSessionId_t;
+@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
+type ClassOfServiceUint_t ClassOfService_t;
+type PacketLengthUint_t   PacketLength_t;
+type EgressInstanceUint_t EgressInstance_t;
+type TimestampUint_t      Timestamp_t;
+typedef error   ParserError_t;
+
+const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 254;
+const PortId_t PSA_PORT_CPU = (PortId_t) 255;
+
+const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessionId_t) 0;
+
 #endif  // PSA_EXAMPLE_CORE_TYPES
 
 #ifndef PSA_EXAMPLE_CORE_TYPES
 #error "Please define the following types for PSA and the PSA_EXAMPLE_CORE_TYPES macro"
 // BEGIN:Type_defns
-@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
-type bit<unspecified> PortId_t;
-type bit<unspecified> MulticastGroup_t;
-type bit<unspecified> CloneSessionId_t;
-@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
-type bit<unspecified> ClassOfService_t;
-type bit<unspecified> PacketLength_t;
-type bit<unspecified> EgressInstance_t;
-type bit<unspecified> Timestamp_t;
-typedef error   ParserError_t;
-
-const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
-const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
-
-const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessiontId_t) unspecified;
-
-/* These are defined using typedef, not type, so they are truly just
- * different names for the type bit<W> for the particular width W
- * shown.  Unlike the type definitions above, values declared with the
- * types below can be freely mingled in expressions the same as any
- * value declared with type bit<W> can.  Values declared with one of
- * the `type` types above _cannot_ be so freely mingled, unless you
- * cast them to one of these types first.  While that may be
- * inconvenient when you need to do arithmetic on such values, it is
- * the price to pay for having all occurrences of values of these
- * types marked as such in the automatically generated control plane
- * API.
+/* These are defined using `typedef`, not `type`, so they are truly
+ * just different names for the type bit<W> for the particular width W
+ * shown.  Unlike the `type` definitions below, values declared with
+ * the `typedef` type names can be freely mingled in expressions, just
+ * as any value declared with type bit<W> can.  Values declared with
+ * one of the `type` names below _cannot_ be so freely mingled, unless
+ * you first cast them to the corresponding `typedef` type.  While
+ * that may be inconvenient when you need to do arithmetic on such
+ * values, it is the price to pay for having all occurrences of values
+ * of the `type` types marked as such in the automatically generated
+ * control plane API.
  *
- * Note that the width of typedef <name>Uint_t must be exactly the
- * same as the width of type <name>_t, which in P4_16 allows values of
- * that pair of types to be cast to each other. */
+ * Note that the width of typedef <name>Uint_t will always be the same
+ * as the width of type <name>_t. */
 typedef bit<unspecified> PortIdUint_t;
 typedef bit<unspecified> MulticastGroupUint_t;
 typedef bit<unspecified> CloneSessionIdUint_t;
@@ -119,31 +101,49 @@ typedef bit<unspecified> ClassOfServiceUint_t;
 typedef bit<unspecified> PacketLengthUint_t;
 typedef bit<unspecified> EgressInstanceUint_t;
 typedef bit<unspecified> TimestampUint_t;
+
+@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
+type PortIdUint_t         PortId_t;
+type MulticastGroupUint_t MulticastGroup_t;
+type CloneSessionIdUint_t CloneSessionId_t;
+@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
+type ClassOfServiceUint_t ClassOfService_t;
+type PacketLengthUint_t   PacketLength_t;
+type EgressInstanceUint_t EgressInstance_t;
+type TimestampUint_t      Timestamp_t;
+typedef error   ParserError_t;
+
+const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
+const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
+
+const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessiontId_t) unspecified;
 // END:Type_defns
 #endif  // #ifndef PSA_EXAMPLE_CORE_TYPES
 
 // BEGIN:Type_defns2
 
-/* Note: All of the widths for types with `InHeader` in their name are
- * intended only to carry values of the corresponding types in packet
- * headers between a controller and a PSA device.  The widths are
- * intended to be large enough for all PSA devices, so that a
- * controller can fill in headers with these fields in a common way
- * for all PSA devices.
+/* Note: All of the types with `InHeader` in their name are intended
+ * only to carry values of the corresponding types in packet headers
+ * between a PSA device and the P4Runtime Server software that manages
+ * it.
+ *
+ * The widths are intended to be at least as large as any PSA device
+ * will ever have for that type.  Thus these types may also be useful
+ * to define packet headers that are sent directly between a PSA
+ * device and other devices, without going through P4Runtime Server
+ * software (e.g. this could be useful for sending packets to a
+ * controller or data collection system using higher packet rates than
+ * the P4Runtime Server can handle).  If used for this purpose, there
+ * is no requirement that the PSA data plane _automatically_ perform
+ * the numerical translation of these types that would occur if the
+ * header went through the P4Runtime Server.  Any such desired
+ * translation is up to the author of the P4 program to perform with
+ * explicit code.
  *
  * All widths must be a multiple of 8, so that any subset of these
  * fields may be used in a single P4 header definition, even on P4
  * implementations that restrict headers to contain fields with a
  * total length that is a multiple of 8 bits. */
-@p4runtime_translation("p4.org/psa/v1/PortIdInHeader_t", 32)
-type bit<32> PortIdInHeader_t;
-type bit<32> MulticastGroupInHeader_t;
-type bit<16> CloneSessionIdInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/ClassOfServiceInHeader_t", 8)
-type bit<8>  ClassOfServiceInHeader_t;
-type bit<16> PacketLengthInHeader_t;
-type bit<16> EgressInstanceInHeader_t;
-type bit<64> TimestampInHeader_t;
 
 /* See the comments near the definition of PortIdUint_t for why these
  * typedef definitions exist. */
@@ -154,6 +154,16 @@ typedef bit<8>  ClassOfServiceInHeaderUint_t;
 typedef bit<16> PacketLengthInHeaderUint_t;
 typedef bit<16> EgressInstanceInHeaderUint_t;
 typedef bit<64> TimestampInHeaderUint_t;
+
+@p4runtime_translation("p4.org/psa/v1/PortIdInHeader_t", 32)
+type  PortIdInHeaderUint_t         PortIdInHeader_t;
+type  MulticastGroupInHeaderUint_t MulticastGroupInHeader_t;
+type  CloneSessionIdInHeaderUint_t CloneSessionIdInHeader_t;
+@p4runtime_translation("p4.org/psa/v1/ClassOfServiceInHeader_t", 8)
+type  ClassOfServiceInHeaderUint_t ClassOfServiceInHeader_t;
+type  PacketLengthInHeaderUint_t   PacketLengthInHeader_t;
+type  EgressInstanceInHeaderUint_t EgressInstanceInHeader_t;
+type  TimestampInHeaderUint_t      TimestampInHeader_t;
 // END:Type_defns2
 
 /* The _int_to_header functions were written to convert a value of
