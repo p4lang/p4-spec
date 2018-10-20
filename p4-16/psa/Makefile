@@ -29,6 +29,7 @@ check:
 	${P4C} examples/psa-example-counters.p4
 	${P4C} examples/psa-example-digest.p4
 	${P4C} examples/psa-example-incremental-checksum.p4
+	${P4C} examples/psa-example-incremental-checksum2.p4
 	${P4C} examples/psa-example-parser-checksum.p4
 	${P4C} examples/psa-example-parser-error-handling.p4
 	${P4C} examples/psa-example-recirculate.p4
@@ -40,23 +41,10 @@ check:
 # psa-example-mirror-on-drop.p4 needs updates for latest psa.p4
 #	${P4C} examples/psa-example-mirror-on-drop.p4
 
-# psa-example-incremental-checksum2.p4 fails with latest p4test as of
-# 2017-Dec-04 because of call to InternetChecksum method set_state(),
-# because its argument is not a compile-time constant.  I am not sure
-# why that should be a problem.
-#	${P4C} examples/psa-example-incremental-checksum2.p4
-
 # psa-example-register1.p4 is almost identical to
 # psa-example-register2.p4, except that it attempts to return a struct
 # from a register read, and write a struct back to the register.  As
-# of 2017-Dec-04, the latest version of p4test gives an error if you
-# attempt this.
+# of 2018-Oct-19, the latest version of p4test gives an error if you
+# attempt this, I believe somewhere in one of the mid end passes.  It
+# is definitely not in the bmv2 back end code.
 #	${P4C} examples/psa-example-register1.p4
-
-# These have been moved to the examples/historical directory for now,
-# and may be removed, given that it seems likely that parser value
-# sets will be created as a P4_16 language built-in construct, like
-# tables, rather than as a PSA-specific feature.
-#	${P4C} examples/psa-example-value-sets.p4
-#	${P4C} examples/psa-example-value-sets2.p4
-#	${P4C} examples/psa-example-value-sets3.p4
