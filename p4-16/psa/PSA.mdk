@@ -675,8 +675,8 @@ follow.
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
-            ep = egress_port configured for ostd.clone_session_id in PRE
-	    mcast_grp = multicast_group configured for ostd.clone_session_id in PRE
+	    egress_port = egress_port in the set of pairs of egress_port and instance configured for ostd.clone_session_id in PRE
+	    instance = instance in the set of pairs of egress_port and instance configured for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session in PRE
             plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
@@ -684,8 +684,8 @@ follow.
                 // Recommmended to log error about unsupported cos value.
             }
             if (platform_port_valid(ep)) {
-                create a clone of the packet and send it to the packet
-                    buffer with the egress_port ep and
+                create one or more clones of the packet and send it to the packet
+                    buffer with the egress_port, instance and
                     class_of_service cos, after which it will start
                     egress processing.  It will contain at most the
                     first plen bytes of the packet as received at the
@@ -897,9 +897,9 @@ packet contents and metadata when a packet begins egress processing.
 +--------------+-------------+---------------+--------------+-----+
 | `packet_path`    | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| `instance`         | From PacketReplicationEngine configuration for NM packets, ||||
-|                    | or cloned packet that are multicast via a multicast group. ||||
-|                    | 0 for NU packets, and for cloned packet that are not multicast replicated. ||||
+| `instance`         | 0 | from PRE           | 0 for cloned packets that are not multicast replicated. ||
+|                    |   | configuration      | from PRE configuration of multicast group  ||
+|                    |   | of multicast group | for cloned packets that are multicast replicated ||
 +--------------+-------------+---------------+--------------+-----+
 | `egress_timestamp` | Time that packet began processing in EgressParser.  Filled in ||||
 |                     | independently for each copy of a multicast-replicated packet. ||||
@@ -1020,8 +1020,7 @@ the contents of several metadata fields in the struct
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
-            ep = egress_port configured for ostd.clone_session_id in PRE
-            mcast_grp = multicast_group configured for ostd.clone_session_id in PRE
+            (egress_port, instance) = set of egress_port and instance pairs configured for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session_id in PRE
             plen = packet_length_bytes configured for ostd.clone_session_id in PRE
             if (cos value is not supported) {
@@ -1152,8 +1151,11 @@ values that should be associated with packets cloned using that
 session.
 
 ```
-PortId_t         egress_port;
-MulticastGroup_t multicast_group;
+/// Each clone session may configure one or more pairs of (egress_port, instance).
+PortId_t         egress_port;  /// egress_port in a pair of (egress_port, instance)
+EgressInstance_t instance;  /// instance in a pair of (egress_port, instance)
+
+/// Each clone session may configure at most one of each following values.
 ClassOfService_t class_of_service;
 bool             truncate;
 PacketLength_t   packet_length_bytes;  /// only used if truncate is true
@@ -1166,19 +1168,8 @@ will be sent to the CPU, or recirculated at the end of egress
 processing, as a normal unicast packet would at the end of egress
 processing.
 
-The `multicast_group` may be any multicast group configured by the
-control plane in the PRE. Sending a packet to a clone session with a
-multicast group configured would cause the cloned packet to be
-replicated to each `egress_port` in the multicast group. If the
-`multicast_group` specified in a clone session is not configured in
-the PRE by the control plane, the cloned packet will not be
-multicasted. A PSA target may need extra effort to check the validity
-of the multicast group in a clone session. Therefore, sending a packet
-to a clone session with un-configured multicast group may have
-performance impact. A clone session can configure both `egress_port`
-and `multicast_group` simultaneously. In addition, an `egress_port`
-may appear multiple times in the same `multicast_group`. Refer to
-section [#sec-multicast] on the details of multicast replication.
+The `instance` is configured by the control plane in PRE to identify
+different copies of the multicasted packet.
 
 Truncation of cloned packets is supported as an optimization to
 reduce the bandwidth required to send the beginning of packets.  This
