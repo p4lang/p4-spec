@@ -674,9 +674,10 @@ follow.
 
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
-            cos = class_of_service configured for ostd.clone_session_id in PRE
-	    egress_port = egress_port in the set of pairs of egress_port and instance configured for ostd.clone_session_id in PRE
-	    instance = instance in the set of pairs of egress_port and instance configured for ostd.clone_session_id in PRE
+	    cos = class_of_service configured for ostd.clone_session_id in PRE
+	    set((egress_port[0], instance[0]), .., (egress_port[n], instance[n])) =
+	        set of egress_port and instance pair in the
+	    	configured sessions for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session in PRE
             plen = packet_length_bytes configured for ostd.clone_session in PRE
             if (cos value is not supported) {
@@ -684,8 +685,8 @@ follow.
                 // Recommmended to log error about unsupported cos value.
             }
             if (platform_port_valid(ep)) {
-                create one or more clones of the packet and send it to the packet
-                    buffer with the egress_port, instance and
+                for each pair of (egress_port, instance), create a clone of the packet
+		    and send it to the packet buffer with the egress_port, instance and
                     class_of_service cos, after which it will start
                     egress processing.  It will contain at most the
                     first plen bytes of the packet as received at the
@@ -898,7 +899,7 @@ packet contents and metadata when a packet begins egress processing.
 | `packet_path`    | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
 | `instance`         | 0 | from PRE           | 0 for cloned packets that are not multicast replicated. ||
-|                    |   | configuration      | from PRE configuration of multicast group  ||
+|                    |   | configuration      | value from PRE configuration of multicast group  ||
 |                    |   | of multicast group | for cloned packets that are multicast replicated ||
 +--------------+-------------+---------------+--------------+-----+
 | `egress_timestamp` | Time that packet began processing in EgressParser.  Filled in ||||
@@ -1020,7 +1021,9 @@ the contents of several metadata fields in the struct
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
             cos = class_of_service configured for ostd.clone_session_id in PRE
-            (egress_port, instance) = set of egress_port and instance pairs configured for ostd.clone_session_id in PRE
+	    set((egress_port[0], instance[0]), .., (egress_port[n], instance[n])) =
+	        set of egress_port and instance pair in the
+	    	configured sessions for ostd.clone_session_id in PRE
             trunc = truncate configured for ostd.clone_session_id in PRE
             plen = packet_length_bytes configured for ostd.clone_session_id in PRE
             if (cos value is not supported) {
