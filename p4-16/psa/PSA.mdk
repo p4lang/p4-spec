@@ -709,7 +709,7 @@ reader convenience -- it is not the specification for the behavior.
     psa_ingress_output_metadata_t ostd;
 
     if (ostd.clone) {
-        create ingress to egress clone, with options as configured by
+        create ingress to egress clone(s), with options as configured by
             the PRE clone session numbered ostd.clone_session_id;
     } else { no clone; }
 
@@ -727,27 +727,24 @@ follow.
 
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
-	    cos = class_of_service configured for ostd.clone_session_id in PRE
-	    set((egress_port[0], instance[0]), .., (egress_port[n], instance[n])) =
-	        set of egress_port and instance pair in the
-	    	configured sessions for ostd.clone_session_id in PRE
-            trunc = truncate configured for ostd.clone_session in PRE
-            plen = packet_length_bytes configured for ostd.clone_session in PRE
+            from the values configured for ostd.clone_session_id in PRE {
+                cos = class_of_service
+                set((egress_port[0], instance[0]), ..., (egress_port[n], instance[n])) =
+                    set of egress_port and instance pairs
+                trunc = truncate
+                plen = packet_length_bytes
+            }
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos value.
             }
-            if (platform_port_valid(ep)) {
-                for each pair of (egress_port, instance), create a clone of the packet
-		    and send it to the packet buffer with the egress_port, instance and
-                    class_of_service cos, after which it will start
-                    egress processing.  It will contain at most the
-                    first plen bytes of the packet as received at the
-                    ingress parser if trunc is true, otherwise the
-                    entire packet.
-            } else {
-                // Do not create a clone.  Recommended to log error
-                // about unsupported ep value.
+            for each pair (egress_port, instance) in the set {
+                Create a clone of the packet and send it to the packet
+                buffer with the egress_port, instance, and
+                class_of_service cos, after which it will start egress
+                processing.  It will contain at most the first plen
+                bytes of the packet as received at the ingress parser
+                if trunc is true, otherwise the entire packet.
             }
         } else {
             // Do not create a clone.  Recommmended to log error about
@@ -951,9 +948,9 @@ packet contents and metadata when a packet begins egress processing.
 +--------------+-------------+---------------+--------------+-----+
 | `packet_path`    | Same value as received by EgressParser above. ||||
 +--------------+-------------+---------------+--------------+-----+
-| `instance`         | 0 | from PRE           | 0 for cloned packets that are not multicast replicated. ||
-|                    |   | configuration      | value from PRE configuration of multicast group  ||
-|                    |   | of multicast group | for cloned packets that are multicast replicated ||
+| `instance`         | 0 | from PRE           | from PRE configuration  ||
+|                    |   | configuration      | of clone session        ||
+|                    |   | of multicast group |                         ||
 +--------------+-------------+---------------+--------------+-----+
 | `egress_timestamp` | Time that packet began processing in EgressParser.  Filled in ||||
 |                     | independently for each copy of a multicast-replicated packet. ||||
@@ -985,7 +982,7 @@ contents of `packet_in` of that ingress packet, with no modifications
 from any ingress processing.  Truncation of the payload is supported.
 
 Packets cloned in ingress using a clone session configured with
-`clone_port` equal to `PSA_PORT_RECIRCULATE` fit into this category.
+`egress_port` equal to `PSA_PORT_RECIRCULATE` fit into this category.
 
 
 ### Initial packet contents for packets cloned from egress to egress
@@ -997,7 +994,7 @@ was not parsed by the egress parser.  Truncation of the payload is
 supported.
 
 Packets cloned in egress using a clone session configured with
-`clone_port` equal to `PSA_PORT_RECIRCULATE` fit into this category.
+`egress_port` equal to `PSA_PORT_RECIRCULATE` fit into this category.
 
 
 ### User-defined metadata for all egress packets
@@ -1028,13 +1025,15 @@ with defined contents.  Its value is the one that was assigned to the
 clone was created.
 
 
-### Multicast copies
+### Multicast and clone copies
 
 The following fields may differ among copies of a multicast-replicated
-packet that are processed in egress.
+packet that are processed in egress.  Similarly for copies of a cloned
+packet when they are processed in egress.  Both are referred to as
+replicated packets in this section.
 
 + `egress_port` - This field will typically differ among copies of a
-  multicast-replicated packet, but it may also be the same for
+  replicated packet, but it may also be the same for
   arbitrary copies, as determined by the control plane configuration
   of the PacketReplicationEngine.  It is expected that the control
   plane will configure the PacketReplicationEngine so that each copy
@@ -1042,11 +1041,11 @@ packet that are processed in egress.
   `(egress_port, instance)`.
 + `instance` - See `egress_port`
 + `egress_timestamp` - This value is filled in independently for each
-  copy of a multicast-replicated packet.  Depending upon the quantity
+  copy of a replicated packet.  Depending upon the quantity
   of traffic destined to each output port, the timestamp could vary
   significantly between copies of the same original packet.
 + `parser_error` - In the common case, this will typically be the same
-  for every copy of the same original multicast-replicated packet.
+  for every copy of the same original replicated packet.
   However, it is determined by the EgressParser P4 code for each copy
   independently, so if that parsing behavior depends upon a field that
   can differ among copies, e.g. `egress_port`, then `parser_error`
@@ -1054,7 +1053,7 @@ packet that are processed in egress.
 
 All contents of a packet and its associated metadata, other than those
 mentioned above, will be the same for every copy of the same original
-multicast-replicated packet.
+replicated packet.
 
 
 ## Behavior of packets after egress processing is complete {#sec-after-egress}
@@ -1073,28 +1072,26 @@ the contents of several metadata fields in the struct
 
     if (ostd.clone) {
         if (ostd.clone_session_id value is supported) {
-            cos = class_of_service configured for ostd.clone_session_id in PRE
-	    set((egress_port[0], instance[0]), .., (egress_port[n], instance[n])) =
-	        set of egress_port and instance pair in the
-	    	configured sessions for ostd.clone_session_id in PRE
-            trunc = truncate configured for ostd.clone_session_id in PRE
-            plen = packet_length_bytes configured for ostd.clone_session_id in PRE
+            from the values configured for ostd.clone_session_id in PRE {
+                cos = class_of_service
+                set((egress_port[0], instance[0]), ..., (egress_port[n], instance[n])) =
+                    set of egress_port and instance pairs
+                trunc = truncate
+                plen = packet_length_bytes
+            }
             if (cos value is not supported) {
                 cos = 0;
                 // Recommmended to log error about unsupported cos
                 // value.
             }
-            if (platform_port_valid(ep)) {
-                create a clone of the packet and send it to the packet
-                    buffer with the egress_port ep and
-                    class_of_service cos, after which it will start
-                    egress processing.  It will contain at most the
-                    first plen bytes of the packet as sent out from
-                    the egress deparser if trunc is true, otherwise
-                    the entire packet.
-            } else {
-                // Do not create a clone.  Recommended to log error
-                // about unsupported ep value.
+            for each pair (egress_port, instance) in the set {
+                Create a clone of the packet and send it to the packet
+                buffer with the egress_port, instance, and
+                class_of_service cos, after which it will start egress
+                processing.  It will contain at most the first plen
+                bytes of the packet as sent out from the egress
+                deparser if trunc is true, otherwise the entire
+                packet.
             }
         } else {
             // Do not create a clone.  Recommmended to log error about
@@ -1109,8 +1106,10 @@ the contents of several metadata fields in the struct
     }
     // The value istd.egress_port below is the same one that the
     // packet began its egress processing with, as decided during
-    // ingress processing for this packet.  The egress code is not
-    // allowed to change it.
+    // ingress processing for this packet (or as determined by the PRE
+    // configuration of a clone session, for cloned packets,
+    // regardless of whether the clone operation was done in ingress
+    // or egress).  The egress code is not allowed to change it.
     if (istd.egress_port == PSA_PORT_RECIRCULATE) {
         recirculate the packet, i.e. it will go back to starting with the
             ingress parser;
@@ -1171,7 +1170,9 @@ be some translation of header field values, as described in Section
 ## Packet Cloning  {#sec-clone}
 
 Packet cloning is a mechanism to send a copy of a packet to a
-specified port, in addition to the 'regular' packet,
+specified port, in addition to the 'regular' packet.  Multiple clones
+can be made via a single clone operation, by appropriate control plane
+configuration.
 
 One use case for cloning is packet mirroring, i.e. send the packet to
 its normal destination according to other features implemented by the
@@ -1181,11 +1182,11 @@ another output port, e.g. to a monitoring device.
 Packet cloning happens at the end of the ingress and/or egress
 pipeline. PSA specifies the following semantics for the clone
 operation.  When the clone operation is invoked at the end of the
-ingress pipeline, the cloned packet is a copy of the packet as it
+ingress pipeline, each cloned packet is a copy of the packet as it
 entered the ingress parser.  When the clone operation is invoked at
-the end of egress pipeline, the cloned packet is a copy of the
+the end of the egress pipeline, each cloned packet is a copy of the
 modified packet after egress processing, as output by the egress
-deparser.  In both cases, the cloned packet is submitted to the egress
+deparser.  In both cases, the cloned packets are submitted to the egress
 pipeline for further processing.
 
 Logically, PRE implements the mechanics of copying a packet.  The
@@ -1199,7 +1200,7 @@ CloneSessionId_t         clone_session_id;
 ```
 
 The `clone` flag specifies whether a packet should be cloned.  If
-true, then a cloned packet should be generated at the end of the
+true, then a cloned packet, or packets, should be generated at the end of the
 pipeline.  The `clone_session_id` specifies one of several possible
 clone sessions that the control plane may configure in the PRE.  For
 each clone session, the control plane may configure the following
@@ -1207,25 +1208,28 @@ values that should be associated with packets cloned using that
 session.
 
 ```
-/// Each clone session may configure one or more pairs of (egress_port, instance).
+/// Each clone session may configure zero or more pairs of (egress_port, instance).
 PortId_t         egress_port;  /// egress_port in a pair of (egress_port, instance)
 EgressInstance_t instance;  /// instance in a pair of (egress_port, instance)
 
-/// Each clone session may configure at most one of each following values.
+/// Each clone session has configuration for exactly one of each of
+/// the following values.
 ClassOfService_t class_of_service;
 bool             truncate;
 PacketLength_t   packet_length_bytes;  /// only used if truncate is true
 ```
 
-The `egress_port` may be any port that can be used for normal unicast
-packets, i.e. any normal port, `PSA_PORT_CPU`, or
+The configuration of the set of `(egress_port, instance)` values for a
+clone session is similar to, and has the same requirements and
+restrictions as, the configuration of a set of pairs for a multicast
+group, as described in Section [#sec-multicast].
+
+The `egress_port` values may be any ports that can be used for normal
+unicast packets, i.e. any normal port, `PSA_PORT_CPU`, or
 `PSA_PORT_RECIRCULATE`. For the latter two values, the cloned packet
 will be sent to the CPU, or recirculated at the end of egress
 processing, as a normal unicast packet would at the end of egress
 processing.
-
-The `instance` is configured by the control plane in PRE to identify
-different copies of the multicasted packet.
 
 Truncation of cloned packets is supported as an optimization to
 reduce the bandwidth required to send the beginning of packets.  This
@@ -1253,8 +1257,11 @@ might choose only to support values that are multiples of 32 bytes.
 
 Since it is an expected common case to clone packets to the CPU, every
 PSA implementation begins with a clone session
-`PSA_CLONE_SESSION_TO_CPU` initialized with `egress_port =
-PSA_PORT_CPU`, `class_of_service = 0`, and `truncate = false`.
+`PSA_CLONE_SESSION_TO_CPU` initialized with the set of (`egress_port`,
+`instance`) values containing exactly one pair with `egress_port =
+PSA_PORT_CPU` and `instance = 0`.  This clone session is also
+initialized with the configuration values `class_of_service = 0`, and
+`truncate = false`.
 
 
 ### Clone Examples {#sec-clone-examples}
