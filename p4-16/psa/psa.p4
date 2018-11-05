@@ -739,27 +739,6 @@ extern Digest<T> {
 }
 // END:Digest_extern
 
-// BEGIN:ValueSet_extern
-extern ValueSet<D> {
-    ValueSet(int<32> size);
-    bool is_member(in D data);
-
-    /*
-    @ControlPlaneAPI
-    message ValueSetEntry {
-        uint32 value_set_id = 1;
-        // FieldMatch allows specification of exact, lpm, ternary, and
-        // range matching on fields for tables, and these options are
-        // permitted for the ValueSet extern as well.
-        repeated FieldMatch match = 2;
-    }
-
-    // ValueSetEntry should be added to the 'message Entity'
-    // definition, inside its 'oneof Entity' list of possibilities.
-    */
-}
-// END:ValueSet_extern
-
 // BEGIN:Programmable_blocks
 parser IngressParser<H, M, RESUBM, RECIRCM>(
     packet_in buffer,
