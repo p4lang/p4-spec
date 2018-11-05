@@ -1484,6 +1484,8 @@ specification.
 |                       | or `ActionSelector` |  |
 |-----------------------|----------------------------------------------|
 | `psa_empty_group_action` | action | Section [#sec-action-selector] |
+|-----------------------|----------------------------------------------|
+| `psa_idle_timeout` | `PSA_IdleTimeout_t` | Section [#sec-idle-timeout]|
 |-------------------|----------------------------------------------|
 ~
 
@@ -1497,6 +1499,59 @@ table.
 A PSA implementation must implement tables that have both a
 `psa_direct_counter` and `psa_direct_meter` property.
 
+### Table entry timeout notification {#sec-idle-timeout}
+
+PSA uses the `psa_idle_timeout` to enable a table implementation send
+notifications from the PSA device when a configurable time has passed since an
+entry was last matched. The property may take one of two values --
+`PSA_NO_TIMEOUT`, and `PSA_NOTIFY_CONTROL`. `PSA_NO_TIMEOUT` disables idle
+timeout support for the table. `PSA_NOTIFY_CONTROL` enables the notification. A
+PSA implementation will then generate an API for the control plane set
+time-to-live (TTL) values for table entries and if at any time during its
+lifetime, the table entry is not "hit" (&ie; not selected by any packet lookup)
+for a lapse of time greater or equal to its TTL, the device should generate a
+notification to the control plane.
+
+Example:
+```
+enum PSA_IdleTimeout_t {
+  PSA_NO_TIMEOUT,
+  PSA_NOTIFY_CONTROL
+}
+
+table t {
+  key = {};
+  actions = {};
+  psa_idle_timeout = PSA_NOTIFY_CONTROL;
+}
+```
+
+Restrictions on the TTL values and notifications:
+
+- It is likely that any hardware implementation will have a limited number of
+  bits to represent the values, and, since the values are programmed at
+  runtime, it is the responsability of the runtime (P4Runtime or other
+  controller software) to guarantee that the TTL values can be represented in
+  the device. This can be done by scaling the values to the number of bits
+  available on the platform, ensuring that the range of values between
+  different entries are representable. A PSA implementation should only enable
+  the programming of such tables, and return an error if the device does not
+  support the idle timeout at all.
+
+- If no value is programmed for a table entry, even though the table has
+  enabled the idle timeout property, the entry will not generate a
+  notification. The entry will participate in the aging process, with the
+  maximum timeout interval possible, i.e., its idle timeout counter will be set
+  to the maximum interval possible and the entry may be deleted when the
+  maximum interval elapses.
+
+- PSA does not require a timeout value for a default action entry. The reason
+  for not making this mandatory in the specification is that the default action
+  may not have an actual entry in the table and it is may be hit on the miss
+  table misses. Not sure what an TTL means for a miss path. The default action entry will not be aged out.
+
+- ActionSelectors and ActionProfiles will inherit the idle timeout property
+  from their parent tables, since in PSA they act as table implementations.
 
 ## Packet Replication Engine {#sec-pre}
 
@@ -2620,14 +2675,6 @@ information such as egress port link utilization or queue
 occupancy[^PSA_INT_Issue].
 
 [^PSA_INT_Issue]: <https://github.com/p4lang/p4-spec/issues/510>
-
-
-## Table entry timeout notification
-
-PSA does not yet define an option for tables to maintain a "last match
-time" per entry, with notifications from the PSA device to a
-controller when a configurable time has passed since an entry was last
-matched.
 
 
 ## PSA profiles
