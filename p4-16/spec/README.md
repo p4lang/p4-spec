@@ -49,13 +49,21 @@ install them on a Mac using Font Book:
 UtopiaStd-Regular.otf
 luximr.ttf
 ```
+
 ### Linux
+
+Follow the instruction below by hand, or for an Ubuntu 16.04 or 18.04
+system, you may use the bash script
+[`setup-for-ubuntu-linux.sh`](setup-for-ubuntu-linux.sh) to install
+the necessary packages and fonts for you.
+
 ```
 sudo apt-get install nodejs
 sudo npm install madoko -g
 make
 ```
 In particular (on Ubuntu 16.04 at least), don't try `sudo apt-get install npm` because `npm` is already included and this will yield a bunch of confusing error messages from `apt-get`.
+
 ### Windows
 
 You need to install miktex [http://miktex.org/], madoko
