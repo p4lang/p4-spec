@@ -1499,30 +1499,39 @@ table.
 A PSA implementation must implement tables that have both a
 `psa_direct_counter` and `psa_direct_meter` property.
 
+A PSA implementation need not support both `psa_implementation` and
+`psa_idle_timeout` properties on the same table.
+
 ### Table entry timeout notification {#sec-idle-timeout}
 
 PSA uses the `psa_idle_timeout` to enable a table implementation send
 notifications from the PSA device when a configurable time has passed since an
 entry was last matched. The property may take one of two values --
-`PSA_NO_TIMEOUT`, and `PSA_NOTIFY_CONTROL`. `PSA_NO_TIMEOUT` disables idle
-timeout support for the table. `PSA_NOTIFY_CONTROL` enables the notification. A
-PSA implementation will then generate an API for the control plane set
-time-to-live (TTL) values for table entries and if at any time during its
-lifetime, the table entry is not "hit" (&ie; not selected by any packet lookup)
-for a lapse of time greater or equal to its TTL, the device should generate a
-notification to the control plane.
+`NO_TIMEOUT`, and `NOTIFY_CONTROL`. `NO_TIMEOUT` disables idle timeout support
+for the table and it is the default value when the property is not present.
+`PSA_NOTIFY_CONTROL` enables the notification. A PSA implementation will then
+generate an API for the control plane to set time-to-live (TTL) values for table
+entries and if at any time during its lifetime, the table entry is not "hit"
+(&ie; not selected by any packet lookup) for a lapse of time greater or equal
+to its TTL, the device should generate a notification to the control plane.
+The rate and mode of how the notifications are generated and delivered to the
+control plane are subject to configuration parameters specified by the control
+plane API.
 
 Example:
 ```
 enum PSA_IdleTimeout_t {
-  PSA_NO_TIMEOUT,
-  PSA_NOTIFY_CONTROL
+  NO_TIMEOUT,
+  NOTIFY_CONTROL
 }
 
 table t {
-  key = {};
-  actions = {};
-  psa_idle_timeout = PSA_NOTIFY_CONTROL;
+  action a1 () { ... }
+  action a2 () { ... }
+  key = { hdr.f1: exact; }
+  actions = { a1; a2; }
+  default_action = a2;
+  psa_idle_timeout = PSA_IdleTimeout_t.NOTIFY_CONTROL;
 }
 ```
 
@@ -1530,7 +1539,7 @@ Restrictions on the TTL values and notifications:
 
 - It is likely that any hardware implementation will have a limited number of
   bits to represent the values, and, since the values are programmed at
-  runtime, it is the responsability of the runtime (P4Runtime or other
+  runtime, it is the responsibility of the runtime (P4Runtime or other
   controller software) to guarantee that the TTL values can be represented in
   the device. This can be done by scaling the values to the number of bits
   available on the platform, ensuring that the range of values between
@@ -1540,18 +1549,15 @@ Restrictions on the TTL values and notifications:
 
 - If no value is programmed for a table entry, even though the table has
   enabled the idle timeout property, the entry will not generate a
-  notification. The entry will participate in the aging process, with the
-  maximum timeout interval possible, i.e., its idle timeout counter will be set
-  to the maximum interval possible and the entry may be deleted when the
-  maximum interval elapses.
+  notification.
 
 - PSA does not require a timeout value for a default action entry. The reason
   for not making this mandatory in the specification is that the default action
   may not have an actual entry in the table and it is may be hit on the miss
-  table misses. Not sure what an TTL means for a miss path. The default action entry will not be aged out.
+  table misses. Not sure what an TTL means for a miss path. The default action
+  entry will not be aged out.
 
-- ActionSelectors and ActionProfiles will inherit the idle timeout property
-  from their parent tables, since in PSA they act as table implementations.
+- Currently, tables implemented using ActionSelectors and ActionProfiles do not support the `psa_idle_timeout` property. Future versions of the specification may remove this restriction.
 
 ## Packet Replication Engine {#sec-pre}
 
