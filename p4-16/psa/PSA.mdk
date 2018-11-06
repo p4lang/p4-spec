@@ -1509,7 +1509,7 @@ notifications from the PSA device when a configurable time has passed since an
 entry was last matched. The property may take one of two values --
 `NO_TIMEOUT`, and `NOTIFY_CONTROL`. `NO_TIMEOUT` disables idle timeout support
 for the table and it is the default value when the property is not present.
-`PSA_NOTIFY_CONTROL` enables the notification. A PSA implementation will then
+`NOTIFY_CONTROL` enables the notification. A PSA implementation will then
 generate an API for the control plane to set time-to-live (TTL) values for table
 entries and if at any time during its lifetime, the table entry is not "hit"
 (&ie; not selected by any packet lookup) for a lapse of time greater or equal
@@ -1552,10 +1552,10 @@ Restrictions on the TTL values and notifications:
   notification.
 
 - PSA does not require a timeout value for a default action entry. The reason
-  for not making this mandatory in the specification is that the default action
-  may not have an actual entry in the table and it is may be hit on the miss
-  table misses. Not sure what an TTL means for a miss path. The default action
-  entry will not be aged out.
+  for not making this mandatory in the specification is that tthe default
+  action may not have an explicit table entry to represent it, and also there
+  are no known compelling use cases for a controller knowing when no misses
+  have occurred for a particular table for a long time. The default action entry will not be aged out.
 
 - Currently, tables implemented using ActionSelectors and ActionProfiles do not support the `psa_idle_timeout` property. Future versions of the specification may remove this restriction.
 
