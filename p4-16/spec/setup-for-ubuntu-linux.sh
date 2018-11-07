@@ -38,7 +38,7 @@ fi
 DISTRIBUTOR_ID=`lsb_release -si`
 UBUNTU_RELEASE=`lsb_release -sr`
 
-if [ ${DISTRIBUTOR_ID} != "Ubuntu" -o ${UBUNTU_RELEASE} != "16.04" ]
+if [ ${DISTRIBUTOR_ID} != "Ubuntu" -o \( ${UBUNTU_RELEASE} != "16.04" -a ${UBUNTU_RELEASE} != "18.04" \) ]
 then
     warning
     1>&2 echo ""
@@ -75,7 +75,6 @@ sudo apt clean
 # On a freshly installed Ubuntu 18.04 system, added about 0.8G.
 
 # Retrieve and install fonts
-curl -fsSL -O https://raw.github.com/p4lang/p4-spec/gh-pages/fonts/UtopiaStd-Regular.otf
-curl -fsSL -O https://raw.github.com/p4lang/p4-spec/gh-pages/fonts/luximr.ttf
 mkdir -p "${FONT_INSTALL_DIR}"
-/bin/mv UtopiaStd-Regular.otf luximr.ttf "${FONT_INSTALL_DIR}"
+curl -fsSL --output "${FONT_INSTALL_DIR}/UtopiaStd-Regular.otf" https://raw.github.com/p4lang/p4-spec/gh-pages/fonts/UtopiaStd-Regular.otf
+curl -fsSL --output "${FONT_INSTALL_DIR}/luximr.ttf" https://raw.github.com/p4lang/p4-spec/gh-pages/fonts/luximr.ttf
