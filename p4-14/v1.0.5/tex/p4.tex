@@ -1336,6 +1336,7 @@ Represents the type of instance of the packet:
 \item ingress clone
 \item egress clone
 \item recirculated
+\item resubmitted
 \end{itemize}
 The representation of this data is target specific. \\ \hline
 \texttt{parser_status} &
@@ -2353,13 +2354,18 @@ Only valid on the ingress pipeline.
 
 The packet is marked for resubmission. It will complete the ingress pipeline 
 to generate any necessary metadata values. Then, the \textbf{original} packet data 
-will be resubmitted to the parser with values of the fields in \texttt{field_list} from 
-the ingress processing on the packet. These values replace the normal initial 
+will be resubmitted to the parser with values of the fields in \texttt{field_list}
+that those fields have at the time ingress processing completes.
+These values replace the normal initial
 values of the metadata fields indicated in the initializer of the instance 
-declaration.
+declaration. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 
-If multiple resubmit actions get executed on one packet, the union of all 
-the fields in the field lists should be resubmitted with the packet.
+If multiple resubmit actions get executed on one packet, only the
+field list from the last resubmit action is used, and only one packet
+is resubmitted.
+
+The resubmitted packet will have \texttt{instance_type} set to
+indicate that it is a resubmitted packet.
 
 See Section~\ref{sec:recirc} for more details.
 
@@ -2379,9 +2385,17 @@ Only valid on the egress pipeline.
 
 The packet is marked for recirculation. It will complete the egress pipeline 
 and be deparsed.  This version of the packet is then recirculated to the parser 
-with values of the fields in \texttt{field_list} from the processing on the packet. 
+with values of the fields in \texttt{field_list} that those fields
+have at the time egress processing completes.
 These values replace the normal initial values of the metadata fields indicated 
-in the initializer of the instance declaration.
+in the initializer of the instance declaration. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
+
+If multiple recirculate actions get executed on one packet, only the
+field list from the last recirculate action is used, and only one
+packet is recirculated.
+
+The recirculated packet will have \texttt{instance_type} set to
+indicate that it is a recirculated packet.
 
 See Section~\ref{sec:recirc} for more details.
 
@@ -2416,7 +2430,7 @@ of session is optional and the parameter may be ignored on some targets.
 The cloned instance will have \texttt{instance_type} set to indicate that it is an 
 ingress clone. 
 
-The metadata fields indicated in \texttt{field_list} are copied to the Parsed Representation 
+The metadata fields indicated in \texttt{field_list} (their values when ingress processing is complete) are copied to the Parsed Representation 
 of the clone instance. These values replace the normal initial values of the 
 metadata fields indicated in the initializer of the instance declaration (which 
 occurs before parsing). Only metadata (and not header) fields can be specified in the \texttt{field_list}.
@@ -2447,7 +2461,7 @@ characteristics of the clone operation as described in \texttt{clone_ingress_pkt
 
 
 The metadata fields indicated in \texttt{field_list} are copied to the clone instance. These 
-values replace the normal initial values of the metadata fields indicated 
+values (the values at the end of egress processing) replace the normal initial values of the metadata fields indicated 
 in the initializer of the instance declaration. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 
 The cloned instance will have \texttt{instance_type} set to indicate that it is an 
@@ -2511,7 +2525,7 @@ Mechanism.
 The packet is marked for cloning at egress. Once the original packet completes 
 the egress pipeline, the packet and its Parsed Representation of packet headers 
 (including all modifications due to \matchaction) along with the metadata 
-fields specified in \texttt{field_list} are submitted to the Buffering Mechanism as 
+fields specified in \texttt{field_list} (their values at the end of egress processing) are submitted to the Buffering Mechanism as 
 a new packet instance. Only metadata (and not header) fields can be specified in the \texttt{field_list}.
 
 The original packet is forwarded as normal.
