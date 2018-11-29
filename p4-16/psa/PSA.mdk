@@ -3494,3 +3494,96 @@ table.
 In either case, an implementation might also support putting the `if`
 statement inside of the action `set_output_port`, but this is not
 required by PSA.
+
+
+# Appendix: Revision History {#appendix-revision-history}
+
+|-----|-----|-----|
+| Release | Release Date | Summary of Changes |
++:---:+-----+-----+
+| 1.0 | March 1, 2018 | Initial version. |
++-----+-----+-----+
+| 1.1 | November 22, 2018 | Version 1.1.  See changes below |
++-----+-----+-----+
+
+## Changes made in version 1.1
+
+
+### Numeric translation between P4Runtime API values and data plane values
+
+There was a series of meetings after PSA v1.0 was released to refine
+the details of the plan to do numeric translation of values with type
+`PortId_t` (and `ClassOfService_t`, and optionally other types in the
+future).  PSA v1.1 reflects the latest design for how to accomplish
+this.  Changes can be found here:
+
++ Section 4.1 "PSA type definitions"
++ Section 4.4 "Data plane vs. control plane data representations"
+
+
+### Add the ability for packet clone sessions to create multiple copies
+
+In PSA v1.0, requesting to make a clone of a packet was restricted to
+creating a single clone, sent to a single output port.  In PSA v1.1
+you may now configure a clone session with a set of
+`(egress_port, instance)` pairs, similar to how a multicast group can
+be configured.  Changes can be found here:
+
++ Section 6.2. "Behavior of packets after ingress processing is complete"
++ Section 6.4.5 "Multicast and clone copies" (formerly called "Multicast copies")
++ Section 6.5 "Behavior of packets after egress processing is complete"
++ Section 6.8 "Packet Cloning"
+
+
+### Add psa_idle_timeout table property
+
+Adding this brings PSA v1.1 up to date with the support for this
+feature in the P4Runtime API.  Using this table property enables the
+P4 developer to specify that a table must maintain some state of when
+the last time each table entry was matched, and if an entry remains
+unmatched for longer than a time configured by the controller, then a
+notification message should be sent to the controller.
+
++ Section 7.2.1 "Table entry timeout notification"
+
+
+### Add psa_empty_group_action table property
+
+PSA v1.0 did not specify the behavior of a table with an
+`ActionSelector` implementation, if a packet matched a table entry
+that was configured with an empty action selector group.
+
+PSA v1.1 recommends (but does not require) that implementations
+support a new `psa_empty_group_action` table property, whose value is
+an action that should be executed when this situation occurs.
+
++ Section 7.12 "Action Selector"
+
+
+### Other changes
+
+In PSA v1.0, the `Digest` extern was required to be supported in both
+the `IngressDeparser` and `EgressDeparser` control blocks.  It is now
+no longer required to be supported in the `EgressDeparser` control
+block.
+
++ Table 5 "Summary of controls that can instantiate and invoke externs"
+
+
+### Changes to the psa.p4 include file
+
++ Updates for the latest plan on P4Runtime API numerical translation
+  of type `PortId_t` and `ClassOfService_t`.
++ Eliminate obsolete `ValueSet` extern, because the `value_set`
+  construct was added to the P4~16~ language specification in version
+  1.1.0.
++ Fix a few typos in example control plane APIs in comments.
++ Eliminate `PSA_SWITCH` `#define` macro with arguments, since the
+  P4~16~ language spec does not require that the P4~16~ preprocessor
+  support such macros.
+
+
+### Changes to example PSA programs in the `p4-16/psa/examples` directory
+
++ Small changes required to bring them in harmony with the latest
+  details on P4Runtime API numerical translation of type `PortId_t`.
