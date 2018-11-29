@@ -1953,7 +1953,7 @@ described in Section [#sec-bit-ops].
 
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to
-a compile-time known value that is a positive integer greater than 1.
+a compile-time known value that is a positive integer.
 
 Bits within an integer are numbered from `0` to `W-1`. Bit `0`
 is the least significant, and bit `W-1` is the sign bit.
@@ -1969,6 +1969,8 @@ bit values).
 
 All operations that can be performed on signed integers are described
 in Section [#sec-int-ops].
+
+A signed integer with width 1 can only have two legal values: 0 and -1.
 
 #### Dynamically-sized bit-strings
 
@@ -2035,7 +2037,7 @@ types. For additional examples of literals see Section
 | `8s10`  | Type is `int<8>`, value is 10 |
 | `2s3`   | Type is `int<2>`, value is -1 (last 2 bits), overflow warning |
 | `1w10`  | Type is `bit<1>`, value is 0 (last bit), overflow warning |
-| `1s10`  | Error: 1-bit signed type is illegal |
+| `1s10`  | Type is `int<1>`, value is -1, overflow warning |
 |----------|--------------------|
 
 ## Derived types { #sec-derived-types }
@@ -3247,7 +3249,7 @@ Bit-strings also support the following operations:
   at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
-  unchanged.
+  unchanged.  A slice of an unsigned integer is an unsigned integer.
 - Logical shift left and right with a runtime known unsigned integer
   value, denoted by `<<` and `>>` respectively. In a shift, the left operand is unsigned, and right operand must be either an
   expression of type `bit<S>` or a non-negative integer literal.
@@ -3313,6 +3315,20 @@ type. The result always has the same width as the left operand.
   - all result bits are zero when shifting left
   - all result bits are zero when shifting right a positive value
   - all result bits are one when shifting right a negative value
+- Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
+  where `m` and `l` must be positive integers
+  that are compile-time known values, and `m >= l`. The result is
+  a bit-string of width `m - l + 1`, including the bits numbered
+  from `l` (which becomes the least significant bit of the result) to `m` (the
+  most significant bit of the result) from the source operand. The conditions `0 <= l < W`
+  and `l <= m < W` are checked statically (where `W` is
+  the length of the source bit-string). Note that both endpoints of
+  the extraction are inclusive. The bounds are required to be
+  compile-time known values so that the result width can be computed
+  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
+  The effect of this statement is to set bits `m` to `l` of `e` to the
+  bit-pattern represented by `x`, and leaves all other bits of `e`
+  unchanged.  A slice of a signed integer is treated like a signed integer as well.
 
 ### A note about shifts
 
