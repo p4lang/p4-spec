@@ -2459,25 +2459,32 @@ type-checking. Expressions with set types are described in Section
 #### Function types { #sec-function-type }
 
 []{tex-cmd: "\indent"}
-Currently function types cannot be created explicitly in P4 programs;
-they are created by the P4 compiler internally to represent the types
-of functions, procedures, and methods during
-type-checking. We also call the type of a function its
-signature. Libraries can contain extern function declarations.
+Function types are created by the P4 compiler internally to represent the types
+of functions (explicit functions or extern functions) and methods during
+type-checking.  We also call the type of a function its
+signature. Libraries can contain functions and extern function declarations.
 
-For example, the following declaration:
+For example, consider the following declarations:
 
 ~ Begin P4Example
 extern void random(in bit<5> logRange, out bit<32> value);
+
+bit<32> add(in bit<32> left, in bit<32> right) {
+   return left + right;
+}
 ~ End P4Example
 
-describes an object `random` which has a function type,
-representing the following information:
+These declarations describe two objects:
 
-- the result type is `void`
-- the function has two inputs
-- first input has direction `in`, type `bit<5>`, and name `logRange`
-- second input has direction `out`, type `bit<32>`, and name `value`
+* `random`, which has a function type, representing the following information:
+    - the result type is `void`
+    - the function has two inputs
+    - first input has direction `in`, type `bit<5>`, and name `logRange`
+    - second input has direction `out`, type `bit<32>`, and name `value`
+* `add`, also has a function type, representing the following information:
+    - the result type if `bit<32>`
+    - the function has two inputs
+    - both inputs have direction `in` and type `bit<32>`
 
 ### Extern types { #sec_extern }
 
