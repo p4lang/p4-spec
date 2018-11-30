@@ -2393,6 +2393,8 @@ tupleType
 Operations that manipulate tuple types are described in Sections
 [#sec-tuple-exprs] and [#sec-set-exprs].
 
+The type `tuple<>` is a tuple type with no components.
+
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
@@ -2829,7 +2831,8 @@ typeArg
     ;
 
 typeArgumentList
-    : typeArg
+    : /* empty */
+    | typeArg
     | typeArgumentList ',' typeArg
     ;
 
@@ -3483,6 +3486,8 @@ is a `tuple` type.
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
+
+The empty list expression has type `tuple<>` - a tuple with no components.
 
 ## Operations on sets { #sec-set-exprs }
 
