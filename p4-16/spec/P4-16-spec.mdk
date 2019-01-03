@@ -5545,7 +5545,7 @@ match_kind {
 ~ End P4Example
 
 These identifiers correspond to the P4~14~ match kinds with the same
-names. The semantics of these annotations is actually not needed to
+names. The semantics of these match kinds is actually not needed to
 describe the behavior of the P4 abstract machine; how they are used
 influences only the control-plane API and the implementation of
 the look-up table. From the point of view of the P4 program, a look-up
@@ -6941,7 +6941,8 @@ to two controllable entities, which is illegal.
 The `@atomic` annotation, described in Section [#sec-concurrency]
 can be used to enforce the atomic execution of a code block.
 
-## Package Documentation Annotations { #sec-package-anno }
+### Package Documentation Annotations { #sec-package-anno }
+
 Package-level metadata can be declared by annotating the `main()` function with the `pkginfo` annotation. Multiple k-v pairs
 can be assigned. These can be extracted by the compiler into P4Info and used for package
 management. An example is given below. Key names are not controlled by the P4 Language specification.
@@ -6959,6 +6960,13 @@ Implementers or other bodies may establish conventions, for example the P4-API w
 )
 V1Switch(...) main;  // Entity being annotated
 ~ End P4Example
+
+### Value set annotations { #sec-value-set-annotations }
+
+The `@match` annotation, described in Section [#sec-select], is used
+to specify a `match_kind` value other than the default `match_kind` of
+`exact` for a field of a `value_set`.
+
 
 ## Target-specific annotations
 
@@ -7046,6 +7054,7 @@ The following table shows all P4 reserved annotations.
 | `atomic`      | specify atomic execution                           | [#sec-concurrency]       |
 | `defaultonly` | action can only appear in the default action       | [#sec-table-action-anno] |
 | `hidden`      | hides a controllable entity from the control plane | [#sec-name-annotations]  |
+| `match`       | specify `match_kind` of a field in a `value_set`   | [#sec-value-set-annotations] |
 | `name`        | assign local control-plane name                    | [#sec-name-annotations]  |
 | `optional`    | parameter is optional                              | [#sec-optional-parameters] |
 | `pkginfo`     | assign package-level metadata properties           | [#sec-package-anno]      |
