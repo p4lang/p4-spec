@@ -580,6 +580,19 @@ argument
     | DONTCARE
     ;
 
+structInitializerExpression
+    : '{' fieldInitializerExpressionList '}'
+    ;
+
+fieldInitializerExpressionList
+    : /* empty */
+    | fieldInitializerExpressionList ',' fieldInitializer
+    ;
+
+fieldInitializer
+    : '.' name '=' expression
+    ;
+
 expressionList
     : /* empty */
     | expression
@@ -723,6 +736,7 @@ expression
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
+    | structInitializerExpression
     | '(' expression ')'
     | '!' expression
     | '~' expression
