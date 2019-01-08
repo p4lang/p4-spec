@@ -2278,9 +2278,11 @@ header IPv4_h {
 }
 ~ End P4Example
 
-As discussed in Section [#sec-list-exprs], headers that contain
-variable-length fields may need to be parsed in multiple steps by
-being broken into multiple headers.
+As demonstrated by a code example in Section
+[#sec-packet-extract-two], another way to support headers that contain
+variable-length fields is to define two headers -- one fixed length,
+one containing a `varbit` field -- and extract each part in separate
+parsing steps.
 
 ### Header stacks { #sec-header-stacks }
 
@@ -2393,6 +2395,8 @@ tupleType
 Operations that manipulate tuple types are described in Sections
 [#sec-tuple-exprs] and [#sec-set-exprs].
 
+The type `tuple<>` is a tuple type with no components.
+
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
@@ -2459,25 +2463,32 @@ type-checking. Expressions with set types are described in Section
 #### Function types { #sec-function-type }
 
 []{tex-cmd: "\indent"}
-Currently function types cannot be created explicitly in P4 programs;
-they are created by the P4 compiler internally to represent the types
-of functions, procedures, and methods during
-type-checking. We also call the type of a function its
-signature. Libraries can contain extern function declarations.
+Function types are created by the P4 compiler internally to represent the types
+of functions (explicit functions or extern functions) and methods during
+type-checking.  We also call the type of a function its
+signature. Libraries can contain functions and extern function declarations.
 
-For example, the following declaration:
+For example, consider the following declarations:
 
 ~ Begin P4Example
 extern void random(in bit<5> logRange, out bit<32> value);
+
+bit<32> add(in bit<32> left, in bit<32> right) {
+   return left + right;
+}
 ~ End P4Example
 
-describes an object `random` which has a function type,
-representing the following information:
+These declarations describe two objects:
 
-- the result type is `void`
-- the function has two inputs
-- first input has direction `in`, type `bit<5>`, and name `logRange`
-- second input has direction `out`, type `bit<32>`, and name `value`
+* `random`, which has a function type, representing the following information:
+    - the result type is `void`
+    - the function has two inputs
+    - first input has direction `in`, type `bit<5>`, and name `logRange`
+    - second input has direction `out`, type `bit<32>`, and name `value`
+* `add`, also has a function type, representing the following information:
+    - the result type is `bit<32>`
+    - the function has two inputs
+    - both inputs have direction `in` and type `bit<32>`
 
 ### Extern types { #sec_extern }
 
@@ -2829,7 +2840,8 @@ typeArg
     ;
 
 typeArgumentList
-    : typeArg
+    : /* empty */
+    | typeArg
     | typeArgumentList ',' typeArg
     ;
 
@@ -3483,6 +3495,8 @@ is a `tuple` type.
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
+
+The empty list expression has type `tuple<>` - a tuple with no components.
 
 ## Operations on sets { #sec-set-exprs }
 
@@ -5538,7 +5552,7 @@ match_kind {
 ~ End P4Example
 
 These identifiers correspond to the P4~14~ match kinds with the same
-names. The semantics of these annotations is actually not needed to
+names. The semantics of these match kinds is actually not needed to
 describe the behavior of the P4 abstract machine; how they are used
 influences only the control-plane API and the implementation of
 the look-up table. From the point of view of the P4 program, a look-up
@@ -6934,7 +6948,8 @@ to two controllable entities, which is illegal.
 The `@atomic` annotation, described in Section [#sec-concurrency]
 can be used to enforce the atomic execution of a code block.
 
-## Package Documentation Annotations { #sec-package-anno }
+### Package Documentation Annotations { #sec-package-anno }
+
 Package-level metadata can be declared by annotating the `main()` function with the `pkginfo` annotation. Multiple k-v pairs
 can be assigned. These can be extracted by the compiler into P4Info and used for package
 management. An example is given below. Key names are not controlled by the P4 Language specification.
@@ -6952,6 +6967,13 @@ Implementers or other bodies may establish conventions, for example the P4-API w
 )
 V1Switch(...) main;  // Entity being annotated
 ~ End P4Example
+
+### Value set annotations { #sec-value-set-annotations }
+
+The `@match` annotation, described in Section [#sec-select], is used
+to specify a `match_kind` value other than the default `match_kind` of
+`exact` for a field of a `value_set`.
+
 
 ## Target-specific annotations
 
@@ -6986,6 +7008,7 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.2.0
 
 * Constrain `default` label position for `switch` statements
+* Allow empty tuples
 
 ## Summary of changes made in version 1.1.0
 
@@ -7043,6 +7066,7 @@ The following table shows all P4 reserved annotations.
 | `atomic`      | specify atomic execution                           | [#sec-concurrency]       |
 | `defaultonly` | action can only appear in the default action       | [#sec-table-action-anno] |
 | `hidden`      | hides a controllable entity from the control plane | [#sec-name-annotations]  |
+| `match`       | specify `match_kind` of a field in a `value_set`   | [#sec-value-set-annotations] |
 | `name`        | assign local control-plane name                    | [#sec-name-annotations]  |
 | `optional`    | parameter is optional                              | [#sec-optional-parameters] |
 | `pkginfo`     | assign package-level metadata properties           | [#sec-package-anno]      |
@@ -7207,7 +7231,7 @@ above on recursion that apply while a parser or control is executing.
 The first table lists restrictions on what types can be passed as
 constructor parameters to other types.
 
-|-------------|-------------------------------------------------|
+|-------------|---------|--------|---------|--------|
 |             | can be a constructor parameter for this type ||||
 |             |---------|--------|---------|--------|
 | This type   | package | parser | control | extern |
@@ -7241,8 +7265,8 @@ instantiation, hence the answer "N/A" (for not applicable) in those
 table entries.  Variables may not be declared at the top level of your
 program, but constants may.
 
-|-------------|-------------------------------------------------|
-|             | can be instantiated in this place ||||||
+|-------------|-----------|---------|---------|--------|---------|----------|
+|             | can be instantiated in this place                      ||||||
 |             |-----------|---------|---------|---------|--------|----------|
 | This type   | top level | package | parser  | control | extern | function |
 +-------------+:---------:+:-------:+:-------:+:-------:+:------:+:--------:+
@@ -7260,7 +7284,7 @@ The next table lists restrictions on what types can be passed as
 run-time parameters to other callable things that have run-time
 parameters: parsers, controls, extern methods, actions, and functions.
 
-|-------------|-------------------------------------------------|
+|-------------|-----------|---------|---------|---------|----------|
 |             | can be a run-time parameter to this callable thing |||||
 |             |-----------|---------|---------|---------|----------|
 | This type   | parser    | control | method  | action  | function |
@@ -7289,7 +7313,7 @@ One way that an extern can be called from the top level of a parser or
 control is in an initializer expression for a declared variable,
 e.g. `bit<32> x = rand.get();`.
 
-|-------------|-------------------------------------------------|
+|-------------|-----------|---------|-----------|---------|--------|----------|
 |             | can be called at run time from this place in a P4 program ||||||
 |             |-----------|---------|-----------|---------|--------|----------|
 |             |           | control | parser or |         |        |          |
