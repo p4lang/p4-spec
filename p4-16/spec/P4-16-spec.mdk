@@ -4501,8 +4501,9 @@ a switch statement.
 ~ Begin P4Example
 switch (t.apply().action_run) {
    action1:          // fall-through to action2:
-   action2: { ...}
-   action3: { ...}  // no fall-through from action2 to action3 labels
+   action2: { ... }
+   action3: { ... }  // no fall-through from action2 to action3 labels
+   default: { ... }
 }
 ~ End P4Example
 
@@ -4510,6 +4511,7 @@ Note that the `default` label of the `switch` statement is
 used to match on the kind of action executed, no matter whether there
 was a table hit or miss. The `default` label does not indicate
 that the table missed and the `default_action` was executed.
+The `default` label should be the last label if present.
 
 # Packet parsing { #sec-packet-parsing }
 
@@ -7005,6 +7007,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.0
 
+* Constrain `default` label position for `switch` statements
 * Allow empty tuples
 
 ## Summary of changes made in version 1.1.0
