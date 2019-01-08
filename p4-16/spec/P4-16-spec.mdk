@@ -2420,12 +2420,15 @@ infinite-precision integer, without a width specified.
 | `header`       | error     | allowed |  allowed |
 | header stack   | error     | error   |  allowed |
 | `header_union` | error     | error   |  allowed |
-| `struct`       | error     | error   |  allowed |
+| `struct`       | allowed[^struct_header]   | error   |  allowed |
 | `tuple`        | error     | error   |  allowed |
 |----------------|-----------|---------|----------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
+[^struct_header]: a `struct` type used as a field in a `header` must contain
+    only a bit-field, an integer, a Serializable Enums, or a Boolean.
+
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
