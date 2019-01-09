@@ -2208,7 +2208,7 @@ structField
 ~ End P4Grammar
 
 where each `typeRef` is restricted to a bit-string type (fixed or
-variable) or an integer type. This declaration introduces a new
+variable), an integer type, or a struct with only `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`. This declaration introduces a new
 identifier in the current scope; the type can be referred to using
 this identifier. A header is similar to a `struct` in C,
 containing all the specified fields. However, in addition, a header also
@@ -2225,6 +2225,30 @@ header Empty_h { }
 ~ End P4Example
 
 Note that an empty header still contains a validity bit.
+
+When a struct is inside of a header, the order of the fields for the purposes 
+of extract and emit calls is the order of the fields as defined in the source code.
+An example of a header including a struct is included below. 
+
+~ Begin P4Example
+struct ipv6_addr {
+    bit<32> Addr0;
+    bit<32> Addr1;
+    bit<32> Addr2;
+    bit<32> Addr3;
+}
+
+header ipv6_t {
+    bit<4>    version;
+    bit<8>    trafficClass;
+    bit<20>   flowLabel;
+    bit<16>   payloadLen;
+    bit<8>    nextHdr;
+    bit<8>    hopLimit;
+    ipv6_addr src;
+    ipv6_addr dst;
+}
+~ End P4Example
 
 Headers that do not contain any `varbit` field are "fixed
 size." Headers containing `varbit` fields have "variable
@@ -2427,7 +2451,7 @@ infinite-precision integer, without a width specified.
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
 [^struct_header]: a `struct` type used as a field in a `header` must contain
-    only a bit-field, an integer, a Serializable Enums, or a Boolean.
+    only `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`.
 
 
 Rationale: `int` does not have precise storage requirements,
