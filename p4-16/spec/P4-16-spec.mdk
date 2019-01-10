@@ -6865,7 +6865,7 @@ We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., an organization named X would use
 annotations named like `@X_annotation`
 
-### Optional parameter annotations
+### Optional parameter annotations { #sec-optional-parameters }
 
 A parameter to a package, extern method, extern function or extern
 object constructor can be annotated with `@optional` to indicate that
@@ -6974,6 +6974,19 @@ The `@match` annotation, described in Section [#sec-select], is used
 to specify a `match_kind` value other than the default `match_kind` of
 `exact` for a field of a `value_set`.
 
+### Deprecated annotation { #sec-deprecated-anno }
+
+The `deprecated` annotation has a required string argument that is a
+message that will be printed by a compiler when a program is using the
+deprecated construct.  This is mostly useful for annotating library
+constructs, such as externs.
+
+~ Begin P4Example
+@deprecated("Please use the 'check' function instead")
+extern Checker {
+   ...
+}
+~ End P4Example
 
 ## Target-specific annotations
 
@@ -7009,6 +7022,7 @@ The P4 compiler should provide:
 
 * Constrain `default` label position for `switch` statements
 * Allow empty tuples
+* Added `@deprecated` annotation.
 * Constrain keys to be unique in annotation values specified as key-value pairs
 
 ## Summary of changes made in version 1.1.0
@@ -7072,6 +7086,7 @@ The following table shows all P4 reserved annotations.
 | `optional`    | parameter is optional                              | [#sec-optional-parameters] |
 | `pkginfo`     | assign package-level metadata properties           | [#sec-package-anno]      |
 | `tableonly`   | action cannot be a defalt_action                   | [#sec-table-action-anno] |
+| `deprecated`  | Construct has been deprecated                      | [#sec-deprecated-anno]   |
 |---------------|----------------------------------------------------|--------------------------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
