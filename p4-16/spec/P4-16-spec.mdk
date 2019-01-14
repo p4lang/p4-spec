@@ -2208,7 +2208,7 @@ structField
 ~ End P4Grammar
 
 where each `typeRef` is restricted to a bit-string type (fixed or
-variable), an integer type, a boolean type, or a struct that itself contains other 
+variable), a fixed-width signed integer type, a boolean type, or a struct that itself contains other 
 struct fields, nested arbitrarily, as long as all of the "leaf" types are
 are `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`.  If a `bool` is used
 inside a P4 header, all implementations encode the `bool` as a one bit long field. 
@@ -2220,6 +2220,13 @@ we say that the "header is valid". When a header is created
 its "validity" bit is automatically set to `false`. The "validity"
 bit can be manipulated by using the header methods `isValid()`, `setValid()`,
 and `setInvalid()`, as described in Section [#sec-ops-on-hdrs].
+
+Note, nesting of headers is not supported.  The reason is if one used an 
+extract() on a header that contained nested headers, then all of the headers 
+involved would become valid.  Additionally, what about invoking `hdr.setInvalid()` on a 
+"sub-header", without doing so on the top level header? What if one tried to then emit() 
+the top level header in that state? What should be emitted?  Due to such reasons, nested
+headers are not supported.
 
 Header types may be empty:
 
@@ -2453,8 +2460,9 @@ infinite-precision integer, without a width specified.
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
-[^struct_header]: a `struct` type used as a field in a `header` must contain
-    only `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`.
+[^struct_header]: a `struct` or nested 'struct' type that has the same properties, 
+    used as a field in a `header` must contain only 
+    `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`.
 
 
 Rationale: `int` does not have precise storage requirements,
