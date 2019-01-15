@@ -6173,10 +6173,11 @@ header, header stack, `struct`, or header union to the output packet.
 - When applied to a header stack, `emit` recursively invokes itself to
   each element of the stack.
 - When applied to a `struct` or header union, `emit` recursively
-  invokes itself to each field.
+  invokes itself to each field.  Note, a `struct` must not contain
+  a field of type `error` or  `enum` because these types cannot be serialized.
 
-It is illegal to invoke `emit` on an expression whose type is
-`enum`, `error`, or a base type other than an integer (`int<W>`) or Boolean type.
+It is illegal to invoke `emit` on an expression whose type is a base type,
+`enum`, or `error`.
 
 We can define the meaning of the `emit` method in pseudo-code as
 follows:
