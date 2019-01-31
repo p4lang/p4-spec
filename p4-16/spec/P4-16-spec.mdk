@@ -2221,12 +2221,7 @@ its "validity" bit is automatically set to `false`. The "validity"
 bit can be manipulated by using the header methods `isValid()`, `setValid()`,
 and `setInvalid()`, as described in Section [#sec-ops-on-hdrs].
 
-Note, nesting of headers is not supported.  The reason is if one used an 
-extract() on a header that contained nested headers, then all of the headers 
-involved would become valid.  Additionally, what about invoking `hdr.setInvalid()` on a 
-"sub-header", without doing so on the top level header? What if one tried to then emit() 
-the top level header in that state? What should be emitted?  Due to such reasons, nested
-headers are not supported.
+Note, nesting of headers is not supported.  One reason is that headers containing structs covers many of the use cases where headers containing other headers might be useful. Another is that it leads to complications in defining the behavior of arbitrary sequences of `setValid`, `setInvalid`, and `emit` operations. Consider an example where header `h1` contains header `h2` as a member, both currently valid. A program executes `h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` be emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` invalidate all headers contained within `h1`, regardless of how deeply they are nested?
 
 Header types may be empty:
 
