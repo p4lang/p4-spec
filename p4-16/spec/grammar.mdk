@@ -53,8 +53,7 @@ annotations
 
 annotation
     : '@' name
-    | '@' name '(' expressionList ')'
-    | '@' name '(' keyValueList ')'
+    | '@' name '(' annotationBody ')'
     ;
 
 parameterList
@@ -586,13 +585,96 @@ expressionList
     | expressionList ',' expression
     ;
 
-keyValuePair
-    : IDENTIFIER '=' expression
-    ;
+annotationBody
+    : /* empty */
+    | annotationBody '(' annotationBody ')'
+    | annotationBody annotationToken
 
-keyValueList
-    : keyValuePair
-    | keyValueList ',' keyValuePair
+annotationToken
+    : ABSTRACT
+    | ACTION
+    | ACTIONS
+    | APPLY
+    | BOOL
+    | BIT
+    | CONST
+    | CONTROL
+    | DEFAULT
+    | ELSE
+    | ENTRIES
+    | ENUM
+    | ERROR
+    | EXIT
+    | EXTERN
+    | FALSE
+    | HEADER
+    | HEADER_UNION
+    | IF
+    | IN
+    | INOUT
+    | INT
+    | KEY
+    | MATCH_KIND
+    | TYPE
+    | OUT
+    | PARSER
+    | PACKAGE
+    | PRAGMA
+    | RETURN
+    | SELECT
+    | STATE
+    | STRUCT
+    | SWITCH
+    | TABLE
+    | THIS
+    | TRANSITION
+    | TRUE
+    | TUPLE
+    | TYPEDEF
+    | VARBIT
+    | VALUESET
+    | VOID
+    | "_"
+    | IDENTIFIER
+    | TYPE_IDENTIFIER
+    | STRING_LITERAL
+    | INTEGER
+    | "&&&"
+    | ".."
+    | "<<"
+    | "&&"
+    | "||"
+    | "=="
+    | "!="
+    | ">="
+    | "<="
+    | "++"
+    | "+"
+    | "|+|"
+    | "-"
+    | "|-|"
+    | "*"
+    | "/"
+    | "%"
+    | "|"
+    | "&"
+    | "^"
+    | "~"
+    | "["
+    | "]"
+    | "{"
+    | "}"
+    | "<"
+    | ">"
+    | "!"
+    | ":"
+    | ","
+    | "?"
+    | "."
+    | "="
+    | ";"
+    | "@"
+    | UNKNOWN_TOKEN
     ;
 
 member
