@@ -6786,9 +6786,9 @@ diagnostics.
 
 Annotations are similar to C# attributes and Java annotations. They
 are a simple mechanism for extending the P4 language to some limited
-degree without changing the grammar. To some degree they subsume the C `#pragmas`.
-Annotations can be added to types, fields, variables, etc. using the `@`
-syntax (as shown explicitly in the P4 grammar):
+degree without changing the grammar. To some degree they subsume C `#pragma`s.
+Annotations are attached to types, fields, variables, etc. using the `@`
+syntax (as shown explicitly in the P4 grammar), and have an optional body:
 
 ~ Begin P4Grammar
 optAnnotations
@@ -6803,58 +6803,29 @@ annotations
 
 annotation
     : '@' name
-    | '@' name '(' expressionList ')'
-    | '@' name '(' keyValueList ')'
-    ;
-...
-keyValuePair
-    : IDENTIFIER '=' expression
-    ;
-
-keyValueList
-    : keyValuePair
-    | keyValueList ',' keyValuePair
+    | '@' name '(' annotationBody ')'
     ;
 ~ End P4Grammar
 
-## Key-Value Pairs in Annotations
+## Bodies of annotations
 
-One useful variant of annotations is a comma-separated list of key-value (k-v)
-pairs. This can be used to assign multiple properties to an entity in a more concise and readable way.
-Multiple annotations of either form may be used and are cumulative, i.e. the list of k-v pairs will accumulate.
-It is an error if a given key appears more than once for the same annotation name on the same P4 object.
-The following sections illustrate two ways of writing the same list of annotations.
+The flexibility of P4 annotations comes from the minimal structure mandated by
+the P4 grammar: annotation bodies may contain any sequence of terminals, so
+long as parentheses are balanced. In the following grammar fragment, the
+`annotationToken` non-terminal represents any terminal produced by the lexer,
+including keywords, identifiers, string and integer literals, and symbols, but
+excluding parentheses.
 
-### Multiple Annotation Statements Each using Single K-V Expression
-In this form, multiple `@pkginfo` annotations are declared. The effect is to build a list of annotations
-for the `main()` object.
-~ Begin P4Example
-@pkginfo(version="1.2.3")
-@pkginfo(brief="A program to demonstrate documentation")
-@pkginfo(description="A longer description, can span lines.\
-    Second line of longer description.")
-@pkginfo(arch="PSA 1.0")
-@pkginfo(organization="P4.org")
-@pkginfo(contact="support@p4.org")
-@pkginfo(url="https://github.com/p4lang")
-V1Switch(...) main;  // Entity being annotated
-~ End P4Example
-### Single Annotation Statement Using Multiple K-V Expressions
-In this form, a single `@pkginfo` annotation is declared. The effect is identical to the example
-above using multiple declarations.
-~ Begin P4Example
-@pkginfo(
-    version="1.2.3",
-    brief="A program to demonstrate documentation",
-    description="A longer description, can span lines.\
-        Second line of longer description.",
-    arch="PSA 1.0",
-    organization="P4.org",
-    contact="support@p4.org",
-    url="https://github.com/p4lang"
-)
-V1Switch(...) main;  // Entity being annotated
-~ End P4Example
+~ Begin P4Grammar
+annotationBody
+    : /* empty */
+    | annotationBody '(' annotationBody ')'
+    | annotationBody annotationToken
+~ End P4Grammar
+
+Annotations may impose additional structure on their bodies, and are not
+confined to the P4 language. For example, the predefined `@pkginfo` annotation
+takes key-value pairs, which are not found in the main P4 language.
 
 ## Predefined annotations
 
@@ -6870,14 +6841,14 @@ annotations named like `@X_annotation`
 A parameter to a package, extern method, extern function or extern
 object constructor can be annotated with `@optional` to indicate that
 the user does not need to provide a corresponding argument for that
-parameter.  The meaning of parameter with no supplied value is
+parameter.  The meaning of a parameter with no supplied value is
 target-dependent.
 
 ### Annotations on the table action list  { #sec-table-action-anno }
 
 The following two annotations can be used to give additional
 information to the compiler and control-plane about actions in a
-table. They have no arguments.
+table. These annotations have no bodies.
 
 - `@tableonly`: actions with this annotation can only appear
   within the table, and never as default action.
@@ -6899,8 +6870,8 @@ table t {
 
 The `@name` annotation directs the compiler to use a different
 local name when generating the external APIs used to manipulate a
-language element from the control plane. It must have a string literal
-argument.  In the
+language element from the control plane. This annotation takes a string literal
+body.  In the
 following example, the fully-qualified name of the table is `c_inst.t1`.
 
 ~ Begin P4Example
@@ -6913,16 +6884,16 @@ c() c_inst;
 
 The `@hidden` annotation hides a controllable entity, e.g. a table,
 key, action, or extern, from the control plane.  This effectively
-removes its fully-qualified name (Section [#sec-cp-names]).  It does
-not take any arguments.
+removes its fully-qualified name (Section [#sec-cp-names]).  This annotation
+does not have a body.
 
 #### Restrictions
 
 Each element may be annotated with at most one `@name`
 or `@hidden` annotation, and each control plane name must refer to
 at most one controllable entity.  This is of special concern when
-using absolute `@name` annotation: If a type containing an `@name`
-annotation with an absolute pathname (i.e., starting with a dot)
+using an absolute `@name` annotation: if a type containing a `@name`
+annotation with an absolute pathname (i.e., one starting with a dot)
 is instantiated more than once, it will result in the same
 name referring to two controllable entities.
 
@@ -6950,10 +6921,10 @@ can be used to enforce the atomic execution of a code block.
 
 ### Package Documentation Annotations { #sec-package-anno }
 
-Package-level metadata can be declared by annotating the `main()` function with the `pkginfo` annotation. Multiple k-v pairs
-can be assigned. These can be extracted by the compiler into P4Info and used for package
-management. An example is given below. Key names are not controlled by the P4 Language specification.
-Implementers or other bodies may establish conventions, for example the P4-API working group.
+Package-level metadata can be declared by annotating the `main()` function with
+`pkginfo` annotations, as shown in the example below. These can be extracted by
+the compiler into P4Info and used for package management.
+
 ~ Begin P4Example
 @pkginfo(
     version="1.2.3",
@@ -6967,6 +6938,42 @@ Implementers or other bodies may establish conventions, for example the P4-API w
 )
 V1Switch(...) main;  // Entity being annotated
 ~ End P4Example
+
+The body of a `pkginfo` annotation is a key-value list, specified by the
+following grammar: 
+
+~ Begin P4Grammar
+keyValueList
+    : keyValuePair
+    | keyValueList ',' keyValuePair
+    ;
+
+keyValuePair
+    : IDENTIFIER '=' expression
+    ;
+~ End P4Grammar
+
+Multiple `pkginfo` annotations may be given, and are cumulative (i.e., the
+key-value lists are concatenated together). The example above gives all
+key-value pairs in a single annotation. Equivalently, each key-value pair can
+be given in a separate `@pkginfo` declaration, shown below. The effect is to
+build a list of annotations for the `main()` object.
+
+~ Begin P4Example
+@pkginfo(version="1.2.3")
+@pkginfo(brief="A program to demonstrate documentation")
+@pkginfo(description="A longer description, can span lines.\
+    Second line of longer description.")
+@pkginfo(arch="PSA 1.0")
+@pkginfo(organization="P4.org")
+@pkginfo(contact="support@p4.org")
+@pkginfo(url="https://github.com/p4lang")
+V1Switch(...) main;  // Entity being annotated
+~ End P4Example
+
+It is an error if a given key appears more than once on the same P4 object.
+Key names are not controlled by the P4 Language specification.
+Implementers or other bodies may establish conventions, for example the P4-API working group.
 
 ### Value set annotations { #sec-value-set-annotations }
 
@@ -7020,10 +7027,11 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.0
 
-* Constrain `default` label position for `switch` statements
-* Allow empty tuples
+* Constrain `default` label position for `switch` statements.
+* Allow empty tuples.
 * Added `@deprecated` annotation.
-* Constrain keys to be unique in annotation values specified as key-value pairs
+* Constrain keys to be unique in `@pkginfo` annotation.
+* Relaxed the structure of annotation bodies.
 
 ## Summary of changes made in version 1.1.0
 
