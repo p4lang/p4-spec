@@ -29,13 +29,19 @@ limitations under the License.
  * These types need to be defined before including the architecture file
  * and the macro protecting them should be defined.
  */
-#define PSA_EXAMPLE_CORE_TYPES
-#ifdef PSA_EXAMPLE_CORE_TYPES
-/* The bit widths shown below are only examples.  Each PSA
- * implementation is free to use its own custom width in bits for
- * those types that are bit<W> for some W.  The only reason that there
- * are example numerical widths in this file is so that we can easily
- * compile this file, and example PSA P4 programs that include it. */
+#define PSA_ON_BMV2_CORE_TYPES
+#ifdef PSA_ON_BMV2_CORE_TYPES
+/* The bit widths shown below are specific to the BMv2 psa_switch
+ * target.  These types do _not_ dictate what sizes these types should
+ * have for any other implementation of PSA.  Each PSA implementation
+ * is free to use its own custom width in bits for those types that
+ * are bit<W> for some W.  One reason they are here is to support the
+ * implementation of PSA on BMv2.  Another is so that we can easily
+ * compile this file, and example PSA P4 programs that include it.
+ *
+ * The bit widths for BMv2 psa_switch have been chosen to be the same
+ * as the corresponding InHeader types later.  This simplifies the
+ * implementation of P4Runtime for BMv2 psa_switch. */
 
 /* These are defined using `typedef`, not `type`, so they are truly
  * just different names for the type bit<W> for the particular width W
@@ -51,13 +57,22 @@ limitations under the License.
  *
  * Note that the width of typedef <name>Uint_t will always be the same
  * as the width of type <name>_t. */
-typedef bit<10> PortIdUint_t;
-typedef bit<10> MulticastGroupUint_t;
-typedef bit<10> CloneSessionIdUint_t;
-typedef bit<3>  ClassOfServiceUint_t;
-typedef bit<14> PacketLengthUint_t;
+typedef bit<32> PortIdUint_t;
+typedef bit<32> MulticastGroupUint_t;
+typedef bit<16> CloneSessionIdUint_t;
+typedef bit<8>  ClassOfServiceUint_t;
+typedef bit<16> PacketLengthUint_t;
 typedef bit<16> EgressInstanceUint_t;
-typedef bit<48> TimestampUint_t;
+typedef bit<64> TimestampUint_t;
+
+/* Note: clone_spec in BMv2 simple_switch v1model is 32 bits wide, but
+ * it is used such that 16 of its bits contain a clone/mirror session
+ * id, and 16 bits contain the numeric id of a field_list.  Only the
+ * 16 bits of clone/mirror session id are comparable to the type
+ * CloneSessionIdUint_t here.  See occurrences of clone_spec in this
+ * file for details:
+ * https://github.com/p4lang/behavioral-model/blob/master/targets/simple_switch/simple_switch.cpp
+ */
 
 @p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
 type PortIdUint_t         PortId_t;
@@ -70,14 +85,14 @@ type EgressInstanceUint_t EgressInstance_t;
 type TimestampUint_t      Timestamp_t;
 typedef error   ParserError_t;
 
-const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 254;
-const PortId_t PSA_PORT_CPU = (PortId_t) 255;
+const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 0xfffffffa;
+const PortId_t PSA_PORT_CPU = (PortId_t) 0xfffffffd;
 
 const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessionId_t) 0;
 
-#endif  // PSA_EXAMPLE_CORE_TYPES
+#endif  // PSA_ON_BMV2_CORE_TYPES
 
-#ifndef PSA_EXAMPLE_CORE_TYPES
+#ifndef PSA_ON_BMV2_CORE_TYPES
 #error "Please define the following types for PSA and the PSA_EXAMPLE_CORE_TYPES macro"
 // BEGIN:Type_defns
 /* These are defined using `typedef`, not `type`, so they are truly
