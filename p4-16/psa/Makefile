@@ -24,6 +24,8 @@ P4C=p4test
 #P4C=p4test --Wdisable=uninitialized_out_param
 
 check:
+	${P4C} examples/psa-example-drop-all.p4
+	${P4C} examples/psa-example-hello-world.p4
 	${P4C} examples/psa-example-bridged-metadata.p4
 	${P4C} examples/psa-example-clone-to-port.p4
 	${P4C} examples/psa-example-counters.p4
