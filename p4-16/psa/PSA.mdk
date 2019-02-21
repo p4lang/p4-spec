@@ -477,8 +477,7 @@ The list above is not intended to be exhaustive.
 All of the comments above apply to all types where numerical
 translation occurs between the controller and the data plane.
 Below is a complete list of such types planned for numerical
-translation by default with PSA, and have an annotation
-`p4runtime_translation` in the `psa.p4` include file:
+translation by default with PSA:
 
 + `PortId_t` or `PortIdInHeader_t`
 + `ClassOfService_t` or `ClassOfServiceInHeader_t`
@@ -512,22 +511,15 @@ translation in the agent software, between target-specific values, and
 a value with a common unit and 0 value reference across all targts.
 ~
 
-~ TBD
-It is not clear yet whether it is reasonable to use a value of type
-`PortId_t` as an index to of a `Register` extern, or of an indexed
-`Counter` or `Meter` extern.  A likely result of attempting to do this
-in a P4 program is that the indexes accessed will be the data plane
-specific values of `PortId_t`, and when the control plane attempts to
-access values in these externs, the numerical translation may not be
-performed on the index.  It is reasonable to use a `DirectCounter` or
-`DirectMeter` with a table key that includes a `PortId_t` field,
-because the agent software will perform port translation for table
-keys.
+Note that all of these types have a `@p4runtime_translation`
+annotation in the `psa.p4` include file.  This is to ensure that when
+the compiler generates a P4Runtime P4Info file from source programs,
+it will not include the target-specific bit width in the P4Info file.
+For the same P4 source program, the P4Info file contents are intended
+to be identical for all targets.
 
-If this is not a reasonable thing to do, the example program
-`psa-example-counters.p4` should be modified so that it does not do
-this, and scrub all other examples for any similar behavior.
-~
+This also enables P4Runtime systems to easily enable numerical
+translation for any of these types later, if desired.
 
 
 # Programmable blocks {#sec-programmable-blocks}
