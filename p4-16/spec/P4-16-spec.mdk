@@ -323,7 +323,7 @@ Assuming a fixed cost for table lookup operations and interactions
 with extern objects, all P4 programs (i.e., parsers and controls)
 execute a constant number of operations for each byte of an input
 packet received and analyzed. Although parsers may contain loops,
-provided some header is extracted on each cycle, the packet itself
+provided some data is extracted on each cycle, the packet itself
 provides a bound on the total execution of the parser. In other words,
 under these assumptions, the computational complexity of a P4 program
 is linear in the total size of all headers, and never depends on the
@@ -2564,7 +2564,7 @@ on a packet:
 
 ~ Begin P4Example
 extern packet_out {
-    void emit<T>(in T hdr);
+    void emit<T>(in T x);
 }
 control d(packet_out b, in Hdr h) {
     apply {
@@ -4877,7 +4877,7 @@ a `parser` instantiation.
 
 ~ Begin P4Example
 extern packet_in {
-    void extract<T>(out T headerLvalue);
+    void extract<T>(out T Lvalue);
     void extract<T>(out T variableSizeHeader, in bit<32> varFieldSizeBits);
     T lookahead<T>();
     bit<32> length();  // This method may be unavailable in some architectures
@@ -4888,13 +4888,15 @@ extern packet_in {
 To extract data from a packet represented by an argument `b` with
 type `packet_in`, a parser invokes the `extract` methods of `b`.
 There are two variants of the `extract` method: a one-argument
-variant for extracting fixed-size headers, and a two-argument variant
+variant for extracting structs or fixed-size headers, and a two-argument variant
 for extracting variable-sized headers. Because these operations can
 cause runtime verification failures (see below), these methods can
 only be executed within parsers.
 
-When extracting data into a bit-string or integer, the first packet
-bit is extracted to the most significant bit of the integer.
+When extracting data into a bit-string or integer field of a header,
+the first packet bit is extracted to the most significant bit of the
+bit-string or integer. When extracting data into a struct, the order
+of bits is completely target-dependent.
 
 Some targets may perform cut-through packet processing, i.e., they may
 start processing a packet before its length is known (i.e., before all
@@ -4923,19 +4925,19 @@ packet_in {
 
 ### Fixed width extraction { #sec-packet-extract-one }
 
-The single-argument `extract` method handles fixed-width headers,
+The single-argument `extract` method handles structs or fixed-width headers,
 and is declared in P4 as follows:
 
 ~ Begin P4Example
-void extract<T>(out T headerLeftValue);
+void extract<T>(out T leftValue);
 ~ End P4Example
 
-The expression `headerLeftValue` must evaluate to a l-value (see
-Section [#sec-lvalues]) of type `header` with a fixed width. If
-this method executes successfully, on completion the `headerLvalue`
-is filled with data from the packet and its validity bit is set to `true`. This
+The expression `leftValue` must evaluate to a l-value (see
+Section [#sec-lvalues]) of type `header` with a fixed width, or of type `struct`. If
+this method executes successfully, on completion the `leftValue`
+is filled with data from the packet, and if it is of type `header` then its validity bit is set to `true`. This
 method may fail in various ways---e.g., if there are not
-enough bits left in the packet to fill the specified header.
+enough bits left in the packet to fill the specified `leftValue`.
 
 For example, the following program fragment extracts an Ethernet header:
 
@@ -4949,7 +4951,7 @@ parser P(packet_in b, out Result r) {
 ~ End P4Example
 
 In terms of the `ParserModel`, the semantics of the
-single-argument `extract` is given in terms of the following
+single-argument `extract` on a header type is given in terms of the following
 pseudo-code method, using data from the `packet` class defined
 above. We use the special `valid$` identifier to indicate the
 hidden valid bit of a header, `isNext$` to indicate that the
@@ -4967,6 +4969,27 @@ void packet_in.extract<T>(out T headerLValue) {
      verify(headerLValue.nextIndex$ < headerLValue.size, error.StackOutOfBounds);
      headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
    }
+   this.nextBitIndex += bitsToExtract;
+}
+~ End P4Pseudo
+
+The semantics of the single-argument `extract` method on a struct type
+is given below. This use of `extract` is only expected to produce
+useful results if it is performed at the same offset from the
+beginning of the packet that the same target device earlier performed
+an `emit` method on a struct with the same type name. In this case,
+the resulting value of `structLValue` will be equal to the original
+struct value that was emitted, according to the `==` operator. If such
+an `extract` operation is done in any other situation, the resulting
+value of `structLValue` is unspecified.
+
+~ Begin P4Pseudo
+void packet_in.extract<T>(out T structLValue) {
+   bitsToExtract = sizeofInBits(structLValue);  // target-specific size
+   lastBitNeeded = this.nextBitIndex + bitsToExtract;
+   ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
+   // The format of data extracted into a struct is target-specific
+   structLValue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    this.nextBitIndex += bitsToExtract;
 }
 ~ End P4Pseudo
@@ -5291,7 +5314,7 @@ P4 Runtime specification.
 # Control blocks { #sec-control }
 
 P4 parsers are responsible for extracting bits from a packet into
-headers. These headers (and other metadata) can be manipulated and transformed within `control`
+headers and/or structs. These (and other metadata) can be manipulated and transformed within `control`
 blocks. The body of a control block
 resembles a traditional imperative program. Within the body of a control block,
 match-action units can be invoked to perform data
@@ -6134,8 +6157,24 @@ header, header stack, `struct`, or header union to the output packet.
   the packet if it is valid and otherwise behaves like a no-op.
 - When applied to a header stack, `emit` recursively invokes itself to
   each element of the stack.
-- When applied to a `struct` or header union, `emit` recursively
-  invokes itself to each field.
+- When applied to a header union, `emit` recursively invokes itself to
+  each field.
+- When applied to a struct, `emit` appends the data of the entire
+  struct to the packet in a target-specific format. There is no
+  requirement that fields be emitted in the order they appear in the
+  struct definition. The target is allowed to add padding. The struct
+  is allowed to contain members of any types except `void`, `int`, and
+  `match_kind`. If the struct contains headers, the format in which
+  those nested headers is emitted need not conform to the rules above
+  when performing an `emit` operation directly on a header.
+
+The only requirements on the data format output by emitting a struct
+are that if the same target device later does an `extract` operation
+on the resulting packet, starting at the same offset within the packet
+at which the `emit` was done, on a variable with the same struct type
+name on which the `emit` was done, the resulting value of that
+variable after the `extract` operation is equal to the original
+emitted struct value, according to the `==` operator.
 
 It is illegal to invoke `emit` on an expression of whose type is a
 base type, `enum`, or `error`.
@@ -6152,30 +6191,32 @@ packet_out {
         this.lengthInBits = 0;
     }
     /// Append data to the packet. Type T must be a header, header
-    /// stack, header union, or struct formed recursively from those types
+    /// stack, header union, or struct
     void emit<T>(T data) {
         if (isHeader(T))
             if(data.valid$) {
-                this.data.append(data);
+                this.data.append(data);  // in target-independent format
                 this.lengthInBits += data.lengthInBits;
             }
         else if (isHeaderStack(T))
             for (e : data)
                  emit(e);
-        else if (isHeaderUnion(T) || isStruct(T))
+        else if (isHeaderUnion(T))
             for (f : data.fields$)
                  emit(e.f)
+        else if (isStruct(T)) {
+            this.data.append(data);  // in target-specific format
+            this.lengthInBits += data.lengthInBits;
+        }
         // Other cases for T are illegal
     }
 ~ End P4Pseudo
 
 Here we use the special `valid$` identifier to indicate the hidden
 valid bit of headers and `fields$` to indicate the list of fields
-for a struct or header union. We also use standard `for` notation to
+for header union. We also use standard `for` notation to
 iterate through the elements of a stack `(e : data)` and list of
-fields for header unions and structs `(f : data.fields$)`.  The
-iteration order for a struct is the order those fields appear in the
-type declaration.
+fields for header unions `(f : data.fields$)`.
 
 # Architecture description { #sec-arch-desc }
 
@@ -7109,11 +7150,11 @@ error {
     ParserTimeout      /// Parser execution time limit exceeded.
 }
 extern packet_in {
-    /// Read a header from the packet into a fixed-sized header @hdr
+    /// Read from the packet into a fixed-sized header, or struct, @x,
     /// and advance the cursor.
     /// May trigger error PacketTooShort or StackOutOfBounds.
-    /// @T must be a fixed-size header type
-    void extract<T>(out T hdr);
+    /// @T must be a fixed-size header type or struct type
+    void extract<T>(out T x);
     /// Read bits from the packet into a variable-sized header @variableSizeHeader
     /// and advance the cursor.
     /// @T must be a header containing exactly 1 varbit field.
@@ -7133,8 +7174,7 @@ extern packet_in {
 extern packet_out {
     /// Write @data into the output packet, skipping invalid headers
     /// and advancing the cursor
-    /// @T can be a header type, a header stack, a header_union, or a struct
-    /// containing fields with such types.
+    /// @T can be a header type, a header stack, a header_union, or a struct.
     void emit<T>(in T data);
 }
 action NoAction() {}
