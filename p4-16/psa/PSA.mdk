@@ -332,11 +332,56 @@ plane sizes for these types no wider than the corresponding
 
 ## Match kinds
 
-Additional supported match_kind types
+PSA supports the following additional `match_kind` types, over and
+above the three defined in the P4~16~ language specification:
 
 ```
 [INCLUDE=psa.p4:Match_kinds]
 ```
+
+`selector` is only supported for tables with an action selector implementation.
+See Section [#sec-action-selector] for details.
+
+If a table has at least one `range` field, then a single search key could match
+multiple table entries. Every entry must be assigned a numeric priority by the
+control plane software when it is installed. If multiple installed table entries
+match the same search key, one among them with the maximum numeric priority will
+"win", and its action performed. If there are multiple matching table entries
+with the same maximum numeric priority, it is implementation-specific which one
+will have its action performed. Control plane software should assign different
+priority values to table entries that can match the same packet if they wish to
+avoid this implementation-specific behavior.
+
+The winner is one with maximum numeric priority value if you use the P4Runtime
+API to specify the numeric priorities. Check the documentation of your control
+plane API if you use a different one, as some APIs might choose to use the
+convention that smaller numeric priority values win over larger ones.
+
+A `range` table may have one or more `lpm` fields. If so, the prefix length is
+used to determine whether a search key matches the entry, but the prefix length
+does _not_ determine the relative priority among multiple matching table
+entries. Only the numeric priority supplied by the control plane software
+determines that.
+
+If a table has no `range` field, but at least one `ternary` field, then as for
+tables with `range` fields, a single search key can be matched by multiple table
+entries, and thus every entry must have a numeric priority assigned by the
+control plane software. The same note about `lpm` fields above applies here.
+
+If a table has neither `range` nor `ternary` fields, but at least one `lpm`
+field, there must be exactly one `lpm` field. There may be 0 or more `exact`
+fields in addition to the `lpm` field. While there can be multiple installed
+table entries that match a single search key, there can be at most one matching
+table entry of each possible prefix length of the `lpm` field (because no two
+table entries installed at the same time are allowed to have the same search
+key). The matching entry with the longest prefix length is always the
+winner. The control plane cannot specify a priority when installing entries for
+such a table -- it is always determined by the prefix length.
+
+If a table has only `exact` fields, then for any search key, there can be at
+most one matching table entry, because duplicate search keys are not allowed to
+be installed. Thus no numeric priority is ever needed to determine the "winning"
+matching table entry.
 
 
 ## Data plane vs. control plane data representations {#sec-data-plane-vs-control-plane-values}
