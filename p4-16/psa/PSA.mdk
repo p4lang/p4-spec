@@ -511,15 +511,23 @@ translation in the agent software, between target-specific values, and
 a value with a common unit and 0 value reference across all targts.
 ~
 
-Note that all of these types have a `@p4runtime_translation`
-annotation in the `psa.p4` include file.  This is to ensure that when
-the compiler generates a P4Runtime P4Info file from source programs,
-it will not include the target-specific bit width in the P4Info file.
+Note that all of these types have a `p4runtime_translation` annotation
+in the `psa.p4` include file.  This is to ensure that when the
+compiler generates a P4Runtime P4Info file from source programs, it
+will not include the target-specific bit width in the P4Info file.
 For the same P4 source program, the P4Info file contents are intended
 to be identical for all targets.
 
-This also enables P4Runtime systems to easily enable numerical
-translation for any of these types later, if desired.
+If the type bitwidth specified as the second parameter to the
+`p4runtime_translation` is different from the device-specific bitwidth
+(of the underlying type), we expect the P4Runtime server to perform
+the appropriate casting. Additionally, more advance numerical
+translation can be enabled at runtime for any type annotated with
+`p4runtime_translation`, although arbitrary numerical translation is
+only mandated for `PortId_t`, `ClassOfService_t`, and their `Inheader`
+variants. To request arbitrary numerical translation for a give type,
+the P4Runtime system will expect the URI (first parameter to the
+`p4runtime_translation`) and the desired mapping.
 
 
 # Programmable blocks {#sec-programmable-blocks}
