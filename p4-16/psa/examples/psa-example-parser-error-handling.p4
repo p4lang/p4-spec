@@ -220,6 +220,11 @@ control packet_path_to_bits(out bit<3> packet_path_bits,
     }
     table packet_path_convert {
         key = {
+            // Note that P4Runtime v1.0 does not support P4 programs
+            // with table search key fields that have any type except
+            // bit<W>.  See psa-example-parser-error-handling2.p4 for
+            // a variant of this program that avoids this issue using
+            // an if-then-elseif daisy chain instead of a table.
             packet_path : exact;
         }
         actions = {
@@ -348,6 +353,11 @@ control handle_parser_errors(
     }
     table parser_error_count_and_convert {
         key = {
+            // Note that P4Runtime v1.0 does not support P4 programs
+            // with table search key fields that have any type except
+            // bit<W>.  See psa-example-parser-error-handling2.p4 for
+            // a variant of this program that avoids this issue using
+            // an if-then-elseif daisy chain instead of a table.
             parser_error : exact;
         }
         actions = {
