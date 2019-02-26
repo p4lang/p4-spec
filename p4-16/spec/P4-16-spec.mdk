@@ -5093,7 +5093,7 @@ as follows,
 b.lookahead<T>()
 ~ End P4Example
 
-where `T` must be a type with fixed width. In case of success the
+where `T` must be a `header` type with fixed width, or a `struct` type. In case of success the
 result of the evaluation of `lookahead` returns a value of type `T`.
 
 In terms of the `ParserModel`, the semantics of `lookahead` is
@@ -5104,6 +5104,7 @@ T packet_in.lookahead<T>() {
    bitsToExtract = sizeof(T);
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
+   // The format of data looked ahead when returning a struct is target-specific
    T tmp = this.data.extractBits(this.nextBitIndex, bitsToExtract);
    return tmp;
 }
