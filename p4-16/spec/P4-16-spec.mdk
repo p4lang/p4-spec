@@ -4974,14 +4974,27 @@ void packet_in.extract<T>(out T headerLValue) {
 ~ End P4Pseudo
 
 The semantics of the single-argument `extract` method on a struct type
-is given below. This use of `extract` is only expected to produce
-useful results if it is performed at the same offset from the
+is given below. This use of `extract` is only required to produce
+predictable results if it is performed at the same offset from the
 beginning of the packet that the same target device earlier performed
 an `emit` method on a struct with the same type name. In this case,
 the resulting value of `structLValue` will be equal to the original
 struct value that was emitted, according to the `==` operator. If such
 an `extract` operation is done in any other situation, the resulting
 value of `structLValue` is unspecified.
+
+The length in bits of the data consumed by such an `extract` operation
+is not only target-dependent, but even for the same target and the
+same struct name, the number of bits could vary in length across
+different calls to `emit` and `extract`.  For example, if the struct
+contained a field with type `header_union`, an implementation may find
+it advantageous to use a variable-length encoding.  Also, a target may
+choose to implement `emit` on a struct by first generating some
+variable-length sequence of padding bits, so that later struct fields
+start on a multiple of 64 bits from the beginning of the packet, for
+target-specific efficiency reasons.  The P4 programmer must not rely
+on anything about the bit level encoding of a struct other than what
+is specified above.
 
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T structLValue) {
