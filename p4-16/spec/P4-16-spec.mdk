@@ -3649,17 +3649,17 @@ of the header.
 - The method `setInvalid()` sets the header's validity bit to
 "false". It can only be applied to an l-value.
 
-The expression `sizeInBits(h)` is defined for any value `h` that has a
+The expression `h.sizeInBits()` is defined for any value `h` that has a
 header type.  The expression is equal to the sum of the sizes of all
 of header `h`'s fields in bits, counting all `varbit` fields as length
-0.  An expression `sizeInBits(h)` is a compile-time constant with type
+0.  An expression `h.sizeInBits()` is a compile-time constant with type
 `int`.
 
-The expression `sizeInBytes(h)` is similar to `sizeInBits`, except
+The expression `h.sizeInBytes()` is similar to `h.sizeInBits()`, except
 that it returns the total size of all of the header's fields in bytes,
 rounding up to the next whole number of bytes if the header's size is
-not a multiple of 8 bits long.  `sizeInBytes(h)` is equal to
-`(sizeInBits(h) + 7) >> 3`.
+not a multiple of 8 bits long.  `h.sizeInBytes()` is equal to
+`(h.sizeInBits() + 7) >> 3`.
 
 The result of reading a field in any of the situations below is that
 some unspecified value will be used for that field.
@@ -3770,12 +3770,12 @@ expressions are legal:
   are copied, including its elements and their validity bits,
   as well as `nextIndex`.
 
-- `sizeInBits(hs)` is a compile-time constant value of type `int`
-  equal to `n * sizeInBits(h)`, where `h` is the header type on which
+- `hs.sizeInBits()` is a compile-time constant value of type `int`
+  equal to `n * h.sizeInBits()`, where `h` is the header type on which
   the header stack `hs` is defined.
 
-- `sizeInBytes(hs)` is a compile-time constant value of type `int`
-  equal to `(sizeInBits(hs) + 7) >> 3`.
+- `hs.sizeInBytes()` is a compile-time constant value of type `int`
+  equal to `(hs.sizeInBits() + 7) >> 3`.
 
 To help programmers write parsers for header stacks, P4 also offers
 computations that automatically advance through the stack as elements
@@ -3949,11 +3949,11 @@ methods are not defined for header unions.
 Supplying an expression with a union type to `emit` simply emits the
 single header that is valid, if any.
 
-The expression `sizeInBits(u)` for a value `u` with a header union
+The expression `u.sizeInBits()` for a value `u` with a header union
 type is a compile-time constant value of type `int`.  It is equal to
-the maximum value of `sizeInBits(h)` among all members `h` of `u`.
-The expression `sizeInBytes(u)` is a compile-time constant value of
-type `int` equal to `(sizeInBits(u) + 7) >> 3`.
+the maximum value of `h.sizeInBits()` among all members `h` of `u`.
+The expression `u.sizeInBytes()` is a compile-time constant value of
+type `int` equal to `(u.sizeInBits() + 7) >> 3`.
 
 The following example shows how we can use header unions to represent
 IPv4 and IPv6 headers uniformly:
@@ -6392,7 +6392,7 @@ The following are compile-time known values:
 - The following expressions (`+`, `-`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`)
   when their operands are all compile-time known values.
 - Identifiers declared as constants using the `const` keyword.
-- Expressions of the form `sizeInBits(e)` and `sizeInBytes(e)`.
+- Expressions of the form `e.sizeInBits()` and `e.sizeInBytes()`.
 
 ## Compile-time Evaluation { #sec-ct-eval }
 
