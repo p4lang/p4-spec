@@ -1,5 +1,5 @@
 /*
-Copyright 2017 Cisco Systems, Inc.
+Copyright 2019 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -215,41 +215,76 @@ struct headers {
 control packet_path_to_bits(out bit<3> packet_path_bits,
     in PSA_PacketPath_t packet_path)
 {
-    action set_packet_path_bits(bit<3> bits) {
-        packet_path_bits = bits;
-    }
-    table packet_path_convert {
-        key = {
-            // Note that P4Runtime v1.0 does not support P4 programs
-            // with table search key fields that have any type except
-            // one of these:
-            //
-            // + bit<W>
-            // + a serialized enum with a base type of bit<W>
-            // + a typedef or type that has a base type of one of the
-            //   above.
-            //
-            // See psa-example-parser-error-handling2.p4 for a variant
-            // of this program that avoids this issue using an
-            // if-then-elseif daisy chain instead of a table.
-            packet_path : exact;
-        }
-        actions = {
-            set_packet_path_bits;
-        }
-        default_action = set_packet_path_bits(0);
-        const entries = {
-            PSA_PacketPath_t.NORMAL           : set_packet_path_bits(1);
-            PSA_PacketPath_t.NORMAL_UNICAST   : set_packet_path_bits(2);
-            PSA_PacketPath_t.NORMAL_MULTICAST : set_packet_path_bits(3);
-            PSA_PacketPath_t.CLONE_I2E        : set_packet_path_bits(4);
-            PSA_PacketPath_t.CLONE_E2E        : set_packet_path_bits(5);
-            PSA_PacketPath_t.RESUBMIT         : set_packet_path_bits(6);
-            PSA_PacketPath_t.RECIRCULATE      : set_packet_path_bits(7);
-        }
-    }
     apply {
-        packet_path_convert.apply();
+        // Some P4 implementations could probably implement the below
+        // more efficiently with a table lookup, rather than a daisy
+        // chaing of if-then-elseif, as is done in the example program
+        // psa-example-parser-error-handling.p4.  In the absence of
+        // that, a switch or case statement like in C/C++/Java that
+        // could take an enum value as the expression would be
+        // equivalent to such a table, but as yet P4_16 has no such
+        // statement.
+
+        // This may be the only way as of P4_16 v1.1, PSA v1.1, and
+        // P4Runtime v1.0 to convert an enum to an integer in the data
+        // plane.
+        if (packet_path == PSA_PacketPath_t.NORMAL) {
+            packet_path_bits = 1;
+        } else if (packet_path == PSA_PacketPath_t.NORMAL_UNICAST) {
+            packet_path_bits = 2;
+        } else if (packet_path == PSA_PacketPath_t.NORMAL_MULTICAST) {
+            packet_path_bits = 3;
+        } else if (packet_path == PSA_PacketPath_t.CLONE_I2E) {
+            packet_path_bits = 4;
+        } else if (packet_path == PSA_PacketPath_t.CLONE_E2E) {
+            packet_path_bits = 5;
+        } else if (packet_path == PSA_PacketPath_t.RESUBMIT) {
+            packet_path_bits = 6;
+        } else if (packet_path == PSA_PacketPath_t.RECIRCULATE) {
+            packet_path_bits = 7;
+        } else {
+            packet_path_bits = 0;
+        }
+    }
+}
+
+
+typedef bit<8>  ErrorIndex_t;
+
+control error_to_bits(out ErrorIndex_t error_idx,
+    in error error_enum)
+{
+    apply {
+        // Similar to the comments in control packet_path_to_bits
+        // above, some P4 implementations could probably implement
+        // this more efficiently if it were written differently.
+
+        // It is written this way to conform to restrictions in the
+        // combination of published specs P4_16 v1.1, PSA v1.1, and
+        // P4Runtime v1.0.  Example program
+        // psa-example-parser-error-handling.p4 shows another way to
+        // implement this behavior using tables with enum and error
+        // type values as table search key fields, which is not
+        // supported by P4Runtime v1.0.
+        if (error_enum == error.NoError) {
+            error_idx = 1;
+        } else if (error_enum == error.PacketTooShort) {
+            error_idx = 2;
+        } else if (error_enum == error.NoMatch) {
+            error_idx = 3;
+        } else if (error_enum == error.StackOutOfBounds) {
+            error_idx = 4;
+        } else if (error_enum == error.HeaderTooShort) {
+            error_idx = 5;
+        } else if (error_enum == error.ParserTimeout) {
+            error_idx = 6;
+        } else if (error_enum == error.BadIPv4HeaderChecksum) {
+            error_idx = 7;
+        } else if (error_enum == error.UnhandledIPv4Options) {
+            error_idx = 8;
+        } else {
+            error_idx = 0;
+        }
     }
 }
 
@@ -264,7 +299,6 @@ error {
 }
 
 typedef bit<32> PacketCounter_t;
-typedef bit<8>  ErrorIndex_t;
 
 const bit<9> NUM_ERRORS = 256;
 
@@ -343,47 +377,15 @@ control handle_parser_errors(
     out CloneReason_t clone_reason,
     out to_cpu_error_header_t to_cpu_error_hdr)
 {
-    // Table parser_error_count_and_convert below shows one way to
-    // count the number of times each parser error was encountered.
-    // Although it is not used in this example program, it also shows
-    // how to convert the error value into a unique bit vector value
-    // 'error_idx', which can be useful if you wish to put a bit
-    // vector encoding of an error into a packet header, e.g. for a
-    // packet sent to the control CPU.
-
-    DirectCounter<PacketCounter_t>(PSA_CounterType_t.PACKETS) parser_error_counts;
+    Counter<PacketCounter_t, ErrorIndex_t>(9, PSA_CounterType_t.PACKETS)
+        parser_error_counts;
     ErrorIndex_t error_idx;
 
-    action set_error_idx (ErrorIndex_t idx) {
-        error_idx = idx;
-        parser_error_counts.count();
-    }
-    table parser_error_count_and_convert {
-        key = {
-            // See the comments for table packet_path_convert, which
-            // also apply for this table.
-            parser_error : exact;
-        }
-        actions = {
-            set_error_idx;
-        }
-        default_action = set_error_idx(0);
-        const entries = {
-            error.NoError               : set_error_idx(1);
-            error.PacketTooShort        : set_error_idx(2);
-            error.NoMatch               : set_error_idx(3);
-            error.StackOutOfBounds      : set_error_idx(4);
-            error.HeaderTooShort        : set_error_idx(5);
-            error.ParserTimeout         : set_error_idx(6);
-            error.BadIPv4HeaderChecksum : set_error_idx(7);
-            error.UnhandledIPv4Options  : set_error_idx(8);
-        }
-        psa_direct_counter = parser_error_counts;
-    }
     apply {
         // Example code showing how to count number of times each
         // kind of parser error was seen.
-        parser_error_count_and_convert.apply();
+        error_to_bits.apply(error_idx, parser_error);
+        parser_error_counts.count(error_idx);
         // Initialize the contents of an error header to prepend
         // in front of a clone of this packet when sending it to
         // control plane.
