@@ -5286,7 +5286,7 @@ sets" [P4SizeProperty] for further discussion on the implementation of parser
 value set size.
 
 The value set is populated by the control-plane by methods specified in the
-P4 Runtime specification.
+P4Runtime specification.
 
 # Control blocks { #sec-control }
 
@@ -6824,14 +6824,15 @@ annotationBody
 ~ End P4Grammar
 
 Annotations may impose additional structure on their bodies, and are not
-confined to the P4 language. For example, the predefined `@pkginfo` annotation
-takes key-value pairs, which are not found in the main P4 language.
+confined to the P4 language. For example, the P4Runtime specification defines a
+`@pkginfo` annotation that takes key-value pairs, which are not found in the
+main P4 language.
 
 ## Predefined annotations
 
 Annotation names that start with lowercase letters are reserved for
 the standard library and architecture.  This document pre-defines a
-set of "standard" annotations, see Appendix [#sec-p4-reserved-annotations].  We expect that this list will grow.
+set of "standard" annotations in Appendix [#sec-p4-reserved-annotations].  We expect that this list will grow.
 We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., an organization named X would use
 annotations named like `@X_annotation`
@@ -6919,62 +6920,6 @@ to two controllable entities, which is illegal.
 The `@atomic` annotation, described in Section [#sec-concurrency]
 can be used to enforce the atomic execution of a code block.
 
-### Package Documentation Annotations { #sec-package-anno }
-
-Package-level metadata can be declared by annotating the `main()` function with
-`pkginfo` annotations, as shown in the example below. These can be extracted by
-the compiler into P4Info and used for package management.
-
-~ Begin P4Example
-@pkginfo(
-    version="1.2.3",
-    brief="A program to demonstrate documentation",
-    description="A longer description, can span lines.\
-        Second line of longer description.",
-    arch="PSA 1.0",
-    organization="P4.org",
-    contact="support@p4.org",
-    url="https://github.com/p4lang"
-)
-V1Switch(...) main;  // Entity being annotated
-~ End P4Example
-
-The body of a `pkginfo` annotation is a key-value list, specified by the
-following grammar: 
-
-~ Begin P4Grammar
-keyValueList
-    : keyValuePair
-    | keyValueList ',' keyValuePair
-    ;
-
-keyValuePair
-    : IDENTIFIER '=' expression
-    ;
-~ End P4Grammar
-
-Multiple `pkginfo` annotations may be given, and are cumulative (i.e., the
-key-value lists are concatenated together). The example above gives all
-key-value pairs in a single annotation. Equivalently, each key-value pair can
-be given in a separate `@pkginfo` declaration, shown below. The effect is to
-build a list of annotations for the `main()` object.
-
-~ Begin P4Example
-@pkginfo(version="1.2.3")
-@pkginfo(brief="A program to demonstrate documentation")
-@pkginfo(description="A longer description, can span lines.\
-    Second line of longer description.")
-@pkginfo(arch="PSA 1.0")
-@pkginfo(organization="P4.org")
-@pkginfo(contact="support@p4.org")
-@pkginfo(url="https://github.com/p4lang")
-V1Switch(...) main;  // Entity being annotated
-~ End P4Example
-
-It is an error if a given key appears more than once on the same P4 object.
-Key names are not controlled by the P4 Language specification.
-Implementers or other bodies may establish conventions, for example the P4-API working group.
-
 ### Value set annotations { #sec-value-set-annotations }
 
 The `@match` annotation, described in Section [#sec-select], is used
@@ -7012,17 +6957,18 @@ The P4 compiler should provide:
 
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
-|:---{width:12%}---|:---{width:12%}---|:---{width:76%}---|
+|:---{width:12%}---|:---{width:20%}---|:---{width:68%}---|
 | **Release** | **Release Date** | **Summary of Changes** |
 |-----|-----|-----|
 | 1.0.0 | May 17, 2017 | Initial version. |
 |-----|-----|-----|
-| 1.1.0 | November 26, 2018 | Added top-level functions, optional and named parameters, `enum` |
-|       |          | representations, parser value sets, type definitions, |
+| 1.1.0 | November 26, 2018 | Added top-level functions, optional and named parameters, |
+|       |          | `enum` representations, parser value sets, type definitions, |
 |       |          | saturating arithmetic, and structured annotations. |
 |       |          | Removed `globalname` annotation and added a table `size` property. |
-|       |          | Clarified semantics of operations on invalid headers, added restrictions |
-|       |          | on arguments to calls, and modified precedence of bitwise operators. |
+|       |          | Clarified semantics of operations on invalid headers, added |
+|       |          | restrictions on arguments to calls, and modified precedence of |
+|       |          | bitwise operators. |
 |-----|-----|-----|
 
 ## Summary of changes made in version 1.2.0
@@ -7030,8 +6976,9 @@ The P4 compiler should provide:
 * Constrain `default` label position for `switch` statements.
 * Allow empty tuples.
 * Added `@deprecated` annotation.
-* Constrain keys to be unique in `@pkginfo` annotation.
 * Relaxed the structure of annotation bodies.
+* Removed the `@pkginfo` annotation. This is defined by the P4Runtime
+  specification.
 
 ## Summary of changes made in version 1.1.0
 
@@ -7092,7 +7039,6 @@ The following table shows all P4 reserved annotations.
 | `match`       | specify `match_kind` of a field in a `value_set`   | [#sec-value-set-annotations] |
 | `name`        | assign local control-plane name                    | [#sec-name-annotations]  |
 | `optional`    | parameter is optional                              | [#sec-optional-parameters] |
-| `pkginfo`     | assign package-level metadata properties           | [#sec-package-anno]      |
 | `tableonly`   | action cannot be a defalt_action                   | [#sec-table-action-anno] |
 | `deprecated`  | Construct has been deprecated                      | [#sec-deprecated-anno]   |
 |---------------|----------------------------------------------------|--------------------------|
