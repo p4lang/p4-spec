@@ -2208,20 +2208,27 @@ structField
 ~ End P4Grammar
 
 where each `typeRef` is restricted to a bit-string type (fixed or
-variable), a fixed-width signed integer type, a boolean type, or a struct that itself contains other 
-struct fields, nested arbitrarily, as long as all of the "leaf" types are
-are `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`.  If a `bool` is used
-inside a P4 header, all implementations encode the `bool` as a one bit long field. 
-This declaration introduces a new identifier in the current scope; the 
-type can be referred to using this identifier. A header is similar to a `struct` in C,
-containing all the specified fields. However, in addition, a header also
-contains a hidden Boolean "validity" field. When the "validity" bit is `true`
-we say that the "header is valid". When a header is created
-its "validity" bit is automatically set to `false`. The "validity"
+variable), a fixed-width signed integer type, a boolean type, or a struct that 
+itself contains other struct fields, nested arbitrarily, as long as all of the 
+"leaf" types are `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`. If a 
+`bool` is used inside a P4 header, all implementations encode the `bool` as a 
+one bit long field. This declaration introduces a new identifier in the 
+current scope; the type can be referred to using this identifier. A header is 
+similar to a `struct` in C, containing all the specified fields. However, in 
+addition, a header also contains a hidden Boolean "validity" field. When the 
+"validity" bit is `true` we say that the "header is valid". When a header is 
+created its "validity" bit is automatically set to `false`. The "validity"
 bit can be manipulated by using the header methods `isValid()`, `setValid()`,
 and `setInvalid()`, as described in Section [#sec-ops-on-hdrs].
 
-Note, nesting of headers is not supported.  One reason is that headers containing structs covers many of the use cases where headers containing other headers might be useful. Another is that it leads to complications in defining the behavior of arbitrary sequences of `setValid`, `setInvalid`, and `emit` operations. Consider an example where header `h1` contains header `h2` as a member, both currently valid. A program executes `h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` be emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` invalidate all headers contained within `h1`, regardless of how deeply they are nested?
+Note, nesting of headers is not supported. One reason is that it leads to 
+complications in defining the behavior of arbitrary sequences of `setValid`, 
+`setInvalid`, and `emit` operations. Consider an example where header `h1` 
+contains header `h2` as a member, both currently valid. A program executes 
+`h2.setInvalid()` followed by `packet.emit(h1)`. Should all fields of `h1` 
+be emitted, but skipping `h2`? Similarly, should `h1.setInvalid()` 
+invalidate all headers contained within `h1`, regardless of how deeply 
+they are nested?
 
 Header types may be empty:
 
@@ -2232,7 +2239,7 @@ header Empty_h { }
 Note that an empty header still contains a validity bit.
 
 When a struct is inside of a header, the order of the fields for the purposes 
-of extract and emit calls is the order of the fields as defined in the source code.
+of `extract` and `emit` calls is the order of the fields as defined in the source code.
 An example of a header including a struct is included below. 
 
 ~ Begin P4Example
@@ -2455,9 +2462,9 @@ infinite-precision integer, without a width specified.
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
-[^struct_header]: a `struct` or nested 'struct' type that has the same properties, 
+[^struct_header]: a `struct` or nested `struct` type that has the same properties, 
     used as a field in a `header` must contain only 
-    `bit<W>`, `int<W>`, a Serializable Enum, or a `bool`.
+    `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`.
 
 
 Rationale: `int` does not have precise storage requirements,
