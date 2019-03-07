@@ -5021,8 +5021,8 @@ is captured by the following pseudo-code:
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLvalue,
                           in bit<32> variableFieldSize) {
-   // implementations _may_ include the following line, but need not
-   verify(variableFieldSize[2:0] == 0, error.ParserInvalidAlignment);
+   // implementations are allowed to include the following line, but need not
+   // verify(variableFieldSize[2:0] == 0, error.ParserInvalidArgument);
    bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
@@ -5158,8 +5158,8 @@ given in pseudo-code as follows:
 
 ~ Begin P4Pseudo
 void packet_in.advance(bit<32> bits) {
-   // implementations _may_ include the following line, but need not
-   verify(bits[2:0] == 0, error.ParserInvalidAlignment);
+   // implementations are allowed to include the following line, but need not
+   // verify(bits[2:0] == 0, error.ParserInvalidArgument);
    lastBitNeeded = this.nextBitIndex + bits;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
    this.nextBitIndex += bits;
@@ -7095,8 +7095,8 @@ error {
     StackOutOfBounds,  /// Reference to invalid element of a header stack.
     HeaderTooShort,    /// Extracting too many bits into a varbit field.
     ParserTimeout,     /// Parser execution time limit exceeded.
-    ParserInvalidAlignment  /// extract or advance would leave parser with
-                       /// alignment unsupported by the implementation.
+    ParserInvalidArgument  /// parser operation was called with a value
+                       /// not supported by the implementation
 }
 extern packet_in {
     /// Read a header from the packet into a fixed-sized header @hdr
