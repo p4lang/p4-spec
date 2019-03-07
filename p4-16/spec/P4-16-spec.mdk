@@ -2440,6 +2440,35 @@ Note the two-argument `extract` method (see Section
 [#sec-packet-extract-two]) on packets only supports a single `varbit`
 field in a header.
 
+The table below lists all types that may appear as base types in a
+`typedef` or `type` declaration.
+
+
+|------------------|--------------------------------------|
+| Base type B      | `typedef B <name>` | `type B <name>` |
++:-----------------+:-------------------+:----------------+
+| `bit<W>`         | allowed            | allowed         |
+| `int<W>`         | allowed            | allowed         |
+| `varbit<W>`      | allowed            | error           |
+| `int`            | allowed            | error           |
+| `void`           | error              | error           |
+| `error`          | allowed            | error           |
+| `match_kind`     | error              | error           |
+| `bool`           | allowed            | allowed         |
+| `enum`           | allowed            | error           |
+| `header`         | allowed            | error           |
+| header stack     | allowed            | error           |
+| `header_union`   | allowed            | error           |
+| `struct`         | allowed            | error           |
+| `tuple`          | allowed            | error           |
+| a `typedef` name | allowed            | allowed[^type_allowed] |
+| a `type` name    | allowed            | allowed         |
+|------------------|--------------------|-----------------|
+
+[^type_allowed]: `type B <name>` is allowed for a type name `B`
+    defined via `typedef X B` if `type X <name>` is allowed.
+
+
 ### Synthesized data types { #sec-synth-types }
 
 For the purposes of type-checking the P4 compiler can synthesize some
