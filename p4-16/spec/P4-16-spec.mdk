@@ -2487,8 +2487,8 @@ struct Parsed_headers {
 
 An overlay allows the access to fields or subfields of a `struct` or
 `header` using alternative names.  An overlay is constructed by a
-special `overlay` function, that establishes a connection between the
-fields of the source and destination structure.
+special `overlay` "function", that establishes a connection between
+the fields of the source and destination structure.
 
 In the following example we have two structure types: `Addresses` and
 `Fields`.  The overlay named `sourceQuads` is given a structure of
@@ -2526,8 +2526,8 @@ overlay Fields sourceQuads(Addresses add) {
 
 Addresses a = { 0x01234567, 0x89ABCDEF };
 Fields    q = sourceQuads(a);  // q is { 0x01, 0x23, 0x45, 0x67, 0x0123456789ABCDEF };
-q.q0 = 0;   // q is { 0x00, 0x23, 0x45, 0x67, 0x0023456789ABCDEF }, a is { 0x00234567, 0x89ABCDEF }
-q.q1 = a.destination[7:0]; // q is { 0x00, 0xEF, 0x45, 0x67, 0x00EF456789ABCDEF }, a is { 0x00EF4567, 0x89ABCDEF }
+a.source = 0;   // q is { 0x00, 0x00, 0x00, 0x00, 0x0000000089ABCDEF }, a is { 0x0, 0x89ABCDEF }
+a.source[7:0] = a.destination[7:0]; // q is { 0x00, 0x00, 0x00, 0xEF, 0x000000EF89ABCDEF }, a is { 0x000000EF, 0x89ABCDEF }
 ~ End P4Example
 
 An overlay must define all fields of the destination structure.
@@ -2535,9 +2535,11 @@ An overlay must define all fields of the destination structure.
 Overlays can only be applied to `struct` and `header` objects, and
 they can only produce `struct` objects.  A struct produced by an
 overlay can only contain fields of the base types: `bit<>` and
-`int<>`.  The only expressions allowed within an overlay are field
-access, bit slicing and concatenation.  Referring to `header_union`
-fields within an overlay is not allowed.
+`int<>`.  The only statement allowed within an overlay function is an
+assignment statement that assigns to a field of the destination.  The
+only expressions allowed within an overlay are field access, bit
+slicing and concatenation.  Referring to `header_union` fields within
+an overlay is not allowed.
 
 Under some restrictions overlays can be left-values:
 - they must be obtained by applying an overlay function to a left-value;
@@ -2545,20 +2547,67 @@ Under some restrictions overlays can be left-values:
 
 The second restriction is necessary to compute how the fields of the
 source structure are changed when the destination structure is
-updated.  In the following example:
+updated.  In the previous example `q` is not a left value.  Updating
+an overlay which is a left value will update the original structure.
+If the input of an overlay is a header the rules about accesing
+uninitialized header fields are valid for the source header.
 
 ~ Begin P4Example
-struct Bits {
-   bit<2> b;
+struct Addresses {
+    bit<32> source;
+    bit<32> destination;
 }
 
-overlay Bits nonLeft(Addresses add) {
-   b = add.source[31] ++ add.source[31];
+struct Bytes {
+    bit<8> q0;
+    bit<8> q1;
+    bit<8> q2;
+    bit<8> q3;
 }
+
+overlay Bytes sourceQuads(Addresses add) {
+   q0 = add.source[31:24];
+   q1 = add.source[23:16];
+   q2 = add.source[15:8];
+   q3 = add.source[7:0];
+}
+
+Addresses a = { 0x01234567, 0x89ABCDEF };
+Fields    q = sourceQuads(a);  // q is { 0x01, 0x23, 0x45, 0x67 };
+q.q0 = 0; // q is { 0x0, 0x23, 0x45, 0x67 }, a is { 0x00234556, 0x89ABCDEF }
 ~ End P4Example
 
-an overaly built by applying `nonLeft` is never a left-value.  This is
-because the bit `add.source[31]` is used twice in defining `b`.
+Overlays can be "stacked", as in the following example, where both `s`
+and `b` are left-values.
+
+~ Begin P4Example
+struct Int {
+   bit<32> i;
+}
+
+struct Short {
+   bit<16> s;
+}
+
+overlay Short FirstShort(Int i) {
+   s = i[31:16];
+}
+
+struct Byte {
+   bit<8> b;
+}
+
+overlay Byte FirstByte(Short s) {
+   b = s[15:8];
+}
+
+Int i = { 0x012345678 };
+Short s = FirstShort(i);
+Byte b = FirstByte(s);
+~ End P4Example
+
+The "function" computing an overlay can only be used as an initializer
+in the declaration of a variable of the suitable type.
 
 TODO: add P4 grammar.
 
