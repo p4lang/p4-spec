@@ -3698,6 +3698,18 @@ of the header.
 - The method `setInvalid()` sets the header's validity bit to
 "false". It can only be applied to an l-value.
 
+The expression `h.minSizeInBits()` is defined for any value `h` that has a
+header type.  The expression is equal to the sum of the sizes of all
+of header `h`'s fields in bits, counting all `varbit` fields as length
+0.  An expression `h.minSizeInBits()` is a compile-time constant with type
+`int`.
+
+The expression `h.minSizeInBytes()` is similar to `h.minSizeInBits()`, except
+that it returns the total size of all of the header's fields in bytes,
+rounding up to the next whole number of bytes if the header's size is
+not a multiple of 8 bits long.  `h.minSizeInBytes()` is equal to
+`(h.minSizeInBits() + 7) >> 3`.
+
 A header object can be initialized with a list expression, similar to
 a `struct`---the list fields are assigned to the header fields in the
 order they appear.  In this case the header automatically becomes
@@ -6443,6 +6455,7 @@ The following are compile-time known values:
 - The following expressions (`+`, `-`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`)
   when their operands are all compile-time known values.
 - Identifiers declared as constants using the `const` keyword.
+- Expressions of the form `e.minSizeInBits()` and `e.minSizeInBytes()`.
 
 ## Compile-time Evaluation { #sec-ct-eval }
 
