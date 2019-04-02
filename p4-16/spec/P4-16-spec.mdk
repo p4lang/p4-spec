@@ -2233,7 +2233,7 @@ size." Headers containing `varbit` fields have "variable
 size." The size (in bits) of a fixed-size header is a constant, and it
 is simply the sum of the sizes of all component fields (without
 counting the validity bit). There is no padding or alignment of the
-header fields. Architectures may impose additional constraints on
+header fields. Targets may impose additional constraints on
 header types---e.g., restricting headers to sizes that are an integer
 number of bytes.
 
@@ -5052,6 +5052,8 @@ is captured by the following pseudo-code:
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLvalue,
                           in bit<32> variableFieldSize) {
+   // targets are allowed to include the following line, but need not
+   // verify(variableFieldSize[2:0] == 0, error.ParserInvalidArgument);
    bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
    lastBitNeeded = this.nextBitIndex + bitsToExtract;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
@@ -5187,6 +5189,8 @@ given in pseudo-code as follows:
 
 ~ Begin P4Pseudo
 void packet_in.advance(bit<32> bits) {
+   // targets are allowed to include the following line, but need not
+   // verify(bits[2:0] == 0, error.ParserInvalidArgument);
    lastBitNeeded = this.nextBitIndex + bits;
    ParserModel.verify(this.lengthInBits >= lastBitNeeded, error.PacketTooShort);
    this.nextBitIndex += bits;
@@ -7035,6 +7039,8 @@ The P4 compiler should provide:
 |       |          | restrictions on arguments to calls, and modified precedence of |
 |       |          | bitwise operators. |
 |-----|-----|-----|
+| 1.2.0 | April TBD, 2019 | Added error `ParserInvalidArgument`. |
+|-----|-----|-----|
 
 ## Summary of changes made in version 1.2.0
 
@@ -7125,7 +7131,9 @@ error {
     NoMatch,           /// 'select' expression has no matches.
     StackOutOfBounds,  /// Reference to invalid element of a header stack.
     HeaderTooShort,    /// Extracting too many bits into a varbit field.
-    ParserTimeout      /// Parser execution time limit exceeded.
+    ParserTimeout,     /// Parser execution time limit exceeded.
+    ParserInvalidArgument  /// Parser operation was called with a value
+                           /// not supported by the implementation.
 }
 extern packet_in {
     /// Read a header from the packet into a fixed-sized header @hdr
