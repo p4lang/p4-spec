@@ -2858,7 +2858,7 @@ expression
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
-    | structInitializerExpression
+    | '{' kvList '}'
     | '(' expression ')'
     | '!' expression
     | '~' expression
@@ -3759,19 +3759,16 @@ initializer is similar to a C99 structure initializer:
 
 ~ Begin P4Grammar
 expression ...
-    | structInitializerExpression
-
-structInitializerExpression
-    : '{' fieldInitializerExpressionList '}'
+    | '{' kvList '}'
     ;
 
-fieldInitializerExpressionList
-    : /* empty */
-    | fieldInitializerExpressionList ',' fieldInitializer
+kvList
+    : kvPair
+    | kvList "," kvPair
     ;
 
-fieldInitializer
-    : '.' name '=' expression
+kvPair
+    : name "=" expression
     ;
 ~ End P4Grammar
 
@@ -3785,7 +3782,7 @@ struct S {
     bit<32> a;
     bit<32> b;
 }
-const S x = { .a = 10, .b = 20 };
+const S x = { a = 10, b = 20 };
 ~ End P4Example
 
 ## Operations on headers { #sec-ops-on-hdrs }
