@@ -1368,6 +1368,7 @@ declaration
     | errorDeclaration
     | matchKindDeclaration
     | functionDeclaration
+    | overlayDeclaration
     ;
 ~ End P4Grammar
 
@@ -2531,15 +2532,17 @@ a.source[7:0] = a.destination[7:0]; // q is { 0x00, 0x00, 0x00, 0xEF, 0x000000EF
 ~ End P4Example
 
 An overlay must define all fields of the destination structure.
+The "function" computing an overlay can only be used as an initializer
+in the declaration of a variable of the suitable type.
 
 Overlays can only be applied to `struct` and `header` objects, and
-they can only produce `struct` objects.  A struct produced by an
-overlay can only contain fields of the base types: `bit<>` and
+they can only produce `struct` objects, but one cannot use a member of
+a `header_union` as an argument to an overlay..  A struct produced by
+an overlay can only contain fields of the base types: `bit<>` and
 `int<>`.  The only statement allowed within an overlay function is an
 assignment statement that assigns to a field of the destination.  The
 only expressions allowed within an overlay are field access, bit
-slicing and concatenation.  Referring to `header_union` fields within
-an overlay is not allowed.
+slicing and concatenation.
 
 Under some restrictions overlays can be left-values:
 - they must be obtained by applying an overlay function to a left-value;
@@ -2548,9 +2551,9 @@ Under some restrictions overlays can be left-values:
 The second restriction is necessary to compute how the fields of the
 source structure are changed when the destination structure is
 updated.  In the previous example `q` is not a left value.  Updating
-an overlay which is a left value will update the original structure.
-If the input of an overlay is a header the rules about accesing
-uninitialized header fields are valid for the source header.
+an overlay which is a left value will update the original structure or
+header.  If the input of an overlay is a header the rules about
+accessing uninitialized header fields are valid for the source header.
 
 ~ Begin P4Example
 struct Addresses {
@@ -2577,39 +2580,11 @@ Fields    q = sourceQuads(a);  // q is { 0x01, 0x23, 0x45, 0x67 };
 q.q0 = 0; // q is { 0x0, 0x23, 0x45, 0x67 }, a is { 0x00234556, 0x89ABCDEF }
 ~ End P4Example
 
-Overlays can be "stacked", as in the following example, where both `s`
-and `b` are left-values.
-
-~ Begin P4Example
-struct Int {
-   bit<32> i;
-}
-
-struct Short {
-   bit<16> s;
-}
-
-overlay Short FirstShort(Int i) {
-   s = i[31:16];
-}
-
-struct Byte {
-   bit<8> b;
-}
-
-overlay Byte FirstByte(Short s) {
-   b = s[15:8];
-}
-
-Int i = { 0x012345678 };
-Short s = FirstShort(i);
-Byte b = FirstByte(s);
-~ End P4Example
-
-The "function" computing an overlay can only be used as an initializer
-in the declaration of a variable of the suitable type.
-
-TODO: add P4 grammar.
+~ Begin P4Grammar
+overlayDeclaration
+    : OVERLAY functionDeclaration
+    ;
+~ End P4Grammar
 
 ### Tuple types { #sec-tuple-types }
 
@@ -8012,6 +7987,11 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `switch` | `table`   | `transition` |  `true` |
 | `tuple` | `typedef` | `varbit`  | `verify` |
 | `void`       | ||
+| `overlay` | `package` | `parser` | `out`         |
+|  `return`  | `select` | `state` | `struct`   |
+| `switch` | `table`   | `transition` |  `true` |
+|  `tuple` | `typedef` | `varbit`  | `verify` |
+| `void`   |  |      |      |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
