@@ -2859,6 +2859,7 @@ expression
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
     | '{' kvList '}'
+    | typeName '{' kvList '}'
     | '(' expression ')'
     | '!' expression
     | '~' expression
@@ -3742,24 +3743,24 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
 with a list expression, as discussed in Section [#sec-list-exprs], or
-with a structure initializer expression, as described below.
+with a structure-valued expression, as described in
+[#sec-structure-expressions].  Both these cases must initialize all
+fields of the structure.
 
 Two structs can be compared for equality (==) or inequality (!=) only
 if they have the same type and all of their fields can be recursively
 compared for equality.  Two structures are equal if and only if all
 their corresponding fields are equal.
 
-See Section [#sec-uninitialized-values-and-writing-invalid-headers]
-for a description of the behavior if `struct` fields are read without
-being initialized.
+## Structure-valued expressions { #sec-structure-expressions}
 
-A structure can be initialized using a structure initializer which
-specifies values for each of the fields.  The syntax of a structure
-initializer is similar to a C99 structure initializer:
+One can write expressions that evaluate to a structure or header.  The
+syntax of these expressions is given by:
 
 ~ Begin P4Grammar
 expression ...
     | '{' kvList '}'
+    | typeName '{' kvList '}'
     ;
 
 kvList
@@ -3772,10 +3773,26 @@ kvPair
     ;
 ~ End P4Grammar
 
-A struct initializer must initialize all fields of a struct.
+If present, the `typeName` must be the name of a `struct` or `header`
+type.  The `typeName` can be omitted if it can be inferred from
+context, e.g., when initializing a variable with a `struct` type.  The
+following example shows a structure-valued expression used in an
+equality comparison expression:
 
-The following example shows a structure initialized using a structure
-initializer expression:
+~ Begin P4Example
+struct S {
+    bit<32> a;
+    bit<32> b;
+}
+
+S s;
+...
+// Compare s with a structure-valued expression
+bool b = s == S { a = 1, b = 2 };
+~ End P4Example
+
+The following example shows a structure initialized using a
+structure-valued expression:
 
 ~ Begin P4Example
 struct S {
@@ -3784,6 +3801,10 @@ struct S {
 }
 const S x = { a = 10, b = 20 };
 ~ End P4Example
+
+See Section [#sec-uninitialized-values-and-writing-invalid-headers]
+for a description of the behavior if `struct` fields are read without
+being initialized.
 
 ## Operations on headers { #sec-ops-on-hdrs }
 
@@ -3826,7 +3847,7 @@ automatically becomes valid:
 header H { bit<32> x; bit<32> y; }
 H h;
 h = { 10, 12 };  // This also makes the header h valid
-h = { .y = 12, .x = 10 };  // Same effect as above
+h = { y = 12, x = 10 };  // Same effect as above
 ~ End P4Example
 
 Two headers can be compared for equality (==) or inequality (!=) only
