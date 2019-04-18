@@ -85,25 +85,10 @@ control ingress(inout headers_t hdr,
                 inout psa_ingress_output_metadata_t ostd)
 {
     apply {
-        if (hdr.ipv4.isValid()) {
-            // Direct IPv4 packets out of ports 0 through 3, based
-            // upon the 2 least significant bits of the IPv4
-            // destination address.
-            send_to_port(ostd,
-                (PortId_t) ((PortIdUint_t) hdr.ipv4.dstAddr[1:0]));
-            if (hdr.ipv4.dstAddr[1:0] == 0) {
-                // This action should overwrite the ostd.drop field
-                // that was assigned a value via the send_to_port()
-                // action above, causing this packet to be dropped,
-                // _not_ sent out of port 0.
-                ingress_drop(ostd);
-            }
-        } else {
-            // If no statements are executed during ingress processing
-            // for a PSA program, the packet should be dropped by
-            // default, _not_ go out port 0 as it does in BMv2
-            // simple_switch programs using the v1model architecture.
-        }
+        // If no statements are executed during ingress processing for
+        // a PSA program, the packet should be dropped by default,
+        // _not_ go out port 0 as it does in BMv2 simple_switch
+        // programs using the v1model architecture.
     }
 }
 
