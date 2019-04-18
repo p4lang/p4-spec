@@ -1764,6 +1764,7 @@ P4 supports the following built-in base types:
 - The `match_kind` type, which is used for describing the implementation of
   table lookups,
 - `bool`, which represents Boolean values
+- `int`, which represents arbitrary-sized constant integer values
 - Bit-strings of fixed width, denoted by `bit<>`
 - Fixed-width signed integers represented using two's complement `int<>`
 - Bit-strings of dynamically-computed width with a fixed maximum width `varbit<>`
@@ -1773,6 +1774,7 @@ baseType
     : BOOL
     | ERROR
     | BIT
+    | INT
     | BIT '<' INTEGER '>'
     | INT '<' INTEGER '>'
     | VARBIT '<' INTEGER '>'
@@ -2001,7 +2003,15 @@ have a runtime component to fixed-width types, according to the rules
 described below.
 
 All operations that can be performed on infinite-precision integers
-are described in Section [#sec-varint-ops].
+are described in Section [#sec-varint-ops].  The following example
+shows three constant definitions whose values are infinite-precision
+integers.
+
+~ Begin P4Example
+const int a = 5;
+const int b = 2 * a;
+const int c = b - a + 3;
+~ End P4Example
 
 #### Integer literal types
 
@@ -7063,6 +7073,7 @@ The P4 compiler should provide:
 * Relaxed the structure of annotation bodies.
 * Removed the `@pkginfo` annotation. This is defined by the P4Runtime
   specification.
+* Added `int` type (Section [#sec-infinite-precision-integers].)
 * Added error `ParserInvalidArgument` (Sections
   [#sec-packet-extract-two], [#sec-skip-bits]).
 * Clarify the significance of order of entries in `const entries`
