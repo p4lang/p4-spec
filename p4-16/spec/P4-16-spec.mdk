@@ -2541,8 +2541,11 @@ a `header_union` as an argument to an overlay..  A struct produced by
 an overlay can only contain fields of the base types: `bit<>` and
 `int<>`.  The only statement allowed within an overlay function is an
 assignment statement that assigns to a field of the destination.  The
-only expressions allowed within an overlay are field access, bit
-slicing and concatenation.
+only expressions allowed within an overlay are:
+- field access
+- bit slicing
+- concatenation
+- casts that convert in either direction between bit<W> and int<W> (but not casts that change the width)
 
 Under some restrictions overlays can be left-values:
 - they must be obtained by applying an overlay function to a left-value;
@@ -2555,30 +2558,67 @@ an overlay which is a left value will update the original structure or
 header.  If the input of an overlay is a header the rules about
 accessing uninitialized header fields are valid for the source header.
 
+The following example shows an use of overlays
+
 ~ Begin P4Example
-struct Addresses {
-    bit<32> source;
-    bit<32> destination;
+// In this header all fields are byte-aligned
+header IPv4_aligned {
+    bit<8>       version_ihl;
+    bit<8>       diffserv;
+    bit<16>      totalLen;
+    bit<16>      identification;
+    bit<16>      flags_fragOffset;
+    bit<8>       ttl;
+    bit<8>       protocol;
+    bit<16>      hdrChecksum;
+    bit<32>      srcAddr;
+    bit<32>      dstAddr;
 }
 
-struct Bytes {
-    bit<8> q0;
-    bit<8> q1;
-    bit<8> q2;
-    bit<8> q3;
+// Overlay of IPv4_aligned that exposes all fields
+struct IPv4 {
+    bit<4>       version;
+    bit<4>       ihl;
+    bit<8>       diffserv;
+    bit<16>      totalLen;
+    bit<16>      identification;
+    bit<3>       flags;
+    bit<13>      fragOffset;
+    bit<8>       ttl;
+    bit<8>       protocol;
+    bit<16>      hdrChecksum;
+    bit<32>      srcAddr;
+    bit<32>      dstAddr;
 }
 
-overlay Bytes sourceQuads(Addresses add) {
-   q0 = add.source[31:24];
-   q1 = add.source[23:16];
-   q2 = add.source[15:8];
-   q3 = add.source[7:0];
+overlay IPv4 expand(IPv4_aligned s) {
+    version = s.version_ihl[7:4];
+    ihl = s.version_ihl[3:0];
+    diffserv = s.diffserv;
+    totalLen = s.totalLen;
+    identification = s.identification;
+    flags = s.flags_fragOffset[15:13];
+    fragOffset = s.flags_fragOffset[12:0];
+    ttl = s.ttl;
+    protocol = s.protocol;
+    hdrChecksum = s.hdrChecksum;
+    srcAddr = s.srcAddr;
+    dstAddr = s.dstAddr;
 }
 
-Addresses a = { 0x01234567, 0x89ABCDEF };
-Fields    q = sourceQuads(a);  // q is { 0x01, 0x23, 0x45, 0x67 };
-q.q0 = 0; // q is { 0x0, 0x23, 0x45, 0x67 }, a is { 0x00234567, 0x89ABCDEF }
+parser P(...) {
+   IPv4_aligned header;
+   IPv4 fields = expand(header);
+   ...
+   state ipv4 {
+      packet.extract(header);
+      verify(fields.version == 5, error.UnsupportedVersion);
+   }
+}
 ~ End P4Example
+
+It is expected that such coding style will make it easier to generate
+efficient implementations on some architectures..
 
 ~ Begin P4Grammar
 overlayDeclaration
