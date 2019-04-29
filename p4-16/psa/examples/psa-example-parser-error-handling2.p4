@@ -514,9 +514,9 @@ parser EgressParserImpl(packet_in buffer,
         verify(false, error.UnknownCloneI2EFormatId);
     }
     state copy_clone_e2e_meta {
-        transition select (clone_i2e_meta.clone_reason) {
-            CloneReason_t.PARSER_ERROR: copy_clone_i2e_meta_parser_error;
-            default: clone_i2e_unknown_format_id;
+        transition select (clone_e2e_meta.clone_reason) {
+            CloneReason_t.PARSER_ERROR: copy_clone_e2e_meta_parser_error;
+            default: clone_e2e_unknown_format_id;
         }
     }
     state copy_clone_e2e_meta_parser_error {
