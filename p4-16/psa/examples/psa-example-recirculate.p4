@@ -44,8 +44,6 @@ struct fwd_metadata_t {
     bit<32> outport;
 }
 
-struct empty_metadata_t {}
-
 header recirc_metadata_t {
     bit<8> custom_field;
 }
@@ -85,25 +83,10 @@ parser IngressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
-    in psa_ingress_parser_input_metadata_t istd,
-    in empty_metadata_t resub_meta,
-    in recirc_metadata_t recirc_meta)
+    in psa_ingress_parser_input_metadata_t istd)
 {
     CommonParser() p;
-
     state start {
-        transition select(istd.packet_path) {
-           PSA_PacketPath_t.RECIRCULATE: copy_recirc_meta;
-           PSA_PacketPath_t.NORMAL: parse_ethernet;
-        }
-    }
-
-    state copy_recirc_meta {
-        user_meta.recirc_header = recirc_meta;
-	transition parse_ethernet;
-    }
-
-    state parse_ethernet {
         p.apply(buffer, parsed_hdr, user_meta);
 	transition accept;
     }
@@ -133,10 +116,7 @@ parser EgressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
-    in psa_egress_parser_input_metadata_t istd,
-    in empty_metadata_t normal_meta,
-    in empty_metadata_t clone_i2e_meta,
-    in empty_metadata_t cloen_e2e_meta)
+    in psa_egress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 
@@ -164,9 +144,6 @@ control DeparserImpl(packet_out packet, inout headers hdr) {
 
 control IngressDeparserImpl(
     packet_out packet,
-    out empty_metadata_t clone_i2e_meta,
-    out empty_metadata_t resub_meta,
-    out empty_metadata_t normal_meta,
     inout headers hdr,
     in metadata meta,
     in psa_ingress_output_metadata_t istd)
@@ -179,28 +156,53 @@ control IngressDeparserImpl(
 
 control EgressDeparserImpl(
     packet_out packet,
-    out empty_metadata_t clone_e2e_meta,
-    out recirc_metadata_t recirc_meta,
     inout headers hdr,
     in metadata meta,
-    in psa_egress_output_metadata_t istd,
-    in psa_egress_deparser_input_metadata_t edstd)
+    in psa_egress_output_metadata_t istd)
 {
     DeparserImpl() common_deparser;
     apply {
-        if (psa_recirculate(istd, edstd)) {
-            recirc_meta.custom_field = 1;
-        }
         common_deparser.apply(packet, hdr);
     }
 }
 
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
+control RecirculatePackerImpl(
+    in headers hdr,  // TBD: Should this be here?
+    in metadata meta,
+    out recirc_metadata_t recirc_meta)
+{
+    apply {
+        recirc_meta.custom_field = 1;
+    }
+}
 
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
+control RecirculateUnpackerImpl(
+    in recirc_metadata_t recirc_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.recirc_header = recirc_meta;
+    }
+}
+
+IngressPipeline(
+    IngressParserImpl(),
+    ingress(),
+    IngressDeparserImpl(),
+    EmptyResubmitUnpacker(),
+    RecirculateUnpackerImpl(),
+    EmptyNormalPacker(),
+    EmptyResubmitPacker(),
+    EmptyCloneI2EPacker()) ip;
+
+EgressPipeline(
+    EgressParserImpl(),
+    egress(),
+    EgressDeparserImpl(),
+    EmptyNormalUnpacker(),
+    EmptyCloneI2EUnpacker(),
+    EmptyCloneE2EUnpacker(),
+    RecirculatePackerImpl(),
+    EmptyCloneE2EPacker()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;

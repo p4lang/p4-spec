@@ -319,12 +319,6 @@ struct psa_egress_input_metadata_t {
   ParserError_t            parser_error;
 }
 
-/// This struct is an 'in' parameter to the egress deparser.  It
-/// includes enough data for the egress deparser to distinguish
-/// whether the packet should be recirculated or not.
-struct psa_egress_deparser_input_metadata_t {
-  PortId_t                 egress_port;
-}
 // BEGIN:Metadata_egress_output
 struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
@@ -335,57 +329,6 @@ struct psa_egress_output_metadata_t {
 }
 // END:Metadata_egress_output
 // END:Metadata_types
-
-/// During the IngressDeparser execution, psa_clone_i2e returns true
-/// if and only if a clone of the ingress packet is being made to
-/// egress for the packet being processed.  If there are any
-/// assignments to the out parameter clone_i2e_meta in the
-/// IngressDeparser, they must be inside an if statement that only
-/// allows those assignments to execute if psa_clone_i2e(istd) returns
-/// true.  psa_clone_i2e can be implemented by returning istd.clone
-
-extern bool psa_clone_i2e(in psa_ingress_output_metadata_t istd);
-
-/// During the IngressDeparser execution, psa_resubmit returns true if
-/// and only if the packet is being resubmitted.  If there are any
-/// assignments to the out parameter resubmit_meta in the
-/// IngressDeparser, they must be inside an if statement that only
-/// allows those assignments to execute if psa_resubmit(istd) returns
-/// true.  psa_resubmit can be implemented by returning (!istd.drop &&
-/// istd.resubmit)
-
-extern bool psa_resubmit(in psa_ingress_output_metadata_t istd);
-
-/// During the IngressDeparser execution, psa_normal returns true if
-/// and only if the packet is being sent 'normally' as unicast or
-/// multicast to egress.  If there are any assignments to the out
-/// parameter normal_meta in the IngressDeparser, they must be inside
-/// an if statement that only allows those assignments to execute if
-/// psa_normal(istd) returns true.  psa_normal can be implemented by
-/// returning (!istd.drop && !istd.resubmit)
-
-extern bool psa_normal(in psa_ingress_output_metadata_t istd);
-
-/// During the EgressDeparser execution, psa_clone_e2e returns true if
-/// and only if a clone of the egress packet is being made to egress
-/// for the packet being processed.  If there are any assignments to
-/// the out parameter clone_e2e_meta in the EgressDeparser, they must
-/// be inside an if statement that only allows those assignments to
-/// execute if psa_clone_e2e(istd) returns true.  psa_clone_e2e can be
-/// implemented by returning istd.clone
-
-extern bool psa_clone_e2e(in psa_egress_output_metadata_t istd);
-
-/// During the EgressDeparser execution, psa_recirculate returns true
-/// if and only if the packet is being recirculated.  If there are any
-/// assignments to recirculate_meta in the EgressDeparser, they must
-/// be inside an if statement that only allows those assignments to
-/// execute if psa_recirculate(istd) returns true.  psa_recirculate
-/// can be implemented by returning (!istd.drop && (edstd.egress_port
-/// == PSA_PORT_RECIRCULATE))
-
-extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
-                            in psa_egress_deparser_input_metadata_t edstd);
 
 
 // BEGIN:Match_kinds
@@ -776,60 +719,294 @@ extern Digest<T> {
 // END:Digest_extern
 
 // BEGIN:Programmable_blocks
-parser IngressParser<H, M, RESUBM, RECIRCM>(
+parser IngressParser<H, M>(
     packet_in buffer,
     out H parsed_hdr,
     inout M user_meta,
-    in psa_ingress_parser_input_metadata_t istd,
-    in RESUBM resubmit_meta,
-    in RECIRCM recirculate_meta);
+    in psa_ingress_parser_input_metadata_t istd);
 
 control Ingress<H, M>(
     inout H hdr, inout M user_meta,
     in    psa_ingress_input_metadata_t  istd,
     inout psa_ingress_output_metadata_t ostd);
 
-control IngressDeparser<H, M, CI2EM, RESUBM, NM>(
+control IngressDeparser<H, M>(
     packet_out buffer,
-    out CI2EM clone_i2e_meta,
-    out RESUBM resubmit_meta,
-    out NM normal_meta,
     inout H hdr,
-    in M meta,
+    in M meta,  // TBD: Is ths needed any more if we only do emits?
     in psa_ingress_output_metadata_t istd);
 
-parser EgressParser<H, M, NM, CI2EM, CE2EM>(
+parser EgressParser<H, M>(
     packet_in buffer,
     out H parsed_hdr,
     inout M user_meta,
-    in psa_egress_parser_input_metadata_t istd,
-    in NM normal_meta,
-    in CI2EM clone_i2e_meta,
-    in CE2EM clone_e2e_meta);
+    in psa_egress_parser_input_metadata_t istd);
 
 control Egress<H, M>(
     inout H hdr, inout M user_meta,
     in    psa_egress_input_metadata_t  istd,
     inout psa_egress_output_metadata_t ostd);
 
-control EgressDeparser<H, M, CE2EM, RECIRCM>(
+control EgressDeparser<H, M>(
     packet_out buffer,
-    out CE2EM clone_e2e_meta,
-    out RECIRCM recirculate_meta,
     inout H hdr,
+    in M meta,  // TBD: Is ths needed any more if we only do emits?
+    in psa_egress_output_metadata_t istd);
+
+// Common notes for all "Packer" and "Unpacker" controls declared
+// below.
+
+// None of them need to support the instantation of tables, nor any
+// externs.  All of them are expected to be a "pure function" of their
+// inputs, without modifying any state, nor reading any external state
+// other than their input parameters.
+
+// Their bodies are expected to have as many possible execution paths
+// as the user wishes to have "sets of user-defined metadata" that
+// they want to preserve for that kind of packet.
+
+// For example, if the P4 program developer always wants to preserve
+// the same metadata fields for all packets following that packet
+// path, then no branches are needed in the body at all.
+
+// If the P4 program developer wants to preserve exactly one of three
+// different sets of metadata, depending upon some user-defined
+// conditions about the packets being processed, then there should be
+// three possible execution paths through both the Packer and Unpacker
+// control bodies.
+
+// For convenience, all of these controls have a default "empty" or
+// "no op" definition here in the psa.p4 include file.  See below.
+
+
+// The NormalPacker control is executed once for each packet that will
+// be sent as a normal unicast or multicasat packet from ingress to
+// egress, just after the Ingress control completes execution.
+
+// The condition in which it must be executed is (!ostd.drop &&
+// !ostd.resubmit), where ostd is the struct of type
+// psa_ingress_output_metadata_t that is an output from the Ingress
+// control.
+
+// Note that it need not be executed once for each copy made of a
+// muticast packet.  An implementation is allowed to make all such
+// copies after this control is executed.
+control NormalPacker<H, M, NM>(
+    in H hdr,  // TBD: Should this be here?
     in M meta,
-    in psa_egress_output_metadata_t istd,
-    in psa_egress_deparser_input_metadata_t edstd);
+    out NM normal_meta);
+
+// The NormalUnpacker control is executed once for each packet that
+// was sent as normal unicast or multicast from ingress to egress,
+// just before the EgressParser begins.
+
+// It is expected that an implementation will execute the
+// NormalUnpacker control once for each copy of a multicast packet.
+// Even so, it is also expected that the implementation of this
+// control should be a pure function of its inputs, and its inputs are
+// expected to be identical for all copies of a multicast packet, with
+// the possible exception of uninitialized fields of the input, which
+// the user's program should not rely upon if they wish to achieve
+// portability across implementations.
+control NormalUnpacker<M, NM>(
+    in NM normal_meta,
+    inout M meta);
+
+// The ResubmitPacker control is executed once for each resubmitted
+// packet, just after the Ingress control completes execution.
+
+// The condition in which it must be executed is (!ostd.drop &&
+// ostd.resubmit), where ostd is the struct of type
+// psa_ingress_output_metadata_t that is an output from the Ingress
+// control.
+control ResubmitPacker<H, M, RESUBM>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out RESUBM resubmit_meta);
+
+// The ResubmitUnpacker control is executed once for each resubmitted
+// packet, just before that resubmitted packet will begin the
+// IngressParser.  It receives as its only input the contents of the
+// resubmit metadata, and its only job is to copy that data (or
+// perhaps only part of it) into the desired part of the type M struct
+// that will go through the IngressParser and Ingress.  It "unpacks"
+// the resubmitted metadata, and nothing else.
+control ResubmitUnpacker<M, RESUBM>(
+    in RESUBM resubmit_meta,
+    inout M user_meta);
+
+// The RecirculatePacker control is executed once for each
+// recirculated packet, just after the Egress control completes,
+
+// The condition in which it must be executed is (!ostd.drop &&
+// (istd.egress_port == PSA_PORT_RECIRCULATE)), where ostd is the
+// struct of type psa_egress_output_metadata_t that is an output from
+// the Egress control, and istd is the struct of type
+// psa_egress_input_metadata_t that is an input to the Egress control.
+control RecirculatePacker<H, M, RECIRCM>(
+    in H hdr,  // TBD: Should this be here?
+    in M user_meta,
+    out RECIRCM recirculate_meta);
+
+// The RecirculateUnpacker control is executed once for each
+// recirculated packet, just before the IngressParser begins.
+control RecirculateUnpacker<M, RECIRCM>(
+    in RECIRCM recirculate_meta,
+    inout M user_meta);
+
+// The CloneI2EPacker control is executed once for each packet cloned
+// from ingress to egress, just after the Ingress control completes
+// execution.
+
+// The condition in which it must be executed is (ostd.clone), where
+// ostd is the struct of type psa_ingress_output_metadata_t that is an
+// output from the Ingress control.
+
+// Note that it need not be executed once for each copy made of a
+// cloned packet.  An implementation is allowed to make all such
+// copies after this control is executed.
+control CloneI2EPacker<H, M, CI2EM>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out CI2EM clone_i2e_meta);
+
+// The same notes about multicast copies applies for the
+// CloneI2EUnpacker control as for the NormalUnpacker control.  See
+// the documentation of the NormalUnpacker for details.
+control CloneI2EUnpacker<M, CI2EM>(
+    in CI2EM clone_i2e_meta,
+    inout M meta);
+
+// The CloneE2EPacker control is executed once for each packet cloned
+// from egress to egress, just after the Egress control completes
+// execution.
+
+// The condition in which it must be executed is (ostd.clone), where
+// ostd is the struct of type psa_egress_output_metadata_t that is an
+// output from the Egress control.
+
+// Note that it need not be executed once for each copy made of a
+// cloned packet.  An implementation is allowed to make all such
+// copies after this control is executed.
+control CloneE2EPacker<H, M, CE2EM>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out CE2EM clone_e2e_meta);
+
+// The same notes about multicast copies applies for the
+// CloneE2EUnpacker control as for the NormalUnpacker control.  See
+// the documentation of the NormalUnpacker for details.
+control CloneE2EUnpacker<M, CE2EM>(
+    in CE2EM clone_e2e_meta,
+    inout M meta);
+
+// Default "empty" or "no op" implementations of packers and
+// unpackers, ready for use for PSA programs that do not need to
+// preserve metadata for those kinds of packets, or do not exercise
+// those packet paths at all.
+
+struct psa_empty_t {
+}
+
+control EmptyNormalPacker<H, M>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out psa_empty_t normal_meta)
+{
+    apply { }
+}
+
+control EmptyNormalUnpacker<M>(
+    in psa_empty_t normal_meta,
+    inout M meta)
+{
+    apply { }
+}
+
+control EmptyResubmitPacker<H, M>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out psa_empty_t resubmit_meta)
+{
+    apply { }
+}
+
+control EmptyResubmitUnpacker<M>(
+    in psa_empty_t resubmit_meta,
+    inout M user_meta)
+{
+    apply { }
+}
+
+control EmptyRecirculatePacker<H, M>(
+    in H hdr,  // TBD: Should this be here?
+    in M user_meta,
+    out psa_empty_t recirculate_meta)
+{
+    apply { }
+}
+
+control EmptyRecirculateUnpacker<M>(
+    in psa_empty_t recirculate_meta,
+    inout M user_meta)
+{
+    apply { }
+}
+
+control EmptyCloneI2EPacker<H, M>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out psa_empty_t clone_i2e_meta)
+{
+    apply { }
+}
+
+control EmptyCloneI2EUnpacker<M>(
+    in psa_empty_t clone_i2e_meta,
+    inout M meta)
+{
+    apply { }
+}
+
+control EmptyCloneE2EPacker<H, M>(
+    in H hdr,  // TBD: Should this be here?
+    in M meta,
+    out psa_empty_t clone_e2e_meta)
+{
+    apply { }
+}
+
+control EmptyCloneE2EUnpacker<M>(
+    in psa_empty_t clone_e2e_meta,
+    inout M meta)
+{
+    apply { }
+}
+
+// TBD: Perhaps there is a way to assign a default parameter value of
+// rsu of EmptyResubmitUnpacker, and similarly for the other packers
+// and unpackers?  The straightforward P4_16 default parameter syntax
+// did not work in my experiments, which may be a bug in p4c.
 
 package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
-    IngressParser<IH, IM, RESUBM, RECIRCM> ip,
+    IngressParser<IH, IM> ip,
     Ingress<IH, IM> ig,
-    IngressDeparser<IH, IM, CI2EM, RESUBM, NM> id);
+    IngressDeparser<IH, IM> id,
+    ResubmitUnpacker<IM, RESUBM> rsu,
+    RecirculateUnpacker<IM, RECIRCM> rcu,
+    NormalPacker<IH, IM, NM> np,
+    ResubmitPacker<IH, IM, RESUBM> rsp,
+    CloneI2EPacker<IH, IM, CI2EM> ci2ep);
 
 package EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
-    EgressParser<EH, EM, NM, CI2EM, CE2EM> ep,
+    EgressParser<EH, EM> ep,
     Egress<EH, EM> eg,
-    EgressDeparser<EH, EM, CE2EM, RECIRCM> ed);
+    EgressDeparser<EH, EM> ed,
+    NormalUnpacker<EM, NM> nu,
+    CloneI2EUnpacker<EM, CI2EM> ci2eu,
+    CloneE2EUnpacker<EM, CE2EM> ce2eu,
+    RecirculatePacker<EH, EM, RECIRCM> rcp,
+    CloneE2EPacker<EH, EM, CE2EM> ce2ep);
 
 package PSA_Switch<IH, IM, EH, EM, NM, CI2EM, CE2EM, RESUBM, RECIRCM> (
     IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM> ingress,

@@ -51,9 +51,6 @@ header clone_i2e_metadata_t {
 }
 // END:Clone_Example_Part1
 
-struct empty_metadata_t {
-}
-
 struct metadata {
     fwd_metadata_t fwd_metadata;
     clone_i2e_metadata_t clone_meta;
@@ -89,9 +86,7 @@ parser IngressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
-    in psa_ingress_parser_input_metadata_t istd,
-    in empty_metadata_t resubmit_meta,
-    in empty_metadata_t recirculate_meta)
+    in psa_ingress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 
@@ -129,26 +124,11 @@ parser EgressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata user_meta,
-    in psa_egress_parser_input_metadata_t istd,
-    in metadata normal_meta,
-    in clone_i2e_metadata_t clone_i2e_meta,
-    in empty_metadata_t clone_e2e_meta)
+    in psa_egress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 
     state start {
-        transition select (istd.packet_path) {
-           PSA_PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
-           PSA_PacketPath_t.NORMAL: parse_ethernet;
-        }
-    }
-
-    state copy_clone_i2e_meta {
-        user_meta.clone_meta = clone_i2e_meta;
-        transition parse_ethernet;
-    }
-
-    state parse_ethernet {
         p.apply(buffer, parsed_hdr, user_meta);
         transition accept;
     }
@@ -172,36 +152,44 @@ control DeparserImpl(packet_out packet, inout headers hdr) {
 // BEGIN:Clone_Example_Part3
 control IngressDeparserImpl(
     packet_out packet,
-    out clone_i2e_metadata_t clone_i2e_meta,
-    out empty_metadata_t resubmit_meta,
-    out metadata normal_meta,
     inout headers hdr,
     in metadata meta,
     in psa_ingress_output_metadata_t istd)
 {
     DeparserImpl() common_deparser;
     apply {
-        // Assignments to the out parameter clone_i2e_meta must be
-        // guarded by this if condition:
-        if (psa_clone_i2e(istd)) {
-            clone_i2e_meta.custom_tag = (bit<8>) meta.custom_clone_id;
-            if (meta.custom_clone_id == 1) {
-                clone_i2e_meta.srcAddr = hdr.ethernet.srcAddr;
-            }
-        }
         common_deparser.apply(packet, hdr);
+    }
+}
+
+control CloneI2EPackerImpl(
+    in headers hdr,  // TBD: Should this be here?
+    in metadata meta,
+    out clone_i2e_metadata_t clone_i2e_meta)
+{
+    apply {
+        clone_i2e_meta.custom_tag = (bit<8>) meta.custom_clone_id;
+        if (meta.custom_clone_id == 1) {
+            clone_i2e_meta.srcAddr = hdr.ethernet.srcAddr;
+        }
+    }
+}
+
+control CloneI2EUnpackerImpl(
+    in clone_i2e_metadata_t clone_i2e_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.clone_meta = clone_i2e_meta;
     }
 }
 // END:Clone_Example_Part3
 
 control EgressDeparserImpl(
     packet_out packet,
-    out empty_metadata_t clone_e2e_meta,
-    out empty_metadata_t recirculate_meta,
     inout headers hdr,
     in metadata meta,
-    in psa_egress_output_metadata_t istd,
-    in psa_egress_deparser_input_metadata_t edstd)
+    in psa_egress_output_metadata_t istd)
 {
     DeparserImpl() common_deparser;
     apply {
@@ -209,12 +197,24 @@ control EgressDeparserImpl(
     }
 }
 
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
+IngressPipeline(
+    IngressParserImpl(),
+    ingress(),
+    IngressDeparserImpl(),
+    EmptyResubmitUnpacker(),
+    EmptyRecirculateUnpacker(),
+    EmptyNormalPacker(),
+    EmptyResubmitPacker(),
+    CloneI2EPackerImpl()) ip;
 
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
+EgressPipeline(
+    EgressParserImpl(),
+    egress(),
+    EgressDeparserImpl(),
+    EmptyNormalUnpacker(),
+    CloneI2EUnpackerImpl(),
+    EmptyCloneE2EUnpacker(),
+    EmptyRecirculatePacker(),
+    EmptyCloneE2EPacker()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
