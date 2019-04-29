@@ -201,6 +201,7 @@ IngressPipeline(
     IngressParserImpl(),
     ingress(),
     IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
     EmptyResubmitUnpacker(),
     EmptyRecirculateUnpacker(),
     EmptyNormalPacker(),

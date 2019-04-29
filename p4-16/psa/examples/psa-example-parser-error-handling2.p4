@@ -355,9 +355,6 @@ parser IngressParserImpl(packet_in buffer,
 {
     CommonParser() cp;
     state start {
-        transition packet_in_parsing;
-    }
-    state packet_in_parsing {
         cp.apply(buffer, hdr, meta);
         transition accept;
     }
@@ -617,6 +614,7 @@ IngressPipeline(
     IngressParserImpl(),
     ingress(),
     IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
     EmptyResubmitUnpacker(),
     EmptyRecirculateUnpacker(),
     EmptyNormalPacker(),

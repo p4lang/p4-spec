@@ -778,6 +778,12 @@ control EgressDeparser<H, M>(
 // For convenience, all of these controls have a default "empty" or
 // "no op" definition here in the psa.p4 include file.  See below.
 
+// The NewPacketMetadataInitializer control is executed once for each
+// new packet arriving from a switch port, including packets from the
+// CPU port, just before the IngressParser begins.
+control NewPacketMetadataInitializer<M>(
+    in PortId_t ingress_port,
+    inout M meta);
 
 // The NormalPacker control is executed once for each packet that will
 // be sent as a normal unicast or multicasat packet from ingress to
@@ -908,6 +914,13 @@ control CloneE2EUnpacker<M, CE2EM>(
 struct psa_empty_t {
 }
 
+control EmptyNewPacketMetadataInitializer<M>(
+    in PortId_t ingress_port,
+    inout M meta)
+{
+    apply { }
+}
+
 control EmptyNormalPacker<H, M>(
     in H hdr,  // TBD: Should this be here?
     in M meta,
@@ -992,6 +1005,7 @@ package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
     IngressParser<IH, IM> ip,
     Ingress<IH, IM> ig,
     IngressDeparser<IH, IM> id,
+    NewPacketMetadataInitializer<IM> npi,
     ResubmitUnpacker<IM, RESUBM> rsu,
     RecirculateUnpacker<IM, RECIRCM> rcu,
     NormalPacker<IH, IM, NM> np,

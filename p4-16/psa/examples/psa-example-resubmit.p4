@@ -226,6 +226,7 @@ IngressPipeline(
     IngressParserImpl(),
     ingress(),
     IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
     ResubmitUnpackerImpl(),
     EmptyRecirculateUnpacker(),
     EmptyNormalPacker(),

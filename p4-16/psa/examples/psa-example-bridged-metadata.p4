@@ -372,6 +372,7 @@ IngressPipeline(
     IngressParserImpl(),
     ingress(),
     IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
     ResubmitUnpackerImpl(),
     RecirculateUnpackerImpl(),
     NormalPackerImpl(),
