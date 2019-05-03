@@ -733,8 +733,8 @@ control Ingress<H, M>(
 control IngressDeparser<H, M>(
     packet_out buffer,
     inout H hdr,
-    in M meta,  // TBD: Is ths needed any more if we only do emits?
-    in psa_ingress_output_metadata_t istd);
+    in M meta,  // TBD: Is ths needed any more if deparser can only do emits?
+    in psa_ingress_output_metadata_t istd);  // TBD: Remove this if deparser only does emits?
 
 parser EgressParser<H, M>(
     packet_in buffer,
@@ -750,8 +750,8 @@ control Egress<H, M>(
 control EgressDeparser<H, M>(
     packet_out buffer,
     inout H hdr,
-    in M meta,  // TBD: Is ths needed any more if we only do emits?
-    in psa_egress_output_metadata_t istd);
+    in M meta,  // TBD: Is ths needed any more if deparser can only do emits?
+    in psa_egress_output_metadata_t istd);  // TBD: Remove this if deparser only does emits?
 
 // Common notes for all "Packer" and "Unpacker" controls declared
 // below.
@@ -798,7 +798,7 @@ control NewPacketMetadataInitializer<M>(
 // muticast packet.  An implementation is allowed to make all such
 // copies after this control is executed.
 control NormalPacker<H, M, NM>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out NM normal_meta);
 
@@ -826,7 +826,7 @@ control NormalUnpacker<M, NM>(
 // psa_ingress_output_metadata_t that is an output from the Ingress
 // control.
 control ResubmitPacker<H, M, RESUBM>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out RESUBM resubmit_meta);
 
@@ -850,7 +850,7 @@ control ResubmitUnpacker<M, RESUBM>(
 // the Egress control, and istd is the struct of type
 // psa_egress_input_metadata_t that is an input to the Egress control.
 control RecirculatePacker<H, M, RECIRCM>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M user_meta,
     out RECIRCM recirculate_meta);
 
@@ -872,7 +872,7 @@ control RecirculateUnpacker<M, RECIRCM>(
 // cloned packet.  An implementation is allowed to make all such
 // copies after this control is executed.
 control CloneI2EPacker<H, M, CI2EM>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out CI2EM clone_i2e_meta);
 
@@ -895,7 +895,7 @@ control CloneI2EUnpacker<M, CI2EM>(
 // cloned packet.  An implementation is allowed to make all such
 // copies after this control is executed.
 control CloneE2EPacker<H, M, CE2EM>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out CE2EM clone_e2e_meta);
 
@@ -922,7 +922,7 @@ control EmptyNewPacketMetadataInitializer<M>(
 }
 
 control EmptyNormalPacker<H, M>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out psa_empty_t normal_meta)
 {
@@ -937,7 +937,7 @@ control EmptyNormalUnpacker<M>(
 }
 
 control EmptyResubmitPacker<H, M>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out psa_empty_t resubmit_meta)
 {
@@ -952,7 +952,7 @@ control EmptyResubmitUnpacker<M>(
 }
 
 control EmptyRecirculatePacker<H, M>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M user_meta,
     out psa_empty_t recirculate_meta)
 {
@@ -967,7 +967,7 @@ control EmptyRecirculateUnpacker<M>(
 }
 
 control EmptyCloneI2EPacker<H, M>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out psa_empty_t clone_i2e_meta)
 {
@@ -982,7 +982,7 @@ control EmptyCloneI2EUnpacker<M>(
 }
 
 control EmptyCloneE2EPacker<H, M>(
-    in H hdr,  // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out psa_empty_t clone_e2e_meta)
 {
@@ -998,8 +998,10 @@ control EmptyCloneE2EUnpacker<M>(
 
 // TBD: Perhaps there is a way to assign a default parameter value of
 // rsu of EmptyResubmitUnpacker, and similarly for the other packers
-// and unpackers?  The straightforward P4_16 default parameter syntax
-// did not work in my experiments, which may be a bug in p4c.
+// and unpackers?  See https://github.com/p4lang/p4c/issues/1914 for a
+// related P4_16 code example that p4c currently gives an error for.
+// If that issue is resolved, it will inform how to support default
+// values of EmptyRecirculatePacker, etc. for the packages below.
 
 package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
     IngressParser<IH, IM> ip,

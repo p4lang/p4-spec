@@ -465,7 +465,7 @@ control NormalUnpackerImpl(
 }
 
 control CloneI2EPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out clone_i2e_metadata_t clone_i2e_meta)
 {
@@ -491,7 +491,7 @@ control CloneI2EUnpackerImpl(
 }
 
 control CloneE2EPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out clone_e2e_metadata_t clone_e2e_meta)
 {

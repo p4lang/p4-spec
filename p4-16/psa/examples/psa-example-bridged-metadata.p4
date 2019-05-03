@@ -240,7 +240,7 @@ control EgressDeparserImpl(
 }
 
 control NormalPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out metadata normal_meta)
 {
@@ -259,7 +259,7 @@ control NormalUnpackerImpl(
 }
 
 control ResubmitPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out resubmit_metadata_t resubmit_meta)
 {
@@ -278,7 +278,7 @@ control ResubmitUnpackerImpl(
 }
 
 control RecirculatePackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out recirculate_metadata_t recirculate_meta)
 {
@@ -299,7 +299,7 @@ control RecirculateUnpackerImpl(
 }
 
 control CloneI2EPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out clone_i2e_metadata_t clone_i2e_meta)
 {
@@ -347,7 +347,7 @@ control CloneI2EUnpackerImpl(
 }
 
 control CloneE2EPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out clone_e2e_metadata_t clone_e2e_meta)
 {

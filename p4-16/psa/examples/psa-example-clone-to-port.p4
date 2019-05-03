@@ -163,7 +163,7 @@ control IngressDeparserImpl(
 }
 
 control CloneI2EPackerImpl(
-    in headers hdr,  // TBD: Should this be here?
+    in headers hdr,
     in metadata meta,
     out clone_i2e_metadata_t clone_i2e_meta)
 {

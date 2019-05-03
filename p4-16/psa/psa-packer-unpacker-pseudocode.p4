@@ -39,7 +39,7 @@ control JustBeforeIngressParser(
 
 control JustAfterIngress(
     in psa_ingress_output_metadata_t ostd,
-    in H hdr,   // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out CI2EM clone_i2e_meta,
     out RESUBM resubmit_meta,
@@ -95,7 +95,7 @@ control JustBeforeEgressParser(
 control JustAfterEgress(
     in psa_egress_input_metadata_t istd,
     in psa_egress_output_metadata_t ostd,
-    in H hdr,   // TBD: Should this be here?
+    in H hdr,
     in M meta,
     out CE2EM clone_e2e_meta,
     out RECIRCM recirculate_meta)
@@ -113,4 +113,3 @@ control JustAfterEgress(
         }
     }
 }
-
