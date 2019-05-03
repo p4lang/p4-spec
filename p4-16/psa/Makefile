@@ -42,7 +42,7 @@ check:
 	${P4C} examples/psa-example-bridged-metadata.p4
 	${P4C} examples/psa-example-clone-to-port.p4
 	#${P4C} examples/psa-example-counters.p4
-	#${P4C} examples/psa-example-digest.p4
+	${P4C} examples/psa-example-digest.p4
 	#${P4C} examples/psa-example-incremental-checksum.p4
 	#${P4C} examples/psa-example-incremental-checksum2.p4
 	#${P4C} examples/psa-example-parser-checksum.p4

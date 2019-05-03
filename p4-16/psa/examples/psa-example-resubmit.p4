@@ -231,7 +231,8 @@ IngressPipeline(
     EmptyRecirculateUnpacker(),
     EmptyNormalPacker(),
     ResubmitPackerImpl(),
-    EmptyCloneI2EPacker()) ip;
+    EmptyCloneI2EPacker(),
+    EmptyDigestCreator()) ip;
 
 EgressPipeline(
     EgressParserImpl(),

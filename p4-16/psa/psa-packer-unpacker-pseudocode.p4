@@ -46,6 +46,7 @@ control JustAfterIngress(
     out NM normal_meta)
 {
     apply {
+        DigestPacker(hdr, meta);
         if (ostd.clone) {
             CloneI2EPacker(hdr, meta, clone_i2e_meta);
         }
@@ -53,6 +54,11 @@ control JustAfterIngress(
             // nothing to do here
         } else if (ostd.resubmit) {
             ResubmitPacker(hdr, meta, resubmit_meta);
+            // TBD: It seems that there is no need to execute the
+            // ingress deparser control in this case.  Should an
+            // implementation be allowed to do so, and discard/ignore
+            // the results?  It seems that it should be able to safely
+            // do so.
         } else {
             NormalPacker(hdr, meta, normal_meta);
         }

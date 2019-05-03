@@ -377,7 +377,8 @@ IngressPipeline(
     RecirculateUnpackerImpl(),
     NormalPackerImpl(),
     ResubmitPackerImpl(),
-    CloneI2EPackerImpl()) ip;
+    CloneI2EPackerImpl(),
+    EmptyDigestCreator()) ip;
 
 EgressPipeline(
     EgressParserImpl(),

@@ -53,9 +53,6 @@ struct headers {
     ipv4_t           ipv4;
 }
 
-struct empty_metadata_t {
-}
-
 // BEGIN:Digest_Example_Part1
 struct mac_learn_digest_t {
     EthernetAddress srcAddr;
@@ -92,9 +89,7 @@ parser CommonParser(
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
                          inout metadata meta,
-                         in psa_ingress_parser_input_metadata_t istd,
-                         in empty_metadata_t resubmit_meta,
-                         in empty_metadata_t recirculate_meta)
+                         in psa_ingress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 
@@ -111,10 +106,7 @@ parser IngressParserImpl(packet_in buffer,
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata meta,
-                        in psa_egress_parser_input_metadata_t istd,
-                        in empty_metadata_t normal_meta,
-                        in empty_metadata_t clone_i2e_meta,
-                        in empty_metadata_t clone_e2e_meta)
+                        in psa_egress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 
@@ -158,7 +150,7 @@ control ingress(inout headers hdr,
         meta.mac_learn_msg.srcAddr = hdr.ethernet.srcAddr;
         meta.mac_learn_msg.ingress_port = istd.ingress_port;
         // meta.mac_learn_msg will be sent to control plane in
-        // IngressDeparser control block
+        // DigestCreator control block
     }
     table learned_sources {
         key = { hdr.ethernet.srcAddr : exact; }
@@ -200,33 +192,35 @@ control CommonDeparserImpl(packet_out packet,
     }
 }
 
-// BEGIN:Digest_Example_Part3
 control IngressDeparserImpl(packet_out packet,
-                            out empty_metadata_t clone_i2e_meta,
-                            out empty_metadata_t resubmit_meta,
-                            out empty_metadata_t normal_meta,
                             inout headers hdr,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
 {
     CommonDeparserImpl() common_deparser;
+    apply {
+        common_deparser.apply(packet, hdr);
+    }
+}
+
+// BEGIN:Digest_Example_Part3
+control DigestCreatorImpl(
+    in headers hdr,
+    in metadata meta)
+{
     Digest<mac_learn_digest_t>() mac_learn_digest;
     apply {
         if (meta.send_mac_learn_msg) {
             mac_learn_digest.pack(meta.mac_learn_msg);
         }
-        common_deparser.apply(packet, hdr);
     }
 }
 // END:Digest_Example_Part3
 
 control EgressDeparserImpl(packet_out packet,
-                           out empty_metadata_t clone_e2e_meta,
-                           out empty_metadata_t recirculate_meta,
                            inout headers hdr,
                            in metadata meta,
-                           in psa_egress_output_metadata_t istd,
-                           in psa_egress_deparser_input_metadata_t edstd)
+                           in psa_egress_output_metadata_t istd)
 {
     CommonDeparserImpl() common_deparser;
     apply {
@@ -234,13 +228,27 @@ control EgressDeparserImpl(packet_out packet,
     }
 }
 
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
+IngressPipeline(
+    IngressParserImpl(),
+    ingress(),
+    IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
+    EmptyResubmitUnpacker(),
+    EmptyRecirculateUnpacker(),
+    EmptyNormalPacker(),
+    EmptyResubmitPacker(),
+    EmptyCloneI2EPacker(),
+    DigestCreatorImpl()) ip;
 
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
+EgressPipeline(
+    EgressParserImpl(),
+    egress(),
+    EgressDeparserImpl(),
+    EmptyNormalUnpacker(),
+    EmptyCloneI2EUnpacker(),
+    EmptyCloneE2EUnpacker(),
+    EmptyRecirculatePacker(),
+    EmptyCloneE2EPacker()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
 

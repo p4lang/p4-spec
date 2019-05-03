@@ -906,6 +906,19 @@ control CloneE2EUnpacker<M, CE2EM>(
     in CE2EM clone_e2e_meta,
     inout M meta);
 
+// The DigestCreator control is executed once for each packet that
+// executes the Ingress control, just after the Ingress control
+// completes execution.  It is executed for all such packets,
+// unconditionally, ut its body may contain `if` statements with
+// conditions based upon fields in the input parameters, to determine
+// whether to create one or more digest messages for this packet.
+
+// Any desired Digest extern objects must be instantianted inside of
+// this control.
+control DigestCreator<H, M>(
+    in H hdr,
+    in M meta);
+
 // Default "empty" or "no op" implementations of packers and
 // unpackers, ready for use for PSA programs that do not need to
 // preserve metadata for those kinds of packets, or do not exercise
@@ -996,6 +1009,13 @@ control EmptyCloneE2EUnpacker<M>(
     apply { }
 }
 
+control EmptyDigestCreator<H, M>(
+    in H hdr,
+    in M meta)
+{
+    apply { }
+}
+
 // TBD: Perhaps there is a way to assign a default parameter value of
 // rsu of EmptyResubmitUnpacker, and similarly for the other packers
 // and unpackers?  See https://github.com/p4lang/p4c/issues/1914 for a
@@ -1012,7 +1032,8 @@ package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
     RecirculateUnpacker<IM, RECIRCM> rcu,
     NormalPacker<IH, IM, NM> np,
     ResubmitPacker<IH, IM, RESUBM> rsp,
-    CloneI2EPacker<IH, IM, CI2EM> ci2ep);
+    CloneI2EPacker<IH, IM, CI2EM> ci2ep,
+    DigestCreator<IH, IM> dp);
 
 package EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
     EgressParser<EH, EM> ep,
