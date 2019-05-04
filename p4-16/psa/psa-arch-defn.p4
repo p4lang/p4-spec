@@ -217,7 +217,9 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
         do_deparsing = false;
         if (igom.clone) {
             CloneI2EPacker.apply(hdr, meta, clone_i2e_meta);
-            do_deparsing = true;
+            // packet_rcvd is the original unmodified packet that we
+            // began with when this control started.
+            pre.enqCloneI2E(igom.clone_session_id, packet_rcvd, clone_i2e_meta);
         }
         if (!tbd_implementation_specific_cos_supported(igom.class_of_service)) {
             // TBD: Recommended to log error about unsupported
@@ -227,7 +229,6 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
         if (igom.drop) {
             // No packet to send for this reason, but check for clone
             // below.
-            do_deparsing = false;
         } else if (igom.resubmit) {
             // An implementation could reuse resubmit_meta_in here if
             // it wishes toto, instead of resubmit_meta_out, but we
@@ -239,7 +240,6 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
             // began with when this control started.
             pips.enqResubmittedPacket(packet_rcvd, ingress_port,
                 resubmit_meta_out);
-            do_deparsing = false;
         } else if (igom.multicast_group != 0) {
             NormalPacker.apply(hdr, meta, normal_meta);
             do_deparsing = true;
@@ -250,17 +250,15 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
             // drop the packet
             // TBD: Recommended to log error about unsupported
             // igom.egress_port value.
-            do_deparsing = false;
         }
         if (do_deparsing) {
+            packet_to_send = tbd_empty_packet;
             IngressDeparser.apply(packet_to_send, hdr, meta, igom);
-            // TBD: At this point, packet_to_send has the part of
-            // packet_rcvd that was not parsed appended to it.  Make
-            // an explicit call here to an operation that does this.
-            if (igom.clone) {
-                pre.enqCloneI2E(igom.clone_session_id, packet_to_send,
-                    clone_i2e_meta);
-            }
+            // TBD: At this point, packet_to_send only contains the
+            // contents of headers that were emitted in the ingress
+            // deparser.  It should now have the part of packet_rcvd
+            // that was not parsed appended to it.  Make an explicit
+            // call here to an operation that does this.
             if (igom.multicast_group != 0) {
                 pre.enqMulticast(igom.multicast_group, igom.class_of_service,
                     packet_to_send, normal_meta);
@@ -386,13 +384,17 @@ control EgressReadyForPacket<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
             RecirculatePacker.apply(hdr, meta, recirculate_meta);
             do_deparsing = true;
         } else {
+            // send packet to output port in this case
             do_deparsing = true;
         }
         if (do_deparsing) {
+            packet_to_send = tbd_empty_packet;
             EgressDeparser.apply(packet_to_send, hdr, meta, egom);
-            // TBD: At this point, packet_to_send has the part of
-            // packet_rcvd that was not parsed appended to it.  Make
-            // an explicit call here to an operation that does this.
+            // TBD: At this point, packet_to_send only contains the
+            // contents of headers that were emitted in the egress
+            // deparser.  It should now have the part of packet_rcvd
+            // that was not parsed appended to it.  Make an explicit
+            // call here to an operation that does this.
             if (egom.clone) {
                 pre.enqCloneE2E(egom.clone_session_id, packet_to_send,
                     clone_e2e_meta_out);
