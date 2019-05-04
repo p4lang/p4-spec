@@ -786,7 +786,7 @@ control NewPacketMetadataInitializer<M>(
     inout M meta);
 
 // The NormalPacker control is executed once for each packet that will
-// be sent as a normal unicast or multicasat packet from ingress to
+// be sent as a normal unicast or multicast packet from ingress to
 // egress, just after the Ingress control completes execution.
 
 // The condition in which it must be executed is (!ostd.drop &&
