@@ -1,8 +1,65 @@
-// This is a rough draft of what a "precise definition" for a P4_16
-// architecture, in this case the PSA architecture, plus a
-// not-yet-approved significant change proposed here:
+// This is a rough draft of a "precise definition" for a P4_16
+// architecture.
+
+// This is the PSA architecture, with a not-yet-approved significant
+// change proposed here:
 // https://github.com/p4lang/p4-spec/pull/757
 
+// Type definitions like PortId_t and others are used below.  They are
+// defined in the psa.p4 include file.
+#include "psa.p4"
+
+// This type represents an offset from the beginning of a packet, in
+// bits.  It is intended to record where the ingress or egress parser
+// finished parsing, via some combnation of extract and advance calls.
+// Assume that packets are at most 16 Kbytes long, so an offset from
+// the start of the packet in bytes must be at least 14 bits long.  An
+// arbitrary offset in bits must be at least 17 bits long.
+
+type bit<17> OffsetWithinPacket_t;
+
+// Assume the P4_16 packet_out extern object has been extended with a
+// method appendPayload with this signature:
+
+// void appendPayload(packet_in p, OffsetWithinPacket_t offset);
+
+// When called, all bits within packet p starting at the specified
+// offset, until the end of p, are appended to the end of the
+// packet_out object on which the method is called.
+
+// Also a method initializeToEmptyPacket() that initializes the packet
+// to contain nothing:
+
+// void initializeToEmptyPacket();
+
+
+// All of P4_14, P4_16+v1model, and P4_16+PSA have resubmitted,
+// recirculated, and new packets from ports "merged together" for
+// ingress processing.  In any actual switch implementation, there is
+// likely to be some kind of arbitration, or a packet scheduler, that
+// chooses which packet to process in ingress next, when the
+// combination of such packets are arriving faster than ingress can
+// keep up with.
+
+// The PreIngressPacketScheduler represents such a packet scheduler.
+// Implementations could vary widely in the behavior they provide
+// here, and also in what kinds of configuration options they provide.
+
+// For example, one implementation might put all such packets into a
+// single common FIFO, except for those that are tail dropped when you
+// attempt to enqueue them.
+
+// Another implementation might provide per (input port, class of
+// service) FIFO queues, where class of service is extracted from a
+// packet's 802.1Q header, if the packet has such a header.
+// Resubmitted packets have their own separate FIFO queue, as do
+// recirculated packets.  There a DRR (Deficit Round Robin) scheduler
+// that schedules packets from these many FIFO queues as ingress
+// becomes ready to process more packets.
+
+// The PreIngressPacketScheduler extern defined here specifies the
+// "inputs" and "outputs", but not the precise internal behavior of a
+// particular implementation.
 
 extern PreIngressPacketScheduler<RESUBM, RECIRCM> {
     PreIngressPacketScheduler();
@@ -10,14 +67,14 @@ extern PreIngressPacketScheduler<RESUBM, RECIRCM> {
     // returned by schedulePacket (as opposed to being dropped), will
     // always be returned with the corresponding ingress_port value
     // and packet_path equal to PSA_PacketPath_t.NORMAL.
-    enqNewPacket(
+    void enqNewPacket(
         in packet_in packet,
         in PortId_t ingress_port);
     // Any packets on which enqResubmittedPacket is called, which are
     // later returned by schedulePacket (as opposed to being dropped),
     // will always be returned with the corresponding ingress_port
     // value and packet_path equal to PSA_PacketPath_t.RESUBMIT.
-    enqResubmittedPacket(
+    void enqResubmittedPacket(
         in packet_in packet,
         in PortId_t ingress_port,
         in RESUBM resubmit_meta);
@@ -25,7 +82,7 @@ extern PreIngressPacketScheduler<RESUBM, RECIRCM> {
     // later returned by schedulePacket (as opposed to being dropped),
     // will always be returned with packet_path equal to
     // PSA_PacketPath_t.RECIRCULATE.
-    enqRecirculatedPacket(
+    void enqRecirculatedPacket(
         in packet_in packet,
         in RECIRCM recirculate_meta);
     // Every packet that is enqueued using one of the enq methods will
@@ -39,7 +96,7 @@ extern PreIngressPacketScheduler<RESUBM, RECIRCM> {
     // queue containing all such packets, or there could be separate
     // queues for each input port, and another for all resubmitted
     // packets, and another for all recirculated packets, etc.
-    schedulePacket(
+    void schedulePacket(
         out bool packet_valid, // if false, then no packet ready to process
         out PSA_PacketPath_t packet_path,
         out packet_in packet,
@@ -50,40 +107,68 @@ extern PreIngressPacketScheduler<RESUBM, RECIRCM> {
 
 PreIngressPacketScheduler() pips;
 
-extern PacketReplicationEngine<NM, CI2EM> {
+
+// As for the PreIngressPacketScheduler, the PacketReplicationEngine
+// could have many details of its behavior that vary from one
+// implementation to another, but they should all have a similar
+// "interface" as described here.  No attempt is made here to specify
+// a control plane interface, except that the interface must have a
+// way of configuring clone sessions and multicast groups.  See the
+// P4Runtime API specification for one such control plane interface.
+
+extern PacketReplicationEngine<NM, CI2EM, CE2EM> {
     PacketReplicationEngine();
 
     // Packets stored with enqUnicast will later have packet_path ==
-    // PSA_PacketPath_t.NORMAL_UNICAST
-    enqUnicast(
+    // PSA_PacketPath_t.NORMAL_UNICAST when scheduled for egress
+    // processing.
+    void enqUnicast(
         in PortId_t egress_port,
         in ClassOfService_t class_of_service, 
         in packet_out packet_to_send,
         in NM normal_meta);
 
     // Packets stored with enqMulticast will later have packet_path ==
-    // PSA_PacketPath_t.NORMAL_MULTICAST
-    enqMulticast(
+    // PSA_PacketPath_t.NORMAL_MULTICAST when scheduled for egress
+    // processing.
+    //
+    // The PacketReplicationEngine has internal state, configured by
+    // the control plane, such that for each valid multicast_group
+    // value the implementation supports, there is a set of
+    // (egress_port, instance) pairs.  Except for copies that the
+    // implementation may choose to drop, a copy of the packet should
+    // later be scheduled for each such (egress_port, instance) pair.
+    // All should be identical except in that pair of values.
+    void enqMulticast(
         in MulticastGroup_t multicast_group,
         in ClassOfService_t class_of_service, 
         in packet_out packet_to_send,
         in NM normal_meta);
     
     // Packets stored with enqCloneI2E will later have packet_path ==
-    // PSA_PacketPath_t.CLONE_I2E
-    enqCloneI2E(
+    // PSA_PacketPath_t.CLONE_I2E when scheduled for egress
+    // processing.
+    //
+    // The PacketReplicationEngine has internal state, configured by
+    // the control plane, such that for each valid clone_session_id
+    // value the implementation supports, there is a set of
+    // (egress_port, instance) pairs.  See enqMulticast notes for
+    // packets that should later be scheduled.
+    void enqCloneI2E(
         in CloneSessionId_t clone_session_id,
         in packet_out packet_to_send,
         in CI2EM clone_i2e_meta);
     
     // Packets stored with enqCloneE2E will later have packet_path ==
-    // PSA_PacketPath_t.CLONE_E2E
-    enqCloneE2E(
+    // PSA_PacketPath_t.CLONE_E2E when scheduled for egress
+    // processing.  Otherwise, the same notes for enqCloneI2E apply
+    // for enqCloneE2E.
+    void enqCloneE2E(
         in CloneSessionId_t clone_session_id,
         in packet_out packet_to_send,
         in CE2EM clone_e2e_meta);
 
-    schedulePacket(
+    void schedulePacket(
         out bool packet_valid, // if false, then no packet ready to process
         out PSA_PacketPath_t packet_path,
         out packet_in packet,
@@ -104,7 +189,7 @@ extern BufferingQueueingEngine {
     // any notion in the implementation of separate per class of
     // service queueing between egress processing and the port, use
     // class_of_service to select it.
-    enqPacket(
+    void enqPacket(
         in PortId_t egress_port,
         in ClassOfService_t class_of_service, 
         in packet_out packet_to_send);
@@ -127,6 +212,35 @@ control NewPacketFromPort(
 // pipeline is ready to start processing a new packet, at some finite
 // rate.
 
+// Note that this description could be broken down more finely, to
+// make it more explicit that certain kinds of behaviors are allowed
+// for a PSA implementation.
+
+// For example, from reading this description it is not readily
+// apparent whether there can be multiple different packets
+// concurrently executing IngressReadyForPacket, or not.  The intent
+// is that there can be.
+
+// Given that is the intent, it is then not obvious what possible
+// execution orders should be permitted, and which should be
+// disallowed.  For example, a Tofino implementation would have a
+// constant latency from start of Ingress processing until Ingress
+// processing is complete, but an NPU implementation could have
+// variable latency for Ingress processing, and either enable packets
+// from the same input port to be enqueued in the packet buffer in a
+// different order than they arrived on the input port, or they could
+// have a reordering mechanism that ensures that packets are enqueued
+// in the packet buffer in the same relative order they arrived.  Or
+// they could have mechanisms where packets in the same "flow" are
+// enqueued in the same relative order they arrived, but packets in
+// different flows are not constrained in that way.
+
+// It is not clear to me yet whether there are good ways to specify
+// such possibilities in code, as opposed to English or other natural
+// language.  Certainly such things can be specified in a lot more
+// detailed code, e.g. Verilog, but that seems to defeat the purpose
+// of having an executable spec that leaves out such details.
+
 control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
     // TBD: any parameters?
     )
@@ -142,7 +256,7 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
     IH hdr;
     IM meta;
     ParserError_t parser_error;
-    bit<19> parser_final_packet_offset;
+    OffsetWithinPacket_t parser_final_packet_offset;
     RESUBM resubmit_meta_in;
     NM normal_meta;
     RESUBM resubmit_meta_out;
@@ -244,6 +358,9 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
             NormalPacker.apply(hdr, meta, normal_meta);
             do_deparsing = true;
         } else if (platform_port_valid(igom.egress_port)) {
+            // see PSA specification's description of
+            // platform_port_valid() function.  Its definition is
+            // implementation-specific.
             NormalPacker.apply(hdr, meta, normal_meta);
             do_deparsing = true;
         } else {
@@ -252,13 +369,15 @@ control IngressReadyForPacket<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
             // igom.egress_port value.
         }
         if (do_deparsing) {
-            packet_to_send = tbd_empty_packet;
+            packet_to_send.initializeToEmptyPacket();
             IngressDeparser.apply(packet_to_send, hdr, meta, igom);
-            // TBD: At this point, packet_to_send only contains the
+            // At this point, packet_to_send only contains the
             // contents of headers that were emitted in the ingress
-            // deparser.  It should now have the part of packet_rcvd
-            // that was not parsed appended to it.  Make an explicit
-            // call here to an operation that does this.
+            // deparser.  Now append the unparsed portion of
+            // packet_rcvd to it.
+            packet_to_send.appendPayload(packet_rcvd,
+                parser_final_packet_offset);
+
             if (igom.multicast_group != 0) {
                 pre.enqMulticast(igom.multicast_group, igom.class_of_service,
                     packet_to_send, normal_meta);
@@ -284,16 +403,14 @@ control EgressReadyForPacket<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
     PortId_t egress_port;
     ClassOfService_t class_of_service;
     EgressInstance_t instance;
-
     psa_egress_parser_input_metadata_t egpim;
     psa_egress_input_metadata_t egim;
     psa_egress_output_metadata_t egom;
-
     Timestamp_t egress_timestamp;
     EH hdr;
     EM meta;
     ParserError_t parser_error;
-    bit<19> parser_final_packet_offset;
+    OffsetWithinPacket_t parser_final_packet_offset;
     NM normal_meta;
     CI2EM clone_i2e_meta;
     CE2EM clone_e2e_meta_in;
@@ -388,13 +505,14 @@ control EgressReadyForPacket<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
             do_deparsing = true;
         }
         if (do_deparsing) {
-            packet_to_send = tbd_empty_packet;
+            packet_to_send.initializeToEmptyPacket();
             EgressDeparser.apply(packet_to_send, hdr, meta, egom);
-            // TBD: At this point, packet_to_send only contains the
+            // At this point, packet_to_send only contains the
             // contents of headers that were emitted in the egress
-            // deparser.  It should now have the part of packet_rcvd
-            // that was not parsed appended to it.  Make an explicit
-            // call here to an operation that does this.
+            // deparser.  Now append the unparsed portion of
+            // packet_rcvd to it.
+            packet_to_send.appendPayload(packet_rcvd,
+                parser_final_packet_offset);
             if (egom.clone) {
                 pre.enqCloneE2E(egom.clone_session_id, packet_to_send,
                     clone_e2e_meta_out);
