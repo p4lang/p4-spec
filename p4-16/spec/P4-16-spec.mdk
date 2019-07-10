@@ -3318,7 +3318,7 @@ type. The result always has the same width as the left operand.
 - Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
   where `m` and `l` must be positive integers
   that are compile-time known values, and `m >= l`. The result is
-  a bit-string of width `m - l + 1`, including the bits numbered
+  a signed bit-string of width `m - l + 1`, including the bits numbered
   from `l` (which becomes the least significant bit of the result) to `m` (the
   most significant bit of the result) from the source operand. The conditions `0 <= l < W`
   and `l <= m < W` are checked statically (where `W` is
@@ -3328,7 +3328,7 @@ type. The result always has the same width as the left operand.
   at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
-  unchanged.  A slice of a signed integer is treated like a signed integer as well.
+  unchanged.  A slice of a signed integer is treated like an unsigned integer.
 
 ### A note about shifts
 
@@ -7125,6 +7125,8 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.0
 
+* Allow 1-bit signed values
+* Define the type of bit slices from signed and unsigned values to be unsigned.
 * Constrain `default` label position for `switch` statements.
 * Allow empty tuples.
 * Added `@deprecated` annotation.
