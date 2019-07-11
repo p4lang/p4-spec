@@ -87,6 +87,22 @@ packageTypeDeclaration
 instantiation
     : typeRef '(' argumentList ')' name ';'
     | annotations typeRef '(' argumentList ')' name ';'
+    | annotations typeRef '(' argumentList ')' name '=' objInitializer ';'
+    | typeRef '(' argumentList ')' name '=' objInitializer ';'
+    ;
+
+objInitializer
+    : '{' objDeclarations '}'
+    ;
+
+objDeclarations
+    : /* empty */
+    | objDeclarations objDeclaration
+    ;
+
+objDeclaration
+    : functionDeclaration
+    | instantiation
     ;
 
 optConstructorParameters
@@ -724,6 +740,7 @@ prefixedNonTypeName
 
 lvalue
     : prefixedNonTypeName
+    | THIS
     | lvalue '.' member
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
@@ -752,6 +769,7 @@ expression
     : INTEGER
     | TRUE
     | FALSE
+    | THIS
     | STRING_LITERAL
     | nonTypeName
     | dotPrefix nonTypeName
@@ -797,9 +815,10 @@ expression
 
 nonBraceExpression
     : INTEGER
+    | STRING_LITERAL
     | TRUE
     | FALSE
-    | STRING_LITERAL
+    | THIS
     | nonTypeName
     | dotPrefix nonTypeName
     | nonBraceExpression '[' expression ']'
