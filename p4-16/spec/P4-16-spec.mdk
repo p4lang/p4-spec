@@ -3677,6 +3677,44 @@ tuple<bit<32>, bool> x = { 10, false };
 
 The empty list expression has type `tuple<>` - a tuple with no components.
 
+## Structure-valued expressions { #sec-structure-expressions}
+
+One can write expressions that evaluate to a structure or header.  The
+syntax of these expressions is given by:
+
+~ Begin P4Grammar
+expression ...
+    | '{' kvList '}'
+    | typeName '{' kvList '}'
+    ;
+
+kvList
+    ;
+~ End P4Grammar
+
+If present, the `typeName` must be the name of a `struct` or `header`
+type.  The `typeName` can be omitted if it can be inferred from
+context, e.g., when initializing a variable with a `struct` type.  The
+following example shows a structure-valued expression used in an
+equality comparison expression:
+
+~ Begin P4Example
+struct S {
+    bit<32> a;
+    bit<32> b;
+}
+
+S s;
+...
+// Compare s with a structure-valued expression
+bool b = s == S { a = 1, b = 2 };
+~ End P4Example
+
+Structure-valued expressions can be used in the right-hand side of
+assignments, in comparisons, in field selection expressions, and as
+arguments to functions, method or actions.  Structure-valued
+expressions are not left values.
+
 ## Operations on sets { #sec-set-exprs }
 
 Some P4 expressions denote sets of values (`set<T>`, for some type `T`;
