@@ -2491,74 +2491,7 @@ An overlay allows the access to fields or subfields of a `struct` or
 special `overlay` "function", that establishes a connection between
 the fields of the source and destination structure.
 
-In the following example we have two structure types: `Addresses` and
-`Fields`.  The overlay named `sourceQuads` is given a structure of
-type `Addresses` and allows accesses to its fields through a structure
-of type `Fields`.  The first four fields of `Fields` are individual
-bytes of `Addresses.source`, and the field `Fields.all` is the
-concatenation of `Source.source` and `Source.destination`.
-
-A variable of type `Addresses` named `a` is instantiated, and an
-overlay named `q` is created using the `sourceQuads` overlay.  Now
-fields of the `a` structure can be accessed read-write using fields of
-the `q` structure.
-
-~ Begin P4Example
-struct Addresses {
-    bit<32> source;
-    bit<32> destination;
-}
-
-struct Fields {
-    bit<8> q0;
-    bit<8> q1;
-    bit<8> q2;
-    bit<8> q3;
-    bit<64> all;
-}
-
-overlay Fields sourceQuads(Addresses add) {
-   q0 = add.source[31:24];
-   q1 = add.source[23:16];
-   q2 = add.source[15:8];
-   q3 = add.source[7:0];
-   all = add.source ++ add.destination;
-}
-
-Addresses a = { 0x01234567, 0x89ABCDEF };
-Fields    q = sourceQuads(a);  // q is { 0x01, 0x23, 0x45, 0x67, 0x0123456789ABCDEF };
-a.source = 0;   // q is { 0x00, 0x00, 0x00, 0x00, 0x0000000089ABCDEF }, a is { 0x0, 0x89ABCDEF }
-a.source[7:0] = a.destination[7:0]; // q is { 0x00, 0x00, 0x00, 0xEF, 0x000000EF89ABCDEF }, a is { 0x000000EF, 0x89ABCDEF }
-~ End P4Example
-
-An overlay must define all fields of the destination structure.
-The "function" computing an overlay can only be used as an initializer
-in the declaration of a variable of the suitable type.
-
-Overlays can only be applied to `struct` and `header` objects, and
-they can only produce `struct` objects, but one cannot use a member of
-a `header_union` as an argument to an overlay..  A struct produced by
-an overlay can only contain fields of the base types: `bit<>` and
-`int<>`.  The only statement allowed within an overlay function is an
-assignment statement that assigns to a field of the destination.  The
-only expressions allowed within an overlay are:
-- field access
-- bit slicing
-- concatenation
-- casts that convert in either direction between bit<W> and int<W> (but not casts that change the width)
-
-Under some restrictions overlays can be left-values:
-- they must be obtained by applying an overlay function to a left-value;
-- each bit from a source field must be used at most once.
-
-The second restriction is necessary to compute how the fields of the
-source structure are changed when the destination structure is
-updated.  In the previous example `q` is not a left value.  Updating
-an overlay which is a left value will update the original structure or
-header.  If the input of an overlay is a header the rules about
-accessing uninitialized header fields are valid for the source header.
-
-The following example shows an use of overlays
+The following example shows an use of overlays:
 
 ~ Begin P4Example
 // In this header all fields are byte-aligned
@@ -2575,35 +2508,20 @@ header IPv4_aligned {
     bit<32>      dstAddr;
 }
 
-// Overlay of IPv4_aligned that exposes all fields
-struct IPv4 {
-    bit<4>       version;
-    bit<4>       ihl;
-    bit<8>       diffserv;
-    bit<16>      totalLen;
-    bit<16>      identification;
-    bit<3>       flags;
-    bit<13>      fragOffset;
-    bit<8>       ttl;
-    bit<8>       protocol;
-    bit<16>      hdrChecksum;
-    bit<32>      srcAddr;
-    bit<32>      dstAddr;
-}
-
+// This overlay introduces a structure type named IPv4
 overlay IPv4 expand(IPv4_aligned s) {
-    version = s.version_ihl[7:4];
-    ihl = s.version_ihl[3:0];
-    diffserv = s.diffserv;
-    totalLen = s.totalLen;
-    identification = s.identification;
-    flags = s.flags_fragOffset[15:13];
-    fragOffset = s.flags_fragOffset[12:0];
-    ttl = s.ttl;
-    protocol = s.protocol;
-    hdrChecksum = s.hdrChecksum;
-    srcAddr = s.srcAddr;
-    dstAddr = s.dstAddr;
+    bit<4>  version = s.version_ihl[7:4];
+    bit<4>  ihl = s.version_ihl[3:0];
+    bit<8>  diffserv = s.diffserv;
+    bit<16> totalLen = s.totalLen;
+    bit<16> identification = s.identification;
+    bit<3>  flags = s.flags_fragOffset[15:13];
+    bit<13> fragOffset = s.flags_fragOffset[12:0];
+    bit<8>  ttl = s.ttl;
+    bit<8>  protocol = s.protocol;
+    bit<16> hdrChecksum = s.hdrChecksum;
+    bit<32> srcAddr = s.srcAddr;
+    bit<32> dstAddr = s.dstAddr;
 }
 
 parser P(...) {
@@ -2617,15 +2535,72 @@ parser P(...) {
 }
 ~ End P4Example
 
-In this example the `expand` overlay produces a left-value.
 It is expected that such coding style will make it easier to generate
-efficient implementations on some architectures..
+efficient implementations on some architectures.
+
+The `_ = _;` notation indicates that all fields of a source which have
+not yet been referenced are mapped unchanged to corresponding fields
+of the destination.  Using this notation, the previous overlay can be
+simplified as:
+
+~ Begin P4Example
+overlay IPv4 expand(IPv4_aligned s) {
+    bit<4>  version = s.version_ihl[7:4];
+    bit<4>  ihl = s.version_ihl[3:0];
+    bit<3>  flags = s.flags_fragOffset[15:13];
+    bit<13> fragOffset = s.flags_fragOffset[12:0];
+    _ = _; // map all remaining fields unchanged
+}
+~ End P4Example
+
+An overlay must define all fields of the destination structure.  The
+"function" computing an overlay can only be used as an initializer in
+the declaration of a variable of the suitable type.  In an overlay
+each bit from a source field must be used at most once.  This
+restriction is necessary to compute how the fields of the source
+structure are changed when the destination structure is updated.
+
+Overlays can only be applied to `struct` and `header` objects, and
+they can only produce `struct` objects.  One cannot use a member of
+a `header_union` as an argument to an overlay.  A struct produced by
+an overlay can only contain fields of the base types: `bit<>` and
+`int<>`.  The only statement allowed within an overlay function is an
+assignment statement that assigns to a field of the destination.  The
+only expressions allowed within an overlay are:
+- field access
+- bit slicing
+- concatenation
+- casts that convert in either direction between bit<W> and int<W> (but not casts that
+  change the width)
+
+An overlay applied to a left-value is also a left-value.  Updating an
+overlay which is a left value will update the original structure or
+header.  If the input of an overlay is a header the rules about
+accessing uninitialized header fields are valid for the source header.
 
 ~ Begin P4Grammar
 overlayDeclaration
     : OVERLAY functionDeclaration
     ;
 ~ End P4Grammar
+
+An overlay can be implemented by the compiler by maintaining a map
+between each source bit and the corresponding destination bit.  Using
+this information the compiler can rewrite operations on the overlay by
+replacing them with operations performed directly on the source data
+structure.  For the previous example, the compiler could rewrite the
+parser `P` as follows:
+
+~ Begin P4Example
+parser P(...) {
+   IPv4_aligned header;
+   ...
+   state ipv4 {
+      packet.extract(header);
+      verify(header.version_ihl[7:4] == 5, error.UnsupportedVersion);
+   }
+}
+~ End P4Example
 
 ### Tuple types { #sec-tuple-types }
 
