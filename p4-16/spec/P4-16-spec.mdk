@@ -1761,6 +1761,8 @@ P4 supports the following built-in base types:
   restricted circumstances.
 - The `error` type, which is used to convey errors in a
   target-independent, compiler-managed way.
+- The `string` type, which can be used only for compile-time
+  constant string values.
 - The `match_kind` type, which is used for describing the implementation of
   table lookups,
 - `bool`, which represents Boolean values
@@ -1775,6 +1777,7 @@ baseType
     | ERROR
     | BIT
     | INT
+    | STRING
     | BIT '<' INTEGER '>'
     | INT '<' INTEGER '>'
     | VARBIT '<' INTEGER '>'
@@ -1857,12 +1860,23 @@ Boolean values are not integers or bit-strings.
 
 ### Strings { #sec-strings }
 
-P4 offers no support for string processing. The only strings that can
+The type `string` represents strings.  There are no operations on
+string values; one cannot declare variables with a `string` type.  P4
+does not support string manipulation in the dataplane; the `string`
+type is only allowed for denoting compile-time constant string values.
+These may be useful, for example, a specific target architecture may
+support an extern function for logging with the following signature:
+
+~ Begin P4Example
+extern void log(string message);
+~ End P4Example
+
+The type `string` can thus only be used for directionless parameters
+(see Section [#sec-calling-convention]).  The only strings that can
 appear in a P4 program are constant string literals, described in
-Section [#sec-string-literals]. String literals can only be used in
-annotations (described in Section [#sec-annotations]). For example,
-the following annotation indicates that a specific name should be used
-for a table when generating the control-plane API:
+Section [#sec-string-literals].  For example, the following annotation
+indicates that a specific name should be used for a table when
+generating the control-plane API:
 
 ~ Begin P4Example
 @name("acl") table t1 { ...}
@@ -7125,6 +7139,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.0
 
+* Added `string` type (Section [#sec-string].)
 * Allow 1-bit signed values
 * Define the type of bit slices from signed and unsigned values to be unsigned.
 * Constrain `default` label position for `switch` statements.
@@ -7181,9 +7196,10 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `false`   |  `header`   |  `header_union` | `if`         |
 |  `in`   | `inout` | `int`         | `match_kind` |
 | `package` | `parser` | `out`         | `return`  |
-| `select` | `state` | `struct`   |  `switch` |
-| `table`   | `transition` |  `true` |  `tuple` |
-| `typedef` | `varbit`  | `verify` | `void`       |
+| `select` | `state` | `string` | `struct`   |
+| `switch` | `table`   | `transition` |  `true` |
+| `tuple` | `typedef` | `varbit`  | `verify` |
+| `void`       | ||
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
