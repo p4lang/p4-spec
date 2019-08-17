@@ -6035,15 +6035,19 @@ struct apply_result(T) {
 ~ End P4Pseudo
 
 The evaluation of the `apply` method sets the `hit` field to `true`
-if a match is found in the lookup-table. This bit can be used to drive
-the execution of the control-flow in the control block that invoked
-the table:
+and the field `miss` to `false` if a match is found in the lookup-table.
+These bits can be used to drive the execution of the control-flow in the
+control block that invoked the table:
 
 ~ Begin P4Example
 if (ipv4_match.apply().hit) {
     // there was a hit
 } else {
     // there was a miss
+}
+
+if (ipv4_host.apply().miss) {
+    ipv4_lpm.apply(); // Lookup the route only if host table missed
 }
 ~ End P4Example
 
