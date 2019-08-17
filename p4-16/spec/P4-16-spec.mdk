@@ -2163,8 +2163,8 @@ target-specific).
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable `enum`s, because headers are
 allowed to have fields with such `enum` types.
-This requires the programmer provide both the fixed-width unsigned integer type and an associated
-fixed-width unsigned integer value for each symbolic entry in the enumeration.  For example, the
+This requires the programmer provide both the fixed-width unsigned (or signed) integer type and
+an associated integer value for each symbolic entry in the enumeration.  For example, the
 declaration
 
 ~ Begin P4Example
@@ -2189,7 +2189,7 @@ an `enum` with an underlying type can be thought of as being a type derived
 from the underlying type carrying equality, assignment, and casts to/from the
 underlying type.
 
-Compiler implementations are expected to raise an error if the fixed-width unsigned integer representation
+Compiler implementations are expected to raise an error if the fixed-width integer representation
 for an enumeration entry falls outside the representation range of the underlying
 type.
 
@@ -3046,6 +3046,61 @@ casts `a`, which was initialized to `E.e2` to a `bit<8>`, using the specified
 fixed-width unsigned integer representation for `E.e2`, `1`.  The variable `b` is then set to the
 symbolic value `E.e2`, which corresponds to the fixed-width unsigned integer value `1`.
 
+Because it is always safe to cast from an `enum` to its underlying fixed-width integer type,
+automatic casting from an `enum` to its fixed-width (signed or unsigned) integer type is also supported:
+
+~ Begin P4Example
+bit<8> x = E.e2; // sets x to 1 (E.e2 is automatically casted to bit<8>)
+
+E  a = E.e2
+bit<8> y = a << 3; // sets y to 8 (a is automatically casted to bit<8> and then shifted) 
+~ End P4Example
+
+Automatic casting from an underlying fixed-width type to an enum is *not* supported.
+
+~ Begin P4Example
+enum bit<8> E1 {
+   e1 = 0, e2 = 1, e3 = 2
+}
+
+enum bit<8> E1 {
+   e1 = 10, e2 = 11, e3 = 12
+}
+E1 a = E1.e1;
+E2 b = E2.e2;
+
+a = b;      // Error: b is automatically casted to bit<8>,
+            // but bit<8> cannot be automatically casted to E1
+            
+a = (E1) b; // OK
+
+a = E1.e1 + 1; // Error: E.e1 is automatically casted to bit<8>,
+               // and the right-hand expression has
+               // the type bit<8>, which cannot be casted to E automatically.
+              
+a = (E1)(E1.e1 + 1); // Final explicit casting makes the assinment legal
+
+a = E1.e1 + E1.e2; // Error: both arguments to the addition are automatically
+                   // casted to bit<8>. Thus the addition itself is legal, but
+                   // the assignment is not
+
+a = (E)(E.e1 + E.e2); //  Final explicit casting makes the assinment legal
+~ End P4Example
+
+A reasonable compiler might generate a warning in cases that involve multiple automatic casts.
+
+~ Begin P4Example
+E1     a = E1.e1;
+E2     b = E2.e2;
+bit<8> c;
+
+if (a > b) { // Warning: two automatic and different casts to bit<8>. Otherwise OK 
+   ...
+}
+
+c = a + b; // Legal, but a warning would be reasonable
+~ End P4Example
+
 Note that while it is always safe to cast from an `enum` to its fixed-width unsigned integer type,
 and vice versa, there may be cases where casting a fixed-width unsigned integer value to
 its related `enum` type produces an unnamed value.
@@ -3056,7 +3111,7 @@ E e = (E) x; // sets e to an unnamed value
 ~ End P4Example
 
 sets `e` to an unnamed value, since there is no symbol corresponding to the
-fixed-width unsigned integer value `5`.
+fixed-width unsigned integer value `5`. 
 
 For example, in the following code, the `else` clause of the `if/else if/else`
 block can be reached even though the matches on `x` are complete with respect
