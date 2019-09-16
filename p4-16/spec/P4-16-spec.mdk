@@ -2859,7 +2859,6 @@ expression
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
     | '{' kvList '}'
-    | typeName '{' kvList '}'
     | '(' expression ')'
     | '!' expression
     | '~' expression
@@ -3743,8 +3742,8 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
 with a list expression, as discussed in Section [#sec-list-exprs], or
-with a structure-valued expression, as described in
-[#sec-structure-expressions].  Both these cases must initialize all
+with a structure initializer, as described in
+[#sec-structure-initializers].  Both these cases must initialize all
 fields of the structure.
 
 Two structs can be compared for equality (==) or inequality (!=) only
@@ -3752,11 +3751,11 @@ if they have the same type and all of their fields can be recursively
 compared for equality.  Two structures are equal if and only if all
 their corresponding fields are equal.
 
-## Structure initializers { #sec-structure-expressions}
+## Structure initializers { #sec-structure-initializers }
 
 Structures can be initialized using structure initializers, which
 specify explicitly the intialized fields.  A structure initializer
-expression evaluates to an struct; it can be used on the right-hand
+expression evaluates to a struct; it can be used on the right-hand
 side of an initialization of a variable with a struct type.
 
 ~ Begin P4Grammar
@@ -3775,7 +3774,7 @@ kvPair
 ~ End P4Grammar
 
 The following example shows a structure initialized using a
-structure-valued expression:
+structure initializer:
 
 ~ Begin P4Example
 struct S {
@@ -3822,7 +3821,7 @@ valid:
 
 Similar to a `struct`, a header object can be initialized with a list
 expression [#sec-list-exprs] --- the list fields are assigned to the
-header fields in the order they appear, or with a struct initializer
+header fields in the order they appear --- or with a structure initializer
 expression [#sec-ops-on-structs].  When initialized the header
 automatically becomes valid:
 
