@@ -6049,15 +6049,20 @@ struct apply_result(T) {
 ~ End P4Pseudo
 
 The evaluation of the `apply` method sets the `hit` field to `true`
-if a match is found in the lookup-table. This bit can be used to drive
-the execution of the control-flow in the control block that invoked
-the table:
+and the field `miss` to `false` if a match is found in the lookup-table;
+if a match is not found `hit` is set to `false` and `miss` to `true`.
+These bits can be used to drive the execution of the control-flow in the
+control block that invoked the table:
 
 ~ Begin P4Example
 if (ipv4_match.apply().hit) {
     // there was a hit
 } else {
     // there was a miss
+}
+
+if (ipv4_host.apply().miss) {
+    ipv4_lpm.apply(); // Lookup the route only if host table missed
 }
 ~ End P4Example
 
@@ -7139,6 +7144,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.0
 
+* Added `table.apply().miss`
 * Added `string` type (Section [#sec-string].)
 * Allow 1-bit signed values
 * Define the type of bit slices from signed and unsigned values to be unsigned.
