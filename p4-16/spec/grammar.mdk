@@ -580,6 +580,15 @@ argument
     | DONTCARE
     ;
 
+kvList
+    : kvPair
+    | kvList ',' kvPair
+    ;
+
+kvPair
+    : name '=' expression
+    ;
+
 expressionList
     : /* empty */
     | expression
@@ -723,6 +732,7 @@ expression
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
+    | '{' kvList '}'
     | '(' expression ')'
     | '!' expression
     | '~' expression

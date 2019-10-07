@@ -2872,6 +2872,7 @@ expression
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
+    | '{' kvList '}'
     | '(' expression ')'
     | '!' expression
     | '~' expression
@@ -3754,12 +3755,48 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 `s` is an l-value, then `s.field` is also an l-value. P4 also allows
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
-with a list expression, as discussed in Section [#sec-list-exprs].
+with a list expression, as discussed in Section [#sec-list-exprs], or
+with a structure initializer, as described in
+[#sec-structure-initializers].  Both these cases must initialize all
+fields of the structure.
 
 Two structs can be compared for equality (==) or inequality (!=) only
 if they have the same type and all of their fields can be recursively
 compared for equality.  Two structures are equal if and only if all
 their corresponding fields are equal.
+
+## Structure initializers { #sec-structure-initializers }
+
+Structures can be initialized using structure initializers, which
+specify explicitly the intialized fields.  A structure initializer
+expression evaluates to a struct; it can be used on the right-hand
+side of an initialization of a variable with a struct type.
+
+~ Begin P4Grammar
+expression ...
+    | '{' kvList '}'
+    ;
+
+kvList
+    : kvPair
+    | kvList "," kvPair
+    ;
+
+kvPair
+    : name "=" expression
+    ;
+~ End P4Grammar
+
+The following example shows a structure initialized using a
+structure initializer:
+
+~ Begin P4Example
+struct S {
+    bit<32> a;
+    bit<32> b;
+}
+const S x = { a = 10, b = 20 };
+~ End P4Example
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
 for a description of the behavior if `struct` fields are read without
@@ -3796,10 +3833,17 @@ a `struct`---the list fields are assigned to the header fields in the
 order they appear.  In this case the header automatically becomes
 valid:
 
+Similar to a `struct`, a header object can be initialized with a list
+expression [#sec-list-exprs] --- the list fields are assigned to the
+header fields in the order they appear --- or with a structure initializer
+expression [#sec-ops-on-structs].  When initialized the header
+automatically becomes valid:
+
 ~ Begin P4Example
 header H { bit<32> x; bit<32> y; }
 H h;
 h = { 10, 12 };  // This also makes the header h valid
+h = { y = 12, x = 10 };  // Same effect as above
 ~ End P4Example
 
 Two headers can be compared for equality (==) or inequality (!=) only
