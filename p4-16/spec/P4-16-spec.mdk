@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.1.0
+Title Note: version 1.2.0-rc
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -2672,7 +2672,7 @@ control d(packet_out b, in Hdr h) {
 
 Functions and methods are the only P4 constructs that support
 overloading: there can exist multiple methods with the same name in
-the same scope.  Whe overloading is used, the compiler must be able to
+the same scope.  When overloading is used, the compiler must be able to
 disambiguate at compile-time which method or function is being called,
 either by the number of arguments or by the names of the arguments,
 when calls are specifying argument names.  Argument type information
@@ -4354,7 +4354,7 @@ table tbl {
 
 ## Operations on types introduced by `type` { #sec-newtype-operations }
 
-Values with a type introduced by the `type` keywork provide only few operations:
+Values with a type introduced by the `type` keyword provide only few operations:
 
 - assignment to left-values of the same type
 - comparisons for equality and inequality if the original type supported such comparisons
@@ -4491,7 +4491,7 @@ The `initializer` expression must be a compile-time known value.
 
 ## Variables { #sec-variables }
 
-Local variables are declared with an a type, a name, and an optional
+Local variables are declared with a type, a name, and an optional
 initializer (as well as an optional annotation):
 
 ~ Begin P4Grammar
@@ -7238,7 +7238,7 @@ The P4 compiler should provide:
 |       |          | restrictions on arguments to calls, and modified precedence of |
 |       |          | bitwise operators. |
 |-----|-----|-----|
-| 1.2.0 | October, 2019 | Added error `ParserInvalidArgument`, order of `const` entries, |
+| 1.2.0 | October, 14, 2019 | Added error `ParserInvalidArgument`, order of `const` entries, |
 |       |               | header size methods, 1-bit signed values, signed bit slices, empty |
 |       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
 |       |               | `table.apply().miss`, `string` type.                                |
@@ -7248,20 +7248,17 @@ The P4 compiler should provide:
 
 * Added `table.apply().miss` (Section [#sec-invoke-mau]).
 * Added `string` type (Section [#sec-string]).
-* Implicit casts from enum values (Section [#sec-enum-exprs]).
+* Added implicit casts from enum values (Section [#sec-enum-exprs]).
 * Allow 1-bit signed values
 * Define the type of bit slices from signed and unsigned values to be unsigned.
 * Constrain `default` label position for `switch` statements.
 * Allow empty tuples.
 * Added `@deprecated` annotation.
 * Relaxed the structure of annotation bodies.
-* Removed the `@pkginfo` annotation. This is defined by the P4Runtime
-  specification.
+* Removed the `@pkginfo` annotation, which is now defined by the P4Runtime specification.
 * Added `int` type (Section [#sec-infinite-precision-integers]).
-* Added error `ParserInvalidArgument` (Sections
-  [#sec-packet-extract-two], [#sec-skip-bits]).
-* Clarify the significance of order of entries in `const entries`
-  (Section [#sec-entries]).
+* Added error `ParserInvalidArgument` (Sections [#sec-packet-extract-two], [#sec-skip-bits]).
+* Clarified the significance of order of entries in `const entries` (Section [#sec-entries]).
 * Added methods to calculate header size (Section [#sec-ops-on-hdrs]).
 
 ## Summary of changes made in version 1.1.0
@@ -7557,7 +7554,7 @@ parameters: parsers, controls, extern methods, actions, and functions.
 | value types | yes       | yes     | yes     | yes     | yes      |
 |-------------|-----------|---------|---------|---------|----------|
 
-Extern method calls may return only return a value that is a value
+Extern method calls may only return a value that is a value
 type, or no value at all (specified by a return type of `void`).
 
 The next table lists restrictions on what kinds of calls can be made
