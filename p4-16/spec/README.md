@@ -25,6 +25,7 @@ Files:
 - ```Makefile``` builds documentation in the build subdirectory
 
 ## Building
+
 Follow the instructions for various platforms below.
 
 HINT: For *nix builds using make, you can use use `make html` for quicker turnarounds and `make` for the final htlp + PDF output.
