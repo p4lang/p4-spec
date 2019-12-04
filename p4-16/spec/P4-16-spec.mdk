@@ -7062,7 +7062,8 @@ Annotations are similar to C# attributes and Java annotations. They
 are a simple mechanism for extending the P4 language to some limited
 degree without changing the grammar. To some degree they subsume C `#pragma`s.
 Annotations are attached to types, fields, variables, etc. using the `@`
-syntax (as shown explicitly in the P4 grammar), and have an optional body:
+syntax (as shown explicitly in the P4 grammar). Unstructured annotations,
+or just "annotations," have an optional body; structured annotations have a mandatory body.
 
 ~ Begin P4Grammar
 optAnnotations
@@ -7078,17 +7079,18 @@ annotations
 annotation
     : '@' name
     | '@' name '(' annotationBody ')'
+    | '@' name '[' structuredAnnotationBody ']'
     ;
 ~ End P4Grammar
 
-## Bodies of annotations
+## Bodies of Unstructured Annotations
 
-The flexibility of P4 annotations comes from the minimal structure mandated by
-the P4 grammar: annotation bodies may contain any sequence of terminals, so
-long as parentheses are balanced. In the following grammar fragment, the
-`annotationToken` non-terminal represents any terminal produced by the lexer,
-including keywords, identifiers, string and integer literals, and symbols, but
-excluding parentheses.
+The flexibility of P4 unstructured annotations comes from the minimal structure
+mandated by the P4 grammar: unstructured annotation bodies may contain any
+sequence of terminals, so long as parentheses are balanced. In the following
+grammar fragment, the `annotationToken` non-terminal represents any terminal
+produced by the lexer, including keywords, identifiers, string and integer
+literals, and symbols, but excluding parentheses.
 
 ~ Begin P4Grammar
 annotationBody
@@ -7097,16 +7099,83 @@ annotationBody
     | annotationBody annotationToken
 ~ End P4Grammar
 
-Annotations may impose additional structure on their bodies, and are not
-confined to the P4 language. For example, the P4Runtime specification defines a
-`@pkginfo` annotation that takes key-value pairs, which are not found in the
-main P4 language.
+Unstructured annotations may impose additional structure on their bodies, and
+are not confined to the P4 language. For example, the P4Runtime specification
+defines a `@pkginfo` annotation that takes key-value pairs, which are not found
+in the main P4 language.
+
+## Bodies of Structured Annotations
+Structured annotations have a specific format and are used declare metadata,
+consisting of expressions and key-value pairs. The `expression`s within the
+`nonEmptyExpressionList`, as well as within the `kvList`, must be either string
+literals, or evaluate at compile-time to integers.
+
+~ Begin P4Grammar
+stucturedAnnotationBody
+    : nonEmptyExpressionList
+    | kvList
+    ;	
+...
+nonEmptyExpressionList
+    : expression
+    | expressionList ',' expression
+    ;
+...
+kvList
+    : kvPair
+    | kvList ',' kvPair
+    ;
+
+kvPair
+    : name '=' expression
+    ;
+
+~ End P4Grammar
+
+For example, to assign two "labels" to a P4 table (which ostensibly could be
+used to render a GUI):
+
+~ Begin P4Example
+@Labels[short="Short Label", hover="My Longer Table Label to appear in hover-help"]
+table t {
+    actions = {
+       a
+    }
+    ...
+}
+~ End P4Example
+
+Structured annotations use square brackets `[..]` instead of parentheses to
+enclose the mandatory body. The body can consist of an expression list or a
+key-value pair list. The different forms cannot be mixed in the same annotation.
+You can have multiple, heterogenous annotations for an allowed P4 token; the
+expressions and/or kv-pairs are cumulative and the body types can be freely
+combined. 
+
+~ Begin P4Example
+@MyStructuredAnno[1,"hello"]
+@MyStructuredAnno[10-8]
+@MyStructuredAnno[k1=3*4,k2="apple"]
+@MyStructuredAnno[k3=42]
+@MyUnstructuredAnno(Some random content)
+@MyUnstructuredAnno(Some more random content)
+// table t effectively has:
+//   @MyStructuredAnno[1, 'hello', 2, k1=12, k2="apple"", k3=42]
+//   as well as two instances of @MyUnstructuredAnno()
+table t {
+    actions = {
+       a
+    }
+    ...
+}
+~ End P4Example
 
 ## Predefined annotations
 
 Annotation names that start with lowercase letters are reserved for
 the standard library and architecture.  This document pre-defines a
-set of "standard" annotations in Appendix [#sec-p4-reserved-annotations].  We expect that this list will grow.
+set of "standard" annotations in Appendix [#sec-p4-reserved-annotations].
+We expect that this list will grow.
 We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., an organization named X would use
 annotations named like `@X_annotation`
