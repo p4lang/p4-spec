@@ -1190,8 +1190,11 @@ P4 offers a very simple module system.  Modules enable programmers to
 decompose a program into multiple source files and libraries.
 
 In the compilation process the preprocessing step is executed first.
-After preprocessing the modules are loaded.  Modules offer a
-functionality similar to `#include` directives:
+After preprocessing the modules are loaded.  Before a module is loaded
+a *new* preprocessor is applied to its source file (no preprocessor
+definitions are inherited from previous preprocessor invocations).  If
+a module is imported multiple times it is preprocessed anew each time.
+Modules offer a functionality similar to `#include` directives:
 
 * Both enable a program to be decomposed into multiple source files.
 
@@ -1203,7 +1206,10 @@ functionality similar to `#include` directives:
   P4 compiler for `import`-ed modules.  In general, the compiler will
   maintain an ordered list of module library paths, and every `import`
   statement will search the specified files in order under each of the
-  library paths, loading the first file that matches.
+  library paths, loading the first file that matches.  For example,
+  invoking the p4 compiler with the flags `-L /lib -L /vendor/modules`
+  will search each module first in the directory `/lib` and then in the
+  directory `/vendor/modules`.
 
 There are also some important differences between modules and
 `#included` files:
@@ -1219,18 +1225,20 @@ There are also some important differences between modules and
 
 * `#include` directives function transitively: a file included from
   another included file has the exact same visibility as the top-level
-  constructs.  In contrast, transitively included modules are
-  completely invisible at the top-level.
+  constructs, and preprocessor macro definitions are visible across
+  all transitive inclusions.  In contrast, transitively included
+  modules are completely invisible at the top-level, and each module is
+  preprocessed by a fresh preprocessor instance.
 
 The following keywords are used to construct modules in P4:
 
 * `import`, `into`: import definitions from a module
-* `private`: mark definitions of a module as non-importable
+* `private`: mark a declaration in a module as non-importable
 
 ### Importing modules { #sec-import }
 
 A definitions in a module can be imported into the global namespace
-with the following statement, executed at compile-time.
+with the following statement, executed at compile-time:
 
 `import module/path/file.p4`
 
@@ -1252,7 +1260,7 @@ namespacePath: IDENTIFIER
 of the `import` statement is to include all the definitions in the
 imported module in the place of the `import` module.  An import is
 followed by an optional path separated by slashes and by a file name.
-Only *relative* paths are allowed.
+Paths cannot start with a slash.
 
 Alternatively, the definitions in a module can be imported in a
 separate namespace with the following construct:
@@ -1284,7 +1292,9 @@ code.
 
 If the top-level P4 program imports module `a` which in turns imports
 module `b`, none of the declarations in module `b` are visible at the
-top-level; they are only visible in the `a` module itself.
+top-level; they are only visible in the `a` module itself.  The search
+path for modules imported by `a` is the same as the search path of
+modules imported by the top-level.
 
 ## P4 core library
 
@@ -1464,6 +1474,7 @@ A P4 program is a list of declarations:
 p4program
     : /* empty */
     | p4program declaration
+    | p4program PRIVATE declaration
     | p4program ';'  /* empty declaration */
     ;
 
