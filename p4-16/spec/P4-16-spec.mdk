@@ -1180,7 +1180,113 @@ produced by different programmers at different times:
   protocol header definitions), and
 - the P4 programs that specify the behavior of each programmable block.
 
-### P4 core library
+The use of the `#include` preprocessor directive is discouraged;
+instead the users should employ the newer module `import` directive
+described in section [#sec-modules].
+
+## Modules { #sec-modules }
+
+P4 offers a very simple module system.  Modules enable programmers to
+decompose a program into multiple source files and libraries.
+
+In the compilation process the preprocessing step is executed first.
+After preprocessing the modules are loaded.  Modules offer a
+functionality similar to `#include` directives:
+
+* Both enable a program to be decomposed into multiple source files.
+
+* Both need to some degree to understand the filesystem layout of
+  modules.  The standard C preprocessor does this through the use of
+  the `-I` flag to specify the location of directories where included
+  files have to searched.  We recommend the use of the `-L` flag for a
+  similar role for specifying filesystem paths to be searched by the
+  P4 compiler for `import`-ed modules.  In general, the compiler will
+  maintain an ordered list of module library paths, and every `import`
+  statement will search the specified files in order under each of the
+  library paths, loading the first file that matches.
+
+There are also some important differences between modules and
+`#included` files:
+
+* `#include` directives produce flat files.  In contrast, P4 modules
+  can optionally create new namespaces, allowing P4 programs to make
+  use of multiple libraries without concern about name clashes.
+
+* `#include` directives do not understand anything about the P4 syntax
+  and semantics, they are purely string processing operations.  In
+  particular, the included files do not have to be syntactically
+  correct P4 programs or program fragments.
+
+* `#include` directives function transitively: a file included from
+  another included file has the exact same visibility as the top-level
+  constructs.  In contrast, transitively included modules are
+  completely invisible at the top-level.
+
+The following keywords are used to construct modules in P4:
+
+* `import`, `into`: import definitions from a module
+* `private`: mark definitions of a module as non-importable
+
+### Importing modules { #sec-import }
+
+A definitions in a module can be imported into the global namespace
+with the following statement, executed at compile-time.
+
+`import module/path/file.p4`
+
+~ Begin P4Grammar
+importStatement: IMPORT filePath
+               | IMPORT filePath INTO namespacePath
+               ;
+
+filePath: FILENAME
+        | DIRECTORYNAME SLASH filePath
+        ;
+
+namespacePath: IDENTIFIER
+             | namespacePath DOT IDENTIFIER
+             ;
+~ End P4Grammar
+
+`import` statements must be present at the top-level only.  The effect
+of the `import` statement is to include all the definitions in the
+imported module in the place of the `import` module.  An import is
+followed by an optional path separated by slashes and by a file name.
+Only *relative* paths are allowed.
+
+Alternatively, the definitions in a module can be imported in a
+separate namespace with the following construct:
+
+`import module/path/file.p4 into namespace`
+
+The effect of this statement is similar to the simple import; in
+addition, the names of all declarations that are imported will be
+prefixed with the `namespace.` prefix (including a trailing dot).
+
+If a module is imported into a namespace then all its declarations are
+available prefixed with the respective namespace.
+
+~ Begin P4Grammar
+pathPrefix: DOT
+          | IDENTIFIER DOT
+          | pathPrefix IDENTIFIER DOT
+          ;
+~ End P4Grammar
+
+### Private declarations
+
+A declaration in a module can be prefixed with the `private` keyword.
+This will cause the declaration not to be visible in the importing
+programs; however, the declaration is still accessible in the imported
+code.
+
+### Transitive imports
+
+If the top-level P4 program imports module `a` which in turns imports
+module `b`, none of the declarations in module `b` are visible at the
+top-level; they are only visible in the `a` module itself.
+
+## P4 core library
 
 The P4 language specification defines a core library that includes
 several common programming constructs. A
@@ -1191,6 +1297,13 @@ library. Including the core library is done with
 ~ Begin P4Example
 # include <core.p4>
 ~ End P4Example
+
+Alternatively, using the module system the core library can be imported using
+
+~ Begin P4Example
+import core.p4
+~ End P4Example
+
 
 ## Lexical constructs { #sec-lexical }
 
@@ -1365,6 +1478,7 @@ declaration
     | errorDeclaration
     | matchKindDeclaration
     | functionDeclaration
+    | importStatement
     ;
 ~ End P4Grammar
 
@@ -1443,7 +1557,7 @@ following expressions are legal l-values:
 ~ Begin P4Grammar
 prefixedNonTypeName
     : nonTypeName
-    | dotPrefix nonTypeName
+    | pathPrefix nonTypeName
     ;
 
 lvalue
@@ -2114,7 +2228,7 @@ namedType
 
 prefixedType
     : TYPE_IDENTIFIER
-    | dotPrefix TYPE_IDENTIFIER
+    | pathPrefix TYPE_IDENTIFIER
     ;
 
 typeName
@@ -2868,7 +2982,7 @@ expression
     | FALSE
     | STRING_LITERAL
     | nonTypeName
-    | dotPrefix nonTypeName
+    | pathPrefix nonTypeName
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
     | '{' expressionList '}'
