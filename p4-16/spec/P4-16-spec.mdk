@@ -7107,8 +7107,11 @@ in the main P4 language.
 ## Bodies of Structured Annotations
 Structured annotations have a specific format and are used declare metadata,
 consisting of expressions and key-value pairs. The `expression`s within the
-`nonEmptyExpressionList`, as well as within the `kvList`, must be either string
-literals, or evaluate at compile-time to integers.
+`nonEmptyExpressionList`, as well as within the `kvList`, must 
+evaluate at compile-time to string literals, infinite-precision integers, or booleans.
+
+Note that P4Runtime information (P4Info) may stipulate additional restrictions. For example,
+an integer expression might be limited to 64-bit values.
 
 ~ Begin P4Grammar
 stucturedAnnotationBody
@@ -7150,7 +7153,7 @@ enclose the mandatory body. The body can consist of an expression list or a
 key-value pair list. The different forms cannot be mixed in the same annotation.
 You can have multiple, heterogenous annotations for an allowed P4 token; the
 expressions and/or kv-pairs are cumulative and the body types can be freely
-combined. 
+combined. It is an error to declare a duplicate key.
 
 ~ Begin P4Example
 @MyStructuredAnno[1,"hello"]
