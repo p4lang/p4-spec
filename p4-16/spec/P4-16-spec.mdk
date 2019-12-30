@@ -7200,6 +7200,63 @@ The `@match` annotation, described in Section [#sec-select], is used
 to specify a `match_kind` value other than the default `match_kind` of
 `exact` for a field of a `value_set`.
 
+### Extern function/method annotations { #sec-extern-annotations }
+
+Various annotations may appear on extern function and method declarations
+to describe limitations on the behavior and interactions of those
+functions.  By default extern functions might have any effect on the
+environment of the P4 program and might interact in non-trivial ways.
+Since externs are architecture-specific and their behavior is known to
+the architecture definition, these annotations are not strictly necessary
+(an implementation can have knowledge of how externs interact based
+on their names built into it), but these annotations provide a uniform
+way of describing certain well-defined interactions (or their absence),
+allowing architecture-indepedent analysis of P4 programs.
+
+- `@pure` - Describes a function that depends solely on its `in` argument
+  values and has no effect other than its `out` argument values and return
+  value.  No hidden state is recorded between calls, and its value does
+  not depend on any hidden state that may be changed by other calls.
+  An example is the `hash` function which computes a deterministic
+  hash of its arguments.  A `@pure` function whose results are unused
+  may be safely eliminated with no adverse effects, and mulitple calls
+  with identical arguments may be combined into a single call.  `@pure`
+  functions may also be reoerdered with respect to other computations
+  that are not data dependent.
+
+- `@noSideEffects` - Weaker than `@pure` and describes a function that
+  does not change any hidden state, but may depend on hidden state.
+  Such a function may be dead code eliminated, and may be reordered
+  or combined with other `@noSideEffects` or `@pure` calls, but not
+  with other function calls that may have side effects that affect
+  the function.
+
+- `@localState` - When applied to an extern method, the extern method
+  implementation might read and/or write internal state, but all such
+  accessed state is limited to state associated directly with the extern
+  object instance on which the method is called. When applied to an extern
+  function, the accessible state is restricted to state associated directly
+  with this extern function. Method and function calls so annotated will
+  never read, nor write, global state of the architecture, nor the state
+  of any other extern object instance or function.
+
+- `@packetState` - Similar to `@localState`, except it is even more
+  restricted in the state that can be accessed. The internal state of the
+  extern object instance or extern function is partitioned by packets being
+  processed in the device. The extern method/function can only access the
+  part of its internal state that is associated with the current packet
+  being processed by the P4_16 code that made the method/function call. An
+  annotation of `@packetState` implies an annotation of `@localState`.
+
+- `@localIndexedState` - Similar to `@localState`, except it is even
+  more restricted in the state that can be accessed. The internal state
+  of the extern object instance or extern function is partitioned into an
+  array of independently accessible sub-states, each with its own index or
+  associated table entry. The extern method/function call can only access
+  the internal state associated with that one index, or one table entry,
+  and no others. An annotation of `@localIndexedState` implies an annotation
+  of `@localState`.
+
 ### Deprecated annotation { #sec-deprecated-anno }
 
 The `deprecated` annotation has a required string argument that is a
@@ -7329,6 +7386,11 @@ The following table shows all P4 reserved annotations.
 | `optional`    | parameter is optional                              | [#sec-optional-parameter-annotations] |
 | `tableonly`   | action cannot be a defalt_action                   | [#sec-table-action-anno] |
 | `deprecated`  | Construct has been deprecated                      | [#sec-deprecated-anno]   |
+| `pure`        | pure function                                      | [#sec-extern-annotations] |
+| `noSideEffects` | function with no side effects                    | [#sec-extern-annotations] |
+| `localState`  | limited hidden state                               | [#sec-extern-annotations] |
+| `packetState` | limited hidden state                               | [#sec-extern-annotations] |
+| `localIndexedState`| limited hidden state                          | [#sec-extern-annotations] |
 |---------------|----------------------------------------------------|--------------------------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
