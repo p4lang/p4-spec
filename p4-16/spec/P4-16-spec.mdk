@@ -7058,12 +7058,13 @@ diagnostics.
 
 # Annotations { #sec-annotations }
 
-Annotations are similar to C# attributes and Java annotations. They
-are a simple mechanism for extending the P4 language to some limited
-degree without changing the grammar. To some degree they subsume C `#pragma`s.
-Annotations are attached to types, fields, variables, etc. using the `@`
-syntax (as shown explicitly in the P4 grammar). Unstructured annotations,
-or just "annotations," have an optional body; structured annotations have a mandatory body.
+Annotations are similar to C# attributes and Java annotations. They are a simple
+mechanism for extending the P4 language to some limited degree without changing
+the grammar. To some degree they subsume C `#pragma`s. Annotations are attached
+to types, fields, variables, etc. using the `@` syntax (as shown explicitly in
+the P4 grammar). Unstructured annotations, or just "annotations," have an
+optional body; structured annotations have a mandatory body, containing at least
+a pair of square brackets `[]`.
 
 ~ Begin P4Grammar
 optAnnotations
@@ -7107,22 +7108,21 @@ in the main P4 language.
 ## Bodies of Structured Annotations
 
 Unlike unstructured annotations, structured annotations use square brackets
-`[...]` and have a specific format. They are commonly used to declare custom
-metadata, consisting of expression lists or key-value lists but not both (except
-that the value of a `kvPair` may itelf be an `expressionList`). An
-`expressionList` may be empty or contain a comma-separated list of members. A
-`kvList` consists of one or more `kvPair`s, each consisting of a key and a
-value; the value is an `expressionList`. 
+`[...]` and have a restricted format. They are commonly used to declare custom
+metadata, consisting of expression lists or key-value lists but not both. An
+`expressionList` may be empty or contain a comma-separated list of member
+`expression`s. A `kvList` consists of one or more `kvPair`s, each consisting of
+a key and a value `expression`. Note the syntax for `expression` is rich, see
+Appendix [#sec-grammar] for details.
 
 To avoid ambiguity, an empty `stucturedAnnotationBody` is by definition
-considered to contain an empty `expressionList`. Furthermore, the value of a `kvPair` may
-be the empty `expressionList`, in which case the pair is considered to
-contain a key without a value.
+considered to contain an empty `expressionList`.
 
-The `expression`s within an `expressionList` must evaluate at compile-time to
-string literals, infinite-precision integers or booleans. Note that P4Runtime
-information (P4Info) may stipulate additional restrictions. For example, an
-integer expression might be limited to 64-bit values.
+All `expression`s (and nested expressions) within a `stucturedAnnotationBody`
+must evaluate at compile-time to string literals, infinite-precision integers or
+booleans. Note that P4Runtime information (P4Info) may stipulate additional
+restrictions. For example, an integer expression might be limited to 64-bit
+values.
 
 It is illegal to duplicate a key within an annotation.  It is illegal to use the
 same annotation `name` on a given `annotationToken`.
@@ -7145,14 +7145,14 @@ kvList
     ;
 
 kvPair
-    : name '=' expressionList
+    : name '=' expression
     ;
 
 ~ End P4Grammar
 
 ### Structured Annotation Examples
 
-#### Empty Expression List
+**Empty Expression List**
 
 The following example produces the empty `expressionList`.
 
@@ -7164,10 +7164,12 @@ table t {
 ~ End P4Example
 
 
-#### Mixed Expression List
+**Mixed Expression List**
 
-The following example will produce an effective expression list of
-`[1,"hello",true, false, 11]`
+The following example will produce an effective expression list as follows:
+```
+[1,"hello",true, false, 11]
+```
 
 ~ Begin P4Example
 #define TEXT_CONST "hello"
@@ -7178,7 +7180,7 @@ table t {
 }
 ~ End P4Example
 
-#### kvList of Strings
+**kvList of Strings**
 
 ~ Begin P4Example
 @Labels[short="Short Label", hover="My Longer Table Label to appear in hover-help"]
@@ -7187,27 +7189,23 @@ table t {
 }
 ~ End P4Example
 
-#### kvList of Mixed Expressions
+**kvList of Mixed Expressions**
 
-The following example will produce a kvPair list as follows. Note one of the
-`kvPair`s has a value which is an `expressionList`.
+The following example will produce an effective kvList as follows. Note one of
+the `kvPair`s has a value which is an `{expressionList}`.
 
 ```
-label=text, my_bool=true, expr_list=[1,"hello",true, false, 11], empty_key=,
-int_val=6
+[label="text", my_bool=true, list_key={"a", 11, false}, int_val=6]
 ```
 
 ~ Begin P4Example
-#define TEXT_CONST "hello"
-#define NUM_CONST 6
-@MixedKV[label="text", my_bool=true, expr_list=1,TEXT_CONST,true,1==2,5+NUM_CONST,\
-       empty_key=, int_val=2*3]
+@MixedKV[label="text", my_bool=true, list_key={"a", 5+6, 1==2}, int_val=2*3]
 table t {
     ...
 }
 ~ End P4Example
 
-#### Illegal Mixing of `kvPair` and `expressionList`
+**Illegal Mixing of `kvPair` and `expressionList`**
 
 The following example is invalid because the body contains both a `kvPair` and
 an `expression`:
@@ -7219,7 +7217,7 @@ table t {
 }
 ~ End P4Example
 
-#### Illegal Duplicate Key
+**Illegal Duplicate Key**
 
 The following example is invalid because the same key occurs more than once:
 
@@ -7231,7 +7229,7 @@ table t {
 ~ End P4Example
 
 
-#### Illegal Duplicate Annotation
+**Illegal Duplicate Annotation**
 
 The following example is invalid because the annotation `name` occurs more
 than once on the same token, e.g. `table t`:
