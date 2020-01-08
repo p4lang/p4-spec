@@ -515,7 +515,12 @@ keyElement
 
 actionList
     : /* empty */
-    | actionList actionRef ';'
+    | actionList optAnnotations actionRef ';'
+    ;
+
+actionRef
+    : prefixedNonTypeName
+    | prefixedNonTypeName '(' argumentList ')'
     ;
 
 entriesList
@@ -525,11 +530,6 @@ entriesList
 
 entry
     : keysetExpression ':' actionRef optAnnotations ';'
-    ;
-
-actionRef
-    : optAnnotations prefixedNonTypeName
-    | optAnnotations prefixedNonTypeName '(' argumentList ')'
     ;
 
 /************************* ACTION ********************************/

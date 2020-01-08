@@ -5839,12 +5839,12 @@ the `actions` property; the value of this property is always an `actionList`:
 ~ Begin P4Grammar
 actionList
     : /* empty */
-    | actionList actionRef ';'
+    | actionList optAnnotations actionRef ';'
     ;
 
 actionRef
-    : optAnnotations prefixedNonTypeName
-    | optAnnotations prefixedNonTypeName '(' argumentList ')'
+    : prefixedNonTypeName
+    | prefixedNonTypeName '(' argumentList ')'
     ;
 ~ End P4Grammar
 
@@ -5988,9 +5988,9 @@ mix mutable and immutable entries in the same table, by declaring
 additional `entries` properties without the `const` keyword.
 
 The `keysetExpression` component of an entry is a tuple that must
-provide a field for each key in the table keys (see
-Sec. [#sec-table-props]). The table key type must match the type of
-the element of the set. `actionRef` must be an action which
+provide a field for each key in the table keys (see Sec.
+[#sec-table-props]). The table key type must match the type of the
+element of the set. The `actionRef` component must be an action which
 appears in the table actions list, with all its arguments bound.
 
 If the runtime API requires a priority for the entries of a
@@ -6050,16 +6050,18 @@ control ingress(inout Header_t h, inout Meta_t m,
             (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4);
             (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5);
             (0x06, _                ) : a_with_control_params(6);
+            _                         : a;
         }
     }
 
 }
 ~ End P4Example
 
-In this example we define a set of 6 entries that cause the invocation
-of action `a_with_control_params`. Once the program is loaded,
-these entries are installed in the table in the order they are
-enumerated in the program.
+In this example we define a set of 7 entries, all of which invoke
+action `a_with_control_params` except for the final entry which
+invokes action `a`. Once the program is loaded, these entries are
+installed in the table in the order they are enumerated in the
+program.
 
 #### Size {#sec-size-table-property}
 
