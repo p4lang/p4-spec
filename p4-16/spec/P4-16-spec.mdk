@@ -3950,11 +3950,15 @@ expressions are legal:
 
 - `hs[index]`: produces a reference to the header at the
   specified position within the stack; if `hs` is an l-value, the
-  result is also an l-value. The header may be invalid. Some architectures
+  result is also an l-value. The header may be invalid. Some implementations
   may impose the constraint that the index expression evaluates to a
-  compile-time known value. Accessing a header stack ``hs`` with an
-  index less than `0` or greater than `hs.size` results in an
-  undefined value.
+  compile-time known value. A P4 compiler must give an error if an
+  index value that is a compile-time constant is out of range.
+
+  Accessing a header stack ``hs`` with an index less than `0` or
+  greater than `hs.size` results in an undefined value.  See Section
+  [#sec-uninitialized-values-and-writing-invalid-headers] for more
+  details.
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -4378,6 +4382,19 @@ bool b2 = x == y;  // no cast needed
 
 ## Reading uninitialized values and writing fields of invalid headers { #sec-uninitialized-values-and-writing-invalid-headers }
 
+As mentioned in Section [#sec-expr-hs], any reference to an element of
+a header stack `hs[index]` where `index` is a compile-time constant
+expression must give an error at compile time if the value of the
+index is out of range.  That section also defines the run time
+behavior of the expressions `hs.next` and `hs.last`, and the behaviors
+specified there take precedence over anything in this section for
+those expressions.  All mentions of header stack elements in this
+section only apply for expressions `hs[index]` where `index` is not a
+compile-time constant value.  An implementation is permitted not to
+implement any such expressions at all, but if they do support these
+expressions, they should conform to the behaviors specified in this
+section.
+
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
 
@@ -4390,6 +4407,13 @@ some unspecified value will be used for that field.
   called, which was not assigned a value during the execution of that
   `control` or `action` (this list of examples is not intended to be
   exhaustive).
+- reading a field of a header that is an element of a header stack,
+  where the index is out of range for the header stack.
+
+TBD: Should an expression like
+`my_hdr_stack[non_constant_index].isValid()` be defined as guaranteed
+always false if the index is out of range?  Or should that value be
+allowed to be undefined, too?
 
 Where a header is mentioned, it may be a member of a `header_union`,
 an element in a header stack, or a normal header.  This unspecified
@@ -4418,18 +4442,28 @@ Such a write must not change the validity of any member headers of
 `u1`, nor any other state that is currently defined in the system,
 whether it is defined state in header fields or anywhere else.
 
-If a write is performed to a field in a currently invalid header, and
-that header is not part of a `header_union`, that write must not
-change any state that is currently defined in the system, neither in
-header fields nor anywhere else.  In particular, that invalid header
-must remain invalid.
+If any of these kinds of writes are performed:
 
-Either of the kinds of writes to fields in a currently invalid header
-is allowed to modify state whose values are not defined, e.g. the
-values of fields in headers that are currently invalid.
++ a write to a field in a currently invalid header, either a regular
+  header or an element of a header stack that is in range, and that
+  header is not part of a `header_union`
++ a write to a field in an element of a header stack, where the index
+  is out of range
++ a method call of `setValid()` or `setInvalid()` on an element of a
+  header stack, where the index is out of range
+
+then that write must not change any state that is currently defined in
+the system, neither in header fields nor anywhere else.  In
+particular, if an invalid header is involved in the write, it must
+remain invalid.
+
+Any writes to fields in a currently invalid header, or to header stack
+elements where the index is out of range, are allowed to modify state
+whose values are not defined, e.g. the values of fields in headers
+that are currently invalid.
 
 For a top level `parser` or `control` in an architecture, it is up to
-that architecture to specify whether `control` parameters with
+that architecture to specify whether parameters with
 direction `in` or `inout` are initialized when the control is called,
 and under what conditions they are initialized, and if so, what their
 values will be.
