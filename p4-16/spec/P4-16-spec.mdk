@@ -4388,12 +4388,15 @@ expression must give an error at compile time if the value of the
 index is out of range.  That section also defines the run time
 behavior of the expressions `hs.next` and `hs.last`, and the behaviors
 specified there take precedence over anything in this section for
-those expressions.  All mentions of header stack elements in this
-section only apply for expressions `hs[index]` where `index` is not a
-compile-time constant value.  An implementation is permitted not to
-implement any such expressions at all, but if they do support these
-expressions, they should conform to the behaviors specified in this
-section.
+those expressions.
+
+All mentions of header stack elements in this section only apply for
+expressions `hs[index]` where `index` is a run time variable
+expression, i.e. not a compile-time constant value.  A P4
+implementation is allowed not to support `hs[index]` where `index` is
+a run time variable expression, but if it does support these
+expressions, the implementation should conform to the behaviors
+specified in this section.
 
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
@@ -4411,9 +4414,9 @@ some unspecified value will be used for that field.
   where the index is out of range for the header stack.
 
 TBD: Should an expression like
-`my_hdr_stack[non_constant_index].isValid()` be defined as guaranteed
-always false if the index is out of range?  Or should that value be
-allowed to be undefined, too?
+`my_hdr_stack[run_time_variable_index].isValid()` be defined as
+guaranteed always false if the index is out of range?  Or should that
+value be allowed to be undefined, too?
 
 Where a header is mentioned, it may be a member of a `header_union`,
 an element in a header stack, or a normal header.  This unspecified
@@ -4445,8 +4448,8 @@ whether it is defined state in header fields or anywhere else.
 If any of these kinds of writes are performed:
 
 + a write to a field in a currently invalid header, either a regular
-  header or an element of a header stack that is in range, and that
-  header is not part of a `header_union`
+  header or an element of a header stack with an index that is in
+  range, and that header is not part of a `header_union`
 + a write to a field in an element of a header stack, where the index
   is out of range
 + a method call of `setValid()` or `setInvalid()` on an element of a
