@@ -707,15 +707,15 @@ lvalue
 %left ','
 %nonassoc '?'
 %nonassoc ':'
-%left OR
-%left AND
-%left EQ NE
-%left '<' '>' LE GE
+%left '||'
+%left '&&'
+%left '==' '!='
+%left '<' '>' '<=' '>='
 %left '|'
 %left '^'
 %left '&'
-%left SHL
-%left PP '+' '-' '|+|' '|-|'
+%left '<<' '>>'
+%left '++' '+' '-' '|+|' '|-|'
 %left '*' '/' '%'
 %right PREFIX
 %nonassoc ']' '(' '['
@@ -735,10 +735,10 @@ expression
     | '{' expressionList '}'
     | '{' kvList '}'
     | '(' expression ')'
-    | '!' expression
-    | '~' expression
-    | '-' expression
-    | '+' expression
+    | '!' expression %prec PREFIX
+    | '~' expression %prec PREFIX
+    | '-' expression %prec PREFIX
+    | '+' expression %prec PREFIX
     | typeName '.' member
     | ERROR '.' member
     | expression '.' member
@@ -749,20 +749,20 @@ expression
     | expression '-' expression
     | expression '|+|' expression
     | expression '|-|' expression
-    | expression SHL expression        // <<
-    | expression '>''>' expression     // check that >> are adjacent
-    | expression LE expression         // <=
-    | expression GE expression         // >=
+    | expression '<<' expression
+    | expression '>>' expression
+    | expression '<=' expression
+    | expression '>=' expression
     | expression '<' expression
     | expression '>' expression
-    | expression NE expression         // !=
-    | expression EQ expression         // ==
+    | expression '!=' expression
+    | expression '==' expression
     | expression '&' expression
     | expression '^' expression
     | expression '|' expression
-    | expression PP expression         // ++
-    | expression AND expression        // &&
-    | expression OR expression         // ||
+    | expression '++' expression
+    | expression '&&' expression
+    | expression '||' expression
     | expression '?' expression ':' expression
     | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
