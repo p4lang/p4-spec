@@ -7118,9 +7118,11 @@ Appendix [#sec-grammar] for details.
 To avoid ambiguity, an empty `stucturedAnnotationBody` is by definition
 considered to contain an empty `expressionList`.
 
-All `expression`s (and nested expressions) within a `stucturedAnnotationBody`
-must evaluate at compile-time to string literals, infinite-precision integers or
-booleans. Note that P4Runtime information (P4Info) may stipulate additional
+All `expression`s within a `stucturedAnnotationBody` must evaluate at
+compile-time to one of the following base types: string literals,
+infinite-precision integers or booleans. Nested `expression`s (e.g. an
+`expression` containing an `expressionList`, a `kvList`, etc.) are not
+allowed. Note that P4Runtime information (`P4Info`) may stipulate additional
 restrictions. For example, an integer expression might be limited to 64-bit
 values.
 
@@ -7191,15 +7193,14 @@ table t {
 
 **kvList of Mixed Expressions**
 
-The following example will produce an effective kvList as follows. Note one of
-the `kvPair`s has a value which is an `{expressionList}`.
+The following example will produce an effective kvList as follows.
 
 ```
-[label="text", my_bool=true, list_key={"a", 11, false}, int_val=6]
+[label="text", my_bool=true, int_val=6]
 ```
 
 ~ Begin P4Example
-@MixedKV[label="text", my_bool=true, list_key={"a", 5+6, 1==2}, int_val=2*3]
+@MixedKV[label="text", my_bool=true, int_val=2*3]
 table t {
     ...
 }
