@@ -7118,16 +7118,18 @@ Appendix [#sec-grammar] for details.
 To avoid ambiguity, an empty `stucturedAnnotationBody` is by definition
 considered to contain an empty `expressionList`.
 
-All `expression`s within a `stucturedAnnotationBody` must evaluate at
-compile-time to one of the following base types: string literals,
-infinite-precision integers or booleans. Nested `expression`s (e.g. an
+All `expression`s within a `stucturedAnnotationBody` must be compile-time
+known values, either literals or expressions requiring compile-time
+evaluation, with a result type that is one of: string literals,
+infinite-precision integer, or boolean. Nested `expression`s (e.g. an
 `expression` containing an `expressionList`, a `kvList`, etc.) are not
 allowed. Note that P4Runtime information (`P4Info`) may stipulate additional
 restrictions. For example, an integer expression might be limited to 64-bit
 values.
 
-It is illegal to duplicate a key within an annotation.  It is illegal to use the
-same annotation `name` on a given `annotationToken`.
+It is illegal to duplicate a `key` within the `kvList` of a structured
+annotation.  It is illegal to use the same annotation `name` on a given
+`annotationToken` for structured annotations.
 
 ~ Begin P4Grammar
 stucturedAnnotationBody
