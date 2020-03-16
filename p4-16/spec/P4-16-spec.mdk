@@ -4413,10 +4413,13 @@ some unspecified value will be used for that field.
 - reading a field of a header that is an element of a header stack,
   where the index is out of range for the header stack.
 
-TBD: Should an expression like
-`my_hdr_stack[run_time_variable_index].isValid()` be defined as
-guaranteed always false if the index is out of range?  Or should that
-value be allowed to be undefined, too?
+Calling the `isValid()` method on an element of a header stack, where
+the index is out of range, returns an undefined boolean value, i.e.,
+it is either `true` or `false`, but the specification does not require
+one or the other, nor that a consistent value is returned across
+multiple such calls.  Assigning an out of range header stack element
+to another header variable `h` leads to a state where `h` is undefined
+in all of its field values, and its validity is also undefined.
 
 Where a header is mentioned, it may be a member of a `header_union`,
 an element in a header stack, or a normal header.  This unspecified
