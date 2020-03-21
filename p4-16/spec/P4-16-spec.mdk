@@ -3685,17 +3685,23 @@ syntax of these expressions is given by:
 ~ Begin P4Grammar
 expression ...
     | '{' kvList '}'
-    | typeName '{' kvList '}'
+    | '(' typeRef ')' expression
     ;
 
 kvList
+    : kvPair
+    | kvList "," kvPair
+    ;
+
+kvPair
+    : name "=" expression
     ;
 ~ End P4Grammar
 
-If present, the `typeName` must be the name of a `struct` or `header`
-type.  The `typeName` can be omitted if it can be inferred from
-context, e.g., when initializing a variable with a `struct` type.  The
-following example shows a structure-valued expression used in an
+For a structure-valued expression `typeRef` is the name of a `struct`
+or `header` type.  The `typeRef` can be omitted if it can be inferred
+from context, e.g., when initializing a variable with a `struct` type.
+The following example shows a structure-valued expression used in an
 equality comparison expression:
 
 ~ Begin P4Example
@@ -3707,7 +3713,7 @@ struct S {
 S s;
 ...
 // Compare s with a structure-valued expression
-bool b = s == S { a = 1, b = 2 };
+bool b = s == (S) { a = 1, b = 2 };
 ~ End P4Example
 
 Structure-valued expressions can be used in the right-hand side of
@@ -3862,28 +3868,9 @@ their corresponding fields are equal.
 
 ## Structure initializers { #sec-structure-initializers }
 
-Structures can be initialized using structure initializers, which
-specify explicitly the intialized fields.  A structure initializer
-expression evaluates to a struct; it can be used on the right-hand
-side of an initialization of a variable with a struct type.
-
-~ Begin P4Grammar
-expression ...
-    | '{' kvList '}'
-    ;
-
-kvList
-    : kvPair
-    | kvList "," kvPair
-    ;
-
-kvPair
-    : name "=" expression
-    ;
-~ End P4Grammar
-
-The following example shows a structure initialized using a
-structure initializer:
+Structures can be initialized using structure-valued expression
+([#sec-structure-expressions]).  The following example shows a
+structure initialized using a structure-valued expression:
 
 ~ Begin P4Example
 struct S {
@@ -3891,6 +3878,7 @@ struct S {
     bit<32> b;
 }
 const S x = { a = 10, b = 20 };
+const S x = (S){ a = 10, b = 20 }; // equivalent
 ~ End P4Example
 
 The compiler must raise an error if a field name appears more than
