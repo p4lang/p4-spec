@@ -5093,6 +5093,17 @@ specified on a struct field, by default it is assumed to be `@match(exact)`.
 A single non-exact field must be placed into a struct by itself, with the
 desired `@match` annotation.
 
+Select expressions may not contain any function or method calls,
+except for the following:
+
++ The `isValid()` method on headers (Section [#sec-ops-on-hdrs]).
+
+See the comments in Section [#sec-table-keys] for the reasons for this
+restriction.  The notes there about P4 implementations being allowed
+to support pure function and method calls apply to select expressions
+as well.
+
+
 ## verify { #sec-verify }
 
 The `verify` statement provides a simple form of error
@@ -5758,7 +5769,7 @@ constant, so the `const` keyword is not needed for these.
 
 ### Table properties { #sec-table-props }
 
-#### Keys
+#### Keys { #sec-table-keys }
 
 The `key` is a table property which specifies the data plane
 values that should be used to look up an entry. A key is a list of
@@ -5825,6 +5836,28 @@ always the empty map.
 
 Each key element can have an optional `@name` annotation which is
 used to synthesize the control-plane visible name for the key field.
+
+Key expressions may not contain any function or method calls, except
+for the following:
+
++ The `isValid()` method on headers (Section [#sec-ops-on-hdrs]).
+
+This limitation is to avoid the need to specify an order of evaluation
+for table key expressions relative to each other, without which
+function or method calls that have side effects would have behavior
+that depends upon the order of evaluation.
+
+An implementation may also choose to support function and method calls
+in key expressions that, like the `isValid()` method, are pure
+functions.  That is, their return value is a function only of their
+direction `in` parameters, and they have no direction `out` nor
+`inout` parameters, and no directionless parameters.
+
+A P4 developer is of course still free to perform whatever function
+and method calls they wish before invoking the `apply()` operation on
+a table, and storing the results in header or metadata fields, and
+then use those fields as table key expressions.
+
 
 #### Actions { #sec-table-action-list }
 
