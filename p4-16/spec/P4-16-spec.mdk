@@ -7066,6 +7066,10 @@ the P4 grammar). Unstructured annotations, or just "annotations," have an
 optional body; structured annotations have a mandatory body, containing at least
 a pair of square brackets `[]`.
 
+Structured annotations and  unstructured annotations must not use the same
+`name`. Thus, a given `name` can only be applied to one type of annotation or
+the other.
+
 ~ Begin P4Grammar
 optAnnotations
     : /* empty */
@@ -7102,8 +7106,7 @@ annotationBody
 
 Unstructured annotations may impose additional structure on their bodies, and
 are not confined to the P4 language. For example, the P4Runtime specification
-defines a `@pkginfo` annotation that takes key-value pairs, which are not found
-in the main P4 language.
+defines a `@pkginfo` annotation that expects key-value pairs.
 
 ## Bodies of Structured Annotations
 
@@ -7115,21 +7118,16 @@ metadata, consisting of expression lists or key-value lists but not both. An
 a key and a value `expression`. Note the syntax for `expression` is rich, see
 Appendix [#sec-grammar] for details.
 
-To avoid ambiguity, an empty `structuredAnnotationBody` is by definition
-considered to contain an empty `expressionList`.
-
-All `expression`s within a `structuredAnnotationBody` must be compile-time
-known values, either literals or expressions requiring compile-time
-evaluation, with a result type that is one of: string literals,
-infinite-precision integer, or boolean. Nested `expression`s (e.g. an
-`expression` containing an `expressionList`, a `kvList`, etc.) are not
-allowed. Note that P4Runtime information (`P4Info`) may stipulate additional
-restrictions. For example, an integer expression might be limited to 64-bit
-values.
+All `expression`s within a `structuredAnnotationBody` must be compile-time known
+values, either literals or expressions requiring compile-time evaluation, with a
+result type that is one of: string literals, infinite-precision integer, or
+boolean. Structured `expression`s (e.g. an `expression` containing an
+`expressionList`, a `kvList`, etc.) are not allowed. Note that P4Runtime
+information (P4Info) may stipulate additional restrictions. For example, an
+integer expression might be limited to 64-bit values.
 
 It is illegal to duplicate a `key` within the `kvList` of a structured
-annotation.  It is illegal to use the same annotation `name` on a given
-`annotationToken` for structured annotations.
+annotation.
 
 ~ Begin P4Grammar
 structuredAnnotationBody
