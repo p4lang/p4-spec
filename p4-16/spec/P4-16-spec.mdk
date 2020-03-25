@@ -7156,7 +7156,7 @@ kvPair
 
 **Empty Expression List**
 
-The following example produces the empty `expressionList`.
+The following example produces an empty annotation:
 
 ~ Begin P4Example
 @Empty[]
@@ -7230,14 +7230,27 @@ table t {
 ~ End P4Example
 
 
-**Illegal Duplicate Annotation**
+**Illegal Duplicate Structured Annotation**
 
 The following example is invalid because the annotation `name` occurs more
-than once on the same token, e.g. `table t`:
+than once on the same element, e.g. `table t`:
 
 ~ Begin P4Example
 @DupAnno[k1=4]
 @DupAnno[k2=5] // illegal duplicate name
+table t {
+    ...
+}
+~ End P4Example
+
+**Illegal Simultaneous Use of Both Structured and Unstructured Annotation**
+
+The following example is invalid because the annotation `name` is used by both
+an unstructured and structured annotation on the same element `table t`:
+
+~ Begin P4Example
+@MixAnno("Anything")
+@MixAnno[k2=5] // illegal use in both annotation types
 table t {
     ...
 }
