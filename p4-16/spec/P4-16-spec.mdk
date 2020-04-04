@@ -6211,6 +6211,65 @@ apply_result(m) m.apply() {
 }
 ~ End P4Pseudo
 
+The behavior of the `buildKey` call in the pseudocode above is to
+evaluate each key expression in the order they appear in the table key
+definition.  The behavior must be the same as if the result of
+evaluating each key expression is assigned to a fresh temporary
+variable, before starting the evaluation of the following key
+expression.  For example, this P4 table definition and apply call:
+
+~ Begin P4Example
+bit<8> f1 (in bit<8> a, inout bit<8> b) {
+    b = a + 5;
+    return a >> 1;
+}
+bit<8> x;
+bit<8> y;
+table t1 {
+    key = {
+        y & 0x7  : exact @name("masked_y");
+        f1(x, y) : exact @name("f1");
+        y        : exact;
+    }
+    // ... rest of table properties defined here, not relevant to example
+}
+apply {
+    // assign values to x and y here, not relevant to example
+    t1.apply();
+}
+~ End P4Example
+
+is equivalent in behavior to the following table definition and apply
+call:
+
+~ Begin P4Example
+// same definition of f1, x, and y as before, so they are not repeated here
+bit<8> tmp_1;
+bit<8> tmp_2;
+bit<8> tmp_3;
+table t1 {
+    key = {
+        tmp_1 : exact @name("masked_y");
+        tmp_2 : exact @name("f1");
+        tmp_3 : exact @name("y");
+    }
+    // ... rest of table properties defined here, not relevant to example
+}
+apply {
+    // assign values to x and y here, not relevant to example
+    tmp_1 = y & 0x7;
+    tmp_2 = f1(x, y);
+    tmp_3 = y;
+    t1.apply();
+}
+~ End P4Example
+
+It is expected that evaluating a key expression will usually have no
+side effects, so the order of their evaluation makes no difference in
+the resulting lookup key value.  In this common case, there is no need
+for a compiler to generate code that assigns the results of key
+expressions to fresh temporary variables.
+
 ## The Match-Action Pipeline Abstract Machine { #sec-mau-abstract-mach }
 
 We can describe the computational model of a match-action pipeline,
