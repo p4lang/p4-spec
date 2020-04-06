@@ -54,6 +54,7 @@ annotations
 annotation
     : '@' name
     | '@' name '(' annotationBody ')'
+    | '@' name '[' structuredAnnotationBody ']'
     ;
 
 parameterList
@@ -596,10 +597,16 @@ expressionList
     | expressionList ',' expression
     ;
 
+
 annotationBody
     : /* empty */
     | annotationBody '(' annotationBody ')'
     | annotationBody annotationToken
+
+structuredAnnotationBody
+    : expressionList
+    | kvList
+    ;	
 
 annotationToken
     : ABSTRACT

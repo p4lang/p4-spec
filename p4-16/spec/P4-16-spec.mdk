@@ -7058,11 +7058,13 @@ diagnostics.
 
 # Annotations { #sec-annotations }
 
-Annotations are similar to C# attributes and Java annotations. They
-are a simple mechanism for extending the P4 language to some limited
-degree without changing the grammar. To some degree they subsume C `#pragma`s.
-Annotations are attached to types, fields, variables, etc. using the `@`
-syntax (as shown explicitly in the P4 grammar), and have an optional body:
+Annotations are similar to C# attributes and Java annotations. They are a simple
+mechanism for extending the P4 language to some limited degree without changing
+the grammar. To some degree they subsume C `#pragma`s. Annotations are attached
+to types, fields, variables, etc. using the `@` syntax (as shown explicitly in
+the P4 grammar). Unstructured annotations, or just "annotations," have an
+optional body; structured annotations have a mandatory body, containing at least
+a pair of square brackets `[]`.
 
 ~ Begin P4Grammar
 optAnnotations
@@ -7078,17 +7080,56 @@ annotations
 annotation
     : '@' name
     | '@' name '(' annotationBody ')'
+    | '@' name '[' structuredAnnotationBody ']'
     ;
 ~ End P4Grammar
 
-## Bodies of annotations
+Structured annotations and unstructured annotations on any one element must not
+use the same `name`. Thus, a given `name` can only be applied to one type of
+annotation or the other for any one element. An annotation used on one element
+does not affect the annotation on another because they have different scope.
 
-The flexibility of P4 annotations comes from the minimal structure mandated by
-the P4 grammar: annotation bodies may contain any sequence of terminals, so
-long as parentheses are balanced. In the following grammar fragment, the
-`annotationToken` non-terminal represents any terminal produced by the lexer,
-including keywords, identifiers, string and integer literals, and symbols, but
-excluding parentheses.
+This is legal:
+
+~ Begin P4Example
+@my_anno(1) table T { ... }
+@my_anno[2] table U { ... } // OK - different scope than previous use of my_anno
+~ End P4Example
+
+This is illegal:
+
+~ Begin P4Example
+@my_anno(1)
+@my_anno[2] table U { ... } // Error - changed type of anno on an element
+~ End P4Example
+
+Multiple unstructured annotations using the same `name` can appear on a given
+element; they are cumulative. Each one will be bound to that element. In
+contrast, only one structured annotation using a given `name` may appear on an
+element; multiple uses of the same `name` will produce an error.
+
+This is legal:
+
+~ Begin P4Example
+@my_anno(1)
+@my_anno(2) table U { ... }  // OK - unstructured annos accumulate
+~ End P4Example
+
+This is illegal:
+
+~ Begin P4Example
+@my_anno[1]
+@my_anno[2] table U { ... } // Error - reused the same structured anno on an element
+~ End P4Example
+
+## Bodies of Unstructured Annotations
+
+The flexibility of P4 unstructured annotations comes from the minimal structure
+mandated by the P4 grammar: unstructured annotation bodies may contain any
+sequence of terminals, so long as parentheses are balanced. In the following
+grammar fragment, the `annotationToken` non-terminal represents any terminal
+produced by the lexer, including keywords, identifiers, string and integer
+literals, and symbols, but excluding parentheses.
 
 ~ Begin P4Grammar
 annotationBody
@@ -7097,16 +7138,164 @@ annotationBody
     | annotationBody annotationToken
 ~ End P4Grammar
 
-Annotations may impose additional structure on their bodies, and are not
-confined to the P4 language. For example, the P4Runtime specification defines a
-`@pkginfo` annotation that takes key-value pairs, which are not found in the
-main P4 language.
+Unstructured annotations may impose additional structure on their bodies, and
+are not confined to the P4 language. For example, the P4Runtime specification
+defines a `@pkginfo` annotation that expects key-value pairs.
+
+## Bodies of Structured Annotations
+
+Unlike unstructured annotations, structured annotations use square brackets
+`[...]` and have a restricted format. They are commonly used to declare custom
+metadata, consisting of expression lists or key-value lists but not both. An
+`expressionList` may be empty or contain a comma-separated list of member
+`expression`s. A `kvList` consists of one or more `kvPair`s, each consisting of
+a key and a value `expression`. Note the syntax for `expression` is rich, see
+Appendix [#sec-grammar] for details.
+
+All `expression`s within a `structuredAnnotationBody` must be compile-time known
+values, either literals or expressions requiring compile-time evaluation, with a
+result type that is one of: string literals, infinite-precision integer, or
+boolean. Structured `expression`s (e.g. an `expression` containing an
+`expressionList`, a `kvList`, etc.) are not allowed. Note that P4Runtime
+information (P4Info) may stipulate additional restrictions. For example, an
+integer expression might be limited to 64-bit values.
+
+It is illegal to duplicate a `key` within the `kvList` of a structured
+annotation.
+
+~ Begin P4Grammar
+structuredAnnotationBody
+    : expressionList
+    | kvList
+    ;	
+...
+expressionList
+    : /* empty */
+    | expression
+    | expressionList ',' expression
+    ;
+...
+kvList
+    : kvPair
+    | kvList ',' kvPair
+    ;
+
+kvPair
+    : name '=' expression
+    ;
+
+~ End P4Grammar
+
+### Structured Annotation Examples
+
+**Empty Expression List**
+
+The following example produces an empty annotation:
+
+~ Begin P4Example
+@Empty[]
+table t {
+    ...
+}
+~ End P4Example
+
+
+**Mixed Expression List**
+
+The following example will produce an effective expression list as follows:
+```
+[1,"hello",true, false, 11]
+```
+
+~ Begin P4Example
+#define TEXT_CONST "hello"
+#define NUM_CONST 6
+@MixedExprList[1,TEXT_CONST,true,1==2,5+NUM_CONST]
+table t {
+    ...
+}
+~ End P4Example
+
+**kvList of Strings**
+
+~ Begin P4Example
+@Labels[short="Short Label", hover="My Longer Table Label to appear in hover-help"]
+table t {
+    ...
+}
+~ End P4Example
+
+**kvList of Mixed Expressions**
+
+The following example will produce an effective kvList as follows.
+
+```
+[label="text", my_bool=true, int_val=6]
+```
+
+~ Begin P4Example
+@MixedKV[label="text", my_bool=true, int_val=2*3]
+table t {
+    ...
+}
+~ End P4Example
+
+**Illegal Mixing of `kvPair` and `expressionList`**
+
+The following example is invalid because the body contains both a `kvPair` and
+an `expression`:
+
+~ Begin P4Example
+@IllegalMixing[key=4, 5] // illegal mixing
+table t {
+    ...
+}
+~ End P4Example
+
+**Illegal Duplicate Key**
+
+The following example is invalid because the same key occurs more than once:
+
+~ Begin P4Example
+@DupKey[k1=4,k1=5] // illegal duplicate key
+table t {
+    ...
+}
+~ End P4Example
+
+
+**Illegal Duplicate Structured Annotation**
+
+The following example is invalid because the annotation `name` occurs more
+than once on the same element, e.g. `table t`:
+
+~ Begin P4Example
+@DupAnno[k1=4]
+@DupAnno[k2=5] // illegal duplicate name
+table t {
+    ...
+}
+~ End P4Example
+
+**Illegal Simultaneous Use of Both Structured and Unstructured Annotation**
+
+The following example is invalid because the annotation `name` is used by both
+an unstructured and structured annotation on the same element `table t`:
+
+~ Begin P4Example
+@MixAnno("Anything")
+@MixAnno[k2=5] // illegal use in both annotation types
+table t {
+    ...
+}
+~ End P4Example
 
 ## Predefined annotations
 
 Annotation names that start with lowercase letters are reserved for
 the standard library and architecture.  This document pre-defines a
-set of "standard" annotations in Appendix [#sec-p4-reserved-annotations].  We expect that this list will grow.
+set of "standard" annotations in Appendix [#sec-p4-reserved-annotations].
+We expect that this list will grow.
 We encourage custom architectures to define annotations starting with
 a manufacturer prefix: e.g., an organization named X would use
 annotations named like `@X_annotation`
