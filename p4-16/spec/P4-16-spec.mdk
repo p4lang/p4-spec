@@ -7205,7 +7205,7 @@ annotation.
 structuredAnnotationBody
     : expressionList
     | kvList
-    ;	
+    ;
 ...
 expressionList
     : /* empty */
@@ -7441,6 +7441,13 @@ extern Checker {
 }
 ~ End P4Example
 
+### No warnings annotation { #sec-nowarn-anno }
+
+The `noWarn` annotation has a required string argument that indicates
+a compiler warning that will be inhibited.  For example
+`@noWarn("unused")` on a declaration will prevent a compiler warning
+if that declaration is not used.
+
 ## Target-specific annotations
 
 Each P4 compiler implementation can define additional annotations
@@ -7476,6 +7483,14 @@ The P4 compiler should provide:
 |       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
 |       |               | `table.apply().miss`, `string` type.                                |
 |-----|-----|-----|
+
+## Summary of changes made in version 1.2.1
+
+* Added `@noWarn` annotation (Section [#sec-nowarn-anno]).
+* Added structure-valued expressions (Section [#sec-structure-expressions]).
+* Added structured annotations (Section [#sec-annotations]).
+* Allow empty statements in parsers (Section [#sec-parser-state-stmt]).
+* Fixed grammar for right shifts (Section [#sec-grammar]).
 
 ## Summary of changes made in version 1.2.0
 
@@ -7556,6 +7571,7 @@ The following table shows all P4 reserved annotations.
 | `optional`    | parameter is optional                              | [#sec-optional-parameter-annotations] |
 | `tableonly`   | action cannot be a default_action                   | [#sec-table-action-anno] |
 | `deprecated`  | Construct has been deprecated                      | [#sec-deprecated-anno]   |
+| `noWarn`      | Has a string argument; inhibits compiler warnings  |                          |
 |---------------|----------------------------------------------------|--------------------------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
@@ -7973,14 +7989,6 @@ parser generator tool.
 
 Several other constant terminals appear in these rules:
 ~ Begin P4Example
-- SHL is <<
-- LE is <=
-- GE is >=
-- NE is !=
-- EQ is ==
-- PP is ++
-- AND is &&
-- OR is ||
 - MASK is &&&
 - RANGE is ..
 - DONTCARE is _
