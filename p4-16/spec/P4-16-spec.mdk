@@ -7426,40 +7426,45 @@ to specify a `match_kind` value other than the default `match_kind` of
 
 ### Extern function/method annotations { #sec-extern-annotations }
 
-Various annotations may appear on extern function and method declarations
-to describe limitations on the behavior and interactions of those
-functions.  By default extern functions might have any effect on the
-environment of the P4 program and might interact in non-trivial ways.
-Since externs are architecture-specific and their behavior is known to
-the architecture definition, these annotations are not strictly necessary
-(an implementation can have knowledge of how externs interact based
-on their names built into it), but these annotations provide a uniform
-way of describing certain well-defined interactions (or their absence),
-allowing architecture-indepedent analysis of P4 programs.
+Various annotations may appear on extern function and method
+declarations to describe limitations on the behavior and interactions
+of those functions.  By default extern functions might have any effect
+on the environment of the P4 program and might interact in non-trivial
+ways (subject to a few limitations -- see section
+[#sec-calling-convention-justification]).  Since externs are
+architecture-specific and their behavior is known to the architecture
+definition, these annotations are not strictly necessary (an
+implementation can have knowledge of how externs interact based on
+their names built into it), but these annotations provide a uniform
+way of describing certain well-defined interactions (or their
+absence), allowing architecture-independent analysis of P4 programs.
 
 - `@pure` - Describes a function that depends solely on its `in`
-  argument values and has no effect other than its `out` argument values
-  and return value.  No hidden state is recorded between calls, and its
-  value does not depend on any hidden state that may be changed by other
-  calls.  An example is the `hash` function which computes a
-  deterministic hash of its arguments, and its return value does not
-  depend upon any control-plane writable seed or initialization vector
-  value.  A `@pure` function whose results are unused may be safely
-  eliminated with no adverse effects, and multiple calls with identical
-  arguments may be combined into a single call.  `@pure` functions may
-  also be reordered with respect to other computations that are not data
-  dependent.
+  parameter values, and has no effect other than returning a value,
+  and copy-out behavior on its `out` and `inout` parameters.  No
+  hidden state is recorded between calls, and its value does not
+  depend on any hidden state that may be changed by other calls.  An
+  example is a `hash` function that computes a deterministic hash of
+  its arguments, and its return value does not depend upon any
+  control-plane writable seed or initialization vector value.  A
+  `@pure` function whose results are unused may be safely eliminated
+  with no adverse effects, and multiple calls with identical arguments
+  may be combined into a single call (subject to the limits imposed by
+  copy-out behavior of `out` and `inout` parameters).  `@pure`
+  functions may also be reordered with respect to other computations
+  that are not data dependent.
 
 - `@noSideEffects` - Weaker than `@pure` and describes a function that
-  does not change any hidden state, but may depend on hidden state.  One
-  example is a `hash` function which computes a deterministic hash of
-  its arguments, plus some internal state that can be modified via
-  control plane API calls such has a seed or initialization vector.
-  Another example is a read of one element of a register array extern.
-  Such a function may be dead code eliminated, and may be reordered or
-  combined with other `@noSideEffects` or `@pure` calls, but not with
-  other function calls that may have side effects that affect the
-  function.
+  does not change any hidden state, but may depend on hidden state.
+  One example is a `hash` function that computes a deterministic hash
+  of its arguments, plus some internal state that can be modified via
+  control plane API calls such as a seed or initialization vector.
+  Another example is a read of one element of a register array extern
+  object.  Such a function may be dead code eliminated, and may be
+  reordered or combined with other `@noSideEffects` or `@pure` calls
+  (subject to the limits imposed by copy-out behavior of `out` and
+  `inout` parameters), but not with other function calls that may have
+  side effects that affect the function.
 
 ### Deprecated annotation { #sec-deprecated-anno }
 
