@@ -7451,11 +7451,15 @@ allowing architecture-indepedent analysis of P4 programs.
   dependent.
 
 - `@noSideEffects` - Weaker than `@pure` and describes a function that
-  does not change any hidden state, but may depend on hidden state.
-  Such a function may be dead code eliminated, and may be reordered
-  or combined with other `@noSideEffects` or `@pure` calls, but not
-  with other function calls that may have side effects that affect
-  the function.
+  does not change any hidden state, but may depend on hidden state.  One
+  example is a `hash` function which computes a deterministic hash of
+  its arguments, plus some internal state that can be modified via
+  control plane API calls such has a seed or initialization vector.
+  Another example is a read of one element of a register array extern.
+  Such a function may be dead code eliminated, and may be reordered or
+  combined with other `@noSideEffects` or `@pure` calls, but not with
+  other function calls that may have side effects that affect the
+  function.
 
 ### Deprecated annotation { #sec-deprecated-anno }
 
