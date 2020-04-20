@@ -1266,11 +1266,12 @@ There are two Boolean literal constants: `true` and `false`.
 #### Integer literals { #sec-integer-literals }
 
 Integer literals are positive, arbitrary-precision integers. By
-default, literals are represented in base 10. To use a different base for
-the literal, one of the following prefixes must be employed:
+default, literals are represented in base 10. The following prefixes
+must be employed to specify the base explicitly:
 
 - `0x` or `0X` indicates base 16 (hexadecimal)
 - `0o` or `0O` indicates base 8 (octal)
+- `0d` or `0D` indicates base 10 (decimal)
 - `0b` or `0B` indicates base 2
 
 The width of a numeric literal in bits can be specified by an unsigned
@@ -1290,7 +1291,9 @@ integer literal. No comments or whitespaces are allowed within a
 literal. Here are some examples of numeric literals:
 
 ~ Begin P4Example
-32w0xFF        // a 32-bit unsigned number with value 255
+32w255         // a 32-bit unsigned number with value 255
+32w0d255       // same value as above
+32w0xFF        // same value as above
 32s0xFF        // a 32-bit signed number with value 255
 8w0b10101010   // an 8-bit unsigned number with value 0xAA
 8w0b_1010_1010 // same value as above
@@ -3074,13 +3077,13 @@ a = E1.e1 + 1; // Error: E.e1 is automatically casted to bit<8>,
                // and the right-hand expression has
                // the type bit<8>, which cannot be casted to E automatically.
 
-a = (E1)(E1.e1 + 1); // Final explicit casting makes the assinment legal
+a = (E1)(E1.e1 + 1); // Final explicit casting makes the assignment legal
 
 a = E1.e1 + E1.e2; // Error: both arguments to the addition are automatically
                    // casted to bit<8>. Thus the addition itself is legal, but
                    // the assignment is not
 
-a = (E1)(E2.e1 + E2.e2); //  Final explicit casting makes the assinment legal
+a = (E1)(E2.e1 + E2.e2); //  Final explicit casting makes the assignment legal
 ~ End P4Example
 
 A reasonable compiler might generate a warning in cases that involve multiple automatic casts.
@@ -3970,11 +3973,15 @@ expressions are legal:
 
 - `hs[index]`: produces a reference to the header at the
   specified position within the stack; if `hs` is an l-value, the
-  result is also an l-value. The header may be invalid. Some architectures
+  result is also an l-value. The header may be invalid. Some implementations
   may impose the constraint that the index expression evaluates to a
-  compile-time known value. Accessing a header stack ``hs`` with an
-  index less than `0` or greater than `hs.size` results in an
-  undefined value.
+  compile-time known value. A P4 compiler must give an error if an
+  index value that is a compile-time constant is out of range.
+
+  Accessing a header stack ``hs`` with an index less than `0` or
+  greater than `hs.size` results in an undefined value.  See Section
+  [#sec-uninitialized-values-and-writing-invalid-headers] for more
+  details.
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -4398,6 +4405,22 @@ bool b2 = x == y;  // no cast needed
 
 ## Reading uninitialized values and writing fields of invalid headers { #sec-uninitialized-values-and-writing-invalid-headers }
 
+As mentioned in Section [#sec-expr-hs], any reference to an element of
+a header stack `hs[index]` where `index` is a compile-time constant
+expression must give an error at compile time if the value of the
+index is out of range.  That section also defines the run time
+behavior of the expressions `hs.next` and `hs.last`, and the behaviors
+specified there take precedence over anything in this section for
+those expressions.
+
+All mentions of header stack elements in this section only apply for
+expressions `hs[index]` where `index` is a run time variable
+expression, i.e. not a compile-time constant value.  A P4
+implementation is allowed not to support `hs[index]` where `index` is
+a run time variable expression, but if it does support these
+expressions, the implementation should conform to the behaviors
+specified in this section.
+
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
 
@@ -4410,6 +4433,16 @@ some unspecified value will be used for that field.
   called, which was not assigned a value during the execution of that
   `control` or `action` (this list of examples is not intended to be
   exhaustive).
+- reading a field of a header that is an element of a header stack,
+  where the index is out of range for the header stack.
+
+Calling the `isValid()` method on an element of a header stack, where
+the index is out of range, returns an undefined boolean value, i.e.,
+it is either `true` or `false`, but the specification does not require
+one or the other, nor that a consistent value is returned across
+multiple such calls.  Assigning an out of range header stack element
+to another header variable `h` leads to a state where `h` is undefined
+in all of its field values, and its validity is also undefined.
 
 Where a header is mentioned, it may be a member of a `header_union`,
 an element in a header stack, or a normal header.  This unspecified
@@ -4438,18 +4471,28 @@ Such a write must not change the validity of any member headers of
 `u1`, nor any other state that is currently defined in the system,
 whether it is defined state in header fields or anywhere else.
 
-If a write is performed to a field in a currently invalid header, and
-that header is not part of a `header_union`, that write must not
-change any state that is currently defined in the system, neither in
-header fields nor anywhere else.  In particular, that invalid header
-must remain invalid.
+If any of these kinds of writes are performed:
 
-Either of the kinds of writes to fields in a currently invalid header
-is allowed to modify state whose values are not defined, e.g. the
-values of fields in headers that are currently invalid.
++ a write to a field in a currently invalid header, either a regular
+  header or an element of a header stack with an index that is in
+  range, and that header is not part of a `header_union`
++ a write to a field in an element of a header stack, where the index
+  is out of range
++ a method call of `setValid()` or `setInvalid()` on an element of a
+  header stack, where the index is out of range
+
+then that write must not change any state that is currently defined in
+the system, neither in header fields nor anywhere else.  In
+particular, if an invalid header is involved in the write, it must
+remain invalid.
+
+Any writes to fields in a currently invalid header, or to header stack
+elements where the index is out of range, are allowed to modify state
+whose values are not defined, e.g. the values of fields in headers
+that are currently invalid.
 
 For a top level `parser` or `control` in an architecture, it is up to
-that architecture to specify whether `control` parameters with
+that architecture to specify whether parameters with
 direction `in` or `inout` are initialized when the control is called,
 and under what conditions they are initialized, and if so, what their
 values will be.
@@ -4660,7 +4703,7 @@ types (e.g. `structs`) are copied recursively, and all components
 of `header`s are copied, including "validity" bits. Assignment is
 not defined for `extern` values.
 
-## Empty statement { #sec-emtpy-stmt }
+## Empty statement { #sec-empty-stmt }
 
 The empty statement, written `;` is a no-op.
 
@@ -6787,7 +6830,7 @@ interact with that entity.  The following entities are controllable.
 A fully qualified name consists of the local name of a controllable
 entity prepended with the fully qualified name of its enclosing
 namespace.  Hence, the following program constructs, which enclose
-controllable entites, must themselves have unique, fully-qualified
+controllable entities, must themselves have unique, fully-qualified
 names.
 
  - control instances
@@ -7202,7 +7245,7 @@ annotation.
 structuredAnnotationBody
     : expressionList
     | kvList
-    ;	
+    ;
 ...
 expressionList
     : /* empty */
@@ -7480,6 +7523,13 @@ extern Checker {
 }
 ~ End P4Example
 
+### No warnings annotation { #sec-nowarn-anno }
+
+The `noWarn` annotation has a required string argument that indicates
+a compiler warning that will be inhibited.  For example
+`@noWarn("unused")` on a declaration will prevent a compiler warning
+if that declaration is not used.
+
 ## Target-specific annotations
 
 Each P4 compiler implementation can define additional annotations
@@ -7522,6 +7572,14 @@ The P4 compiler should provide:
 
 * Added `@pure` and `@noSideEffects` annotations (Section
   [#sec-extern-annotations]).
+
+## Summary of changes made in version 1.2.1
+
+* Added `@noWarn` annotation (Section [#sec-nowarn-anno]).
+* Added structure-valued expressions (Section [#sec-structure-expressions]).
+* Added structured annotations (Section [#sec-annotations]).
+* Allow empty statements in parsers (Section [#sec-parser-state-stmt]).
+* Fixed grammar for right shifts (Section [#sec-grammar]).
 
 ## Summary of changes made in version 1.2.0
 
@@ -7600,10 +7658,11 @@ The following table shows all P4 reserved annotations.
 | `match`       | specify `match_kind` of a field in a `value_set`   | [#sec-value-set-annotations] |
 | `name`        | assign local control-plane name                    | [#sec-name-annotations]  |
 | `optional`    | parameter is optional                              | [#sec-optional-parameter-annotations] |
-| `tableonly`   | action cannot be a defalt_action                   | [#sec-table-action-anno] |
+| `tableonly`   | action cannot be a default_action                  | [#sec-table-action-anno] |
 | `deprecated`  | Construct has been deprecated                      | [#sec-deprecated-anno]   |
 | `pure`        | pure function                                      | [#sec-extern-annotations] |
 | `noSideEffects` | function with no side effects                    | [#sec-extern-annotations] |
+| `noWarn`      | Has a string argument; inhibits compiler warnings  | [#sec-nowarn-anno]       |
 |---------------|----------------------------------------------------|--------------------------|
 
 # Appendix: P4 core library { #sec-p4-core-lib }
@@ -8021,14 +8080,6 @@ parser generator tool.
 
 Several other constant terminals appear in these rules:
 ~ Begin P4Example
-- SHL is <<
-- LE is <=
-- GE is >=
-- NE is !=
-- EQ is ==
-- PP is ++
-- AND is &&
-- OR is ||
 - MASK is &&&
 - RANGE is ..
 - DONTCARE is _
