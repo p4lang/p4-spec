@@ -7467,6 +7467,48 @@ The `@match` annotation, described in Section [#sec-select], is used
 to specify a `match_kind` value other than the default `match_kind` of
 `exact` for a field of a `value_set`.
 
+### Extern function/method annotations { #sec-extern-annotations }
+
+Various annotations may appear on extern function and method
+declarations to describe limitations on the behavior and interactions
+of those functions.  By default extern functions might have any effect
+on the environment of the P4 program and might interact in non-trivial
+ways (subject to a few limitations -- see section
+[#sec-calling-convention-justification]).  Since externs are
+architecture-specific and their behavior is known to the architecture
+definition, these annotations are not strictly necessary (an
+implementation can have knowledge of how externs interact based on
+their names built into it), but these annotations provide a uniform
+way of describing certain well-defined interactions (or their
+absence), allowing architecture-independent analysis of P4 programs.
+
+- `@pure` - Describes a function that depends solely on its `in`
+  parameter values, and has no effect other than returning a value,
+  and copy-out behavior on its `out` and `inout` parameters.  No
+  hidden state is recorded between calls, and its value does not
+  depend on any hidden state that may be changed by other calls.  An
+  example is a `hash` function that computes a deterministic hash of
+  its arguments, and its return value does not depend upon any
+  control-plane writable seed or initialization vector value.  A
+  `@pure` function whose results are unused may be safely eliminated
+  with no adverse effects, and multiple calls with identical arguments
+  may be combined into a single call (subject to the limits imposed by
+  copy-out behavior of `out` and `inout` parameters).  `@pure`
+  functions may also be reordered with respect to other computations
+  that are not data dependent.
+
+- `@noSideEffects` - Weaker than `@pure` and describes a function that
+  does not change any hidden state, but may depend on hidden state.
+  One example is a `hash` function that computes a deterministic hash
+  of its arguments, plus some internal state that can be modified via
+  control plane API calls such as a seed or initialization vector.
+  Another example is a read of one element of a register array extern
+  object.  Such a function may be dead code eliminated, and may be
+  reordered or combined with other `@noSideEffects` or `@pure` calls
+  (subject to the limits imposed by copy-out behavior of `out` and
+  `inout` parameters), but not with other function calls that may have
+  side effects that affect the function.
+
 ### Deprecated annotation { #sec-deprecated-anno }
 
 The `deprecated` annotation has a required string argument that is a
@@ -7518,11 +7560,18 @@ The P4 compiler should provide:
 |       |          | restrictions on arguments to calls, and modified precedence of |
 |       |          | bitwise operators. |
 |-----|-----|-----|
-| 1.2.0 | October, 14, 2019 | Added error `ParserInvalidArgument`, order of `const` entries, |
+| 1.2.0 | October 14, 2019 | Added error `ParserInvalidArgument`, order of `const` entries, |
 |       |               | header size methods, 1-bit signed values, signed bit slices, empty |
 |       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
 |       |               | `table.apply().miss`, `string` type.                                |
 |-----|-----|-----|
+| 1.2.1 | TBD, 2020 | |
+|-----|-----|-----|
+
+## Summary of changes made in version 1.2.1
+
+* Added `@pure` and `@noSideEffects` annotations (Section
+  [#sec-extern-annotations]).
 
 ## Summary of changes made in version 1.2.1
 
@@ -7611,6 +7660,8 @@ The following table shows all P4 reserved annotations.
 | `optional`    | parameter is optional                              | [#sec-optional-parameter-annotations] |
 | `tableonly`   | action cannot be a default_action                  | [#sec-table-action-anno] |
 | `deprecated`  | Construct has been deprecated                      | [#sec-deprecated-anno]   |
+| `pure`        | pure function                                      | [#sec-extern-annotations] |
+| `noSideEffects` | function with no side effects                    | [#sec-extern-annotations] |
 | `noWarn`      | Has a string argument; inhibits compiler warnings  | [#sec-nowarn-anno]       |
 |---------------|----------------------------------------------------|--------------------------|
 
