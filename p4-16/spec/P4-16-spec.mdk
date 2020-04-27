@@ -3798,11 +3798,12 @@ select (hdr.ipv4.version) {
 
 ### Masks { #sec-cubes }
 
-The infix operator `&&&` takes two arguments of type `bit<W>`,
-and creates a value of type `set<bit<W>>`. The
-right value is used as a "mask", where each bit set to `0` in the mask
-indicates a "don't care" bit. More formally, the set denoted by `a
-&&& b` is defined as follows:
+The infix operator `&&&` takes two arguments of type `bit<W>` or
+serializable `enum`, and creates a value of type `set<ltype>`, where
+ltype is the type of the left argument.  The right value is used as a
+"mask", where each bit set to `0` in the mask indicates a "don't care"
+bit. More formally, the set denoted by `a &&& b` is defined as
+follows:
 
 ~ Begin P4Example
 a &&& b = { c of type bit<W> where a & b = c & b }
