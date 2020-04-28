@@ -1341,7 +1341,7 @@ In this document we adopt the following conventions:
 
 - Built-in types are written with lowercase characters---e.g., `int<20>`,
 - User-defined types are capitalized---e.g., `IPv4Address`,
-- Type variables are always uppercase---e.g., `parser P<H, IH>(...)`,
+- Type variables are always uppercase---e.g., `parser P<H, IH>()`,
 - Variables are uncapitalized--- e.g., `ipv4header`,
 - Constants are written with uppercase characters---e.g., `CPU_PORT`, and
 - Errors and enumerations are written in camel-case--- e.g. `PacketTooShort`.
@@ -1391,7 +1391,7 @@ Some P4 constructs act as namespaces that create local scopes for names includin
   declaration:
 
 ~ Begin P4Example
-extern E<H>(...) { ... } // scope of H ends here.
+extern E<H>(/* parameters omitted */) { /* body omitted */ } // scope of H ends here.
 ~ End P4Example
 
 The order of declarations is important; with the exception of parser
@@ -1670,10 +1670,10 @@ switch architecture where the second stage is optional. This could be
 declared as a package with an optional parameter:
 
 ~Begin P4Example
-package pipeline(...);
+package pipeline(/* parameters omitted */);
 package switch(pipeline first, @optional pipeline second);
-...
-pipeline(...) ingress;
+
+pipeline(/* arguments omitted */) ingress;
 switch(ingress) main;   // a switch with a single-stage pipeline
 ~End P4Example
 
@@ -1882,7 +1882,7 @@ the following annotation indicates that a specific name should be used
 for a table when generating the control-plane API:
 
 ~ Begin P4Example
-@name("acl") table t1 { ...}
+@name("acl") table t1 { /* body omitted */ }
 ~ End P4Example
 
 ### Integers (signed and unsigned) { #sec-integers }
@@ -2177,7 +2177,6 @@ enum bit<16> EtherType {
   MPLS      = 0x8847,
   IPV4      = 0x0800,
   IPV6      = 0x86dd
-  // ...
 }
 ~ End P4Example
 
@@ -2432,8 +2431,8 @@ current scope. An empty struct is legal. For example, the structure `Parsed_head
 below contains the headers recognized by a simple parser:
 
 ~ Begin P4Example
-header Tcp_h { ... }
-header Udp_h { ... }
+header Tcp_h { /* fields omitted */ }
+header Udp_h { /* fields omitted */ }
 struct Parsed_headers {
     Ethernet_h ethernet;
     Ip_h       ip;
@@ -2450,7 +2449,7 @@ type of tuples with n component types `T1`,...,`Tn` is written
 as
 
 ~ Begin P4Example
-tuple<T1,...,Tn>
+tuple<T1,/* more fields omitted */,Tn>
 ~ End P4Example
 
 ~ Begin P4Grammar
@@ -2751,7 +2750,7 @@ two values:
 - A value with a predefined type `Counters`
 
 ~ Begin P4Example
-struct Counters { ... }
+struct Counters { /* Fields omitted */ }
 parser P<H>(packet_in b,
              out H packetHeaders,
              out Counters counters);
@@ -3020,8 +3019,8 @@ For example, the following operation tests for the occurrence of an
 error:
 ~ Begin P4Example
 error errorFromParser;
-...
-if (errorFromParser != error.NoError) { ... }
+
+if (errorFromParser != error.NoError) { /* code omitted */ }
 ~ End P4Example
 
 ## Operations on `enum` types { #sec-enum-exprs }
@@ -3125,7 +3124,7 @@ E2     b = E2.e2;
 bit<8> c;
 
 if (a > b) { // Potential warning: two automatic and different casts to bit<8>.
-   ...
+   // code omitted
 }
 
 c = a + b; // Legal, but a warning would be reasonable
@@ -3181,12 +3180,11 @@ enum bit<16> EtherType {
 }
 
 header ethernet {
-  ...
+  // Some fields omitted
   EtherType etherType;
-  ...
 }
 
-parser my_parser(...) {
+parser my_parser(/* parameters omitted */) {
   state parse_ethernet {
     packet.extract(hdr.ethernet);
     transition select(hdr.ethernet.etherType) {
@@ -3235,13 +3233,13 @@ P4 does not implicitly cast from bit-strings to Booleans or
 vice versa. As a consequence, a program that is valid in a language like C such as,
 
 ~ Begin P4Example
-if (x) ...
+if (x) /* body omitted */
 ~ End P4Example
 
 (where x has an integer type) must instead be written in P4 as:
 
 ~ Begin P4Example
-if (x != 0) ...
+if (x != 0) /* body omitted */
 ~ End P4Example
 
 See the discussion on infinite-precision types and implicit casts
@@ -3451,8 +3449,8 @@ Consider the following examples:
 ~ Begin P4Example
 bit<8> x;
 bit<16> y;
-... y << x ...
-... y << 1024 ...
+bit<16> z = y << x;
+bit<16> w = y << 1024;
 ~ End P4Example
 
 As mentioned above, P4 gives a precise meaning shifting with an amount
@@ -3745,7 +3743,7 @@ struct S {
 }
 
 S s;
-...
+
 // Compare s with a structure-valued expression
 bool b = s == (S) { a = 1, b = 2 };
 ~ End P4Example
@@ -3765,9 +3763,9 @@ entries. For example, the `select` expression (Section
 
 ~ Begin P4Example
 select (expression) {
-    set1: state1;
-    set2: state2;
-   ...
+   set1: state1;
+   set2: state2;
+   // More labels omitted
 }
 ~ End P4Example
 
@@ -4412,7 +4410,7 @@ extern ActionProfile {
     ActionProfile(bit<32> size);  // constructor
 }
 table tbl {
-    actions = { ... }
+    actions = { /* body omitted */ }
     implementation = ActionProfile(1024);  // constructor invocation
 }
 ~ End P4Example
@@ -4562,6 +4560,11 @@ struct T {
     N1 n1;
 }
 
+header H {
+    bit<16> f1;
+    bit<8> f2;
+}
+
 N0 n0 = ...;  // initialize n0 with the default value 0
 N1 n1 = ...;  // initialize n1 with the default value N1.A
 S s0 = ...;  // initialize s0 with the default value { 0, false }
@@ -4572,6 +4575,9 @@ T t1 = { s = ..., ... }; // initialize t1 with the value { { 0, false }, 0, N1.A
 T t2 = { s = ... }; // error: no initializer specified for fields n0 and n1
 tuple<N0, N1> p = { ... }; // initialize p with default value { 0, N1.A }
 T t3 = { ..., n0 = 2}; // error: ... must be last
+H h1 = ...;   // initialize h1 with a header that is invalid
+H h2 = { f2=5, ... };   // initialize h2 with a header that is valid, field f1 0, field f2 5
+H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field f2 0
 ~ End P4Example
 
 # Function declarations { #sec-functions }
@@ -4713,9 +4719,9 @@ extern Counter {
     void increment(in bit<32> index);
 }
 // user program
-control c(...) {
+control c(/* parameters omitted */) {
     Counter(32w1024, CounterType.Both) ctr;  // instantiation
-    apply { ... }
+    apply { /* body omitted */ }
 }
 ~ End P4Example
 
@@ -4728,7 +4734,7 @@ For example, the following program is not valid:
 
 ~ Begin P4Example
 // Program
-control c(...) { ... }
+control c(/* parameters omitted */) { /* body omitted */ }
 c() c1;  // illegal top-level instantiation
 ~ End P4Example
 
@@ -4909,9 +4915,9 @@ a switch statement.
 ~ Begin P4Example
 switch (t.apply().action_run) {
    action1:          // fall-through to action2:
-   action2: { ... }
-   action3: { ... }  // no fall-through from action2 to action3 labels
-   default: { ... }
+   action2: { /* body omitted */ }
+   action3: { /* body omitted */ }  // no fall-through from action2 to action3 labels
+   default: { /* body omitted */ }
 }
 ~ End P4Example
 
@@ -4976,7 +4982,7 @@ Unlike parser type declarations, parser declarations may not be
 generic---e.g., the following declaration is illegal:
 
 ~ Begin P4Example
-parser P<H>(inout H data) { ... }
+parser P<H>(inout H data) { /* body omitted */ }
 ~ End P4Example
 
 Hence, used in the context of a `parserDeclaration` the production
@@ -5160,7 +5166,7 @@ In terms of the `ParserModel`, the meaning of a select expression:
 select(e) {
     ks[0]: s[0];
     ks[1]: s[1];
-    ...
+    /* more labels omitted */
     ks[n-2]: s[n-1];
     _ : sd;  // ks[n-1] is default
 }
@@ -5195,8 +5201,8 @@ the value of a recently-extracted header field against a set of
 constant values, as in the following example:
 
 ~ Begin P4Example
-header IPv4_h { ... bit<8> protocol; ... }
-struct P { ... IPv4_h ipv4; ... }
+header IPv4_h { bit<8> protocol; /* more fields omitted */ }
+struct P { IPv4_h ipv4; /* more fields omitted */ }
 P headers;
 select (headers.ipv4.protocol) {
     8w6  : parse_tcp;
@@ -5350,7 +5356,7 @@ enough bits left in the packet to fill the specified header.
 For example, the following program fragment extracts an Ethernet header:
 
 ~ Begin P4Example
-struct Result { ... Ethernet_h ethernet; ... }
+struct Result { Ethernet_h ethernet;  /* more field omitted */ }
 parser P(packet_in b, out Result r) {
     state start {
         b.extract(r.ethernet);
@@ -5442,7 +5448,7 @@ header IPv4_options_h {
 }
 
 struct Parsed_headers {
-    ...
+    // Some fields omitted
     IPv4_no_options_h ipv4;
     IPv4_options_h    ipv4options;
 }
@@ -5450,7 +5456,8 @@ struct Parsed_headers {
 error { InvalidIPv4Header }
 
 parser Top(packet_in b, out Parsed_headers headers) {
-   ...
+   // Some states omitted
+
    state parse_ipv4 {
        b.extract(headers.ipv4);
        verify(headers.ipv4.ihl >= 5, error.InvalidIPv4Header);
@@ -5510,7 +5517,9 @@ state start {
         5: parse_tcp_option_sack;
     }
 }
-...
+
+// Some states omitted
+
 state parse_tcp_option_sack {
     bit<8> n = b.lookahead<Tcp_option_sack_top>().length;
     b.extract(vec.next.sack, (bit<32>) (8 * n - 16));
@@ -5614,7 +5623,7 @@ calling it using its apply method.
 The following example shows a sub-parser invocation:
 
 ~ Begin P4Example
-parser callee(packet_in packet, out IPv4 ipv4) { ...}
+parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
 parser caller(packet_in packet, out Headers h) {
      callee() subparser;  // instance of callee
      state subroutine {
@@ -5752,7 +5761,7 @@ Unlike control type declarations, control declarations may not be
 generic---e.g., the following declaration is illegal:
 
 ~ Begin P4Example
-control C<H>(inout H data) { ... }
+control C<H>(inout H data) { /* Body omitted */ }
 ~ End P4Example
 
 P4 does not support exceptional control-flow within a `control`
@@ -5940,7 +5949,7 @@ table Fwd {
        ipv4header.dstAddress : ternary;
        ipv4header.version    : exact;
     }
-    ...
+    // more fields omitted
 }
 ~ End P4Example
 
@@ -6042,9 +6051,9 @@ supplied as arguments to an `action` are not evaluated until the
 action is invoked.
 
 ~ Begin P4Example
-action a(in bit<32> x) { ...}
+action a(in bit<32> x) { /* body omitted */ }
 bit<32> z;
-action b(inout bit<32> x, bit<8> data) { ...}
+action b(inout bit<32> x, bit<8> data) { /* body omitted */ }
 table t {
     actions = {
        // a; -- illegal, x parameter must be bound
@@ -6274,7 +6283,7 @@ extern ActionProfile {
    ActionProfile(bit<32> size); // number of distinct actions expected
 }
 table t {
-    key = { ...}
+    key = { /* body omitted */ }
     size = 1024;
     implementation = ActionProfile(32);  // constructor invocation
 }
@@ -6394,7 +6403,7 @@ it using its `apply` method.
 The following example shows a control invocation:
 
 ~ Begin P4Example
-control Callee(inout IPv4 ipv4) { ...}
+control Callee(inout IPv4 ipv4) { /* body omitted */ }
 control Caller(inout Headers h) {
      Callee() instance;  // instance of callee
      apply {
@@ -6460,7 +6469,7 @@ parser GenericParser(packet_in b, out Packet_header p)
         }
     }
     state udp {
-         ...
+         // body omitted
     }
 }
 ~ End P4Example
@@ -6481,11 +6490,11 @@ parameters may be applied directly, as if they were an instance.  This
 has the effect of creating and applying a local instance of that type.
 
 ~ Begin P4Example
-control Callee( ... ) { ... }
+control Callee(/* parameters omitted */) { /* body omitted */ }
 
-control Caller( ... )( ... ) {
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
     apply {
-        Callee.apply( ... ); // callee is treated as an instance
+        Callee.apply(/* arguments omitted */); // callee is treated as an instance
     }
 }
 ~ End P4Example
@@ -6493,10 +6502,10 @@ control Caller( ... )( ... ) {
 The definition of `Caller` is equivalent to the following.
 
 ~ Begin P4Example
-control Caller( ... )( ... ) {
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
     @name("Callee") Callee() Callee_inst; // local instance of Callee
     apply {
-        Callee_inst.apply( ... );         // Callee_inst is applied
+        Callee_inst.apply(/* arguments omitted */);         // Callee_inst is applied
     }
 }
 ~ End P4Example
@@ -6712,9 +6721,9 @@ package Switch<T>(Prs<T> p, Pipe<T> map);
 and the following declarations:
 
 ~ Begin P4Example
-parser P(packet_in b, out bit<32> index) { ... }
-control Pipe1(in bit<32> data) { ... }
-control Pipe2(in bit<8> data) { ... }
+parser P(packet_in b, out bit<32> index) { /* body omitted */ }
+control Pipe1(in bit<32> data) { /* body omitted */ }
+control Pipe2(in bit<8> data) { /* body omitted */ }
 ~ End P4Example
 
 The following is a legal declaration for the top-level target:
@@ -6832,20 +6841,20 @@ As an example, consider the following program fragment:
 
 ~ Begin P4Example
 // architecture declaration
-parser P(...);
-control C(...);
-control D(...);
+parser P(/* parameters omitted */);
+control C(/* parameters omitted */);
+control D(/* parameters omitted */);
 
 package Switch(P prs, C ctrl, D dep);
 
-extern Checksum16 { ...}
+extern Checksum16 { /* body omitted */}
 
 // user code
 Checksum16() ck16; // checksum unit instance
 
-parser TopParser(...)(Checksum16 unit) { ...}
-control Pipe(...) { ...}
-control TopDeparser(...)(Checksum16 unit) { ...}
+parser TopParser(/* parameters omitted */)(Checksum16 unit) { /* body omitted */}
+control Pipe(/* parameters omitted */) { /* body omitted */}
+control TopDeparser(/* parameters omitted */)(Checksum16 unit) { /* body omitted */}
 
 Switch(TopParser(ck16),
        Pipe(),
@@ -6931,8 +6940,8 @@ For each `table` construct, its syntactic name becomes the local
 name of the table.  For example:
 
 ~ Begin P4Example
-control c(...)() {
-    table t { ... }
+control c(/* parameters omitted */)() {
+    table t { /* body omitted */ }
 }
 ~ End P4Example
 
@@ -6951,7 +6960,7 @@ table t {
         data.f1 : exact;
         hdrs[3].f2 : exact;
     }
-    actions = { ... }
+    actions = { /* body omitted */ }
 }
 ~ End P4Example
 
@@ -6975,7 +6984,7 @@ table t {
     keys = {
         data.f1 + 1 : exact @name("f1_mask");
     }
-    actions = { ... }
+    actions = { /* body omitted */ }
 }
 ~ End P4Example
 
@@ -6988,8 +6997,8 @@ For each `action` construct, its syntactic name is the local name
 of the action.  For example:
 
 ~ Begin P4Example
-control c(...)() {
-    action a(...) { ... }
+control c(/* parameters omitted */)() {
+    action a(...) { /* body omitted */ }
 }
 ~ End P4Example
 
@@ -7003,7 +7012,7 @@ instance is bound to a name, that name becomes its local control plane
 name.  For example, if `control` `C` is declared as,
 
 ~ Begin P4Example
-control C(...)() { ... }
+control C(/* parameters omitted */)() { /* body omitted */ }
 ~ End P4Example
 
 and instantiated as,
@@ -7019,8 +7028,8 @@ local name is the name of the formal parameter to which it will be
 bound. For example, if `extern` `E` and `control` `C` are declared as,
 
 ~ Begin P4Example
-extern E { ... }
-control C( ... )(E e_in) { ... }
+extern E { /* body omitted */ }
+control C( /* parameters omitted */ )(E e_in) { /* body omitted */ }
 ~ End P4Example
 
 and instantiated as,
@@ -7038,11 +7047,11 @@ the instance of `MyC` is `c`, and the local name of the `extern`
 is `e2`, not `e1`.
 
 ~ Begin P4Example
-extern E { ... }
+extern E { /* body omitted */ }
 control ArchC(E e1);
 package Arch(ArchC c);
 
-control MyC(E e2)() { ... }
+control MyC(E e2)() { /* body omitted */ }
 Arch(MyC()) main;
 ~ End P4Example
 
@@ -7055,7 +7064,7 @@ there are multiple instances.
 
 ~ Begin P4Example
 control Callee() {
-    table t { ... }
+    table t { /* body omitted */ }
     apply { t.apply(); }
 }
 control Caller() {
@@ -7108,10 +7117,10 @@ its fully qualified name when it is unambiguous in the context in
 which it is used.  Consider the following example.
 
 ~ Begin P4Example
-control c( ... )() {
-    action a ( ... ) { ... }
+control c( /* parameters omitted */ )() {
+    action a ( /* parameters omitted */ ) { /* body omitted */ }
     table t {
-        keys = { ... }
+        keys = { /* body omitted */ }
         actions = { a; } }
 }
 c() c_inst;
@@ -7180,7 +7189,7 @@ statements, parser states, control blocks, or whole parsers.
 Consider the following example:
 
 ~ Begin P4Example
-extern Register { ... }
+extern Register { /* body omitted */ }
 control Ingress() {
   Register() r;
   table flowlet { /* read state of r in an action */ }
@@ -7247,15 +7256,15 @@ does not affect the annotation on another because they have different scope.
 This is legal:
 
 ~ Begin P4Example
-@my_anno(1) table T { ... }
-@my_anno[2] table U { ... } // OK - different scope than previous use of my_anno
+@my_anno(1) table T { /* body omitted */ }
+@my_anno[2] table U { /* body omitted */ } // OK - different scope than previous use of my_anno
 ~ End P4Example
 
 This is illegal:
 
 ~ Begin P4Example
 @my_anno(1)
-@my_anno[2] table U { ... } // Error - changed type of anno on an element
+@my_anno[2] table U { /* body omitted */ } // Error - changed type of anno on an element
 ~ End P4Example
 
 Multiple unstructured annotations using the same `name` can appear on a given
@@ -7267,14 +7276,14 @@ This is legal:
 
 ~ Begin P4Example
 @my_anno(1)
-@my_anno(2) table U { ... }  // OK - unstructured annos accumulate
+@my_anno(2) table U { /* body omitted */ }  // OK - unstructured annos accumulate
 ~ End P4Example
 
 This is illegal:
 
 ~ Begin P4Example
 @my_anno[1]
-@my_anno[2] table U { ... } // Error - reused the same structured anno on an element
+@my_anno[2] table U { /* body omitted */ } // Error - reused the same structured anno on an element
 ~ End P4Example
 
 ## Bodies of Unstructured Annotations
@@ -7350,7 +7359,7 @@ The following example produces an empty annotation:
 ~ Begin P4Example
 @Empty[]
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7367,7 +7376,7 @@ The following example will produce an effective expression list as follows:
 #define NUM_CONST 6
 @MixedExprList[1,TEXT_CONST,true,1==2,5+NUM_CONST]
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7376,7 +7385,7 @@ table t {
 ~ Begin P4Example
 @Labels[short="Short Label", hover="My Longer Table Label to appear in hover-help"]
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7391,7 +7400,7 @@ The following example will produce an effective kvList as follows.
 ~ Begin P4Example
 @MixedKV[label="text", my_bool=true, int_val=2*3]
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7403,7 +7412,7 @@ an `expression`:
 ~ Begin P4Example
 @IllegalMixing[key=4, 5] // illegal mixing
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7414,7 +7423,7 @@ The following example is invalid because the same key occurs more than once:
 ~ Begin P4Example
 @DupKey[k1=4,k1=5] // illegal duplicate key
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7428,7 +7437,7 @@ than once on the same element, e.g. `table t`:
 @DupAnno[k1=4]
 @DupAnno[k2=5] // illegal duplicate name
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7441,7 +7450,7 @@ an unstructured and structured annotation on the same element `table t`:
 @MixAnno("Anything")
 @MixAnno[k2=5] // illegal use in both annotation types
 table t {
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7481,7 +7490,7 @@ table t {
        @tableonly b,   // can only appear in the table
        @defaultonly c, // can only appear in the default action
     }
-    ...
+    /* body omitted */
 }
 ~ End P4Example
 
@@ -7494,9 +7503,9 @@ body.  In the
 following example, the fully-qualified name of the table is `c_inst.t1`.
 
 ~ Begin P4Example
-control c( ... )() {
-    @name("t1") table t { ... }
-    apply { ... }
+control c( /* parameters omitted */ )() {
+    @name("t1") table t { /* body omitted */ }
+    apply { /* body omitted */ }
 }
 c() c_inst;
 ~ End P4Example
@@ -7521,8 +7530,8 @@ control noargs();
 package top(noargs c1, noargs c2);
 
 control c() {
-    @name(".foo.bar") table t { ... }
-    apply { ... }
+    @name(".foo.bar") table t { /* body omitted */ }
+    apply { /* body omitted */ }
 }
 top(c(), c()) main;
 ~ End P4Example
@@ -7596,7 +7605,7 @@ constructs, such as externs.
 ~ Begin P4Example
 @deprecated("Please use the 'check' function instead")
 extern Checker {
-   ...
+   /* body omitted */
 }
 ~ End P4Example
 
@@ -8042,14 +8051,14 @@ used in most programming language: a multi-way conditional that
 executes the first branch that matches from a list of cases.
 
 ~ Begin P4Example
-switch(e1,...,en) {
+switch(e1,/* parameters omitted */,en) {
   pat_1 : stmt1;
-  ...
+  /* body omitted */
   pat_m : stmtm;
 }
 ~ End P4Example
 
-Here, the value being scrutinized is given by a tuple `(e1,...,en)`,
+Here, the value being scrutinized is given by a tuple `(e1,/* parameters omitted */,en)`,
 and the patterns are given by expressions that denote sets of
 values. The value matches a branch if it is an element of the set
 denoted by the pattern. Unlike C and C++, there is no break statement
@@ -8105,7 +8114,7 @@ specify the size of header stacks.
 For example:
 ~ Begin P4Example
 foreach hdr in hdrs {
-  ... operations over HDR ...
+  /// operations over HDR
 }
 ~ End P4Example
 
@@ -8139,9 +8148,9 @@ following program fragment:
 
 ~ Begin P4Example
 typedef bit<4> t;
-struct s { ...}
+struct s { /* body omitted */}
 t x;
-parser p(bit<8> b) { ... }
+parser p(bit<8> b) { /* body omitted */ }
 ~ End P4Example
 The lexer has to return the following terminal kinds:
 ~ Begin P4Example
