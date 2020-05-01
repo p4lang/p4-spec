@@ -1503,11 +1503,11 @@ Each parameter may be labeled with a direction:
 	- an action parameter that can be set directly by another calling
       action; in this case it behaves like an `in` parameter
 
-Direction `out` parameters are always initialized as described below
-at the beginning of execution of the portion of the program
-(e.g. control, parser, action, function) that has the `out`
-parameters.  This initialization is not performed for direction `in`
-or `inout` parameters.
+Direction `out` parameters are always initialized at the beginning of
+execution of the portion of the program that has the `out` parameters,
+e.g. `control`, `parser`, `action`, function, etc.  This
+initialization is not performed for direction `in` or `inout`
+parameters.
 
 - If a direction `out` parameter is of type `header` or
   `header_union`, it is set to "invalid".
@@ -1515,9 +1515,9 @@ or `inout` parameters.
   of the header stack are set to "invalid", and its `nextIndex` field
   is initialized to 0 (see Section [#sec-expr-hs]).
 - If a direction `out` parameter is a compound type, e.g. a struct or
-  tuple, but not one of the types explicitly listed above, then apply
-  these rules recursively to its member fields.
-- If a direction `out` paramter has any other type, e.g. `bit<W>`, an
+  tuple, other than one of the types listed above, then apply these
+  rules recursively to its members.
+- If a direction `out` parameter has any other type, e.g. `bit<W>`, an
   implementation need not initialize it to any predictable value.
 
 For example, if a direction `out` parameter has type `s2_t` named `p`:
