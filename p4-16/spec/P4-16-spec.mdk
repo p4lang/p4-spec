@@ -1488,8 +1488,8 @@ Each parameter may be labeled with a direction:
   are initialized by copying the value of the corresponding
   argument when the invocation is executed.
 
-- `out` parameters are uninitialized (parameters of type `header`
-  or `header_union` are set to "invalid") and are treated as l-values
+- `out` parameters are, with a few exceptions listed below,
+  uninitialized and are treated as l-values
   (See Section [#sec-lvalues]) within the body of the method or function.
   An arguments passed as an `out`
   parameter must be an l-value; after the execution of the
@@ -1502,6 +1502,47 @@ Each parameter may be labeled with a direction:
 	- an action parameter that can only be set by the control plane
 	- an action parameter that can be set directly by another calling
       action; in this case it behaves like an `in` parameter
+
+Direction `out` parameters are always initialized as described below
+at the beginning of execution of the portion of the program
+(e.g. control, parser, action, function) that has the `out`
+parameters.  This initialization is not performed for direction `in`
+or `inout` parameters.
+
+- If a direction `out` parameter is of type `header` or
+  `header_union`, it is set to "invalid".
+- If a direction `out` parameter is of type header stack, all elements
+  of the header stack are set to "invalid", and its `nextIndex` field
+  is initialized to 0 (see Section [#sec-expr-hs]).
+- If a direction `out` parameter is a compound type, e.g. a struct or
+  tuple, but not one of the types explicitly listed above, then apply
+  these rules recursively to its member fields.
+- If a direction `out` paramter has any other type, e.g. `bit<W>`, an
+  implementation need not initialize it to any predictable value.
+
+For example, if a direction `out` parameter has type `s2_t` named `p`:
+
+~ Begin P4Example
+header h1_t {
+    bit<8> f1;
+    bit<8> f2;
+}
+struct s1_t {
+    h1_t h1a;
+    bit<3> a;
+    bit<7> b;
+}
+struct s2_t {
+    h1_t h1b;
+    s1_t s1;
+    bit<5> c;
+}
+~ End P4Example
+
+then at the beginning of execution of the part of the program that has
+the `out` parameter `p`, it must be initialized so that `p.h1b` and
+and `p.s1.h1a` are invalid.  No other fields are required to be
+initialized.
 
 Arguments are evaluated from left to right prior to the invocation of the
 function itself. The order of evaluation is important when the
