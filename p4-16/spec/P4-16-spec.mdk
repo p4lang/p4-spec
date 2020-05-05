@@ -5228,9 +5228,11 @@ verify(false, error.NoMatch);
 Some targets may require that all keyset expressions in a select
 expression be compile-time known values. Keysets are evaluated in
 order, from top to bottom as implied by the pseudo-code above; the
-first keyset that includes the value in the `select` argument
-provides the result state. If no label matches, the execution triggers
-a runtime error with the standard error code `error.NoMatch`.
+first keyset that includes the value in the `select` argument provides
+the result state. If no label matches, the execution triggers a
+runtime error with the standard error code `error.NoMatch`. Function
+or method calls are forbidden in keyset expressions, except calls to
+the header methods `isValid()`, `minSizeInBits()`, and `minSizeInBytes()`.
 
 Note that this implies that all cases after a `default` or `_`
 label are unreachable; the compiler should emit a warning if it detects unreachable cases.
