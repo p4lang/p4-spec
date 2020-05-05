@@ -2287,8 +2287,9 @@ one bit long field. This declaration introduces a new identifier in the
 current scope; the type can be referred to using this identifier. A header is
 similar to a `struct` in C, containing all the specified fields. However, in
 addition, a header also contains a hidden Boolean "validity" field. When the
-"validity" bit is `true` we say that the "header is valid". When a header is
-created its "validity" bit is automatically set to `false`. The "validity"
+"validity" bit is `true` we say that the "header is valid". When a local
+variable with a header type is
+declared, its "validity" bit is automatically set to `false`. The "validity"
 bit can be manipulated by using the header methods `isValid()`, `setValid()`,
 and `setInvalid()`, as described in Section [#sec-ops-on-hdrs].
 
@@ -4700,9 +4701,10 @@ optInitializer
     ;
 ~ End P4Grammar
 
-Variable declarations without an initializer are uninitialized (except for header
-stacks, which have their `nextIndex` counter initialized to `0`,
-as discussed in [#sec-expr-hs]). The language places few restrictions on
+Variable declarations without an initializer are uninitialized (except for
+headers and other header-related types, which are initialized to invalid in the
+same way as described for direction `out` parameters in Section
+[#sec-calling-convention]). The language places few restrictions on
 the types of the variables: most P4 types that can be written
 explicitly can be used (e.g., base types, `struct`, `header`,
 header stack, `tuple`). However, it is impossible to declare variables with types
