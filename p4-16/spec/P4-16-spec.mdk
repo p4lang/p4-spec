@@ -6090,7 +6090,10 @@ Each action parameter that has a direction (`in`, `inout`, or `out`)
 must be bound in the `actions` list specification; conversely, no
 directionless parameters may be bound in the list. The expressions
 supplied as arguments to an `action` are not evaluated until the
-action is invoked.
+action is invoked.  Invocations of methods, functions, controls, or
+parsers are forbidden in the expressions supplied as action arguments;
+the only functions that can be called are the header methods
+`isValid()`, `minSizeInBits()` and `minSizeInBytes()`.
 
 ~ Begin P4Example
 action a(in bit<32> x) { /* body omitted */ }
@@ -6103,6 +6106,7 @@ table t {
        b(z);  // binding b's parameter x to z
        // b(z, 3); -- illegal, cannot bind directionless data parameter
        // b(); -- illegal, x parameter must be bound
+       // a(f(2));  -- illegal: argument involves a function call
     }
 }
 ~ End P4Example
