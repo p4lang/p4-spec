@@ -6264,11 +6264,18 @@ apply {
 }
 ~ End P4Example
 
-It is expected that evaluating a key expression will usually have no
-side effects, so the order of their evaluation makes no difference in
-the resulting lookup key value.  In this common case, there is no need
-for a compiler to generate code that assigns the results of key
-expressions to fresh temporary variables.
+Note that the second code example above is given in order to specify
+the behavior of the first one.  An implementation is free to choose
+any technique that achieves this behavior[^MostP4ProgramsDontDoThis].
+
+[^MostP4ProgramsDontDoThis]: Most existing P4~16~ programs today do
+    not use function or method calls in table key expressions, and the
+    order of evaluation of these key expressions makes no difference
+    in the resulting lookup key value. In this overwhelmingly common
+    case, if an implementation chooses to insert extra assignment
+    statements to implement side-effecting key expressions, but does
+    not insert them when there are no side-effecting key expressions,
+    then in typical programs they will almost never be inserted.
 
 ## The Match-Action Pipeline Abstract Machine { #sec-mau-abstract-mach }
 
