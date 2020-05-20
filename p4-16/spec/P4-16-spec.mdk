@@ -3374,8 +3374,6 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
-- Concatenation of two bit-strings, denoted by the infix operator `++`. The result is a bit-string whose
-  length is the sum of the lengths of the inputs where the most significant bits are taken from the left operand.
 - Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
   where `m` and `l` must be positive integers
   that are compile-time known values, and `m >= l`. The result is
@@ -3469,6 +3467,14 @@ type. The result always has the same width as the left operand.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.  A slice of a signed integer is treated like an unsigned integer.
+
+### Concatenation { #sec-concatenation }
+
+Concatenation is applied to two bit-strings (signed or unsigned).  It
+is denoted by the infix operator `++`.  The result is a bit-string
+whose length is the sum of the lengths of the inputs where the most
+significant bits are taken from the left operand; the sign of the
+result is taken from the left operand.
 
 ### A note about shifts
 
@@ -7776,6 +7782,7 @@ The P4 compiler should provide:
 * Added structured annotations (Section [#sec-annotations]).
 * Allow empty statements in parsers (Section [#sec-parser-state-stmt]).
 * Fixed grammar for right shifts (Section [#sec-grammar]).
+* Allow concatenation of signed strings (Section [#sec-concatenation]).
 
 ## Summary of changes made in version 1.2.0
 
