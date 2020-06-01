@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.2.0
+Title Note: version 1.2.1-rc
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -2839,7 +2839,7 @@ important what the type variable binds to (during type unification the
 don't care type can unify with any other type).  An example is given
 Section [#sec-arch-desc-example].
 
-## Default values { #default-values }
+## Default values { #sec-default-values }
 
 Some P4 types define a "default value," which can be used to
 automatically initialize values of that type.  The default values are
@@ -4579,7 +4579,7 @@ values will be.
 ## Initializing with default values
 
 A left-value can be initialized automatically with a default value of the
-suitable type using the syntax `...` (see Section [#default-values]).  A value
+suitable type using the syntax `...` (see Section [#sec-default-values]).  A value
 of type `struct`, `header`, or `tuple` can also be initialized using a mix of
 explicit values and default values by using the notation `...` in a list
 expression initializer; in this case all fields not explicitly
@@ -7767,22 +7767,51 @@ The P4 compiler should provide:
 |       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
 |       |               | `table.apply().miss`, `string` type.                                |
 |-----|-----|-----|
-| 1.2.1 | TBD, 2020 | |
+| 1.2.1-rc  | June 1, 2020 | Added structure-value expressions, default values, concatenation, structured  |
+|     |     |              | annotations, generalized typing rules for masks, restricted typing rule for   | 
+|     |     |              | shifts with infinite-precistion operands, clarified initialization semantics, | 
+|     |     |              | fixed several small issues in the grammar                                     | 
 |-----|-----|-----|
 
 ## Summary of changes made in version 1.2.1
 
+* Added structure-value expressions (Section
+  [#sec-structure-expressions]).
+
+* Added support for default values (Section [#sec-default-values]).
+
+* Added support for concatenating signed strings (Section
+  [#sec-concatenation]).
+
+* Added key-value and list-structured annotations (Section
+  [#annotations]).
+
 * Added `@pure` and `@noSideEffects` annotations (Section
   [#sec-extern-annotations]).
 
-## Summary of changes made in version 1.2.1
-
 * Added `@noWarn` annotation (Section [#sec-nowarn-anno]).
-* Added structure-valued expressions (Section [#sec-structure-expressions]).
-* Added structured annotations (Section [#sec-annotations]).
-* Allow empty statements in parsers (Section [#sec-parser-state-stmt]).
-* Fixed grammar for right shifts (Section [#sec-grammar]).
-* Allow concatenation of signed strings (Section [#sec-concatenation]).
+
+* Generalized typing for masks to allow serializable `enum`s (Section
+  [#sec-cubes]).
+
+* Restricted the right operands of bit shifts involving
+  infinite-precision integers to be constant and positive (Section
+  [#sec-varint-ops]).
+
+* Clarified copy-out behavior for `return` (Section
+  [#sec-return-stmt]) and `exit` (Section [#sec-exit-stmt])
+  statements.
+
+* Clarified semantics of invalid header stacks (Section
+  [#sec-uninitialized-values-and-writing-invalid-headers ]).
+
+* Clarified initialization semantics (Section [#sec-lvalues] and
+  [#sec-calling-convention]), especially for headers and local
+  variables.
+
+* Fixed grammar to clarify parsing of right shift operator (`>>`),
+  allow empty statements in parser (Section [#sec-parser-state-stmt]),
+  and eliminate annotations on const entries (Section [#sec-entries]).
 
 ## Summary of changes made in version 1.2.0
 
