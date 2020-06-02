@@ -2207,8 +2207,7 @@ target-specific).
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable `enum`s, because headers are
 allowed to have fields with such `enum` types.
-This requires the programmer provide both the fixed-width unsigned (or signed) integer type and
-an associated integer value for each symbolic entry in the enumeration.  For example, the
+This requires the programmer provide both the fixed-width unsigned (or signed) integer type (or their nested arbitrarily `typedef`) and an associated integer value for each symbolic entry in the enumeration.  For example, the
 declaration
 
 ~ Begin P4Example
@@ -2234,7 +2233,7 @@ underlying type.
 
 Compiler implementations are expected to raise an error if the fixed-width integer representation
 for an enumeration entry falls outside the representation range of the underlying
-type.
+type. Compiler also raises an error if a `type` is used with a  serializable `enum`.
 
 For example, the declaration
 
