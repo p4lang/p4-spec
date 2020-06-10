@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.2.1-rc
+Title Note: version 1.2.1
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -7767,10 +7767,13 @@ The P4 compiler should provide:
 |       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
 |       |               | `table.apply().miss`, `string` type.                                |
 |-----|-----|-----|
-| 1.2.1-rc  | June 1, 2020 | Added structure-value expressions, default values, concatenation, structured  |
-|     |     |              | annotations, generalized typing rules for masks, restricted typing rule for   | 
-|     |     |              | shifts with infinite-precistion operands, clarified initialization semantics, | 
-|     |     |              | fixed several small issues in the grammar                                     | 
+| 1.2.1     | June 11, 2020 | Added structure-value expressions, default values, concatenation, | 
+|     |     |               | structured  annotations; standardized several new annotations;    | 
+|     |     |               | generalized typing rule for masks; restricted typing rule for     | 
+|     |     |               | shifts with infinite-precistion operands; clarified evaluation    | 
+|     |     |               | order for table keys; clarified copy-out behavior; clarified      | 
+|     |     |               | semantics of invalid header stacks; clarified initialization      | 
+|     |     |               | semantics; fixed several small issues in grammar.                 |
 |-----|-----|-----|
 
 ## Summary of changes made in version 1.2.1
@@ -7808,6 +7811,8 @@ The P4 compiler should provide:
 * Clarified initialization semantics (Section [#sec-lvalues] and
   [#sec-calling-convention]), especially for headers and local
   variables.
+
+* Clarified evaluation order for table keys (Section [#sec-mau-semantics]).
 
 * Fixed grammar to clarify parsing of right shift operator (`>>`),
   allow empty statements in parser (Section [#sec-parser-state-stmt]),
