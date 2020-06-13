@@ -2207,8 +2207,13 @@ target-specific).
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable `enum`s, because headers are
 allowed to have fields with such `enum` types.
-This requires the programmer provide both the fixed-width unsigned (or signed) integer type (or their nested arbitrarily `typedef`) and an associated integer value for each symbolic entry in the enumeration.  For example, the
-declaration
+The symbol `typeRef` in the grammar above must be one of the following types:
+
+- an unsigned integer, i.e. `bit<W>` for some constant `W`.
+- a signed integer, i.e. `int<W>` for some constant `W`.
+- a type name declared via `typdef`, where the base type of that type is either
+one of the types listed above, or another `typedef name that meets these conditions.
+For example, the declaration
 
 ~ Begin P4Example
 enum bit<16> EtherType {
@@ -2232,8 +2237,7 @@ from the underlying type carrying equality, assignment, and casts to/from the
 underlying type.
 
 Compiler implementations are expected to raise an error if the fixed-width integer representation
-for an enumeration entry falls outside the representation range of the underlying
-type. Compiler also raises an error if a `type` is used with a serializable `enum`.
+for an enumeration entry falls outside the representation range of the underlying type.
 
 For example, the declaration
 
