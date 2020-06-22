@@ -1,9 +1,11 @@
-# p4-spec
+# P4 programming language specifications
 
 - api: This folder keeps documents related to P4 run-time API discussions.
-- general: This folder keeps general discussion materials related to the working group activities.
-- p4-14: This holds the official P4 14 spec and discussion materials.
+- p4-14: This holds the official P4 14 spec and discussion materials; this version of the language
+  is no longer being developed, and is in maintenance mode only.
 - p4-16: This holds the official P4 16 spec and discussion materials.
+- The [wiki pages](https://github.com/p4lang/p4-spec/wiki) hold language design materials.
+- The latest version of the P4 specification is [1.2.1](https://p4.org/p4-spec/docs/P4-16-v1.2.1.html).
 
 # Modification Policy
 
