@@ -3569,6 +3569,10 @@ Variable-length bit-strings support a limited set of operations:
   Two `varbit` fields can be compared only if they have the same type.
   Two varbits are equal if they have the same dynamic width and all
   the bits up to the dynamic width are the same.
+- Initialization of a `packet_in` object from a varbit value, by using the
+  `initialize` method of a packet_in extern instance.
+  This allows using the traditional methods of `packet_in` to be used
+  for parsing the data in a varbit field.
 
 The following operations are _not_ supported directly on a value of
 type `varbit`, but instead on any type for which `extract` and `emit`
@@ -3585,6 +3589,9 @@ finding this information in a section dedicated to type `varbit`.
   contain a field with type `varbit`. Such an `emit` method call
   inserts a variable-sized bit-string with a known dynamic width into
   the packet being constructed.
+
+An example that uses a parser to extract data from a varbit field is given
+in Section [#sec-parsing-varbits].
 
 ## Casts { #sec-casts }
 
@@ -5343,6 +5350,8 @@ a `parser` instantiation.
 
 ~ Begin P4Example
 extern packet_in {
+    packet_in();
+    void initialize(in T varbitValue);  // Initializes the packet data from a specified varbit value.
     void extract<T>(out T headerLvalue);
     void extract<T>(out T variableSizeHeader, in bit<32> varFieldSizeBits);
     T lookahead<T>();
@@ -5714,6 +5723,36 @@ If a parser aborts execution dynamically because it exceeded
 the time budget allocated for parsing, the parser should transition to
 `reject` and set
 the standard error `error.ParserTimeout`.
+
+### Parsing varbit fields { #sec-parsing-varbits }
+
+Here is an example that creates a new packet_in from a varbit field
+and passes it to a sub-parser for data extraction.
+
+~ Begin P4Example
+parser parse_options(packet_in options, out Parsed_packet p) {
+   // code omitted
+   ...
+}
+
+parser top(packet_in b, out Parsed_packet p) {
+   packet_in buffer;
+   parse_options options_parser();
+   // some states omitted
+
+   state parse_ipv4 {
+       b.extract(headers.ipv4);
+       b.extract(headers.ipv4options,
+                 (bit<32>)(((bit<16>)headers.ipv4.ihl - 5) * 32));
+       /// Setup buffer as a packet_in containing just
+       /// the packet options.
+       buffer.initialize(headers.ipv4options.options);
+       /// Invoke a sub-parser for parsing options
+       options_parser.apply(buffer, p);
+       transition accept;
+   }
+}
+~ End P4Example
 
 ##  Parser Value Sets { #sec-value-set }
 
@@ -7924,6 +7963,14 @@ error {
                            /// not supported by the implementation.
 }
 extern packet_in {
+    /// Constructor that creates a packet_in with an empty byte array
+    /// as data.
+    packet_in();
+    /// Initializes the packet data from a specified varbit value.
+    /// varbitValue must be a value with a varbit<X> type.
+    /// Subsequent extractions from this packet will actually consume
+    /// data from the specified varbit field.
+    void initialize(in T varbitValue);
     /// Read a header from the packet into a fixed-sized header @hdr
     /// and advance the cursor.
     /// May trigger error PacketTooShort or StackOutOfBounds.
