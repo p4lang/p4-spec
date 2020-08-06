@@ -6350,7 +6350,7 @@ requirements.
 
 A `table` can be invoked by calling its `apply`
 method. Calling an apply method on a table instance returns a value
-with a `struct` type with two fields. This structure is
+with a `struct` type with three fields. This structure is
 synthesized by the compiler automatically. For each `table T`, the
 compiler synthesizes an `enum` and a `struct`, shown in
 pseudo-P4:
@@ -6361,6 +6361,7 @@ enum action_list(T) {
 }
 struct apply_result(T) {
     bool hit;
+    bool miss;
     action_list(T) action_run;
 }
 ~ End P4Pseudo
@@ -6417,6 +6418,7 @@ apply_result(m) m.apply() {
     else {
        result.hit = true;
     }
+    result.miss = !result.hit;
     result.action_run = action_type(RA);
     evaluate_and_copy_in_RA_args(RA);
     execute(RA);
