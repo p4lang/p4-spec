@@ -4991,21 +4991,69 @@ switchCase
 
 switchLabel
     : name
+    | expression
     | DEFAULT
     ;
 ~ End P4Grammar
 
-The expression within the `switch` statement is restricted to be
-the result of a table invocation (See Section [#sec-invoke-mau]).
+The expression within the `switch` statement must be one of:
 
-If a switch label is not followed by a block statement it falls
+- an expression of the form `t.apply().action_run`, where `t` is the name
+  of a table (see Section [#sec-invoke-mau])
+- an expression that evaluates to a result with one of the types
+  listed below:
+  - `bit<W>`
+  - `int<W>`
+  - `enum`, either with or without an underlying representation specified
+  - `error`
+
+If the `switch` expression is of the form `t.apply().action_run`, then
+all switch labels must be names of actions of the table `t`.
+Otherwise, all switch labels must be expressions with compile-time
+known values, and have the same type as the type of the switch
+expression.
+
+TBD: What language to use above if we want to allow a switch
+expression with type `bit<W>`, and allow the switch labels to be type
+`int`, e.g. an expression like `5`?
+
+It is a compile-time error if two labels of a `switch` statement equal
+each other.  The switch label values need not include all possible
+values of the switch expression.  It is optional to have a `switch`
+case with the `default` label, but if one is present, it must be the
+last one in the `switch` statement.
+
+If a switch label is not followed by a block statement, it falls
 through to the next label. However, if a block statement is present,
-it does not fall through. Note, that this is different from C-style `switch`
-statements, where a `break` is needed to prevent
-fall-through. It is legal to have no matching label for some actions,
-or no `default` label. At runtime, if no case matches, execution
-of the program simply continues. However, no label can appear twice in
-a switch statement.
+it does not fall through. Note that this is different from C-style
+`switch` statements, where a `break` is needed to prevent
+fall-through.
+
+When a `switch` statement is executed, first the switch expression is
+evaluated, and any side effects from evaluating this expression are
+visible to any `switch` case that is executed.  Among switch labels
+that are not `default`, at most one of them can equal the value of the
+switch expression. If one is equal, that switch case is executed.
+
+If no labels are equal to the `switch` expression, then:
+
+- if there is a `default` label, the case with the `default` label is
+  executed.
+- if there is no `default` label, then no switch case is executd, and
+  execution continues after the end of the `switch` statement, with no
+  side effects (except any that were caused by evaluating the `switch`
+  expression).
+
+~ Begin P4Example
+// Assume the expression hdr.ethernet.etherType has type bit<16>
+switch (hdr.ethernet.etherType) {
+   0x86dd: { /* body omitted */ }
+   0x0800:          // fall-through to the next body
+   0x0802: { /* body omitted */ }
+   0xcafe: { /* body omitted */ }
+   default: { /* body omitted */ }
+}
+~ End P4Example
 
 ~ Begin P4Example
 switch (t.apply().action_run) {
@@ -5016,11 +5064,11 @@ switch (t.apply().action_run) {
 }
 ~ End P4Example
 
-Note that the `default` label of the `switch` statement is
-used to match on the kind of action executed, no matter whether there
-was a table hit or miss. The `default` label does not indicate
-that the table missed and the `default_action` was executed.
-The `default` label should be the last label if present.
+When the `switch` expression is of the form `t.apply().action_run`,
+note that the `default` label of the `switch` statement is used to
+match on the kind of action executed, no matter whether there was a
+table hit or miss. The `default` label does not indicate that the
+table missed and the `default_action` was executed.
 
 # Packet parsing { #sec-packet-parsing }
 
