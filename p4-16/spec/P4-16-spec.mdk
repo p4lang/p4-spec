@@ -4996,22 +4996,56 @@ switchLabel
     ;
 ~ End P4Grammar
 
-The expression within the `switch` statement must be one of:
+There are two kinds of `switch` expressions allowed, described
+separately in the following two subsections.
 
-- an expression of the form `t.apply().action_run`, where `t` is the name
-  of a table (see Section [#sec-invoke-mau])
-- an expression that evaluates to a result with one of the types
-  listed below:
-  - `bit<W>`
-  - `int<W>`
-  - `enum`, either with or without an underlying representation specified
-  - `error`
+### Switch statement with `action_run` expression
 
-If the `switch` expression is of the form `t.apply().action_run`, then
-all switch labels must be names of actions of the table `t`.
-Otherwise, all switch labels must be expressions with compile-time
-known values, and must have a type that can be implicitly cast to the
-type of the `switch` expression (see Section [#sec-implicit-casts]).
+For this variant of `switch` statement, the expression must be of the
+form `t.apply().action_run`, where `t` is the name of a table (see
+Section [#sec-invoke-mau]).  All switch labels must be names of
+actions of the table `t`, or `default`.
+
+~ Begin P4Example
+switch (t.apply().action_run) {
+   action1:          // fall-through to action2:
+   action2: { /* body omitted */ }
+   action3: { /* body omitted */ }  // no fall-through from action2 to action3 labels
+   default: { /* body omitted */ }
+}
+~ End P4Example
+
+Note that the `default` label of the `switch` statement is used to
+match on the kind of action executed, no matter whether there was a
+table hit or miss. The `default` label does not indicate that the
+table missed and the `default_action` was executed.
+
+### Switch statement with integer or enumerated type expression
+
+For this variant of `switch` statement, the expression must evaluate
+to a result with one of these types:
+
+- `bit<W>`
+- `int<W>`
+- `enum`, either with or without an underlying representation specified
+- `error`
+
+All switch labels must be expressions with compile-time known values,
+and must have a type that can be implicitly cast to the type of the
+`switch` expression (see Section [#sec-implicit-casts]).
+
+~ Begin P4Example
+// Assume the expression hdr.ethernet.etherType has type bit<16>
+switch (hdr.ethernet.etherType) {
+   0x86dd: { /* body omitted */ }
+   0x0800:          // fall-through to the next body
+   0x0802: { /* body omitted */ }
+   0xcafe: { /* body omitted */ }
+   default: { /* body omitted */ }
+}
+~ End P4Example
+
+### Notes common to all switch statements
 
 It is a compile-time error if two labels of a `switch` statement equal
 each other.  The switch label values need not include all possible
@@ -5039,32 +5073,6 @@ If no labels are equal to the `switch` expression, then:
   execution continues after the end of the `switch` statement, with no
   side effects (except any that were caused by evaluating the `switch`
   expression).
-
-~ Begin P4Example
-// Assume the expression hdr.ethernet.etherType has type bit<16>
-switch (hdr.ethernet.etherType) {
-   0x86dd: { /* body omitted */ }
-   0x0800:          // fall-through to the next body
-   0x0802: { /* body omitted */ }
-   0xcafe: { /* body omitted */ }
-   default: { /* body omitted */ }
-}
-~ End P4Example
-
-~ Begin P4Example
-switch (t.apply().action_run) {
-   action1:          // fall-through to action2:
-   action2: { /* body omitted */ }
-   action3: { /* body omitted */ }  // no fall-through from action2 to action3 labels
-   default: { /* body omitted */ }
-}
-~ End P4Example
-
-When the `switch` expression is of the form `t.apply().action_run`,
-note that the `default` label of the `switch` statement is used to
-match on the kind of action executed, no matter whether there was a
-table hit or miss. The `default` label does not indicate that the
-table missed and the `default_action` was executed.
 
 # Packet parsing { #sec-packet-parsing }
 
