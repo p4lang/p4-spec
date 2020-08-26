@@ -5010,12 +5010,8 @@ The expression within the `switch` statement must be one of:
 If the `switch` expression is of the form `t.apply().action_run`, then
 all switch labels must be names of actions of the table `t`.
 Otherwise, all switch labels must be expressions with compile-time
-known values, and have the same type as the type of the switch
-expression.
-
-TBD: What language to use above if we want to allow a switch
-expression with type `bit<W>`, and allow the switch labels to be type
-`int`, e.g. an expression like `5`?
+known values, and must have a type that can be implicitly cast to the
+type of the `switch` expression (see Section [#sec-implicit-casts]).
 
 It is a compile-time error if two labels of a `switch` statement equal
 each other.  The switch label values need not include all possible
@@ -5039,7 +5035,7 @@ If no labels are equal to the `switch` expression, then:
 
 - if there is a `default` label, the case with the `default` label is
   executed.
-- if there is no `default` label, then no switch case is executd, and
+- if there is no `default` label, then no switch case is executed, and
   execution continues after the end of the `switch` statement, with no
   side effects (except any that were caused by evaluating the `switch`
   expression).
