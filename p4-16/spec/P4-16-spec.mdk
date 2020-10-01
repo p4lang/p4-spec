@@ -3828,12 +3828,20 @@ keysetExpression
     ;
 
 tupleKeysetExpression
-    : '(' simpleKeysetExpression ')'
+    : "(" simpleKeysetExpression "," simpleExpressionList ")"
+    | "(" reducedSimpleKeysetExpression ")"
     ;
 
 simpleExpressionList
     : simpleKeysetExpression
     | simpleExpressionList ',' simpleKeysetExpression
+    ;
+
+reducedSimpleKeysetExpression
+    : expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
     ;
 
 simpleKeysetExpression
