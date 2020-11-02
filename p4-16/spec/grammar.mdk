@@ -483,9 +483,8 @@ switchCase
     ;
 
 switchLabel
-    : name
-    : expression
-    | DEFAULT
+    : DEFAULT
+    | nonBraceExpression
     ;
 
 statementOrDeclaration
@@ -780,6 +779,51 @@ expression
     | expression '?' expression ':' expression
     | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
+    | namedType '(' argumentList ')'
+    | '(' typeRef ')' expression
+    ;
+
+nonBraceExpression
+    : INTEGER
+    | TRUE
+    | FALSE
+    | STRING_LITERAL
+    | nonTypeName
+    | dotPrefix nonTypeName
+    | nonBraceExpression '[' expression ']'
+    | nonBraceExpression '[' expression ':' expression ']'
+    | '(' expression ')'
+    | '!' expression %prec PREFIX
+    | '~' expression %prec PREFIX
+    | '-' expression %prec PREFIX
+    | '+' expression %prec PREFIX
+    | typeName '.' member
+    | ERROR '.' member
+    | nonBraceExpression '.' member
+    | nonBraceExpression '*' expression
+    | nonBraceExpression '/' expression
+    | nonBraceExpression '%' expression
+    | nonBraceExpression '+' expression
+    | nonBraceExpression '-' expression
+    | nonBraceExpression '|+|' expression
+    | nonBraceExpression '|-|' expression
+    | nonBraceExpression '<<' expression
+    | nonBraceExpression '>>' expression
+    | nonBraceExpression '<=' expression
+    | nonBraceExpression '>=' expression
+    | nonBraceExpression '<' expression
+    | nonBraceExpression '>' expression
+    | nonBraceExpression '!=' expression
+    | nonBraceExpression '==' expression
+    | nonBraceExpression '&' expression
+    | nonBraceExpression '^' expression
+    | nonBraceExpression '|' expression
+    | nonBraceExpression '++' expression
+    | nonBraceExpression '&&' expression
+    | nonBraceExpression '||' expression
+    | nonBraceExpression '?' expression ':' expression
+    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
+    | nonBraceExpression '(' argumentList ')'
     | namedType '(' argumentList ')'
     | '(' typeRef ')' expression
     ;

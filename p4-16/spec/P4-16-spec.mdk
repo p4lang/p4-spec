@@ -4990,11 +4990,60 @@ switchCase
     ;
 
 switchLabel
-    : name
-    | expression
-    | DEFAULT
+    : DEFAULT
+    | nonBraceExpression
+    ;
+
+nonBraceExpression
+    : INTEGER
+    | TRUE
+    | FALSE
+    | STRING_LITERAL
+    | nonTypeName
+    | dotPrefix nonTypeName
+    | nonBraceExpression '[' expression ']'
+    | nonBraceExpression '[' expression ':' expression ']'
+    | '(' expression ')'
+    | '!' expression %prec PREFIX
+    | '~' expression %prec PREFIX
+    | '-' expression %prec PREFIX
+    | '+' expression %prec PREFIX
+    | typeName '.' member
+    | ERROR '.' member
+    | nonBraceExpression '.' member
+    | nonBraceExpression '*' expression
+    | nonBraceExpression '/' expression
+    | nonBraceExpression '%' expression
+    | nonBraceExpression '+' expression
+    | nonBraceExpression '-' expression
+    | nonBraceExpression '|+|' expression
+    | nonBraceExpression '|-|' expression
+    | nonBraceExpression '<<' expression
+    | nonBraceExpression '>>' expression
+    | nonBraceExpression '<=' expression
+    | nonBraceExpression '>=' expression
+    | nonBraceExpression '<' expression
+    | nonBraceExpression '>' expression
+    | nonBraceExpression '!=' expression
+    | nonBraceExpression '==' expression
+    | nonBraceExpression '&' expression
+    | nonBraceExpression '^' expression
+    | nonBraceExpression '|' expression
+    | nonBraceExpression '++' expression
+    | nonBraceExpression '&&' expression
+    | nonBraceExpression '||' expression
+    | nonBraceExpression '?' expression ':' expression
+    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
+    | nonBraceExpression '(' argumentList ')'
+    | namedType '(' argumentList ')'
+    | '(' typeRef ')' expression
     ;
 ~ End P4Grammar
+
+The `nonBraceExpression` is the same as `expression` as defined in
+Section [#sec-exprs], except it does not include any cases that can
+begin with a left brace `{` character, to avoid syntactic ambiguity
+with a block statement.
 
 There are two kinds of `switch` expressions allowed, described
 separately in the following two subsections.
@@ -5032,7 +5081,9 @@ to a result with one of these types:
 
 All switch labels must be expressions with compile-time known values,
 and must have a type that can be implicitly cast to the type of the
-`switch` expression (see Section [#sec-implicit-casts]).
+`switch` expression (see Section [#sec-implicit-casts]).  Switch
+labels must not begin with a left brace character `{`, to avoid
+ambiguity with a block statement.
 
 ~ Begin P4Example
 // Assume the expression hdr.ethernet.etherType has type bit<16>
