@@ -284,6 +284,7 @@ tupleType
 
 headerStackType
     : typeName '[' expression ']'
+    | specializedType '[' expression ']'
     ;
 
 specializedType
@@ -311,7 +312,11 @@ typeOrVoid
 
 optTypeParameters
     : /* empty */
-    | '<' typeParameterList '>'
+    | typeParameters
+    ;
+
+typeParameters
+    : '<' typeParameterList '>'
     ;
 
 typeParameterList
@@ -357,15 +362,15 @@ derivedTypeDeclaration
     ;
 
 headerTypeDeclaration
-    : optAnnotations HEADER name '{' structFieldList '}'
+    : optAnnotations HEADER name optTypeParameters '{' structFieldList '}'
     ;
 
 headerUnionDeclaration
-    : optAnnotations HEADER_UNION name '{' structFieldList '}'
+    : optAnnotations HEADER_UNION name optTypeParameters '{' structFieldList '}'
     ;
 
 structTypeDeclaration
-    : optAnnotations STRUCT name '{' structFieldList '}'
+    : optAnnotations STRUCT name optTypeParameters '{' structFieldList '}'
     ;
 
 structFieldList
@@ -606,7 +611,7 @@ annotationBody
 structuredAnnotationBody
     : expressionList
     | kvList
-    ;	
+    ;
 
 annotationToken
     : ABSTRACT

@@ -2265,7 +2265,7 @@ syntax:
 
 ~ Begin P4Grammar
 headerTypeDeclaration
-    : optAnnotations HEADER name '{' structFieldList '}'
+    : optAnnotations HEADER name optTypeParameters '{' structFieldList '}'
     ;
 
 structFieldList
@@ -2400,6 +2400,7 @@ defined as:
 ~ Begin P4Grammar
 headerStackType
     : typeName '[' expression ']'
+    : specializedType '[' expression ']'
     ;
 ~ End P4Grammar
 
@@ -2436,8 +2437,7 @@ A header union is defined as:
 
 ~ Begin P4Grammar
 headerUnionDeclaration
-    : optAnnotations HEADER_UNION name
-      '{' structFieldList '}'
+    : optAnnotations HEADER_UNION name optTypeParameters '{' structFieldList '}'
     ;
 ~ End P4Grammar
 
@@ -2464,7 +2464,7 @@ P4 `struct` types are defined with the following syntax:
 
 ~ Begin P4Grammar
 structTypeDeclaration
-    : optAnnotations STRUCT name '{' structFieldList '}'
+    : optAnnotations STRUCT name optTypeParameters '{' structFieldList '}'
     ;
 ~ End P4Grammar
 
@@ -2688,7 +2688,11 @@ typeOrVoid
 
 optTypeParameters
     : /* empty */
-    | '<' typeParameterList '>'
+    | typeParameters
+    ;
+
+typeParameters
+    : '<' typeParameterList '>'
     ;
 
 typeParameterList
@@ -2756,6 +2760,47 @@ Register<bit<32>>(128) registerBank;
 
 The instantiation of `registerBank` is made using the `Register`
 type specialized with the `bit<32>` bound to the `T` type argument.
+
+`struct`, `header`, `header_union` and header stack types can be
+generic as well.  In order to use such a generic type it must be
+specialized with appropriate type arguments.  For example
+
+~ Begin P4Example
+// generic structure type
+struct S<T> {
+    T field;
+    bool valid;
+}
+
+struct G<T> {
+    S<T> s;
+}
+
+// specialize S by replacing 'T' with 'bit<32>'
+const S<bit<32>> s = { field = 32w0, valid = false };
+// Specialize G by replacing 'T' with 'bit<32>'
+const G<bit<32>> g = { s = { field = 0, valid = false } };
+
+// generic header type
+header H<T> {
+    T field;
+}
+
+// Specialize H by replacing 'T' with 'bit<8>'
+const H<bit<8>> h = { field = 1 };
+// Header stack produced from a specialization of a generic header type
+H<bit<8>>[10] stack;
+
+// Generic header union
+header_union HU<T> {
+    H<bit<32>> h32;
+    H<bit<8>>  h8;
+    H<T>       ht;
+}
+
+// Header union with a type obtained by specializing a generic header union type
+HU<bit> hu;
+~ End P4Example
 
 ### Parser and control blocks types { #sec-parser-control-types }
 
@@ -7777,6 +7822,10 @@ The P4 compiler should provide:
 |           |               | semantics of invalid header stacks; clarified initialization      |
 |           |               | semantics; fixed several small issues in grammar.                 |
 |-----|-----|-----|
+
+## Summary of changes made in version 1.3.0
+
+* Support for generic structures (Section [#sec-type-spec]).
 
 ## Summary of changes made in version 1.2.1
 
