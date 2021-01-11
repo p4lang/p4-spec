@@ -4990,22 +4990,70 @@ switchCase
     ;
 
 switchLabel
-    : name
-    | DEFAULT
+    : DEFAULT
+    | nonBraceExpression
+    ;
+
+nonBraceExpression
+    : INTEGER
+    | TRUE
+    | FALSE
+    | STRING_LITERAL
+    | nonTypeName
+    | dotPrefix nonTypeName
+    | nonBraceExpression '[' expression ']'
+    | nonBraceExpression '[' expression ':' expression ']'
+    | '(' expression ')'
+    | '!' expression %prec PREFIX
+    | '~' expression %prec PREFIX
+    | '-' expression %prec PREFIX
+    | '+' expression %prec PREFIX
+    | typeName '.' member
+    | ERROR '.' member
+    | nonBraceExpression '.' member
+    | nonBraceExpression '*' expression
+    | nonBraceExpression '/' expression
+    | nonBraceExpression '%' expression
+    | nonBraceExpression '+' expression
+    | nonBraceExpression '-' expression
+    | nonBraceExpression '|+|' expression
+    | nonBraceExpression '|-|' expression
+    | nonBraceExpression '<<' expression
+    | nonBraceExpression '>>' expression
+    | nonBraceExpression '<=' expression
+    | nonBraceExpression '>=' expression
+    | nonBraceExpression '<' expression
+    | nonBraceExpression '>' expression
+    | nonBraceExpression '!=' expression
+    | nonBraceExpression '==' expression
+    | nonBraceExpression '&' expression
+    | nonBraceExpression '^' expression
+    | nonBraceExpression '|' expression
+    | nonBraceExpression '++' expression
+    | nonBraceExpression '&&' expression
+    | nonBraceExpression '||' expression
+    | nonBraceExpression '?' expression ':' expression
+    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
+    | nonBraceExpression '(' argumentList ')'
+    | namedType '(' argumentList ')'
+    | '(' typeRef ')' expression
     ;
 ~ End P4Grammar
 
-The expression within the `switch` statement is restricted to be
-the result of a table invocation (See Section [#sec-invoke-mau]).
+The `nonBraceExpression` is the same as `expression` as defined in
+Section [#sec-exprs], except it does not include any cases that can
+begin with a left brace `{` character, to avoid syntactic ambiguity
+with a block statement.
 
-If a switch label is not followed by a block statement it falls
-through to the next label. However, if a block statement is present,
-it does not fall through. Note, that this is different from C-style `switch`
-statements, where a `break` is needed to prevent
-fall-through. It is legal to have no matching label for some actions,
-or no `default` label. At runtime, if no case matches, execution
-of the program simply continues. However, no label can appear twice in
-a switch statement.
+There are two kinds of `switch` expressions allowed, described
+separately in the following two subsections.
+
+### Switch statement with `action_run` expression
+
+For this variant of `switch` statement, the expression must be of the
+form `t.apply().action_run`, where `t` is the name of a table (see
+Section [#sec-invoke-mau]).  All switch labels must be names of
+actions of the table `t`, or `default`.
 
 ~ Begin P4Example
 switch (t.apply().action_run) {
@@ -5016,11 +5064,74 @@ switch (t.apply().action_run) {
 }
 ~ End P4Example
 
-Note that the `default` label of the `switch` statement is
-used to match on the kind of action executed, no matter whether there
-was a table hit or miss. The `default` label does not indicate
-that the table missed and the `default_action` was executed.
-The `default` label should be the last label if present.
+Note that the `default` label of the `switch` statement is used to
+match on the kind of action executed, no matter whether there was a
+table hit or miss. The `default` label does not indicate that the
+table missed and the `default_action` was executed.
+
+### Switch statement with integer or enumerated type expression
+
+For this variant of `switch` statement, the expression must evaluate
+to a result with one of these types:
+
+- `bit<W>`
+- `int<W>`
+- `enum`, either with or without an underlying representation specified
+- `error`
+
+All switch labels must be expressions with compile-time known values,
+and must have a type that can be implicitly cast to the type of the
+`switch` expression (see Section [#sec-implicit-casts]).  Switch
+labels must not begin with a left brace character `{`, to avoid
+ambiguity with a block statement.
+
+~ Begin P4Example
+// Assume the expression hdr.ethernet.etherType has type bit<16>
+switch (hdr.ethernet.etherType) {
+   0x86dd: { /* body omitted */ }
+   0x0800:          // fall-through to the next body
+   0x0802: { /* body omitted */ }
+   0xcafe: { /* body omitted */ }
+   default: { /* body omitted */ }
+}
+~ End P4Example
+
+### Notes common to all switch statements
+
+It is a compile-time error if two labels of a `switch` statement equal
+each other.  The switch label values need not include all possible
+values of the switch expression.  It is optional to have a `switch`
+case with the `default` label, but if one is present, it must be the
+last one in the `switch` statement.
+
+If a switch label is not followed by a block statement, it falls
+through to the next label. However, if a block statement is present,
+it does not fall through. Note that this is different from C-style
+`switch` statements, where a `break` is needed to prevent
+fall-through.  If the last switch label is not followed by a block
+statement, the behavior is the same as if the last switch label were
+followed by an empty block statement `{ }`.
+
+When a `switch` statement is executed, first the switch expression is
+evaluated, and any side effects from evaluating this expression are
+visible to any `switch` case that is executed.  Among switch labels
+that are not `default`, at most one of them can equal the value of the
+switch expression. If one is equal, that switch case is executed.
+
+If no labels are equal to the `switch` expression, then:
+
+- if there is a `default` label, the case with the `default` label is
+  executed.
+- if there is no `default` label, then no switch case is executed, and
+  execution continues after the end of the `switch` statement, with no
+  side effects (except any that were caused by evaluating the `switch`
+  expression).
+
+See "Implementing generalized P4_16 switch statements"
+[GeneralizedSwitchStatements] for possible techniques that one might
+use to implement generalized switch statements.
+
+[GeneralizedSwitchStatements]: <https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md>
 
 # Packet parsing { #sec-packet-parsing }
 
@@ -7827,6 +7938,8 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.3.0
 
 * Support for generic structures (Section [#sec-type-spec]).
+* Generalize `switch` statements to allow expressions with integer,
+  `enum`, or `error` types (Section [#sec-switch-stmt]).
 
 ## Summary of changes made in version 1.2.1
 
