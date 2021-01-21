@@ -2487,10 +2487,8 @@ struct Parsed_headers {
 
 ### Tuple types { #sec-tuple-types }
 
-A tuple is similar to a `struct`, in that it holds multiple
-values. The fields of a tuple are named in order `f0`, `f1`, etc.. The
-type of tuples with n component types `T1`,...,`Tn` is written
-as
+A tuple is similar to a `struct`, in that it holds multiple values.
+The type of tuples with n component types `T1`,...,`Tn` is written as
 
 ~ Begin P4Example
 tuple<T1,/* more fields omitted */,Tn>
@@ -3751,8 +3749,14 @@ list expressions.
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
 
-The fields of a tuple are named `f0`, `f1`, etc,; they can be
-extracted using the same syntax as structure fields: `x.f0`.
+The fields of a tuple can be accessed using array index sytnax `x[0]`,
+`x[1]`.  The array indexes *must* be compile-time constants, to enable
+the type-checker to identify the field types statically.
+
+Currently tuple fields are not left-values, even if the tuple itself
+is.  (I.e. a tuple can only be assigned monolithically, and the field
+values cannot be changed individually.)  This restriction may be
+lifted in a future version of the language.
 
 ## Operations on lists { #sec-list-exprs }
 
