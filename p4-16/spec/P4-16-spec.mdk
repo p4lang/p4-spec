@@ -3651,11 +3651,14 @@ for programmers, it has several benefits:
 The following casts are legal in P4:
 
 - `bit<1> <-> bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
+- `int -> bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
 - `int<W> -> bit<W>`: preserves all bits unchanged and reinterprets negative
   values as positive values
 - `bit<W> -> int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
 - `bit<W> -> bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
 - `int<W> -> int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
+- `bit<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is alwasy positive
+- `int<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
 - `int -> bit<W>`: converts the integer value into a sufficiently
   large two's complement bit string to avoid information loss, and
   then truncates the result to `W` bits. The compiler should emit a
@@ -7986,6 +7989,7 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.3.0
 
 * Allow conditional statements in parsers
+* Allow casts from `int` to `bool`
 
 ## Summary of changes made in version 1.2.1
 
