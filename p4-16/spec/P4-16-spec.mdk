@@ -2283,7 +2283,9 @@ variable), a fixed-width signed integer type, a boolean type, or a struct that
 itself contains other struct fields, nested arbitrarily, as long as all of the
 "leaf" types are `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`. If a
 `bool` is used inside a P4 header, all implementations encode the `bool` as a
-one bit long field. This declaration introduces a new identifier in the
+one bit long field, with the value `1` representing `true` and `0` representing `false`.
+
+A header declaration introduces a new identifier in the
 current scope; the type can be referred to using this identifier. A header is
 similar to a `struct` in C, containing all the specified fields. However, in
 addition, a header also contains a hidden Boolean "validity" field. When the
@@ -2469,7 +2471,7 @@ structTypeDeclaration
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
-current scope. An empty struct is legal. For example, the structure `Parsed_headers`
+current scope. An empty struct (with no fields) is legal. For example, the structure `Parsed_headers`
 below contains the headers recognized by a simple parser:
 
 ~ Begin P4Example
@@ -4623,6 +4625,28 @@ that architecture to specify whether parameters with
 direction `in` or `inout` are initialized when the control is called,
 and under what conditions they are initialized, and if so, what their
 values will be.
+
+Since P4 allows empty tuples and structs, one can construct types
+whose values carry no "useful" information, e.g.:
+
+~Begin P4Example
+struct Empty {
+   tuple<> t;
+}
+~End P4Example
+
+We call the following "empty" types:
+
++ empty tuples (`tuple<>`)
++ stacks with 0 size
++ structs with no fields
++ a tuple having all fields of an empty type
++ a struct having all fields of an empty type
+
+Values with empty types carry no useful information.  In particular,
+they do not have to be explicitly initialized to have a legal value.
+
+(Header types with no fields always have a validity bit.)
 
 ## Initializing with default values
 
@@ -7943,6 +7967,8 @@ The P4 compiler should provide:
 * Support for generic structures (Section [#sec-type-spec]).
 * Generalize `switch` statements to allow expressions with integer,
   `enum`, or `error` types (Section [#sec-switch-stmt]).
+* Clarified representation of Booleans in headers (Section [#sec-header-types]).
+* Clarified representation of empty types (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
 
 ## Summary of changes made in version 1.2.1
 
@@ -7974,7 +8000,7 @@ The P4 compiler should provide:
   statements.
 
 * Clarified semantics of invalid header stacks (Section
-  [#sec-uninitialized-values-and-writing-invalid-headers ]).
+  [#sec-uninitialized-values-and-writing-invalid-headers]).
 
 * Clarified initialization semantics (Section [#sec-lvalues] and
   [#sec-calling-convention]), especially for headers and local
