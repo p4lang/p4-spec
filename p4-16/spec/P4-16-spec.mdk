@@ -6012,7 +6012,7 @@ starting with actions.
 
 ## Actions { #sec-actions}
 
-~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is set by the control plane. Parameters are bound by the data plane." }
+~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is provided in the table entries, typically populated by the control plane. Other parameters are bound by the data plane." }
 ![actions]
 ~
 [actions]: figs/actions.png { width: 8cm; page-align: here }
@@ -6041,12 +6041,14 @@ action Forward_a(out bit<9> outputPort, bit<9> port) {
 }
 ~ End P4Example
 
-Action parameters may not have `extern` types. Action parameters
-that have no direction (e.g., `port` in the previous example)
-indicate "action data." All such parameters must appear at the end of the
-parameter list. When used in a match-action table
-(see Section [#sec-table-action-list]), these parameters will be
-provided by the control plane.
+Action parameters may not have `extern` types. Action parameters that
+have no direction (e.g., `port` in the previous example) indicate
+"action data." All such parameters must appear at the end of the
+parameter list. When used in a match-action table (see Section
+[#sec-table-action-list]), these parameters will be provided by the
+table entries (e.g., as specified by the control plane, the
+`default_action` table property, or the `const entries` table
+property).
 
 The body of an action consists of a sequence of statements and
 declarations. No `switch` statements are allowed within an
@@ -6264,7 +6266,7 @@ table smac {
 ~ End P4Example
 
 - The entries in the `smac` `table` may contain two different actions: `Drop_action` and `Rewrite_mac`.
-- The `Rewrite_smac` action has one parameter, `sourceMac`, which is bound by the control plane.
+- The `Rewrite_smac` action has one parameter, `sourceMac`, which in this case will be provided by the control plane.
 
 Each action in the list of actions for a table must have a distinct
 name---e.g., the following program fragment is illegal:
@@ -7969,6 +7971,8 @@ The P4 compiler should provide:
   `enum`, or `error` types (Section [#sec-switch-stmt]).
 * Clarified representation of Booleans in headers (Section [#sec-header-types]).
 * Clarified representation of empty types (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
+* Clarify that action data can be specified by the control plane,
+  `default_action` table property, or `const entries` table property (Section [#sec-actions]).
 
 ## Summary of changes made in version 1.2.1
 
