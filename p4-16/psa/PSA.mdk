@@ -373,22 +373,23 @@ priority last, based upon the order they appear in the P4 program.
 
 ### Ternary tables
 
-If a table has no `range` field, but at least one `ternary` field, then as for
-tables with `range` fields, a single search key can be matched by multiple table
-entries, and thus every entry must have a numeric priority assigned by the
-control plane software. The same note about `lpm` fields in the previous section
-applies here, as well as the note about entries specified via `const entries`.
+If a table has no `range` field, but at least one `ternary` or `optional` field,
+then as for tables with `range` fields, a single search key can be matched by
+multiple table entries, and thus every entry must have a numeric priority
+assigned by the control plane software. The same note about `lpm` fields in the
+previous section applies here, as well as the note about entries specified via
+`const entries`.
 
 
 ### Longest prefix match tables
 
-If a table has neither `range` nor `ternary` fields, but at least one `lpm`
-field, there must be exactly one `lpm` field. There may be 0 or more `exact`
-fields in addition to the `lpm` field. While there can be multiple installed
-table entries that match a single search key, there can be at most one matching
-table entry of each possible prefix length of the `lpm` field (because no two
-table entries installed at the same time are allowed to have the same search
-key). The matching entry with the longest prefix length is always the
+If a table has no `range`, `ternary`, nor `optional` fields, but at least one
+`lpm` field, there must be exactly one `lpm` field. There may be 0 or more
+`exact` fields in addition to the `lpm` field. While there can be multiple
+installed table entries that match a single search key, there can be at most one
+matching table entry of each possible prefix length of the `lpm` field (because
+no two table entries installed at the same time are allowed to have the same
+search key). The matching entry with the longest prefix length is always the
 winner. The control plane cannot specify a priority when installing entries for
 such a table -- it is always determined by the prefix length.
 
