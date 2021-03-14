@@ -1975,7 +1975,7 @@ well-typed P4 program and still be conformant to the P4 spec. However,
 if an architecture accepts a P4 program as valid, the runtime program
 behavior should match this specification.
 
-#### Unsigned integers (bit-strings)
+#### Unsigned integers (bit-strings) {#sec-unsigned-integers}
 
 An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width `W` is
@@ -2007,7 +2007,7 @@ bit values).
 All operations that can be performed on unsigned integers are
 described in Section [#sec-bit-ops].
 
-#### Signed Integers
+#### Signed Integers {#sec-signed-integers}
 
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to
@@ -2051,7 +2051,7 @@ values to always contain an integer number of bytes at runtime.
 All operations that can be performed on varbits are described in
 Section [#sec-varbit-string].
 
-#### Infinite-precision integers
+#### Infinite-precision integers {#sec-infinite-precision-integers}
 
 The infinite-precision data type describes integers with an unlimited
 precision. This type is written as `int`.
@@ -4129,6 +4129,17 @@ expressions are legal:
   greater than or equal to `hs.size` results in an undefined value.  See Section
   [#sec-uninitialized-values-and-writing-invalid-headers] for more
   details.
+
+  The `index` is an expression that must be one of the following types:
+
+  - `int` - an infinite-precision integer (section
+    [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 1` (section
+    [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
+    [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or
+    `int<W>` (section [#sec-enum-types]).
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -7994,6 +8005,7 @@ The P4 compiler should provide:
 * Clarify that action data can be specified by the control plane,
   `default_action` table property, or `const entries` table property (Section [#sec-actions]).
 * Support for more kinds of enumerations (Section [#sec-enum-types]).
+* Specify the types of expressions permitted as an index to a header stack (Section [#sec-expr-hs]).
 
 ## Summary of changes made in version 1.2.1
 
