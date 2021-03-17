@@ -1051,12 +1051,17 @@ this includes the 4 bytes of Ethernet Frame Check Sequence, and
 targets may restrict this value to be the minimum Ethernet frame
 length of 64 bytes.
 
-If a target device supports cut-through switching, and this feature is
-enabled, this field will contain 0.  In such situations, it is
-recommended that a P4 developer use length fields in packet headers to
-determine the length of a packet, not this metadata field.  For
-example, the Total Length field in the IPv4 header, or the Payload
-length field in the IPv6 header.
+If a target device supports cut-through switching, and the cut-through
+feature is enabled, the `packet_length` field will contain 0.
+Cut-through forwarding means that it is possible for ingress
+processing, and perhaps also egress processing, to begin before the
+last byte of the packet has arrived on the input port, and in such
+cases it is not possible for the target device to have determine the
+packet length yet.  In such situations, it is recommended that a P4
+developer use length fields in packet headers to determine the length
+of a packet, not this metadata field.  For example, the Total Length
+field in the IPv4 header, or the Payload length field in the IPv6
+header.
 
 TBD: Document the behavior of `packet_length` for clone packets.
 
