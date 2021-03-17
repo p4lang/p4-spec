@@ -1031,6 +1031,8 @@ packet contents and metadata when a packet begins egress processing.
 |                    |   | configuration      | of clone session        ||
 |                    |   | of multicast group |                         ||
 +--------------+-------------+---------------+--------------+-----+
+| `packet_length` | packet length in bytes (see below) ||||
++--------------+-------------+---------------+--------------+-----+
 | `egress_timestamp` | Time that packet began processing in EgressParser.  Filled in ||||
 |                     | independently for each copy of a multicast-replicated packet. ||||
 +--------------+-------------+---------------+--------------+-----+
@@ -1038,6 +1040,25 @@ packet contents and metadata when a packet begins egress processing.
 |                   | was no parser error.  See "Multicast copies" section. ||||
 |--------------|-------------|---------------|--------------|-----|
 ~
+
+For normal unicast and multicast packets, `packet_length` is the
+length in bytes of the packet as received by the ingress parser,
+_ignoring_ any changes in the packet length that might have been made
+during ingress processing and ingress deparsing.
+
+If the input port on which the packet arrived was an Ethernet port,
+this includes the 4 bytes of Ethernet Frame Check Sequence, and
+targets may restrict this value to be the minimum Ethernet frame
+length of 64 bytes.
+
+If a target device supports cut-through switching, and this feature is
+enabled, this field will contain 0.  In such situations, it is
+recommended that a P4 developer use length fields in packet headers to
+determine the length of a packet, not this metadata field.  For
+example, the Total Length field in the IPv4 header, or the Payload
+length field in the IPv6 header.
+
+TBD: Document the behavior of `packet_length` for clone packets.
 
 
 ### Initial packet contents for normal packets

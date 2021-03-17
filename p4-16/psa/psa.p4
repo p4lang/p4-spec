@@ -315,6 +315,7 @@ struct psa_egress_input_metadata_t {
   PortId_t                 egress_port;
   PSA_PacketPath_t         packet_path;
   EgressInstance_t         instance;       /// instance comes from the PacketReplicationEngine
+  PacketLength_t           packet_length;
   Timestamp_t              egress_timestamp;
   ParserError_t            parser_error;
 }
