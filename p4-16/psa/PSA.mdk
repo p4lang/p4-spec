@@ -1039,6 +1039,19 @@ packet contents and metadata when a packet begins egress processing.
 |--------------|-------------|---------------|--------------|-----|
 ~
 
+Note that while some P4 architectures have a standard metadata field
+that gives the length of the packet in bytes, there is no such field
+in PSA.  If a target device supports cut-through
+switching[^CutThroughSwitching] and this feature is enabled, it is
+possible for egress processing to begin before the last byte of the
+packet has arrived on the input port.  Thus it is not possible for the
+target device to determine the packet length yet.  It is recommended
+that a P4 developer use fields available in some packet headers to
+determine the length of a packet, such as the Total Length field in
+the IPv4 header, or the Payload length field in the IPv6 header.
+
+[^CutThroughSwitching]: https://en.wikipedia.org/wiki/Cut-through_switching
+
 
 ### Initial packet contents for normal packets
 
