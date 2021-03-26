@@ -254,7 +254,6 @@ functionPrototype
 methodPrototype
     : optAnnotations functionPrototype ';'
     | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';'
-    | optAnnotations ABSTRACT functionPrototype ';'
     ;
 
 /************************** TYPES ****************************/
@@ -338,7 +337,6 @@ typeArg
     : DONTCARE
     | typeRef
     | nonTypeName
-        // This is necessary because template arguments may introduce the return type
     | VOID
     ;
 
@@ -720,7 +718,6 @@ prefixedNonTypeName
 
 lvalue
     : prefixedNonTypeName
-    | THIS
     | lvalue '.' member
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
