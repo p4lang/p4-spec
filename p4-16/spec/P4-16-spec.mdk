@@ -1981,8 +1981,10 @@ An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
 compile-time known value (see Section [#sec-ct-constants]) that is a
-positive integer greater than 0.  When using an expression for the
-size they must be parenthesized.
+non-negative integer.  When using an expression for
+the size they must be parenthesized.  Bitstrings with width 0 are
+allowed; they have no actual bits, and can only have the value 0.  See
+{ #sec-uninitialized-values-and-writing-invalid-headers } for additional details.
 
 ~ Begin P4Example
 const bit<32> x = 10;   // 32-bit constant with value 10.
@@ -2038,7 +2040,7 @@ values, P4 provides a special bit-string type whose size is set at
 runtime, called a `varbit`.
 
 The type `varbit<W>` denotes a bit-string with a width of at most `W`
-bits, where `W` must be a positive integer that is a compile-time
+bits, where `W` must be a non-negative integer that is a compile-time
 known value. For example, the type `varbit<120>` denotes the type
 of bit-string values that may have between 0 and 120 bits. Most
 operations that are applicable to fixed-size bit-strings (unsigned
@@ -4694,6 +4696,7 @@ struct Empty {
 
 We call the following "empty" types:
 
++ bitstrings with 0 width
 + empty tuples (`tuple<>`)
 + stacks with 0 size
 + structs with no fields
@@ -8090,6 +8093,11 @@ The P4 compiler should provide:
 * Support for more kinds of enumerations (Section [#sec-enum-types]).
 * Specify the types of expressions permitted as an index to a header stack (Section [#sec-expr-hs]).
 * Add description of abstract methods (Section [#sec-abstract-methods]).
+* Allow conditional statements in parsers
+* Allow casts from `int` to `bool`
+* Allow 0-width bitstrings, varbits (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
+* Allow empty statements in parsers
+* Eliminate annotations on `const` entries in grammar
 
 ## Summary of changes made in version 1.2.1
 
@@ -8132,11 +8140,6 @@ The P4 compiler should provide:
 * Fixed grammar to clarify parsing of right shift operator (`>>`),
   allow empty statements in parser (Section [#sec-parser-state-stmt]),
   and eliminate annotations on const entries (Section [#sec-entries]).
-
-## Summary of changes made in version 1.2.1
-
-* Allow empty statements in parsers
-* Eliminate annotations on `const` entries in grammar
 
 ## Summary of changes made in version 1.2.0
 
