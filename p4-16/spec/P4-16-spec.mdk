@@ -2487,10 +2487,8 @@ struct Parsed_headers {
 
 ### Tuple types { #sec-tuple-types }
 
-A tuple is similar to a `struct`, in that it holds multiple
-values. Unlike a `struct` type, tuples have no named fields. The
-type of tuples with n component types `T1`,...,`Tn` is written
-as
+A tuple is similar to a `struct`, in that it holds multiple values.
+The type of tuples with n component types `T1`,...,`Tn` is written as
 
 ~ Begin P4Example
 tuple<T1,/* more fields omitted */,Tn>
@@ -3750,6 +3748,15 @@ list expressions.
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
+
+The fields of a tuple can be accessed using array index syntax `x[0]`,
+`x[1]`.  The array indexes *must* be compile-time constants, to enable
+the type-checker to identify the field types statically.
+
+Currently tuple fields are not left-values, even if the tuple itself
+is.  (I.e. a tuple can only be assigned monolithically, and the field
+values cannot be changed individually.)  This restriction may be
+lifted in a future version of the language.
 
 ## Operations on lists { #sec-list-exprs }
 
@@ -7974,6 +7981,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.3.0
 
+* support for tuple field access (Section [#sec-tuple-exprs]).
 * Support for generic structures (Section [#sec-type-spec]).
 * Generalize `switch` statements to allow expressions with integer,
   `enum`, or `error` types (Section [#sec-switch-stmt]).
