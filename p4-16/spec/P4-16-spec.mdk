@@ -2173,7 +2173,7 @@ An enumeration type is defined using the following syntax:
 ~ Begin P4Grammar
 enumDeclaration
     : optAnnotations ENUM name '{' identifierList '}'
-    | optAnnotations ENUM BIT '<' INTEGER '>' name '{' specifiedIdentifierList '}'
+    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
     ;
 
 identifierList
@@ -2206,10 +2206,15 @@ target-specific).
 
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable `enum`s, because headers are
-allowed to have fields with such `enum` types.
-This requires the programmer provide both the fixed-width unsigned (or signed) integer type and
-an associated integer value for each symbolic entry in the enumeration.  For example, the
-declaration
+allowed to have fields with such `enum` types. This requires the programmer provide both the fixed-width unsigned (or signed) integer type and
+an associated integer value for each symbolic entry in the enumeration.
+The symbol `typeRef` in the grammar above must be one of the following types:
+
+- an unsigned integer, i.e. `bit<W>` for some constant `W`.
+- a signed integer, i.e. `int<W>` for some constant `W`.
+- a type name declared via `typedef`, where the base type of that type is either
+one of the types listed above, or another `typedef` name that meets these conditions.
+For example, the declaration
 
 ~ Begin P4Example
 enum bit<16> EtherType {
@@ -2233,8 +2238,7 @@ from the underlying type carrying equality, assignment, and casts to/from the
 underlying type.
 
 Compiler implementations are expected to raise an error if the fixed-width integer representation
-for an enumeration entry falls outside the representation range of the underlying
-type.
+for an enumeration entry falls outside the representation range of the underlying type.
 
 For example, the declaration
 
@@ -7989,6 +7993,7 @@ The P4 compiler should provide:
 * Clarified representation of empty types (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
 * Clarify that action data can be specified by the control plane,
   `default_action` table property, or `const entries` table property (Section [#sec-actions]).
+* Support for more kinds of enumerations (Section [#sec-enum-types]).
 
 ## Summary of changes made in version 1.2.1
 
