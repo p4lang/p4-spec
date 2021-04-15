@@ -1368,6 +1368,7 @@ declaration
     | errorDeclaration
     | matchKindDeclaration
     | functionDeclaration
+    | overlayDeclaration
     ;
 ~ End P4Grammar
 
@@ -2486,6 +2487,123 @@ struct Parsed_headers {
     Ip_h       ip;
     Tcp_h      tcp;
     Udp_h      udp;
+}
+~ End P4Example
+
+### Structure overlays { #sec-overlays }
+
+An overlay allows the access to fields or subfields of a `struct` or
+`header` using alternative names.  An overlay is constructed by a
+special `overlay` "function", that establishes a connection between
+the fields of the source and destination structure.
+
+The following example shows an use of overlays:
+
+~ Begin P4Example
+// In this header all fields are byte-aligned
+header IPv4_aligned {
+    bit<8>       version_ihl;
+    bit<8>       diffserv;
+    bit<16>      totalLen;
+    bit<16>      identification;
+    bit<16>      flags_fragOffset;
+    bit<8>       ttl;
+    bit<8>       protocol;
+    bit<16>      hdrChecksum;
+    bit<32>      srcAddr;
+    bit<32>      dstAddr;
+}
+
+// This overlay introduces a structure type named IPv4
+overlay IPv4 expand(IPv4_aligned s) {
+    bit<4>  version = s.version_ihl[7:4];
+    bit<4>  ihl = s.version_ihl[3:0];
+    bit<8>  diffserv = s.diffserv;
+    bit<16> totalLen = s.totalLen;
+    bit<16> identification = s.identification;
+    bit<3>  flags = s.flags_fragOffset[15:13];
+    bit<13> fragOffset = s.flags_fragOffset[12:0];
+    bit<8>  ttl = s.ttl;
+    bit<8>  protocol = s.protocol;
+    bit<16> hdrChecksum = s.hdrChecksum;
+    bit<32> srcAddr = s.srcAddr;
+    bit<32> dstAddr = s.dstAddr;
+}
+
+parser P(...) {
+   IPv4_aligned header;
+   IPv4 fields = expand(header);
+   ...
+   state ipv4 {
+      packet.extract(header);
+      verify(fields.version == 5, error.UnsupportedVersion);
+   }
+}
+~ End P4Example
+
+It is expected that such coding style will make it easier to generate
+efficient implementations on some architectures.
+
+The `_ = _;` notation indicates that all fields of a source which have
+not yet been referenced are mapped unchanged to corresponding fields
+of the destination.  Using this notation, the previous overlay can be
+simplified as:
+
+~ Begin P4Example
+overlay IPv4 expand(IPv4_aligned s) {
+    bit<4>  version = s.version_ihl[7:4];
+    bit<4>  ihl = s.version_ihl[3:0];
+    bit<3>  flags = s.flags_fragOffset[15:13];
+    bit<13> fragOffset = s.flags_fragOffset[12:0];
+    _ = _; // map all remaining fields unchanged
+}
+~ End P4Example
+
+The "function" computing an overlay can only be used as an initializer
+in the declaration of a variable of the suitable type.  In an overlay
+each bit from a source field must be used at most once.  This
+restriction is necessary to compute how the fields of the source
+structure are changed when the destination structure is updated.
+
+Overlays can only be applied to `struct` and `header` objects, and
+they can only produce `struct` objects.  One cannot use a member of
+a `header_union` as an argument to an overlay.  A struct produced by
+an overlay can only contain fields of the base types: `bit<>` and
+`int<>`.  The only statement allowed within an overlay function is an
+assignment statement that assigns to a field of the destination.  The
+only expressions allowed within an overlay are:
+- field access
+- bit slicing
+- concatenation
+- casts that convert in either direction between bit<W> and int<W> (but not casts that
+  change the width)
+
+An overlay applied to a left-value is also a left-value.  Updating an
+overlay which is a left value will update the original structure or
+header.  If the input of an overlay is a header the rules about
+accessing uninitialized header fields are valid for the source header.
+
+~ Begin P4Grammar
+overlayDeclaration
+    : OVERLAY functionDeclaration
+    ;
+~ End P4Grammar
+
+An overlay can be implemented by the compiler by maintaining a map
+between each source bit and the corresponding destination bit.  Using
+this information the compiler can rewrite operations on the overlay by
+replacing them with operations performed directly on the source data
+structure.  For the previous example, the compiler could rewrite the
+parser `P` as follows:
+
+~ Begin P4Example
+parser P(...) {
+   IPv4_aligned header;
+   ...
+   state ipv4 {
+      packet.extract(header);
+      verify(header.version_ihl[7:4] == 5, error.UnsupportedVersion);
+   }
 }
 ~ End P4Example
 
@@ -8055,14 +8173,18 @@ The P4 compiler should provide:
 * Allow 1-bit signed values
 * Define the type of bit slices from signed and unsigned values to be unsigned.
 * Constrain `default` label position for `switch` statements.
-* Allow empty tuples.
-* Added `@deprecated` annotation.
-* Relaxed the structure of annotation bodies.
-* Removed the `@pkginfo` annotation, which is now defined by the P4Runtime specification.
-* Added `int` type (Section [#sec-infinite-precision-integers]).
-* Added error `ParserInvalidArgument` (Sections [#sec-packet-extract-two], [#sec-skip-bits]).
-* Clarified the significance of order of entries in `const entries` (Section [#sec-entries]).
+* Allow empty tuples (Seciton [#sec-tuple-types]).
+* Added `@deprecated` annotation (Section [#sec-deprecated-anno]).
+* Relaxed the structure of annotation bodies (Section [#sec-annotations]).
+* Removed the `@pkginfo` annotation. This is defined by the P4Runtime
+  specification.
+* Added `int` type (Section [#sec-infinite-precision-integers].)
+* Added error `ParserInvalidArgument` (Sections
+  [#sec-packet-extract-two], [#sec-skip-bits]).
+* Clarify the significance of order of entries in `const entries`
+  (Section [#sec-entries]).
 * Added methods to calculate header size (Section [#sec-ops-on-hdrs]).
+* Added structure overlays (Section [#sec-overlays]).
 
 ## Summary of changes made in version 1.1.0
 
@@ -8109,6 +8231,11 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `switch` | `table`   | `transition` |  `true` |
 | `tuple` | `typedef` | `varbit`  | `verify` |
 | `void`       | ||
+| `overlay` | `package` | `parser` | `out`         |
+|  `return`  | `select` | `state` | `struct`   |
+| `switch` | `table`   | `transition` |  `true` |
+|  `tuple` | `typedef` | `varbit`  | `verify` |
+| `void`   |  |      |      |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
