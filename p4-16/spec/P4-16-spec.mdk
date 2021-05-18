@@ -5410,6 +5410,7 @@ transitions to that state including:
 - Method calls, which serve several purposes:
   * Invoking functions (e.g., using `verify` to check the validity of data already parsed), and
   * Invoking methods (e.g., extracting data out of packets or computing checksums) and other parsers (see Section [#sec-invoke-subparser]), and
+- Conditional statements,
 - Transitions to other states (discussed in Section [#sec-transition]).
 
 The syntax for parser statements is given by the following grammar rules:
@@ -8080,65 +8081,57 @@ The P4 compiler should provide:
 |           |               | semantics of invalid header stacks; clarified initialization      |
 |           |               | semantics; fixed several small issues in grammar.                 |
 |-----|-----|-----|
-| 1.2.2     | May 17, 2021 | 
+| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     | 
+|           |              | enumeration types, abstract methods, conditional and empty         | 
+|           |              | statements in parsers, additional casts, and 0-width types;        | 
+|           |              | clarified semantics of default actions, headers, empty types, and  |
+|           |              | action data; fixed typos and inconsistencies in the grammar.       | 
 |-----|-----|-----|
 
 ## Summary of changes made in version 1.2.2
 
-* Fixed several typos and inconsistencies in grammar (Section [#sec-grammar]).
-* Clarified that `default_action` is `NoAction` if otherwise unspecified (Section [#sec-tables]).
 * Added support for accessing tuple fields (Section [#sec-tuple-exprs]).
 * Added support for generic structures (Section [#sec-type-spec]).
-* Generalize `switch` statements to allow expressions with integer, `enum`, or `error` types (Section [#sec-switch-stmt]).
+* Added support for integers, `enum`s, and `error`s in `switch` statements (Section [#sec-switch-stmt]).
+* Added support for additional enumeration types (Section [#sec-enum-types]).
+* Added support for abstract methods (Section [#sec-abstract-methods]).
+* Added support for conditional statements and empty statements in parsers (Section [#sec-parser-state-stmt]).
+* Added support for casts from `int` to `bool` (Section [#sec-casts]).
+* Added support for 0-width bitstrings and varbits (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
+* Clarified that `default_action` is `NoAction` if otherwise unspecified (Section [#sec-tables]).
+* Clarified the types of expressions that may be used as indexes for header stacks (Section [#sec-expr-hs]).
 * Clarified representation of Booleans in headers (Section [#sec-header-types]).
 * Clarified representation of empty types (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
 * Clarified that action data can be specified by the control plane, `default_action` table property, or `const entries` table property (Section [#sec-actions]).
-* Added support for additional enumeration types (Section [#sec-enum-types]).
-* Specified the types of expressions that may be used as indexes for header stacks (Section [#sec-expr-hs]).
-* Added description of abstract methods (Section [#sec-abstract-methods]).
-* Added support for conditional statements and empty statements in parsers (Section [#sec-parsers]).
-* Added support for casts from `int` to `bool`.
-* Added support for 0-width bitstrings and varbits (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
-* Eliminated annotations on `const` entries in grammar.
+* Fixed several typos and inconsistencies in grammar (Section [#sec-grammar]).
+* Eliminated annotations on `const` entries in grammar (Section [#sec-grammar]).
 
 ## Summary of changes made in version 1.2.1
 
 * Added structure-value expressions (Section
   [#sec-structure-expressions]).
-
 * Added support for default values (Section [#sec-default-values]).
-
 * Added support for concatenating signed strings (Section
   [#sec-concatenation]).
-
 * Added key-value and list-structured annotations (Section
   [#sec-annotations]).
-
 * Added `@pure` and `@noSideEffects` annotations (Section
   [#sec-extern-annotations]).
-
 * Added `@noWarn` annotation (Section [#sec-nowarn-anno]).
-
 * Generalized typing for masks to allow serializable `enum`s (Section
   [#sec-cubes]).
-
 * Restricted the right operands of bit shifts involving
   infinite-precision integers to be constant and positive (Section
   [#sec-varint-ops]).
-
 * Clarified copy-out behavior for `return` (Section
   [#sec-return-stmt]) and `exit` (Section [#sec-exit-stmt])
   statements.
-
 * Clarified semantics of invalid header stacks (Section
   [#sec-uninitialized-values-and-writing-invalid-headers]).
-
 * Clarified initialization semantics (Section [#sec-lvalues] and
   [#sec-calling-convention]), especially for headers and local
   variables.
-
 * Clarified evaluation order for table keys (Section [#sec-mau-semantics]).
-
 * Fixed grammar to clarify parsing of right shift operator (`>>`),
   allow empty statements in parser (Section [#sec-parser-state-stmt]),
   and eliminate annotations on const entries (Section [#sec-entries]).
