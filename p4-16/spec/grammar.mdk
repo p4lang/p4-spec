@@ -87,6 +87,22 @@ packageTypeDeclaration
 instantiation
     : typeRef '(' argumentList ')' name ';'
     | annotations typeRef '(' argumentList ')' name ';'
+    | annotations typeRef '(' argumentList ')' name '=' objInitializer ';'
+    | typeRef '(' argumentList ')' name '=' objInitializer ';'
+    ;
+
+objInitializer
+    : '{' objDeclarations '}'
+    ;
+
+objDeclarations
+    : /* empty */
+    | objDeclarations objDeclaration
+    ;
+
+objDeclaration
+    : functionDeclaration
+    | instantiation
     ;
 
 optConstructorParameters
@@ -143,6 +159,7 @@ parserStatement
     | constantDeclaration
     | variableDeclaration
     | emptyStatement
+    | conditionalStatement
     ;
 
 parserBlockStatement
@@ -178,12 +195,20 @@ keysetExpression
     ;
 
 tupleKeysetExpression
-    : '(' simpleKeysetExpression ',' simpleExpressionList ')'
+    : "(" simpleKeysetExpression "," simpleExpressionList ")"
+    | "(" reducedSimpleKeysetExpression ")"
     ;
 
 simpleExpressionList
     : simpleKeysetExpression
     | simpleExpressionList ',' simpleKeysetExpression
+    ;
+
+reducedSimpleKeysetExpression
+    : expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
     ;
 
 simpleKeysetExpression
@@ -284,6 +309,7 @@ tupleType
 
 headerStackType
     : typeName '[' expression ']'
+    | specializedType '[' expression ']'
     ;
 
 specializedType
@@ -293,6 +319,7 @@ specializedType
 baseType
     : BOOL
     | ERROR
+    | STRING
     | INT
     | BIT
     | BIT '<' INTEGER '>'
@@ -311,7 +338,11 @@ typeOrVoid
 
 optTypeParameters
     : /* empty */
-    | '<' typeParameterList '>'
+    | typeParameters
+    ;
+
+typeParameters
+    : '<' typeParameterList '>'
     ;
 
 typeParameterList
@@ -322,12 +353,14 @@ typeParameterList
 realTypeArg
     : DONTCARE
     | typeRef
+    | VOID
     ;
 
 typeArg
     : DONTCARE
     | typeRef
     | nonTypeName
+    | VOID
     ;
 
 realTypeArgumentList
@@ -357,15 +390,15 @@ derivedTypeDeclaration
     ;
 
 headerTypeDeclaration
-    : optAnnotations HEADER name '{' structFieldList '}'
+    : optAnnotations HEADER name optTypeParameters '{' structFieldList '}'
     ;
 
 headerUnionDeclaration
-    : optAnnotations HEADER_UNION name '{' structFieldList '}'
+    : optAnnotations HEADER_UNION name optTypeParameters '{' structFieldList '}'
     ;
 
 structTypeDeclaration
-    : optAnnotations STRUCT name '{' structFieldList '}'
+    : optAnnotations STRUCT name optTypeParameters '{' structFieldList '}'
     ;
 
 structFieldList
@@ -379,7 +412,7 @@ structField
 
 enumDeclaration
     : optAnnotations ENUM name '{' identifierList '}'
-    | optAnnotations ENUM BIT '<' INTEGER '>' name '{' specifiedIdentifierList '}'
+    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
     ;
 
 errorDeclaration
@@ -477,8 +510,8 @@ switchCase
     ;
 
 switchLabel
-    : name
-    | DEFAULT
+    : DEFAULT
+    | nonBraceExpression
     ;
 
 statementOrDeclaration
@@ -501,7 +534,7 @@ tablePropertyList
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
+    | optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     | optAnnotations CONST nonTableKwName '=' initializer ';'
     | optAnnotations nonTableKwName '=' initializer ';'
     ;
@@ -602,11 +635,12 @@ annotationBody
     : /* empty */
     | annotationBody '(' annotationBody ')'
     | annotationBody annotationToken
+    ;
 
 structuredAnnotationBody
     : expressionList
     | kvList
-    ;	
+    ;
 
 annotationToken
     : ABSTRACT
@@ -641,10 +675,10 @@ annotationToken
     | RETURN
     | SELECT
     | STATE
+    | STRING
     | STRUCT
     | SWITCH
     | TABLE
-    | THIS
     | TRANSITION
     | TRUE
     | TUPLE
@@ -706,6 +740,7 @@ prefixedNonTypeName
 
 lvalue
     : prefixedNonTypeName
+    | THIS
     | lvalue '.' member
     | lvalue '[' expression ']'
     | lvalue '[' expression ':' expression ']'
@@ -734,6 +769,7 @@ expression
     : INTEGER
     | TRUE
     | FALSE
+    | THIS
     | STRING_LITERAL
     | nonTypeName
     | dotPrefix nonTypeName
@@ -773,6 +809,52 @@ expression
     | expression '?' expression ':' expression
     | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
+    | namedType '(' argumentList ')'
+    | '(' typeRef ')' expression
+    ;
+
+nonBraceExpression
+    : INTEGER
+    | STRING_LITERAL
+    | TRUE
+    | FALSE
+    | THIS
+    | nonTypeName
+    | dotPrefix nonTypeName
+    | nonBraceExpression '[' expression ']'
+    | nonBraceExpression '[' expression ':' expression ']'
+    | '(' expression ')'
+    | '!' expression %prec PREFIX
+    | '~' expression %prec PREFIX
+    | '-' expression %prec PREFIX
+    | '+' expression %prec PREFIX
+    | typeName '.' member
+    | ERROR '.' member
+    | nonBraceExpression '.' member
+    | nonBraceExpression '*' expression
+    | nonBraceExpression '/' expression
+    | nonBraceExpression '%' expression
+    | nonBraceExpression '+' expression
+    | nonBraceExpression '-' expression
+    | nonBraceExpression '|+|' expression
+    | nonBraceExpression '|-|' expression
+    | nonBraceExpression '<<' expression
+    | nonBraceExpression '>>' expression
+    | nonBraceExpression '<=' expression
+    | nonBraceExpression '>=' expression
+    | nonBraceExpression '<' expression
+    | nonBraceExpression '>' expression
+    | nonBraceExpression '!=' expression
+    | nonBraceExpression '==' expression
+    | nonBraceExpression '&' expression
+    | nonBraceExpression '^' expression
+    | nonBraceExpression '|' expression
+    | nonBraceExpression '++' expression
+    | nonBraceExpression '&&' expression
+    | nonBraceExpression '||' expression
+    | nonBraceExpression '?' expression ':' expression
+    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
+    | nonBraceExpression '(' argumentList ')'
     | namedType '(' argumentList ')'
     | '(' typeRef ')' expression
     ;

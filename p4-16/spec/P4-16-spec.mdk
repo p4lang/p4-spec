@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.2.0
+Title Note: version 1.2.2
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -1982,14 +1982,16 @@ well-typed P4 program and still be conformant to the P4 spec. However,
 if an architecture accepts a P4 program as valid, the runtime program
 behavior should match this specification.
 
-#### Unsigned integers (bit-strings)
+#### Unsigned integers (bit-strings) {#sec-unsigned-integers}
 
 An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
 compile-time known value (see Section [#sec-ct-constants]) that is a
-positive integer greater than 0.  When using an expression for the
-size they must be parenthesized.
+non-negative integer.  When using an expression for
+the size, the epression must be parenthesized.  Bitstrings with width 0 are
+allowed; they have no actual bits, and can only have the value 0.  See
+{ #sec-uninitialized-values-and-writing-invalid-headers } for additional details.
 
 ~ Begin P4Example
 const bit<32> x = 10;   // 32-bit constant with value 10.
@@ -2014,7 +2016,7 @@ bit values).
 All operations that can be performed on unsigned integers are
 described in Section [#sec-bit-ops].
 
-#### Signed Integers
+#### Signed Integers {#sec-signed-integers}
 
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to
@@ -2045,7 +2047,7 @@ values, P4 provides a special bit-string type whose size is set at
 runtime, called a `varbit`.
 
 The type `varbit<W>` denotes a bit-string with a width of at most `W`
-bits, where `W` must be a positive integer that is a compile-time
+bits, where `W` must be a non-negative integer that is a compile-time
 known value. For example, the type `varbit<120>` denotes the type
 of bit-string values that may have between 0 and 120 bits. Most
 operations that are applicable to fixed-size bit-strings (unsigned
@@ -2058,7 +2060,7 @@ values to always contain an integer number of bytes at runtime.
 All operations that can be performed on varbits are described in
 Section [#sec-varbit-string].
 
-#### Infinite-precision integers
+#### Infinite-precision integers {#sec-infinite-precision-integers}
 
 The infinite-precision data type describes integers with an unlimited
 precision. This type is written as `int`.
@@ -2188,7 +2190,7 @@ An enumeration type is defined using the following syntax:
 ~ Begin P4Grammar
 enumDeclaration
     : optAnnotations ENUM name '{' identifierList '}'
-    | optAnnotations ENUM BIT '<' INTEGER '>' name '{' specifiedIdentifierList '}'
+    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
     ;
 
 identifierList
@@ -2221,10 +2223,15 @@ target-specific).
 
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable `enum`s, because headers are
-allowed to have fields with such `enum` types.
-This requires the programmer provide both the fixed-width unsigned (or signed) integer type and
-an associated integer value for each symbolic entry in the enumeration.  For example, the
-declaration
+allowed to have fields with such `enum` types. This requires the programmer provide both the fixed-width unsigned (or signed) integer type and
+an associated integer value for each symbolic entry in the enumeration.
+The symbol `typeRef` in the grammar above must be one of the following types:
+
+- an unsigned integer, i.e. `bit<W>` for some constant `W`.
+- a signed integer, i.e. `int<W>` for some constant `W`.
+- a type name declared via `typedef`, where the base type of that type is either
+one of the types listed above, or another `typedef` name that meets these conditions.
+For example, the declaration
 
 ~ Begin P4Example
 enum bit<16> EtherType {
@@ -2248,8 +2255,7 @@ from the underlying type carrying equality, assignment, and casts to/from the
 underlying type.
 
 Compiler implementations are expected to raise an error if the fixed-width integer representation
-for an enumeration entry falls outside the representation range of the underlying
-type.
+for an enumeration entry falls outside the representation range of the underlying type.
 
 For example, the declaration
 
@@ -2280,7 +2286,7 @@ syntax:
 
 ~ Begin P4Grammar
 headerTypeDeclaration
-    : optAnnotations HEADER name '{' structFieldList '}'
+    : optAnnotations HEADER name optTypeParameters '{' structFieldList '}'
     ;
 
 structFieldList
@@ -2298,7 +2304,9 @@ variable), a fixed-width signed integer type, a boolean type, or a struct that
 itself contains other struct fields, nested arbitrarily, as long as all of the
 "leaf" types are `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`. If a
 `bool` is used inside a P4 header, all implementations encode the `bool` as a
-one bit long field. This declaration introduces a new identifier in the
+one bit long field, with the value `1` representing `true` and `0` representing `false`.
+
+A header declaration introduces a new identifier in the
 current scope; the type can be referred to using this identifier. A header is
 similar to a `struct` in C, containing all the specified fields. However, in
 addition, a header also contains a hidden Boolean "validity" field. When the
@@ -2415,6 +2423,7 @@ defined as:
 ~ Begin P4Grammar
 headerStackType
     : typeName '[' expression ']'
+    : specializedType '[' expression ']'
     ;
 ~ End P4Grammar
 
@@ -2451,8 +2460,7 @@ A header union is defined as:
 
 ~ Begin P4Grammar
 headerUnionDeclaration
-    : optAnnotations HEADER_UNION name
-      '{' structFieldList '}'
+    : optAnnotations HEADER_UNION name optTypeParameters '{' structFieldList '}'
     ;
 ~ End P4Grammar
 
@@ -2479,12 +2487,12 @@ P4 `struct` types are defined with the following syntax:
 
 ~ Begin P4Grammar
 structTypeDeclaration
-    : optAnnotations STRUCT name '{' structFieldList '}'
+    : optAnnotations STRUCT name optTypeParameters '{' structFieldList '}'
     ;
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
-current scope. An empty struct is legal. For example, the structure `Parsed_headers`
+current scope. An empty struct (with no fields) is legal. For example, the structure `Parsed_headers`
 below contains the headers recognized by a simple parser:
 
 ~ Begin P4Example
@@ -2500,10 +2508,8 @@ struct Parsed_headers {
 
 ### Tuple types { #sec-tuple-types }
 
-A tuple is similar to a `struct`, in that it holds multiple
-values. Unlike a `struct` type, tuples have no named fields. The
-type of tuples with n component types `T1`,...,`Tn` is written
-as
+A tuple is similar to a `struct`, in that it holds multiple values.
+The type of tuples with n component types `T1`,...,`Tn` is written as
 
 ~ Begin P4Example
 tuple<T1,/* more fields omitted */,Tn>
@@ -2693,6 +2699,7 @@ methodPrototypes
 methodPrototype
     : optAnnotations functionPrototype ';'
     | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';' //constructor
+    | optAnnotations ABSTRACT functionPrototype ";"
     ;
 
 typeOrVoid
@@ -2703,7 +2710,11 @@ typeOrVoid
 
 optTypeParameters
     : /* empty */
-    | '<' typeParameterList '>'
+    | typeParameters
+    ;
+
+typeParameters
+    : '<' typeParameterList '>'
     ;
 
 typeParameterList
@@ -2736,6 +2747,30 @@ disambiguate at compile-time which method or function is being called,
 either by the number of arguments or by the names of the arguments,
 when calls are specifying argument names.  Argument type information
 is not used in disambiguating calls.
+
+##### Abstract methods { #sec-abstract-methods }
+
+Typical extern object methods are built-in, and are implemented by the
+target architecture.  P4 programmers can only call such methods.
+
+However, some types of extern objects may provide methods that can be
+implemented by the P4 programmers.  Such methods are described with
+the `abstract` keyword prior to the method definition.  Here is an
+example:
+
+~ Begin P4Example
+extern Balancer {
+    Balancer();
+    // get the number of active flows
+    bit<32> getFlowCount();
+    // return port index used for load-balancing
+    // @param address: IPv4 source address of flow
+    abstract bit<4> on_new_flow(in bit<32> address);
+}
+~ End P4Example
+
+When such an object is instantiated the user has to supply an
+implementation of all the `abstract` methods (see [#sec-instantiating-abstract-methods]).
 
 ### Type specialization { #sec-type-spec }
 
@@ -2771,6 +2806,47 @@ Register<bit<32>>(128) registerBank;
 
 The instantiation of `registerBank` is made using the `Register`
 type specialized with the `bit<32>` bound to the `T` type argument.
+
+`struct`, `header`, `header_union` and header stack types can be
+generic as well.  In order to use such a generic type it must be
+specialized with appropriate type arguments.  For example
+
+~ Begin P4Example
+// generic structure type
+struct S<T> {
+    T field;
+    bool valid;
+}
+
+struct G<T> {
+    S<T> s;
+}
+
+// specialize S by replacing 'T' with 'bit<32>'
+const S<bit<32>> s = { field = 32w0, valid = false };
+// Specialize G by replacing 'T' with 'bit<32>'
+const G<bit<32>> g = { s = { field = 0, valid = false } };
+
+// generic header type
+header H<T> {
+    T field;
+}
+
+// Specialize H by replacing 'T' with 'bit<8>'
+const H<bit<8>> h = { field = 1 };
+// Header stack produced from a specialization of a generic header type
+H<bit<8>>[10] stack;
+
+// Generic header union
+header_union HU<T> {
+    H<bit<32>> h32;
+    H<bit<8>>  h8;
+    H<T>       ht;
+}
+
+// Header union with a type obtained by specializing a generic header union type
+HU<bit> hu;
+~ End P4Example
 
 ### Parser and control blocks types { #sec-parser-control-types }
 
@@ -2854,7 +2930,7 @@ important what the type variable binds to (during type unification the
 don't care type can unify with any other type).  An example is given
 Section [#sec-arch-desc-example].
 
-## Default values { #default-values }
+## Default values { #sec-default-values }
 
 Some P4 types define a "default value," which can be used to
 automatically initialize values of that type.  The default values are
@@ -3025,6 +3101,7 @@ typeArg
     : DONTCARE
     | typeRef
     | nonTypeName
+    | VOID
     ;
 
 typeArgumentList
@@ -3389,8 +3466,6 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
-- Concatenation of two bit-strings, denoted by the infix operator `++`. The result is a bit-string whose
-  length is the sum of the lengths of the inputs where the most significant bits are taken from the left operand.
 - Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
   where `m` and `l` must be positive integers
   that are compile-time known values, and `m >= l`. The result is
@@ -3484,6 +3559,14 @@ type. The result always has the same width as the left operand.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.  A slice of a signed integer is treated like an unsigned integer.
+
+### Concatenation { #sec-concatenation }
+
+Concatenation is applied to two bit-strings (signed or unsigned).  It
+is denoted by the infix operator `++`.  The result is a bit-string
+whose length is the sum of the lengths of the inputs where the most
+significant bits are taken from the left operand; the sign of the
+result is taken from the left operand.
 
 ### A note about shifts
 
@@ -3615,11 +3698,14 @@ for programmers, it has several benefits:
 The following casts are legal in P4:
 
 - `bit<1> <-> bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
+- `int -> bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
 - `int<W> -> bit<W>`: preserves all bits unchanged and reinterprets negative
   values as positive values
 - `bit<W> -> int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
 - `bit<W> -> bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
 - `int<W> -> int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
+- `bit<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is alwasy positive
+- `int<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
 - `int -> bit<W>`: converts the integer value into a sufficiently
   large two's complement bit string to avoid information loss, and
   then truncates the result to `W` bits. The compiler should emit a
@@ -3709,6 +3795,15 @@ list expressions.
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
+
+The fields of a tuple can be accessed using array index syntax `x[0]`,
+`x[1]`.  The array indexes *must* be compile-time constants, to enable
+the type-checker to identify the field types statically.
+
+Currently tuple fields are not left-values, even if the tuple itself
+is.  (I.e. a tuple can only be assigned monolithically, and the field
+values cannot be changed individually.)  This restriction may be
+lifted in a future version of the language.
 
 ## Operations on lists { #sec-list-exprs }
 
@@ -3837,12 +3932,20 @@ keysetExpression
     ;
 
 tupleKeysetExpression
-    : '(' simpleKeysetExpression ',' simpleExpressionList ')'
+    : "(" simpleKeysetExpression "," simpleExpressionList ")"
+    | "(" reducedSimpleKeysetExpression ")"
     ;
 
 simpleExpressionList
     : simpleKeysetExpression
     | simpleExpressionList ',' simpleKeysetExpression
+    ;
+
+reducedSimpleKeysetExpression
+    : expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
     ;
 
 simpleKeysetExpression
@@ -4066,9 +4169,20 @@ expressions are legal:
   index value that is a compile-time constant is out of range.
 
   Accessing a header stack ``hs`` with an index less than `0` or
-  greater than `hs.size` results in an undefined value.  See Section
+  greater than or equal to `hs.size` results in an undefined value.  See Section
   [#sec-uninitialized-values-and-writing-invalid-headers] for more
   details.
+
+  The `index` is an expression that must be one of the following types:
+
+  - `int` - an infinite-precision integer (section
+    [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 1` (section
+    [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
+    [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or
+    `int<W>` (section [#sec-enum-types]).
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -4398,6 +4512,7 @@ realTypeArgumentList
 realTypeArg
     : DONTCARE
     | typeRef
+    | VOID
     ;
 ~ End P4Grammar
 
@@ -4585,10 +4700,34 @@ direction `in` or `inout` are initialized when the control is called,
 and under what conditions they are initialized, and if so, what their
 values will be.
 
+Since P4 allows empty tuples and structs, one can construct types
+whose values carry no "useful" information, e.g.:
+
+~Begin P4Example
+struct Empty {
+   tuple<> t;
+}
+~End P4Example
+
+We call the following "empty" types:
+
++ bitstrings with 0 width
++ varbits with 0 width
++ empty tuples (`tuple<>`)
++ stacks with 0 size
++ structs with no fields
++ a tuple having all fields of an empty type
++ a struct having all fields of an empty type
+
+Values with empty types carry no useful information.  In particular,
+they do not have to be explicitly initialized to have a legal value.
+
+(Header types with no fields always have a validity bit.)
+
 ## Initializing with default values
 
 A left-value can be initialized automatically with a default value of the
-suitable type using the syntax `...` (see Section [#default-values]).  A value
+suitable type using the syntax `...` (see Section [#sec-default-values]).  A value
 of type `struct`, `header`, or `tuple` can also be initialized using a mix of
 explicit values and default values by using the notation `...` in a list
 expression initializer; in this case all fields not explicitly
@@ -4784,6 +4923,62 @@ control c(/* parameters omitted */) {
 }
 ~ End P4Example
 
+### Instantiating objects with abstract methods {#sec-instantiating-abstract-methods}
+
+When instantiating an extern type that has `abstract` methods users
+have to supply implementations for all such methods.  This is done using object initializers:
+
+~ Begin P4Grammar
+lvalue:
+    ...
+    | THIS
+
+expression:
+    ...
+    | THIS
+
+instantiation:
+      ...
+      | annotations typeRef "(" argumentList ")" name "=" objInitializer ";"
+      | typeRef "(" argumentList ")" name "=" objInitializer ";"
+
+objInitializer
+    : "{" objDeclarations "}"
+    ;
+
+objDeclarations
+    : /* empty */
+    | objDeclarations objDeclaration
+    ;
+
+objDeclaration
+    : functionDeclaration
+    | instantiation
+    ;
+~ End P4Grammar
+
+The abstract methods can only use the supplied arguments or refer to
+values that are in the top-level scope.  When calling another method
+of the same instance the `this` keyword is used to indicate the
+current object instance:
+
+~ Begin P4Example
+// Instantiate a balancer
+Balancer() b = {  // provide an implementation for the abstract methods
+    bit<4> on_new_flow(in bit<32> address) {
+        // uses the address and the number of flows to load balance
+        bit<32> count = this.getFlowCount();  // call method of the same instance
+        return (address + count)[3:0];
+    }
+}
+~ End P4Example
+
+Abstract methods may be invoked by users explicitly, or they may be
+invoked by the target architecture.  The architectural description has
+to specify when the abstract methods are invoked and what the meaning
+of their arguments and return values is; target architectures may
+impose additional constraints on abstract methods.
+
 ### Restrictions on top-level instantiations
 
 A P4 program may not instantiate controls and parsers at the top-level
@@ -4811,7 +5006,7 @@ Statements can appear in several places:
 - Within an `action`
 
 There are restrictions for the kinds of statements that can appear in
-each of these places. For example, conditionals are not supported in
+each of these places. For example, `return`s are not supported in
 parsers, and `switch` statements are only supported in control
 blocks. We present here the most general case, for control blocks.
 
@@ -4954,22 +5149,70 @@ switchCase
     ;
 
 switchLabel
-    : name
-    | DEFAULT
+    : DEFAULT
+    | nonBraceExpression
+    ;
+
+nonBraceExpression
+    : INTEGER
+    | TRUE
+    | FALSE
+    | STRING_LITERAL
+    | nonTypeName
+    | dotPrefix nonTypeName
+    | nonBraceExpression '[' expression ']'
+    | nonBraceExpression '[' expression ':' expression ']'
+    | '(' expression ')'
+    | '!' expression %prec PREFIX
+    | '~' expression %prec PREFIX
+    | '-' expression %prec PREFIX
+    | '+' expression %prec PREFIX
+    | typeName '.' member
+    | ERROR '.' member
+    | nonBraceExpression '.' member
+    | nonBraceExpression '*' expression
+    | nonBraceExpression '/' expression
+    | nonBraceExpression '%' expression
+    | nonBraceExpression '+' expression
+    | nonBraceExpression '-' expression
+    | nonBraceExpression '|+|' expression
+    | nonBraceExpression '|-|' expression
+    | nonBraceExpression '<<' expression
+    | nonBraceExpression '>>' expression
+    | nonBraceExpression '<=' expression
+    | nonBraceExpression '>=' expression
+    | nonBraceExpression '<' expression
+    | nonBraceExpression '>' expression
+    | nonBraceExpression '!=' expression
+    | nonBraceExpression '==' expression
+    | nonBraceExpression '&' expression
+    | nonBraceExpression '^' expression
+    | nonBraceExpression '|' expression
+    | nonBraceExpression '++' expression
+    | nonBraceExpression '&&' expression
+    | nonBraceExpression '||' expression
+    | nonBraceExpression '?' expression ':' expression
+    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
+    | nonBraceExpression '(' argumentList ')'
+    | namedType '(' argumentList ')'
+    | '(' typeRef ')' expression
     ;
 ~ End P4Grammar
 
-The expression within the `switch` statement is restricted to be
-the result of a table invocation (See Section [#sec-invoke-mau]).
+The `nonBraceExpression` is the same as `expression` as defined in
+Section [#sec-exprs], except it does not include any cases that can
+begin with a left brace `{` character, to avoid syntactic ambiguity
+with a block statement.
 
-If a switch label is not followed by a block statement it falls
-through to the next label. However, if a block statement is present,
-it does not fall through. Note, that this is different from C-style `switch`
-statements, where a `break` is needed to prevent
-fall-through. It is legal to have no matching label for some actions,
-or no `default` label. At runtime, if no case matches, execution
-of the program simply continues. However, no label can appear twice in
-a switch statement.
+There are two kinds of `switch` expressions allowed, described
+separately in the following two subsections.
+
+### Switch statement with `action_run` expression
+
+For this variant of `switch` statement, the expression must be of the
+form `t.apply().action_run`, where `t` is the name of a table (see
+Section [#sec-invoke-mau]).  All switch labels must be names of
+actions of the table `t`, or `default`.
 
 ~ Begin P4Example
 switch (t.apply().action_run) {
@@ -4980,11 +5223,74 @@ switch (t.apply().action_run) {
 }
 ~ End P4Example
 
-Note that the `default` label of the `switch` statement is
-used to match on the kind of action executed, no matter whether there
-was a table hit or miss. The `default` label does not indicate
-that the table missed and the `default_action` was executed.
-The `default` label should be the last label if present.
+Note that the `default` label of the `switch` statement is used to
+match on the kind of action executed, no matter whether there was a
+table hit or miss. The `default` label does not indicate that the
+table missed and the `default_action` was executed.
+
+### Switch statement with integer or enumerated type expression
+
+For this variant of `switch` statement, the expression must evaluate
+to a result with one of these types:
+
+- `bit<W>`
+- `int<W>`
+- `enum`, either with or without an underlying representation specified
+- `error`
+
+All switch labels must be expressions with compile-time known values,
+and must have a type that can be implicitly cast to the type of the
+`switch` expression (see Section [#sec-implicit-casts]).  Switch
+labels must not begin with a left brace character `{`, to avoid
+ambiguity with a block statement.
+
+~ Begin P4Example
+// Assume the expression hdr.ethernet.etherType has type bit<16>
+switch (hdr.ethernet.etherType) {
+   0x86dd: { /* body omitted */ }
+   0x0800:          // fall-through to the next body
+   0x0802: { /* body omitted */ }
+   0xcafe: { /* body omitted */ }
+   default: { /* body omitted */ }
+}
+~ End P4Example
+
+### Notes common to all switch statements
+
+It is a compile-time error if two labels of a `switch` statement equal
+each other.  The switch label values need not include all possible
+values of the switch expression.  It is optional to have a `switch`
+case with the `default` label, but if one is present, it must be the
+last one in the `switch` statement.
+
+If a switch label is not followed by a block statement, it falls
+through to the next label. However, if a block statement is present,
+it does not fall through. Note that this is different from C-style
+`switch` statements, where a `break` is needed to prevent
+fall-through.  If the last switch label is not followed by a block
+statement, the behavior is the same as if the last switch label were
+followed by an empty block statement `{ }`.
+
+When a `switch` statement is executed, first the switch expression is
+evaluated, and any side effects from evaluating this expression are
+visible to any `switch` case that is executed.  Among switch labels
+that are not `default`, at most one of them can equal the value of the
+switch expression. If one is equal, that switch case is executed.
+
+If no labels are equal to the `switch` expression, then:
+
+- if there is a `default` label, the case with the `default` label is
+  executed.
+- if there is no `default` label, then no switch case is executed, and
+  execution continues after the end of the `switch` statement, with no
+  side effects (except any that were caused by evaluating the `switch`
+  expression).
+
+See "Implementing generalized P4_16 switch statements"
+[GeneralizedSwitchStatements] for possible techniques that one might
+use to implement generalized switch statements.
+
+[GeneralizedSwitchStatements]: <https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md>
 
 # Packet parsing { #sec-packet-parsing }
 
@@ -5119,6 +5425,7 @@ transitions to that state including:
 - Method calls, which serve several purposes:
   * Invoking functions (e.g., using `verify` to check the validity of data already parsed), and
   * Invoking methods (e.g., extracting data out of packets or computing checksums) and other parsers (see Section [#sec-invoke-subparser]), and
+- Conditional statements,
 - Transitions to other states (discussed in Section [#sec-transition]).
 
 The syntax for parser statements is given by the following grammar rules:
@@ -5136,6 +5443,7 @@ parserStatement
     | constantDeclaration
     | parserBlockStatement
     | emptyStatement
+    | conditionalStatement
     ;
 
 parserBlockStatement
@@ -5837,7 +6145,7 @@ starting with actions.
 
 ## Actions { #sec-actions}
 
-~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is set by the control plane. Parameters are bound by the data plane." }
+~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is provided in the table entries, typically populated by the control plane. Other parameters are bound by the data plane." }
 ![actions]
 ~
 [actions]: figs/actions.png { width: 8cm; page-align: here }
@@ -5866,12 +6174,14 @@ action Forward_a(out bit<9> outputPort, bit<9> port) {
 }
 ~ End P4Example
 
-Action parameters may not have `extern` types. Action parameters
-that have no direction (e.g., `port` in the previous example)
-indicate "action data." All such parameters must appear at the end of the
-parameter list. When used in a match-action table
-(see Section [#sec-table-action-list]), these parameters will be
-provided by the control plane.
+Action parameters may not have `extern` types. Action parameters that
+have no direction (e.g., `port` in the previous example) indicate
+"action data." All such parameters must appear at the end of the
+parameter list. When used in a match-action table (see Section
+[#sec-table-action-list]), these parameters will be provided by the
+table entries (e.g., as specified by the control plane, the
+`default_action` table property, or the `const entries` table
+property).
 
 The body of an action consists of a sequence of statements and
 declarations. No `switch` statements are allowed within an
@@ -5939,7 +6249,7 @@ tablePropertyList
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
+    | optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     | optAnnotations CONST nonTableKwName '=' initializer ';'
     | optAnnotations nonTableKwName '=' initializer ';'
     ;
@@ -5965,12 +6275,12 @@ In addition, the tables may optionally define the following properties,
   lookup table fails to find a match for the key used.
 - `size`: an integer specifying the desired size of the table.
 
-The compiler may set the `default_action` to `NoAction`
-(and also insert it into the list of `actions`) for tables that do
-not define the `default_action` property. This is
-consistent with the semantics given in Section [#sec-default-action].
-In this document, we assume that that this transformation has been
-performed, so that all tables have a `default_action` property.
+The compiler must set the `default_action` to `NoAction` (and also
+insert it into the list of `actions`) for tables that do not define
+the `default_action` property. This is consistent with the semantics
+given in Section [#sec-default-action]. Hence, all tables can be
+thought of as having a `default_action` property, either implicitly or
+explicitly.
 
 In addition, tables may contain architecture-specific properties (see
 Section [#sec-additional-table-properties]).
@@ -6089,7 +6399,7 @@ table smac {
 ~ End P4Example
 
 - The entries in the `smac` `table` may contain two different actions: `Drop_action` and `Rewrite_mac`.
-- The `Rewrite_smac` action has one parameter, `sourceMac`, which is bound by the control plane.
+- The `Rewrite_smac` action has one parameter, `sourceMac`, which in this case will be provided by the control plane.
 
 Each action in the list of actions for a table must have a distinct
 name---e.g., the following program fragment is illegal:
@@ -6359,7 +6669,7 @@ requirements.
 
 A `table` can be invoked by calling its `apply`
 method. Calling an apply method on a table instance returns a value
-with a `struct` type with two fields. This structure is
+with a `struct` type with three fields. This structure is
 synthesized by the compiler automatically. For each `table T`, the
 compiler synthesizes an `enum` and a `struct`, shown in
 pseudo-P4:
@@ -6370,6 +6680,7 @@ enum action_list(T) {
 }
 struct apply_result(T) {
     bool hit;
+    bool miss;
     action_list(T) action_run;
 }
 ~ End P4Pseudo
@@ -6426,6 +6737,7 @@ apply_result(m) m.apply() {
     else {
        result.hit = true;
     }
+    result.miss = !result.hit;
     result.action_run = action_type(RA);
     evaluate_and_copy_in_RA_args(RA);
     execute(RA);
@@ -7776,21 +8088,68 @@ The P4 compiler should provide:
 |       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
 |       |               | `table.apply().miss`, `string` type.                                |
 |-----|-----|-----|
-| 1.2.1 | TBD, 2020 | |
+| 1.2.1     | June 11, 2020 | Added structure-value expressions, default values, concatenation, |
+|           |               | structured  annotations; standardized several new annotations;    |
+|           |               | generalized typing rule for masks; restricted typing rule for     |
+|           |               | shifts with infinite-precistion operands; clarified evaluation    |
+|           |               | order for table keys; clarified copy-out behavior; clarified      |
+|           |               | semantics of invalid header stacks; clarified initialization      |
+|           |               | semantics; fixed several small issues in grammar.                 |
+|-----|-----|-----|
+| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     | 
+|           |              | enumeration types, abstract methods, conditional and empty         | 
+|           |              | statements in parsers, additional casts, and 0-width types;        | 
+|           |              | clarified semantics of default actions, headers, empty types, and  |
+|           |              | action data; fixed typos and inconsistencies in the grammar.       | 
 |-----|-----|-----|
 
+## Summary of changes made in version 1.2.2
+
+* Added support for accessing tuple fields (Section [#sec-tuple-exprs]).
+* Added support for generic structures (Section [#sec-type-spec]).
+* Added support for integers, `enum`s, and `error`s in `switch` statements (Section [#sec-switch-stmt]).
+* Added support for additional enumeration types (Section [#sec-enum-types]).
+* Added support for abstract methods (Section [#sec-abstract-methods]).
+* Added support for conditional statements and empty statements in parsers (Section [#sec-parser-state-stmt]).
+* Added support for casts from `int` to `bool` (Section [#sec-casts]).
+* Added support for 0-width bitstrings and varbits (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
+* Clarified that `default_action` is `NoAction` if otherwise unspecified (Section [#sec-tables]).
+* Clarified the types of expressions that may be used as indexes for header stacks (Section [#sec-expr-hs]).
+* Clarified representation of Booleans in headers (Section [#sec-header-types]).
+* Clarified representation of empty types (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
+* Clarified that action data can be specified by the control plane, `default_action` table property, or `const entries` table property (Section [#sec-actions]).
+* Fixed several typos and inconsistencies in grammar (Section [#sec-grammar]).
+* Eliminated annotations on `const` entries in grammar (Section [#sec-grammar]).
+
 ## Summary of changes made in version 1.2.1
 
+* Added structure-value expressions (Section
+  [#sec-structure-expressions]).
+* Added support for default values (Section [#sec-default-values]).
+* Added support for concatenating signed strings (Section
+  [#sec-concatenation]).
+* Added key-value and list-structured annotations (Section
+  [#sec-annotations]).
 * Added `@pure` and `@noSideEffects` annotations (Section
   [#sec-extern-annotations]).
-
-## Summary of changes made in version 1.2.1
-
 * Added `@noWarn` annotation (Section [#sec-nowarn-anno]).
-* Added structure-valued expressions (Section [#sec-structure-expressions]).
-* Added structured annotations (Section [#sec-annotations]).
-* Allow empty statements in parsers (Section [#sec-parser-state-stmt]).
-* Fixed grammar for right shifts (Section [#sec-grammar]).
+* Generalized typing for masks to allow serializable `enum`s (Section
+  [#sec-cubes]).
+* Restricted the right operands of bit shifts involving
+  infinite-precision integers to be constant and positive (Section
+  [#sec-varint-ops]).
+* Clarified copy-out behavior for `return` (Section
+  [#sec-return-stmt]) and `exit` (Section [#sec-exit-stmt])
+  statements.
+* Clarified semantics of invalid header stacks (Section
+  [#sec-uninitialized-values-and-writing-invalid-headers]).
+* Clarified initialization semantics (Section [#sec-lvalues] and
+  [#sec-calling-convention]), especially for headers and local
+  variables.
+* Clarified evaluation order for table keys (Section [#sec-mau-semantics]).
+* Fixed grammar to clarify parsing of right shift operator (`>>`),
+  allow empty statements in parser (Section [#sec-parser-state-stmt]),
+  and eliminate annotations on const entries (Section [#sec-entries]).
 
 ## Summary of changes made in version 1.2.0
 
@@ -7844,16 +8203,16 @@ The following table shows all P4 reserved keywords. Some identifiers
 are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
-| `action`   |  `apply ` | `bit`        | `bool` |
-| `const`    |  `control` | `default` | `else` |
-| `enum`   | `error`     |   `extern`  |  `exit`  |
-| `false`   |  `header`   |  `header_union` | `if`         |
-|  `in`   | `inout` | `int`         | `match_kind` |
-| `package` | `parser` | `out`         | `return`  |
-| `select` | `state` | `string` | `struct`   |
-| `switch` | `table`   | `transition` |  `true` |
-| `tuple` | `typedef` | `varbit`  | `verify` |
-| `void`       | ||
+| 'abstract' | `action`   |  `apply ` | `bit`        |
+| `bool`  | `const`    |  `control` | `default` |
+| `else`  | `enum`   | `error`     |   `extern`  |
+| `exit`  | `false`   |  `header`   |  `header_union` |
+| `if`    |   `in`   | `inout` | `int`  |
+| `match_kind` | `package` | `parser` | `out` |
+| `return`  | `select` | `state` | `struct`   |
+|  `switch` | `table`   | `this` | `transition` |
+|  `true` |  `tuple` | `typedef` | `varbit`  |
+| `verify` | `void`   | |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
