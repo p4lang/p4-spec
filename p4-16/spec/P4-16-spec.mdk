@@ -1233,6 +1233,7 @@ nonTypeName
     | STATE
     | ENTRIES
     | TYPE
+    | AS
     ;
 
 name
@@ -2142,6 +2143,7 @@ derivedTypeDeclaration
     : headerTypeDeclaration
     | headerUnionDeclaration
     | structTypeDeclaration
+    | unionTypeDeclaration
     | enumDeclaration
     ;
 
@@ -2511,16 +2513,63 @@ Operations that manipulate tuple types are described in Sections
 
 The type `tuple<>` is a tuple type with no components.
 
+### Safe unions { #sec-safe-unions }
+
+A safe union type is similar to a `header_union` type in that it
+contains multiple fields only one of which can be assigned at any
+time.  However, unlike a `header_union`, it does not use the validity
+bits to encode the field that is dynamically present, but instead uses
+a hidden "tag" field.  The grammar is very similar with `struct` and
+`header_union` grammars.
+
+~ Begin P4Grammar
+unionTypeDeclaration
+    : optAnnotations UNION name optTypeParameters '{' structFieldList '}'
+    ;
+~ End P4Grammar
+
+A variable of type `union` is assigned by assigning a suitable value
+to one of its fields.  Reading the data from a safe union can be only
+done within a `switch` statement that is used to discover which one of
+the fields may contain a value, as described in Section
+[#sec-switch-union].
+
+~ Begin P4Example
+union Safe {
+    bit<32> w;
+    bit<16> s;
+}
+
+// generic union
+union Either<T, U> {
+    T t;
+    U u;
+}
+
+Safe if_fun(in bool b, in bit<32> w, in bit<16> s) {
+    // Allocated union; cannot be initialized.
+    // No fields are present.
+    Safe result;
+    if (b)
+        // Union field 'w' is initialized
+        result.w = w;
+    else
+        // Union field 's' is initialized.
+        result.s = s;
+    return result;
+}
+~ End P4Example
+
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
 header unions, structs, and tuples.  Note that `int` means an
 infinite-precision integer, without a width specified.
 
-|--------------------|--------------------------------------------|
+|--------------------|------------------------------------------|||
 |                    | Container type                           |||
 |                    |-----------|--------------|-----------------|
-| Element type       | header    | header_union | struct or tuple |
+| Element type       | header    | header_union | struct, tuple, or union |
 +:-------------------+:----------+:-------------+:----------------+
 | `bit<W>`       | allowed   | error   |  allowed |
 | `int<W>`       | allowed   | error   |  allowed |
@@ -2536,6 +2585,7 @@ infinite-precision integer, without a width specified.
 | `header_union` | error     | error   |  allowed |
 | `struct`       | allowed[^struct_header]   | error   |  allowed |
 | `tuple`        | error     | error   |  allowed |
+| `union`        | error     | error   |  allowed |
 |----------------|-----------|---------|----------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
@@ -2562,7 +2612,7 @@ The table below lists all types that may appear as base types in a
 `typedef` or `type` declaration.
 
 
-|------------------|--------------------------------------|
+|------------------|--------------------|-----------------|
 | Base type B      | `typedef B <name>` | `type B <name>` |
 +:-----------------+:-------------------+:----------------+
 | `bit<W>`         | allowed            | allowed         |
@@ -2578,6 +2628,7 @@ The table below lists all types that may appear as base types in a
 | header stack     | allowed            | error           |
 | `header_union`   | allowed            | error           |
 | `struct`         | allowed            | error           |
+| `union`          | allowed            | error           |
 | `tuple`          | allowed            | error           |
 | a `typedef` name | allowed            | allowed[^type_allowed] |
 | a `type` name    | allowed            | allowed         |
@@ -5130,6 +5181,7 @@ switchCases
 
 switchCase
     : switchLabel ':' blockStatement
+    | nonBraceExpression AS name ":" blockStatement
     | switchLabel ':'  // fall-through
     ;
 
@@ -5189,8 +5241,8 @@ Section [#sec-exprs], except it does not include any cases that can
 begin with a left brace `{` character, to avoid syntactic ambiguity
 with a block statement.
 
-There are two kinds of `switch` expressions allowed, described
-separately in the following two subsections.
+There are three kinds of `switch` expressions allowed, described
+separately in the following three subsections.
 
 ### Switch statement with `action_run` expression
 
@@ -5240,6 +5292,63 @@ switch (hdr.ethernet.etherType) {
 }
 ~ End P4Example
 
+### Switch statements for deconstructing safe unions { #sec-switch-union }
+
+In order to access the data within a safe union (as described in
+Section [#sec-safe-unions]), it needs to be pattern-matched and
+"deconstructed" using a special form of the switch statement.  The
+switch statement checks a value of type safe union and has as labels
+the various fields of the union.
+
+~ Begin P4Example
+union Safe {
+    bit<32> w;
+    bit<16> s;
+}
+
+Safe su;
+su.s = 10;
+
+...
+
+bit<32> value;
+switch (su) {
+    su.w as w: { value = w; }
+    su.s as s: { value = (bit<32>)s + 10; su.w = value; }
+    default:  { log_msg("No field set"); }
+}
+~ End P4Example
+
+Each case label in such a switch statement is in fact an *assignment*
+which matches on a union field and optionally copies the value of the
+union field into a fresh variable.
+
+The label `su.w as w` is a declaration of a local variable `w` with
+the same type as the field `su.w`.  This label matches only when the
+field `w` of the union `su` contains a valid value.  When the label
+matches, the value of the field `su.w` is copied in the local variable
+`w`.  Afterwards, the corresponding block statement is executed.  The
+copying is necessary because the block statement may actually mutate
+the value of the union, making the field invalid (as in the example
+above).
+
+Note that the local variable introduced by a label (`w` in the
+previous example) is distinct from the union field; mutating `w` does
+not affect `su.w`.
+
+~Begin P4Example
+switch (su) {
+    su.w as w: { w = 2; } // useless write to local w; does not mutate su.w
+    ...
+}
+~End P4Example
+
+Fall-through is not allowed for `switch` statements that deconstruct a
+union.  The `default` label matches if neither of the previous labels
+has matched.  Matching the `default` label does not provide access to
+the value of any of the union fields.  The `default` label is the only
+label that can match an uninitialized safe union.
+
 ### Notes common to all switch statements
 
 It is a compile-time error if two labels of a `switch` statement equal
@@ -5249,12 +5358,13 @@ case with the `default` label, but if one is present, it must be the
 last one in the `switch` statement.
 
 If a switch label is not followed by a block statement, it falls
-through to the next label. However, if a block statement is present,
-it does not fall through. Note that this is different from C-style
-`switch` statements, where a `break` is needed to prevent
-fall-through.  If the last switch label is not followed by a block
-statement, the behavior is the same as if the last switch label were
-followed by an empty block statement `{ }`.
+through to the next label (fall-through is illegal for `switch`
+statements that are used to deconstruct safe unions). However, if a
+block statement is present, it does not fall through. Note that this
+is different from C-style `switch` statements, where a `break` is
+needed to prevent fall-through.  If the last switch label is not
+followed by a block statement, the behavior is the same as if the last
+switch label were followed by an empty block statement `{ }`.
 
 When a `switch` statement is executed, first the switch expression is
 evaluated, and any side effects from evaluating this expression are
@@ -6245,6 +6355,7 @@ nonTableKwName
    | APPLY
    | STATE
    | TYPE
+   | AS
    ;
 ~ End P4Grammar
 
@@ -8081,12 +8192,16 @@ The P4 compiler should provide:
 |           |               | semantics of invalid header stacks; clarified initialization      |
 |           |               | semantics; fixed several small issues in grammar.                 |
 |-----|-----|-----|
-| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     | 
-|           |              | enumeration types, abstract methods, conditional and empty         | 
-|           |              | statements in parsers, additional casts, and 0-width types;        | 
+| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     |
+|           |              | enumeration types, abstract methods, conditional and empty         |
+|           |              | statements in parsers, additional casts, and 0-width types;        |
 |           |              | clarified semantics of default actions, headers, empty types, and  |
-|           |              | action data; fixed typos and inconsistencies in the grammar.       | 
+|           |              | action data; fixed typos and inconsistencies in the grammar.       |
 |-----|-----|-----|
+
+## Summary of changes made in version 1.2.3
+
+* Added support for safe unions (Sections [#sec-safe-unions] and [#sec-switch-union]).
 
 ## Summary of changes made in version 1.2.2
 
