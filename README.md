@@ -5,7 +5,7 @@
   is no longer being developed, and is in maintenance mode only.
 - p4-16: This holds the official P4 16 spec and discussion materials.
 - The [wiki pages](https://github.com/p4lang/p4-spec/wiki) hold language design materials.
-- The latest version of the P4 specification is [1.2.2](https://p4.org/p4-spec/docs/P4-16-v1.2.2.html).
+- The latest version of the P4 specification is [1.2.2](https://p4lang.github.io/p4-spec/docs/P4-16-v1.2.2.html).
 - The primary branch for this repository is named `main`. See [here](https://github.com/p4lang/p4-spec/issues/930#issuecomment-812768044) for instructions on how to rename your local branch if it has a different name.
  
 # Modification Policy
