@@ -23,20 +23,33 @@ clean:
 P4C=p4test
 #P4C=p4test --Wdisable=uninitialized_out_param
 
+# TBD: The lines commented out below are PSA example programs that
+# have not yet been updated for the proposed new way of handling
+# recirculate, resubmit, clone, and normal (aka bridged metadata)
+# preserved metadata.
+
+# Most of those commented out programs would look much like
+# psa-example-drop-all.p4 in the changes required, since they do not
+# preserve any metadata for those cases.
+
+# psa-example-parser-error-handling.p4 does need some updates, most
+# likely ones that look nearly identical to
+# psa-example-parser-error-handling.p4
+
 check:
 	${P4C} examples/psa-example-drop-all.p4
 	${P4C} examples/psa-example-hello-world.p4
 	${P4C} examples/psa-example-bridged-metadata.p4
 	${P4C} examples/psa-example-clone-to-port.p4
-	${P4C} examples/psa-example-counters.p4
+	#${P4C} examples/psa-example-counters.p4
 	${P4C} examples/psa-example-digest.p4
-	${P4C} examples/psa-example-incremental-checksum.p4
-	${P4C} examples/psa-example-incremental-checksum2.p4
-	${P4C} examples/psa-example-parser-checksum.p4
-	${P4C} examples/psa-example-parser-error-handling.p4
+	#${P4C} examples/psa-example-incremental-checksum.p4
+	#${P4C} examples/psa-example-incremental-checksum2.p4
+	#${P4C} examples/psa-example-parser-checksum.p4
+	#${P4C} examples/psa-example-parser-error-handling.p4
 	${P4C} examples/psa-example-parser-error-handling2.p4
 	${P4C} examples/psa-example-recirculate.p4
-	${P4C} examples/psa-example-register2.p4
+	#${P4C} examples/psa-example-register2.p4
 	${P4C} examples/psa-example-resubmit.p4
 
 # check-others:

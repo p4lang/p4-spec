@@ -41,9 +41,6 @@ header ipv4_t {
     bit<32> dstAddr;
 }
 
-struct empty_metadata_t {
-}
-
 struct fwd_metadata_t {
 }
 
@@ -59,9 +56,7 @@ struct headers_t {
 parser IngressParserImpl(packet_in buffer,
                          out headers_t parsed_hdr,
                          inout metadata_t user_meta,
-                         in psa_ingress_parser_input_metadata_t istd,
-                         in empty_metadata_t resubmit_meta,
-                         in empty_metadata_t recirculate_meta)
+                         in psa_ingress_parser_input_metadata_t istd)
 {
     state start {
         transition parse_ethernet;
@@ -95,10 +90,7 @@ control ingress(inout headers_t hdr,
 parser EgressParserImpl(packet_in buffer,
                         out headers_t parsed_hdr,
                         inout metadata_t user_meta,
-                        in psa_egress_parser_input_metadata_t istd,
-                        in empty_metadata_t normal_meta,
-                        in empty_metadata_t clone_i2e_meta,
-                        in empty_metadata_t clone_e2e_meta)
+                        in psa_egress_parser_input_metadata_t istd)
 {
     state start {
         transition accept;
@@ -123,9 +115,6 @@ control CommonDeparserImpl(packet_out packet,
 }
 
 control IngressDeparserImpl(packet_out buffer,
-                            out empty_metadata_t clone_i2e_meta,
-                            out empty_metadata_t resubmit_meta,
-                            out empty_metadata_t normal_meta,
                             inout headers_t hdr,
                             in metadata_t meta,
                             in psa_ingress_output_metadata_t istd)
@@ -137,12 +126,9 @@ control IngressDeparserImpl(packet_out buffer,
 }
 
 control EgressDeparserImpl(packet_out buffer,
-                           out empty_metadata_t clone_e2e_meta,
-                           out empty_metadata_t recirculate_meta,
                            inout headers_t hdr,
                            in metadata_t meta,
-                           in psa_egress_output_metadata_t istd,
-                           in psa_egress_deparser_input_metadata_t edstd)
+                           in psa_egress_output_metadata_t istd)
 {
     CommonDeparserImpl() cp;
     apply {
@@ -150,12 +136,26 @@ control EgressDeparserImpl(packet_out buffer,
     }
 }
 
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
+IngressPipeline(
+    IngressParserImpl(),
+    ingress(),
+    IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
+    EmptyResubmitUnpacker(),
+    EmptyRecirculateUnpacker(),
+    EmptyNormalPacker(),
+    EmptyResubmitPacker(),
+    EmptyCloneI2EPacker(),
+    EmptyDigestCreator()) ip;
 
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
+EgressPipeline(
+    EgressParserImpl(),
+    egress(),
+    EgressDeparserImpl(),
+    EmptyNormalUnpacker(),
+    EmptyCloneI2EUnpacker(),
+    EmptyCloneE2EUnpacker(),
+    EmptyRecirculatePacker(),
+    EmptyCloneE2EPacker()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;

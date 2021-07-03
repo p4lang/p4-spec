@@ -141,9 +141,6 @@ struct headers {
     ipv4_t           ipv4;
 }
 
-error {
-    UnknownCloneI2EFormatId
-}
 
 parser CommonParser(packet_in buffer,
                     out headers parsed_hdr,
@@ -169,32 +166,10 @@ parser IngressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata meta,
-    in psa_ingress_parser_input_metadata_t istd,
-    in resubmit_metadata_t resubmit_meta,
-    in recirculate_metadata_t recirculate_meta)
+    in psa_ingress_parser_input_metadata_t istd)
 {
     CommonParser() p;
-
     state start {
-        transition select (istd.packet_path) {
-            PSA_PacketPath_t.RESUBMIT: copy_resubmit_meta;
-            PSA_PacketPath_t.RECIRCULATE: copy_recirculate_meta;
-            // No metadata to copy for packets received from port,
-            // whether a front panel port or the port from the CPU.
-            default: packet_in_parsing;
-        }
-    }
-    state copy_resubmit_meta {
-        meta.my_meta4 = resubmit_meta.my_meta4;
-        transition packet_in_parsing;
-    }
-    state copy_recirculate_meta {
-        meta.my_meta2 = recirculate_meta.my_meta2;
-        meta.my_meta3 = recirculate_meta.my_meta3;
-        transition packet_in_parsing;
-    }
-
-    state packet_in_parsing {
         p.apply(buffer, parsed_hdr, meta);
         transition accept;
     }
@@ -204,57 +179,10 @@ parser EgressParserImpl(
     packet_in buffer,
     out headers parsed_hdr,
     inout metadata meta,
-    in psa_egress_parser_input_metadata_t istd,
-    in metadata normal_meta,
-    in clone_i2e_metadata_t clone_i2e_meta,
-    in clone_e2e_metadata_t clone_e2e_meta)
+    in psa_egress_parser_input_metadata_t istd)
 {
     CommonParser() p;
-
     state start {
-        transition select (istd.packet_path) {
-            PSA_PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
-            PSA_PacketPath_t.CLONE_E2E: copy_clone_e2e_meta;
-            default: copy_normal_meta;
-        }
-    }
-    state copy_clone_i2e_meta {
-        transition select (clone_i2e_meta.format_id) {
-            0: copy_clone_i2e_meta_format_0;
-            1: copy_clone_i2e_meta_format_1;
-            2: copy_clone_i2e_meta_format_2;
-            default: clone_i2e_unknown_format_id;
-        }
-    }
-    state copy_clone_i2e_meta_format_0 {
-        meta.my_meta2 = clone_i2e_meta.my_meta2;
-        meta.my_meta5 = clone_i2e_meta.my_meta5;
-        transition packet_in_parsing;
-    }
-    state copy_clone_i2e_meta_format_1 {
-        meta.my_meta6 = clone_i2e_meta.my_meta6;
-        transition packet_in_parsing;
-    }
-    state copy_clone_i2e_meta_format_2 {
-        meta.my_meta5 = clone_i2e_meta.my_meta5;
-        meta.my_meta1 = clone_i2e_meta.my_meta1;
-        meta.my_meta3 = clone_i2e_meta.my_meta3;
-        transition packet_in_parsing;
-    }
-    state clone_i2e_unknown_format_id {
-        verify(false, error.UnknownCloneI2EFormatId);
-    }
-    state copy_clone_e2e_meta {
-        meta.my_meta2 = clone_e2e_meta.my_meta2;
-        meta.my_meta5 = clone_e2e_meta.my_meta5;
-        transition packet_in_parsing;
-    }
-    state copy_normal_meta {
-        meta = normal_meta;
-        transition packet_in_parsing;
-    }
-
-    state packet_in_parsing {
         p.apply(buffer, parsed_hdr, meta);
         transition accept;
     }
@@ -289,89 +217,177 @@ control CommonDeparserImpl(packet_out packet, inout headers hdr) {
 
 control IngressDeparserImpl(
     packet_out packet,
-    out clone_i2e_metadata_t clone_i2e_meta,
-    out resubmit_metadata_t resubmit_meta,
-    out metadata normal_meta,
     inout headers hdr,
     in metadata meta,
     in psa_ingress_output_metadata_t istd)
 {
     CommonDeparserImpl() common_deparser;
     apply {
-        // Assignments to the out parameter clone_i2e_meta must be
-        // guarded by this if condition:
-        if (psa_clone_i2e(istd)) {
-            clone_i2e_meta.format_id = meta.clone_i2e_meta_format_id;
-            if (meta.clone_i2e_meta_format_id == 0) {
-                clone_i2e_meta.my_meta2 = meta.my_meta2;
-                clone_i2e_meta.my_meta5 = meta.my_meta5;
-            } else if (meta.clone_i2e_meta_format_id == 1) {
-                clone_i2e_meta.my_meta6 = meta.my_meta6;
-            } else if (meta.clone_i2e_meta_format_id == 2) {
-                clone_i2e_meta.my_meta5 = meta.my_meta5;
-                clone_i2e_meta.my_meta1 = meta.my_meta1;
-                clone_i2e_meta.my_meta3 = meta.my_meta3;
-            }
-        }
-
-        // Assignments to the out parameter resubmit_meta must be
-        // guarded by this if condition:
-        if (psa_resubmit(istd)) {
-            resubmit_meta.my_meta4 = meta.my_meta4;
-        }
-
-        // Assignments to the out parameter normal_meta must be
-        // guarded by this if condition:
-        if (psa_normal(istd)) {
-            normal_meta = meta;
-        }
-
         common_deparser.apply(packet, hdr);
     }
 }
 
 control EgressDeparserImpl(
     packet_out packet,
-    out clone_e2e_metadata_t clone_e2e_meta,
-    out recirculate_metadata_t recirculate_meta,
     inout headers hdr,
     in metadata meta,
-    in psa_egress_output_metadata_t istd,
-    in psa_egress_deparser_input_metadata_t edstd)
+    in psa_egress_output_metadata_t istd)
 {
     CommonDeparserImpl() common_deparser;
     apply {
-        // Assignments to the out parameter clone_e2e_meta must be
-        // guarded by this if condition:
-        if (psa_clone_e2e(istd)) {
-            // Metadata to be carried along with CLONE_E2E packets.
-            clone_e2e_meta.my_meta2 = meta.my_meta2;
-            clone_e2e_meta.my_meta5 = meta.my_meta5;
-        }
-
-        // Assignments to the out parameter recirculate_meta must be
-        // guarded by this if condition:
-        if (psa_recirculate(istd, edstd)) {
-            recirculate_meta.my_meta2 = meta.my_meta2;
-            recirculate_meta.my_meta3 = meta.my_meta3;
-        }
-
-        // There is no metadata that can be included with normal
-        // packets going to the a physical port of the device.  TBD
-        // whether there should be a way to do so for packets sent to
-        // the CPU port.
-
         common_deparser.apply(packet, hdr);
     }
 }
 
+control NormalPackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out metadata normal_meta)
+{
+    apply {
+        normal_meta = meta;
+    }
+}
 
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
+control NormalUnpackerImpl(
+    in metadata normal_meta,
+    inout metadata meta)
+{
+    apply {
+        meta = normal_meta;
+    }
+}
 
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
+control ResubmitPackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out resubmit_metadata_t resubmit_meta)
+{
+    apply {
+        resubmit_meta.my_meta4 = meta.my_meta4;
+    }
+}
+
+control ResubmitUnpackerImpl(
+    in resubmit_metadata_t resubmit_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.my_meta4 = resubmit_meta.my_meta4;
+    }
+}
+
+control RecirculatePackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out recirculate_metadata_t recirculate_meta)
+{
+    apply {
+        recirculate_meta.my_meta2 = meta.my_meta2;
+        recirculate_meta.my_meta3 = meta.my_meta3;
+    }
+}
+
+control RecirculateUnpackerImpl(
+    in recirculate_metadata_t recirculate_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.my_meta2 = recirculate_meta.my_meta2;
+        meta.my_meta3 = recirculate_meta.my_meta3;
+    }
+}
+
+control CloneI2EPackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out clone_i2e_metadata_t clone_i2e_meta)
+{
+    apply {
+        clone_i2e_meta.format_id = meta.clone_i2e_meta_format_id;
+        if (meta.clone_i2e_meta_format_id == 0) {
+            clone_i2e_meta.my_meta2 = meta.my_meta2;
+            clone_i2e_meta.my_meta5 = meta.my_meta5;
+        } else if (meta.clone_i2e_meta_format_id == 1) {
+            clone_i2e_meta.my_meta6 = meta.my_meta6;
+        } else if (meta.clone_i2e_meta_format_id == 2) {
+            clone_i2e_meta.my_meta5 = meta.my_meta5;
+            clone_i2e_meta.my_meta1 = meta.my_meta1;
+            clone_i2e_meta.my_meta3 = meta.my_meta3;
+        }
+    }
+}
+
+control CloneI2EUnpackerImpl(
+    in clone_i2e_metadata_t clone_i2e_meta,
+    inout metadata meta)
+{
+    apply {
+        // TBD: An actual switch statement would be nicer here.  Or,
+        // if there is some new proposed syntax to implement a tagged
+        // union, then whatever that syntax is.  I am only using
+        // if-then-elseif daisy chain here to demonstrate the desired
+        // logic of execution, in a way that is current valid P4_16
+        // syntax that p4c can compile without errors.
+        if (clone_i2e_meta.format_id == 0) {
+            meta.my_meta2 = clone_i2e_meta.my_meta2;
+            meta.my_meta5 = clone_i2e_meta.my_meta5;
+        } else if (clone_i2e_meta.format_id == 1) {
+            meta.my_meta6 = clone_i2e_meta.my_meta6;
+        } else if (clone_i2e_meta.format_id == 2) {
+            meta.my_meta5 = clone_i2e_meta.my_meta5;
+            meta.my_meta1 = clone_i2e_meta.my_meta1;
+            meta.my_meta3 = clone_i2e_meta.my_meta3;
+        }
+        // TBD: Add another 'else' branch if you want to handle the
+        // possibility of clone_i2e_meta.format_id not having any of
+        // the expected values.  A tagged union should avoid that
+        // possibility altogether.
+    }
+}
+
+control CloneE2EPackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out clone_e2e_metadata_t clone_e2e_meta)
+{
+    apply {
+        clone_e2e_meta.my_meta2 = meta.my_meta2;
+        clone_e2e_meta.my_meta5 = meta.my_meta5;
+    }
+}
+
+control CloneE2EUnpackerImpl(
+    in clone_e2e_metadata_t clone_e2e_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.my_meta2 = clone_e2e_meta.my_meta2;
+        meta.my_meta5 = clone_e2e_meta.my_meta5;
+    }
+}
+
+
+IngressPipeline(
+    IngressParserImpl(),
+    ingress(),
+    IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
+    ResubmitUnpackerImpl(),
+    RecirculateUnpackerImpl(),
+    NormalPackerImpl(),
+    ResubmitPackerImpl(),
+    CloneI2EPackerImpl(),
+    EmptyDigestCreator()) ip;
+
+EgressPipeline(
+    EgressParserImpl(),
+    egress(),
+    EgressDeparserImpl(),
+    NormalUnpackerImpl(),
+    CloneI2EUnpackerImpl(),
+    CloneE2EUnpackerImpl(),
+    RecirculatePackerImpl(),
+    CloneE2EPackerImpl()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;

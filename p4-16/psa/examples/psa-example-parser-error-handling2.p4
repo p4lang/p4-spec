@@ -159,9 +159,6 @@ header tcp_t {
     bit<16> urgentPtr;
 }
 
-struct empty_metadata_t {
-}
-
 struct fwd_metadata_t {
 }
 
@@ -293,9 +290,7 @@ control error_to_bits(out ErrorIndex_t error_idx,
 // incorrect IPv4 header checksums.
 error {
     UnhandledIPv4Options,
-    BadIPv4HeaderChecksum,
-    UnknownCloneI2EFormatId,
-    UnknownCloneE2EFormatId
+    BadIPv4HeaderChecksum
 }
 
 typedef bit<32> PacketCounter_t;
@@ -356,15 +351,10 @@ parser CommonParser(packet_in buffer,
 parser IngressParserImpl(packet_in buffer,
                          out headers hdr,
                          inout metadata meta,
-                         in psa_ingress_parser_input_metadata_t istd,
-                         in empty_metadata_t resubmit_meta,
-                         in empty_metadata_t recirculate_meta)
+                         in psa_ingress_parser_input_metadata_t istd)
 {
     CommonParser() cp;
     state start {
-        transition packet_in_parsing;
-    }
-    state packet_in_parsing {
         cp.apply(buffer, hdr, meta);
         transition accept;
     }
@@ -451,84 +441,108 @@ control CommonDeparserImpl(packet_out packet, inout headers hdr) {
 }
 
 control IngressDeparserImpl(packet_out packet,
-                            out clone_i2e_metadata_t clone_i2e_meta,
-                            out empty_metadata_t resubmit_meta,
-                            out empty_metadata_t normal_meta,
                             inout headers hdr,
                             in metadata meta,
                             in psa_ingress_output_metadata_t istd)
 {
     CommonDeparserImpl() cd;
     apply {
-        if (psa_clone_i2e(istd)) {
-            clone_i2e_meta.clone_reason = meta.clone_reason;
-            if (meta.clone_reason == CloneReason_t.PARSER_ERROR) {
-                clone_i2e_meta.to_cpu_error_hdr = meta.to_cpu_error_hdr;
-            }
-            // If you have other reasons to do CLONE_I2E, with
-            // different metadata you want to carry with them, this is
-            // where to do the assignments you want.
-        }
         cd.apply(packet, hdr);
+    }
+}
+
+// Note that we do not actually have any metadata to "unpack" in the
+// normal ingress-to-egress packet path here.  We simply want to
+// initialize some metadata differently in this case than in the clone
+// cases.
+control NormalUnpackerImpl(
+    in psa_empty_t normal_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.clone_reason = CloneReason_t.NONE;
+    }
+}
+
+control CloneI2EPackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out clone_i2e_metadata_t clone_i2e_meta)
+{
+    apply {
+        clone_i2e_meta.clone_reason = meta.clone_reason;
+        if (meta.clone_reason == CloneReason_t.PARSER_ERROR) {
+            clone_i2e_meta.to_cpu_error_hdr = meta.to_cpu_error_hdr;
+        }
+        // If you have other reasons to do CLONE_I2E, with different
+        // metadata you want to carry with them, this is where to do
+        // the assignments you want.
+    }
+}
+
+control CloneI2EUnpackerImpl(
+    in clone_i2e_metadata_t clone_i2e_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.clone_reason = clone_i2e_meta.clone_reason;
+        meta.to_cpu_error_hdr = clone_i2e_meta.to_cpu_error_hdr;
+    }
+}
+
+control CloneE2EPackerImpl(
+    in headers hdr,
+    in metadata meta,
+    out clone_e2e_metadata_t clone_e2e_meta)
+{
+    apply {
+        clone_e2e_meta.clone_reason = meta.clone_reason;
+        if (meta.clone_reason == CloneReason_t.PARSER_ERROR) {
+            clone_e2e_meta.to_cpu_error_hdr = meta.to_cpu_error_hdr;
+        }
+        // If you have other reasons to do CLONE_E2E with different
+        // metadata you want to carry with them, this is where to do
+        // the assignments you want.
+    }
+}
+
+control CloneE2EUnpackerImpl(
+    in clone_e2e_metadata_t clone_e2e_meta,
+    inout metadata meta)
+{
+    apply {
+        meta.clone_reason = clone_e2e_meta.clone_reason;
+        meta.to_cpu_error_hdr = clone_e2e_meta.to_cpu_error_hdr;
     }
 }
 
 parser EgressParserImpl(packet_in buffer,
                         out headers hdr,
                         inout metadata meta,
-                        in psa_egress_parser_input_metadata_t istd,
-                        in empty_metadata_t normal_meta,
-                        in clone_i2e_metadata_t clone_i2e_meta,
-                        in clone_e2e_metadata_t clone_e2e_meta)
+                        in psa_egress_parser_input_metadata_t istd)
 {
     CommonParser() p;
 
     state start {
-        meta.clone_reason = CloneReason_t.NONE;
+        // Note: We are explicitly choosing _not_ to transition to
+        // state packet_in_parsing if istd.packet_path is
+        // PSA_PacketPath_t.CLONE_I2E or PSA_PacketPath_t.CLONE_E2E,
+        // which, as this code is written right now, implies that
+        // (meta.clone_reason == CloneReason_t.PARSER_ERROR).  This is
+        // a special case for packets that experienced a parser error.
+        // We don't want to bother going through parsing and
+        // encountering an error again.
+
+        // If we parse exactly 0 bytes for this packet, then the
+        // egress deparser should emit 0 bytes for the normal packet
+        // headers, and the resulting packet should be identical to
+        // the one that arrived at the egress parser.
         transition select (istd.packet_path) {
-            PSA_PacketPath_t.CLONE_I2E: copy_clone_i2e_meta;
-            PSA_PacketPath_t.CLONE_E2E: copy_clone_e2e_meta;
+            PSA_PacketPath_t.CLONE_I2E: accept;
+            PSA_PacketPath_t.CLONE_E2E: accept;
             default: packet_in_parsing;
         }
     }
-    state copy_clone_i2e_meta {
-        transition select (clone_i2e_meta.clone_reason) {
-            CloneReason_t.PARSER_ERROR: copy_clone_i2e_meta_parser_error;
-            default: clone_i2e_unknown_format_id;
-        }
-    }
-    state copy_clone_i2e_meta_parser_error {
-        meta.clone_reason = clone_i2e_meta.clone_reason;
-        meta.to_cpu_error_hdr = clone_i2e_meta.to_cpu_error_hdr;
-        // Note: We are explicitly choosing _not_ to transition to
-        // state packet_in_parsing here.  This is a special case for
-        // packets that experienced a parser error.  We don't want to
-        // bother going through parsing and encountering an error
-        // again.  If we parse exactly 0 bytes for this packet, then
-        // the egress deparser should emit 0 bytes for the normal
-        // packet headers, and the resulting packet should be
-        // identical to the one that arrived at the egress parser.
-        transition accept;
-    }
-    state clone_i2e_unknown_format_id {
-        verify(false, error.UnknownCloneI2EFormatId);
-    }
-    state copy_clone_e2e_meta {
-        transition select (clone_e2e_meta.clone_reason) {
-            CloneReason_t.PARSER_ERROR: copy_clone_e2e_meta_parser_error;
-            default: clone_e2e_unknown_format_id;
-        }
-    }
-    state copy_clone_e2e_meta_parser_error {
-        meta.clone_reason = clone_e2e_meta.clone_reason;
-        meta.to_cpu_error_hdr = clone_e2e_meta.to_cpu_error_hdr;
-        // See comment in copy_clone_i2e_meta_parser_error.
-        transition accept;
-    }
-    state clone_e2e_unknown_format_id {
-        verify(false, error.UnknownCloneE2EFormatId);
-    }
-
     state packet_in_parsing {
         p.apply(buffer, hdr, meta);
         transition accept;
@@ -586,34 +600,36 @@ control egress(inout headers hdr,
 }
 
 control EgressDeparserImpl(packet_out packet,
-                           out clone_e2e_metadata_t clone_e2e_meta,
-                           out empty_metadata_t recirculate_meta,
                            inout headers hdr,
                            in metadata meta,
-                           in psa_egress_output_metadata_t istd,
-                           in psa_egress_deparser_input_metadata_t edstd)
+                           in psa_egress_output_metadata_t istd)
 {
     CommonDeparserImpl() cd;
     apply {
-        if (psa_clone_e2e(istd)) {
-            clone_e2e_meta.clone_reason = meta.clone_reason;
-            if (meta.clone_reason == CloneReason_t.PARSER_ERROR) {
-                clone_e2e_meta.to_cpu_error_hdr = meta.to_cpu_error_hdr;
-            }
-            // If you have other reasons to do CLONE_E2E with
-            // different metadata you want to carry with them, this is
-            // where to do the assignments you want.
-        }
         cd.apply(packet, hdr);
     }
 }
 
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
+IngressPipeline(
+    IngressParserImpl(),
+    ingress(),
+    IngressDeparserImpl(),
+    EmptyNewPacketMetadataInitializer(),
+    EmptyResubmitUnpacker(),
+    EmptyRecirculateUnpacker(),
+    EmptyNormalPacker(),
+    EmptyResubmitPacker(),
+    CloneI2EPackerImpl(),
+    EmptyDigestCreator()) ip;
 
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
+EgressPipeline(
+    EgressParserImpl(),
+    egress(),
+    EgressDeparserImpl(),
+    NormalUnpackerImpl(),
+    CloneI2EUnpackerImpl(),
+    CloneE2EUnpackerImpl(),
+    EmptyRecirculatePacker(),
+    CloneE2EPackerImpl()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
