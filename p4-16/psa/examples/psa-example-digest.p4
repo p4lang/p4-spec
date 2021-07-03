@@ -23,7 +23,14 @@ limitations under the License.
  */
 
 #include <core.p4>
-#include "../psa.p4"
+/* In a normal PSA program the next line would be:
+
+#include <psa.p4>
+
+ * These examples use psa-for-bmv2.p4 instead so that it is convenient
+ * to test compiling these PSA example programs with local changes to
+ * the psa-for-bmv2.p4 file. */
+#include "psa-for-bmv2.p4"
 
 typedef bit<48>  EthernetAddress;
 
