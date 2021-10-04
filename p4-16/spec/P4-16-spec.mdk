@@ -4084,13 +4084,11 @@ The expression `h.minSizeInBits()` is defined for any value `h` that has a
 header type.  The expression is equal to the sum of the sizes of all
 of header `h`'s fields in bits, counting all `varbit` fields as length
 0.  An expression `h.minSizeInBits()` is a compile-time constant with type
-`int`.
+`int`.  See also Section [#sec-minsizeinbits].
 
 The expression `h.minSizeInBytes()` is similar to `h.minSizeInBits()`, except
-that it returns the total size of all of the header's fields in bytes,
-rounding up to the next whole number of bytes if the header's size is
-not a multiple of 8 bits long.  `h.minSizeInBytes()` is equal to
-`(h.minSizeInBits() + 7) >> 3`.
+that it returns the total size of all of the header's fields in bytes.
+See also Section [#sec-minsizeinbits].
 
 Similar to a `struct`, a header object can be initialized with a list
 expression [#sec-list-exprs] --- the list fields are assigned to the
@@ -4176,6 +4174,14 @@ expressions are legal:
   the stacks to have the same types and sizes. All components of `hs`
   are copied, including its elements and their validity bits,
   as well as `nextIndex`.
+
+- The expression `hs.minSizeInBits()` returns the stack size
+  multiplied by the `minSizeInBits` of an element.  See also the Section
+  [#sec-minsizeinbits].
+
+- The expression `hs.minSizeInBytes()` returns the stack size
+  multiplied by the `minSizeInBytes` of an element.  See also the
+  Section [#sec-minsizeinbits].
 
 To help programmers write parsers for header stacks, P4 also offers
 computations that automatically advance through the stack as elements
@@ -4761,6 +4767,36 @@ H h1 = ...;   // initialize h1 with a header that is invalid
 H h2 = { f2=5, ... };   // initialize h2 with a header that is valid, field f1 0, field f2 5
 H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field f2 0
 ~ End P4Example
+
+# Compile-time size determination { #sec-minsizeinbits }
+
+The method calls `minSizeInBits` and `minSizeInBytes` can be applied
+to most expressions.  Each of these method calls evaluate to
+compile-time known values that return the minimum size in bits
+required to store the expression.
+
+The method `minSizeInBytes` always returns the result the result of
+`minSizeInBits` rounded up to the next whole number of bytes.  not a
+multiple of 8 bits long.  In other words, for any expression `e`,
+`e.minSizeInBytes()` is equal to `(e.minSizeInBits() + 7) >> 3`.
+
+The definition of `e.minSizeInBits` is given recursively on the type of `e` as
+follows:
+
+* if the type of `e` is `varbits` the result is 0
+* if the type of `e` is `bit<N>` or `int<N>` the result is `N`
+* if the type of `e` is a `struct` or `header`, the result is the sum
+  of the `minSizeInBits` of all fields of the struct or header.
+* if the type of `e` is a `header_union` the result is the max of the
+  `minSizeInBits` of all fields of the union
+* if the type of `e` is a header stack, the result is the size of the
+  stack multiplied with the `minSizeInBits` of an element
+* if the type of `e` is a serializable `enum`, the result is the
+  `minSizeInBits` of the underlying type
+* if the type of `e` is a type introduced by `newtype`, the result
+  is the `minSizeInBits` of the underlying type
+* if `e` is the name of a type (e.g., introduced by a `typedef` declaration),
+  then the result is obtained by applying `minSizeInBits` to the underlying type.
 
 # Function declarations { #sec-functions }
 
@@ -8081,12 +8117,17 @@ The P4 compiler should provide:
 |           |               | semantics of invalid header stacks; clarified initialization      |
 |           |               | semantics; fixed several small issues in grammar.                 |
 |-----|-----|-----|
-| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     | 
-|           |              | enumeration types, abstract methods, conditional and empty         | 
-|           |              | statements in parsers, additional casts, and 0-width types;        | 
+| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     |
+|           |              | enumeration types, abstract methods, conditional and empty         |
+|           |              | statements in parsers, additional casts, and 0-width types;        |
 |           |              | clarified semantics of default actions, headers, empty types, and  |
-|           |              | action data; fixed typos and inconsistencies in the grammar.       | 
+|           |              | action data; fixed typos and inconsistencies in the grammar.       |
 |-----|-----|-----|
+
+## Summary of changes made in version 1.2.3
+
+* extended the of minSizeInBits and minSizeInBytes to apply to apply to more
+  expressions (Section [#sec-minsizeinbits]).
 
 ## Summary of changes made in version 1.2.2
 
