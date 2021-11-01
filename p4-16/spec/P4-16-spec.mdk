@@ -4080,16 +4080,6 @@ of the header.
 - The method `setInvalid()` sets the header's validity bit to
 "false". It can only be applied to an l-value.
 
-The expression `h.minSizeInBits()` is defined for any value `h` that has a
-header type.  The expression is equal to the sum of the sizes of all
-of header `h`'s fields in bits, counting all `varbit` fields as length
-0.  An expression `h.minSizeInBits()` is a compile-time constant with type
-`int`.  See also Section [#sec-minsizeinbits].
-
-The expression `h.minSizeInBytes()` is similar to `h.minSizeInBits()`, except
-that it returns the total size of all of the header's fields in bytes.
-See also Section [#sec-minsizeinbits].
-
 Similar to a `struct`, a header object can be initialized with a list
 expression [#sec-list-exprs] --- the list fields are assigned to the
 header fields in the order they appear --- or with a structure initializer
@@ -4174,14 +4164,6 @@ expressions are legal:
   the stacks to have the same types and sizes. All components of `hs`
   are copied, including its elements and their validity bits,
   as well as `nextIndex`.
-
-- The expression `hs.minSizeInBits()` returns the stack size
-  multiplied by the `minSizeInBits` of an element.  See also the Section
-  [#sec-minsizeinbits].
-
-- The expression `hs.minSizeInBytes()` returns the stack size
-  multiplied by the `minSizeInBytes` of an element.  See also the
-  Section [#sec-minsizeinbits].
 
 To help programmers write parsers for header stacks, P4 also offers
 computations that automatically advance through the stack as elements
@@ -4770,33 +4752,61 @@ H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field
 
 # Compile-time size determination { #sec-minsizeinbits }
 
-The method calls `minSizeInBits` and `minSizeInBytes` can be applied
-to most expressions.  Each of these method calls evaluate to
-compile-time known values that return the minimum size in bits
-required to store the expression.
+The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`,
+and `maxSizeInBytes` can be applied to some expressions.  Each of
+these method calls evaluate to compile-time known values that return
+the minimum size in bits required to store the expression.  None of these
+methods evaluates the expression itself.  In consequence, the expression
+may be invalid (e.g., an out-of-bounds header stack access).
 
 The method `minSizeInBytes` always returns the result the result of
-`minSizeInBits` rounded up to the next whole number of bytes.  not a
-multiple of 8 bits long.  In other words, for any expression `e`,
+`minSizeInBits` rounded up to the next whole number of bytes.
+In other words, for any expression `e`,
 `e.minSizeInBytes()` is equal to `(e.minSizeInBits() + 7) >> 3`.
 
-The definition of `e.minSizeInBits` is given recursively on the type of `e` as
-follows:
+The method `maxSizeInBytes` always returns the result the result of
+`maxSizeInBits` rounded up to the next whole number of bytes.
+In other words, for any expression `e`,
+`e.maxSizeInBytes()` is equal to `(e.maxSizeInBits() + 7) >> 3`.
 
-* if the type of `e` is `varbits` the result is 0
-* if the type of `e` is `bit<N>` or `int<N>` the result is `N`
-* if the type of `e` is a `struct` or `header`, the result is the sum
-  of the `minSizeInBits` of all fields of the struct or header.
-* if the type of `e` is a `header_union` the result is the max of the
-  `minSizeInBits` of all fields of the union
-* if the type of `e` is a header stack, the result is the size of the
-  stack multiplied with the `minSizeInBits` of an element
-* if the type of `e` is a serializable `enum`, the result is the
-  `minSizeInBits` of the underlying type
+The definition of `e.minSizeInBits()` and `e.maxSizeInBits()` is given
+recursively on the type of `e` as described in the following table:
+
+|Type | minSizeInBits | maxSizeInBits |
+---------------------------------------
+| `bit<N>` | N | N |
+| `int<N>` | N | N |
+| `bool`   | 1 | 1 |
+| `enum bit<N>` | N | N |
+| `enum int<N>` | N | N |
+| `tuple` | foreach field(tuple) sum of `field.minSizeInBits()` | foreach field(tuple) sum of `field.maxSizeInBits()` |
+| `varbit<N>` | 0 | N |
+| `struct` | foreach field(struct) sum of `field.minSizeInBits()` | foreach field(struct) sum of `field.maxSizeInBits()` |
+| `header` | foreach field(header) sum of `field.minSizeInBits()` | foreach field(header) sum of `field.maxSizeInBits()` |
+| H[N] | N * H.minSizeInBits() | N * H.maxSizeInBits() |
+| `header_union` | max(foreach field(header_union) `field.minSizeInBits()`) | max(foreach field(header_union) `field.maxSizeInBits()`) |
+| `enum` | undefined | undefined |
+| `string` | undefined | undefined |
+| `void` | undefined | undefined |
+| `match_kind` | undefined | undefined |
+| `error` | undefined | undefined |
+| `int` | undefined | undefined |
+| controls/parsers/packages | undefined | undefined |
+---------------------------------------
+
+The methods can also be applied to type name expressions `e`:
+
 * if the type of `e` is a type introduced by `newtype`, the result
-  is the `minSizeInBits` of the underlying type
+  is the application of the method to the underlying type
 * if `e` is the name of a type (e.g., introduced by a `typedef` declaration),
-  then the result is obtained by applying `minSizeInBits` to the underlying type.
+  where the type given a name is one of the above,
+  then the result is obtained by applying the method to the underlying type.
+
+These methods are defined for:
+* all serializable types
+* for a type that does not contain `varbit` fields, both methods return the same result
+* for a type that does contain `varbit` fields, `maxSizeInBits` is the worst-case size
+  of the serialized representation of the data and `minSizeInBits` is the ``best'' case.
 
 # Function declarations { #sec-functions }
 
@@ -7269,7 +7279,8 @@ The following are compile-time known values:
 - The following expressions (`+`, `-`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`)
   when their operands are all compile-time known values.
 - Identifiers declared as constants using the `const` keyword.
-- Expressions of the form `e.minSizeInBits()` and `e.minSizeInBytes()`.
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`,
+  `e.maxSizeInBits()` and `e.maxSizeInBytes()`
 
 ## Compile-time Evaluation { #sec-ct-eval }
 
@@ -8126,8 +8137,8 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.3
 
-* extended the of minSizeInBits and minSizeInBytes to apply to apply to more
-  expressions (Section [#sec-minsizeinbits]).
+* extended the of minSizeInBits, and minSizeInBytes to apply to apply to more
+  expressions (Section [#sec-minsizeinbits]).  Added maxSizeInBits and maxSizeInBytes.
 
 ## Summary of changes made in version 1.2.2
 
