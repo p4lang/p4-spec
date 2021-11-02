@@ -4785,13 +4785,6 @@ recursively on the type of `e` as described in the following table:
 | `header` | foreach field(header) sum of `field.minSizeInBits()` | foreach field(header) sum of `field.maxSizeInBits()` |
 | H[N] | N * H.minSizeInBits() | N * H.maxSizeInBits() |
 | `header_union` | max(foreach field(header_union) `field.minSizeInBits()`) | max(foreach field(header_union) `field.maxSizeInBits()`) |
-| `enum` | undefined | undefined |
-| `string` | undefined | undefined |
-| `void` | undefined | undefined |
-| `match_kind` | undefined | undefined |
-| `error` | undefined | undefined |
-| `int` | undefined | undefined |
-| controls/parsers/packages | undefined | undefined |
 ---------------------------------------
 
 The methods can also be applied to type name expressions `e`:
@@ -4807,6 +4800,8 @@ These methods are defined for:
 * for a type that does not contain `varbit` fields, both methods return the same result
 * for a type that does contain `varbit` fields, `maxSizeInBits` is the worst-case size
   of the serialized representation of the data and `minSizeInBits` is the ``best'' case.
+
+Every other case is undefined and will produce a compile-time error.
 
 # Function declarations { #sec-functions }
 
