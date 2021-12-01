@@ -3195,7 +3195,7 @@ fixed-width unsigned integer representation for `E.e2`, `1`.  The variable `b` i
 symbolic value `E.e2`, which corresponds to the fixed-width unsigned integer value `1`.
 
 Because it is always safe to cast from an `enum` to its underlying fixed-width integer type,
-implicit casting from an `enum` to its fixed-width (signed or unsigned) integer type is also supported:
+implicit casting from an `enum` to its fixed-width (signed or unsigned) integer type is also supported (see Section [#sec-implicit-casts]):
 
 ~ Begin P4Example
 bit<8> x = E.e2; // sets x to 1 (E.e2 is automatically casted to bit<8>)
@@ -3710,7 +3710,9 @@ only implicitly casts from `int` to fixed-width types and from enums
 with an underlying type to the underlying type. In particular,
 applying a binary operation to an expression of type `int` and an
 expression with a fixed-width type will implicitly cast the `int`
-expression to the type of the other expression.
+expression to the type of the other expression. For enums with an underlying
+type, it can be implicitly cast to its underlying type whenever appropriate,
+including but not limited to in shift, concatenation, bit slicing, header stack indexing and other binary operations.
 
 For example, given the following declarations,
 
@@ -3731,6 +3733,10 @@ the compiler will add implicit casts as follows:
 - `x << 13` becomes `0`; overflow warning
 - `x | 0xFFF` becomes `x | (bit<8>)0xFFF`; overflow warning
 - `x + E.a` becomes `x + (bit<8>)E.a`
+- `16w11 << E.a` becomes `16w11 << (bit<8>)E.a`
+- `E.a[3:0]` becomes `((bit<8>)E.a)[3:0]`
+- `E.a ++ 8w0` becomes `(bit<8>)E.a ++ 8w0`
+
 
 ### Illegal arithmetic expressions { #sec-illegal-arith }
 
