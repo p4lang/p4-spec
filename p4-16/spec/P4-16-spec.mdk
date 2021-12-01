@@ -3894,10 +3894,7 @@ arguments to functions, method or actions. In all these cases,
 implicit casts are applied recursively in the structure-valued expression when needed.
 Note that even though using `typeRef` looks like an explicit cast, it is not. 
 
-A structure-valued expression can be compared with a structure-valued expression, a `struct`, or a `header` for
-equality (==) or inequality (!=) only if they have the same type and all of their fields can be recursively
-compared for equality. They are equal if and only if all
-their corresponding fields are equal.
+The following example shows a `struct` initialized using structure-valued expressions:
 
 ~ Begin P4Example
 struct S {
@@ -3907,16 +3904,29 @@ struct S {
 
 // typeRef can be inferred from the type of the struct
 S s = { a = 10, b = 20 };
+// equivalent
+S s = (S) { a = 10, b = 20 };
+~ End P4Example
+
+A structure-valued expression can be compared with a structure-valued expression, a `struct`, or a `header` for
+equality (==) or inequality (!=) only if they have the same type and all of their fields can be recursively
+compared for equality. They are equal if and only if all
+their corresponding fields are equal.
+
+~ Begin P4Example
 // compare a struct with a structure-valued expression
 bool b0 = s == { a = 1, b = 2 };
 // equivalent
 bool b1 = s == (S) { a = 1, b = 2 };
+
 // compare two structure-valued expressions
 bool b2 = { a = 1, b = 2 } == (S) { a = 1, b = 2 };
 // equivalent
 bool b3 = { a = 32w1, b = 32w2 } == { a = 32w1, b = 32w2 };
 ~ End P4Example
 
+The compiler must raise an error if a field name appears more than
+once in the same structure-valued expression.
 
 Structure-valued
 expressions are not left values.
@@ -4066,36 +4076,31 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
 with a list expression, as discussed in Section [#sec-list-exprs], or
-with a structure initializer, as described in
-[#sec-structure-initializers].  Both these cases must initialize all
+with a structure-valued expression, as described in
+[#sec-structure-expressions].  Both these cases must initialize all
 fields of the structure.
 
-Two structs can be compared for equality (==) or inequality (!=) only
-if they have the same type and all of their fields can be recursively
-compared for equality.  Two structures are equal if and only if all
-their corresponding fields are equal.
-
-## Structure initializers { #sec-structure-initializers }
-
-Structures can be initialized using structure-valued expression
-([#sec-structure-expressions]).  The following example shows a
-structure initialized using a structure-valued expression:
+The following example shows a
+structure initialized using list expressions and structure-valued expressions:
 
 ~ Begin P4Example
 struct S {
     bit<32> a;
     bit<32> b;
 }
-const S x = { a = 10, b = 20 };
-const S x = (S){ a = 10, b = 20 }; // equivalent
+const S x = { 10, 20 };             // list expression
+const S x = { a = 10, b = 20 };     // structure-valued expression
+const S x = (S) { a = 10, b = 20 }; // structure-valued expression
 ~ End P4Example
-
-The compiler must raise an error if a field name appears more than
-once in the same structure initializer.
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
 for a description of the behavior if `struct` fields are read without
 being initialized.
+
+Two structs can be compared for equality (==) or inequality (!=) only
+if they have the same type and all of their fields can be recursively
+compared for equality.  Two structures are equal if and only if all
+their corresponding fields are equal.
 
 ## Operations on headers { #sec-ops-on-hdrs }
 
@@ -4125,7 +4130,7 @@ not a multiple of 8 bits long.  `h.minSizeInBytes()` is equal to
 
 Similar to a `struct`, a header object can be initialized with a list
 expression [#sec-list-exprs] --- the list fields are assigned to the
-header fields in the order they appear --- or with a structure initializer
+header fields in the order they appear --- or with a structure-valued expression
 expression [#sec-ops-on-structs].  When initialized the header
 automatically becomes valid:
 
@@ -7257,7 +7262,7 @@ The following are compile-time known values:
 - Identifiers that represent declared types, actions, tables, parsers,
   controls, or packages.
 - List expression where all components are compile-time known values.
-- Structure initializer expressions, where all fields are compile-time
+- Structure-valued expressions, where all fields are compile-time
   known values.
 - Instances constructed by instance declarations (Section
   [#sec-instantiations]) and constructor invocations.
