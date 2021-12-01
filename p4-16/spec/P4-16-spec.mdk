@@ -3814,7 +3814,7 @@ expressionList
 ~ End P4Grammar
 
 The type of a list expression is a tuple type (Section
-[#sec-synth-types]). List expressions can be assigned to expressions
+[#sec-tuple-types]). List expressions can be assigned to expressions
 of type `tuple`, `struct` or `header`, and can also be
 passed as arguments to methods. Lists may be nested. However, list
 expressions are not l-values.
@@ -3851,13 +3851,13 @@ is a `tuple` type.
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
 
-Two list expressions can be compared for equality (==) or inequality (!=) only
-if they have the same type and all of their fields can be recursively
-compared for equality.  Two list expressions are equal if and only if all
+A list expression can be compared with a list expression, a `tuple`, a `struct`, or a `header` for
+equality (==) or inequality (!=) only if they have the same type and all of their fields can be recursively
+compared for equality. They are equal if and only if all
 their corresponding fields are equal.
 
 ~ Begin P4Example
-bool b = { 10, false } != { 10, false };
+bool b = { 10, false } != { 10, false }; // false
 ~ End P4Example
 
 The empty list expression has type `tuple<>` - a tuple with no components.
@@ -3895,27 +3895,28 @@ struct S {
     bit<32> b;
 }
 
-S s;
+// typeRef can be inferred from the type of the struct
+S s = { a = 10, b = 20 };
+// compare a struct with a structure-valued expression
+bool b0 = s == { a = 1, b = 2 };
+// equivalent
+bool b1 = s == (S) { a = 1, b = 2 };
+~ End P4Example
 
-// Compare s with a structure-valued expression
-bool b0 = s == (S) { a = 1, b = 2 };
+A structure-valued expression can be compared with a structure-valued expression, a `struct`, or a `header` for
+equality (==) or inequality (!=) only if they have the same type and all of their fields can be recursively
+compared for equality. They are equal if and only if all
+their corresponding fields are equal.
+
+~ Begin P4Example
+bool b2 = { a = 32w1, b = 32w2 } == { a = 32w1, b = 32w2 };
+bool b3 = { a = 1, b = 2 } == (S) { a = 1, b = 2 };
 ~ End P4Example
 
 Structure-valued expressions can be used in the right-hand side of
 assignments, in comparisons, in field selection expressions, and as
 arguments to functions, method or actions.  Structure-valued
 expressions are not left values.
-
-Two structure-valued expressions can also be compared for equality (==) or inequality (!=)
-if they have the same type and all of their fields can be recursively
-compared for equality.  Two structure-valued expressions are equal if and only if all
-their corresponding fields are equal.
-
-~ Begin P4Example
-bool b1 = { a = 32w1, b = 32w2 } == { a = 32w1, b = 32w2 };
-bool b2 = { a = 1, b = 2 } == (S) { a = 1, b = 2 };
-
-~ End P4Example
 
 ## Operations on sets { #sec-set-exprs }
 
