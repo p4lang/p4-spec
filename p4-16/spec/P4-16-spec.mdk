@@ -3778,8 +3778,15 @@ arguments and returned from functions, and can be initialized with
 list expressions.
 
 ~ Begin P4Example
-tuple<bit<32>, bool> x = { 10, false };
+tuple<bit<32>, bool> x = { 10, false }; // Initialization
+tuple<bit<32>, bool> y = x;             // Assignment
+bool b = x == y;                        // Equality comparison
 ~ End P4Example
+
+Two tuples can be compared for equality (==) or inequality (!=) only
+if they have the same type and all of their fields can be recursively
+compared for equality.  Two tuples are equal if and only if all
+their corresponding fields are equal.
 
 The fields of a tuple can be accessed using array index syntax `x[0]`,
 `x[1]`.  The array indexes *must* be compile-time constants, to enable
@@ -3844,6 +3851,15 @@ is a `tuple` type.
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
 
+Two list expressions can be compared for equality (==) or inequality (!=) only
+if they have the same type and all of their fields can be recursively
+compared for equality.  Two list expressions are equal if and only if all
+their corresponding fields are equal.
+
+~ Begin P4Example
+bool b = { 10, false } != { 10, false };
+~ End P4Example
+
 The empty list expression has type `tuple<>` - a tuple with no components.
 
 ## Structure-valued expressions { #sec-structure-expressions}
@@ -3871,7 +3887,7 @@ For a structure-valued expression `typeRef` is the name of a `struct`
 or `header` type.  The `typeRef` can be omitted if it can be inferred
 from context, e.g., when initializing a variable with a `struct` type.
 The following example shows a structure-valued expression used in an
-equality comparison expression:
+equality comparison with a `struct`:
 
 ~ Begin P4Example
 struct S {
@@ -3882,13 +3898,24 @@ struct S {
 S s;
 
 // Compare s with a structure-valued expression
-bool b = s == (S) { a = 1, b = 2 };
+bool b0 = s == (S) { a = 1, b = 2 };
 ~ End P4Example
 
 Structure-valued expressions can be used in the right-hand side of
 assignments, in comparisons, in field selection expressions, and as
 arguments to functions, method or actions.  Structure-valued
 expressions are not left values.
+
+Two structure-valued expressions can also be compared for equality (==) or inequality (!=)
+if they have the same type and all of their fields can be recursively
+compared for equality.  Two structure-valued expressions are equal if and only if all
+their corresponding fields are equal.
+
+~ Begin P4Example
+bool b1 = { a = 32w1, b = 32w2 } == { a = 32w1, b = 32w2 };
+bool b2 = { a = 1, b = 2 } == (S) { a = 1, b = 2 };
+
+~ End P4Example
 
 ## Operations on sets { #sec-set-exprs }
 
