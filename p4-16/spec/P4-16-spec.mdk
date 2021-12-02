@@ -6007,6 +6007,19 @@ Figure [#fig-subparser] shows a diagram of this process.
 Note that since P4 requires declarations to precede uses, it is impossible to
 create recursive (or mutually recursive) parsers.
 
+When a parser is instantiated, all its local declarations of stateful instantiations are evaluated recursively.
+Each instantiation of a parser pertains to the new instance a unique set of value sets, extern objects, and inner parser instances.
+Thus, invoking a parser instance twice is different from invoking two parser instances each once, where the former
+accesses the same stateful constructs while the latter access two different copies.
+
+Note that this exactly-once evaluation only applies to stateful instantiations. For local variable declarations,
+whether in `state`s or out, and whether with initializers or not, they are evaluated in every
+invocation. That is, local variables in a parser never persists across invocations. For variables
+declared outside `state`s, they are evaluated at the beginning of execution.
+
+When a parser with no constructor parameters is instantiated exactly once, 
+it is possible to invoke the parser directly (see Section [#sec-direct-invocation]).
+
 Architectures may impose (static or dynamic) constraints on the
 number of parser states that can be traversed for processing each
 packet. For example, a compiler for a specific target may reject
@@ -6834,6 +6847,19 @@ control Caller(inout Headers h) {
 }
 ~ End P4Example
 
+When a control is instantiated, all its local declarations of stateful instantiations are evaluated recursively.
+Each instantiation of a control pertains to the new instance a unique set of tables, extern objects, and inner control instances.
+Thus, invoking a control instance twice is different from invoking two control instances each once, where the former
+accesses the same stateful constructs while the latter access two different copies.
+
+Note that this exactly-once evaluation only applies to stateful instantiations. For local variable declarations,
+whether in the `apply` block or out, and whether with initializers or not, they are evaluated at every
+invocation. That is, local variable in a control never persists across invocations. For variables
+declared outside the `apply` block, they are evaluated at the beginning of execution.
+
+When a control with no constructor parameters is instantiated exactly once, 
+it is possible to invoke the control directly (see Section [#sec-direct-invocation]).
+
 # Parameterization { #sec-parameterization }
 
 In order to support libraries of useful P4 components, both `parser`s
@@ -6904,7 +6930,7 @@ the `udpSupport` parameter, as in the following example:
 GenericParser(false) topParser;
 ~ End P4Example
 
-## Direct type invocation
+## Direct type invocation { #sec-direct-invocation }
 
 Controls and parsers are often instantiated exactly once.  As a light
 syntactic sugar, control and parser declarations with no constructor
