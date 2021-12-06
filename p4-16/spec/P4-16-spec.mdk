@@ -3408,11 +3408,11 @@ is `0` and the maximum value is `2^W-1`.
 The precedence of saturating addition and subtraction operations is the
 same as for modulo arithmetic addition and subtraction.
 
-All binary operations (except shifts) require both operands to have
+All binary operations (except shifts and concatenation) require both operands to have
 the same exact type and width; supplying operands with different
 widths produces an error at compile time. No implicit casts are
 inserted by the compiler to equalize the widths. There are no binary
-operations that combine signed and unsigned values (except shifts).
+operations that combine signed and unsigned values (except shifts and concatenation).
 The following operations are provided on bit-string expressions:
 
 - Test for equality between bit-strings of the same width, designated
@@ -3451,6 +3451,12 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
+- Logical shift left and right with a runtime known unsigned integer
+  value, denoted by `<<` and `>>` respectively. In a shift, the left operand is unsigned, and right operand must be either an
+  expression of type `bit<S>` or a non-negative integer literal.
+  The result has the
+  same type as the left operand. Shifting by an amount greater than
+  the width of the input produces a result where all bits are zero.
 - Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
   where `m` and `l` must be positive integers
   that are compile-time known values, and `m >= l`. The result is
@@ -3465,12 +3471,10 @@ Bit-strings also support the following operations:
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.  A slice of an unsigned integer is an unsigned integer.
-- Logical shift left and right with a runtime known unsigned integer
-  value, denoted by `<<` and `>>` respectively. In a shift, the left operand is unsigned, and right operand must be either an
-  expression of type `bit<S>` or a non-negative integer literal.
-  The result has the
-  same type as the left operand. Shifting by an amount greater than
-  the width of the input produces a result where all bits are zero.
+- Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
+  The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
+  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width. 
+  In concatenation, the left operand is placed as the most significant bits.
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
 
@@ -3492,11 +3496,11 @@ P4 also does not support arithmetic exceptions. The runtime result of an
 arithmetic operation is defined for all combinations of input
 arguments.
 
-All binary operations (except shifts) require both operands to have
+All binary operations (except shifts and concatenation) require both operands to have
 the same exact type (signedness) and width and supplying operands with
 different widths or signedness produces a compile-time error. No
 implicit casts are inserted by the compiler to equalize the
-types. With the exception of shifts, P4 does not have any binary operations that combine signed and unsigned
+types. With the exception of shifts and concatenation, P4 does not have any binary operations that combine signed and unsigned
 values.
 
 Note that bitwise operations on signed integers are well-defined, since the
@@ -3516,8 +3520,15 @@ type. The result always has the same width as the left operand.
 - Multiplication, denoted by `*`. Result has the same width as the
   operands. P4 architectures may impose additional restrictions---e.g., they may
   only allow multiplication by a power of two.
+- Bitwise "and" between two bit-strings of the same width, denoted by `&`.
+- Bitwise "or" between two bit-strings of the same width, denoted by `|`.
+- Bitwise "complement" of a single bit-string, denoted by `~`.
+- Bitwise "xor" of two bit-strings of the same width, denoted by `^`.
 - Saturating addition, denoted by `|+|`.
 - Saturating subtraction, denoted by `|-|`.
+
+The `int<W>` datatype also support the following operations:
+
 - Arithmetic shift left and right denoted by `<<` and `>>`.
   The left operand is signed and the right operand must be either an
   unsigned number of type `bit<S>` or a non-negative
@@ -3544,8 +3555,12 @@ type. The result always has the same width as the left operand.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.  A slice of a signed integer is treated like an unsigned integer.
+- Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
+  The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
+  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width. 
+  In concatenation, the left operand is placed as the most significant bits.
 
-### Concatenation { #sec-concatenation }
+### A note about concatenation { #sec-concatenation }
 
 Concatenation is applied to two bit-strings (signed or unsigned).  It
 is denoted by the infix operator `++`.  The result is a bit-string
