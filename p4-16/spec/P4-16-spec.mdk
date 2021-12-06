@@ -7345,6 +7345,7 @@ Every controllable entity exposed in a P4 program must be assigned a
 unique, fully-qualified name, which the control plane may use to
 interact with that entity.  The following entities are controllable.
 
+ - value sets
  - tables
  - keys
  - actions
@@ -7370,6 +7371,20 @@ name.  Constructs with no enclosing namespace, i.e. those defined at
 the global scope, have the same local and fully-qualified names.  The
 local names of controllable entities and enclosing constructs are
 derived from the syntax of a P4 program as follows.
+
+#### Value sets { #sec-cp-tables }
+For each `value_set` construct, its syntactic name becomes the local
+name of the value set.  For example:
+
+~ Begin P4Example
+struct vsk_t {
+    @match(ternary)
+    bit<16> port;
+}
+value_set<vsk_t>(4) pvs;
+~ End P4Example
+
+This value_set's local name is `pvs`.
 
 #### Tables { #sec-cp-tables }
 
