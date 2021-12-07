@@ -3751,7 +3751,7 @@ The following casts are legal in P4:
 To keep the language simple and avoid introducing hidden costs, P4
 only implicitly casts from `int` to fixed-width types and from enums
 with an underlying type to the underlying type. In particular,
-applying a binary operation to an expression of type `int` and an
+applying a binary operation (except shifts and concatenation) to an expression of type `int` and an
 expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
 type, it can be implicitly cast to its underlying type whenever appropriate,
@@ -3774,13 +3774,12 @@ the compiler will add implicit casts as follows:
 
 - `x + 1` becomes `x + (bit<8>)1`
 - `z < 0` becomes `z < (int<8>)0`
-- `x << 13` becomes `0`; overflow warning
 - `x | 0xFFF` becomes `x | (bit<8>)0xFFF`; overflow warning
 - `x + E.a` becomes `x + (bit<8>)E.a`
+- `x << 256` remains unchanged; `256` not implicitly cast to `8w0` in a shift; overflow warning
 - `16w11 << E.a` becomes `16w11 << (bit<8>)E.a`
 - `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
 - `E.a ++ 8w0` becomes `(bit<8>)E.a ++ 8w0`
-
 
 ### Illegal arithmetic expressions { #sec-illegal-arith }
 
