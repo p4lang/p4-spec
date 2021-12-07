@@ -3772,7 +3772,8 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 | `x << z`            | RHS of shift cannot be signed |  `x << (bit<8>)z ` |
 | `x < z`             | Different signs |  `X < (bit<8>)z ` |
 |                         |                           |  `(int<8>)x < z ` |
-| `1 << x`            | RHS of int shift must be compile-time known |  `32w1 << x ` |
+| `1 << x`            | Either LHS should have a fixed width (bit shift),  |  `32w1 << x ` |
+|                     | Or RHS must be compile-time known (int shift) |  None |
 | `~1`                | Bitwise operation on int |  `~32w1 ` |
 | `5 & -3`            | Bitwise operation on int |  `32w5 & -3 ` |
 |-----|-----|-----|
