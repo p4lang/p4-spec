@@ -3712,7 +3712,8 @@ applying a binary operation to an expression of type `int` and an
 expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
 type, it can be implicitly cast to its underlying type whenever appropriate,
-including but not limited to in shift, concatenation, bit slicing, header stack indexing and other binary operations.
+including but not limited to in shifts, concatenation, bit slicing indexes, 
+header stack indexes as well as other unary and binary operations.
 
 For example, given the following declarations,
 
@@ -3734,7 +3735,7 @@ the compiler will add implicit casts as follows:
 - `x | 0xFFF` becomes `x | (bit<8>)0xFFF`; overflow warning
 - `x + E.a` becomes `x + (bit<8>)E.a`
 - `16w11 << E.a` becomes `16w11 << (bit<8>)E.a`
-- `E.a[3:0]` becomes `((bit<8>)E.a)[3:0]`
+- `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
 - `E.a ++ 8w0` becomes `(bit<8>)E.a ++ 8w0`
 
 
