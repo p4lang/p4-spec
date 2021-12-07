@@ -3453,7 +3453,7 @@ Bit-strings also support the following operations:
 
 - Logical shift left and right with a runtime known unsigned integer
   value, denoted by `<<` and `>>` respectively. In a shift, the left operand is unsigned, and right operand must be either an
-  expression of type `bit<S>` or a non-negative integer literal.
+  expression of type `bit<S>` or a non-negative integer compile-time known value.
   The result has the
   same type as the left operand. Shifting by an amount greater than
   the width of the input produces a result where all bits are zero.
@@ -3531,8 +3531,8 @@ The `int<W>` datatype also support the following operations:
 
 - Arithmetic shift left and right denoted by `<<` and `>>`.
   The left operand is signed and the right operand must be either an
-  unsigned number of type `bit<S>` or a non-negative
-  integer literal. The result has the same type as the left operand.
+  unsigned number of type `bit<S>` or a non-negative integer compile-time known value.
+  The result has the same type as the left operand.
   Shifting left produces the exact same bit pattern as a shift left
   of an unsigned value.  Shift left can thus overflow, when it leads to
   a change of the sign bit.
@@ -3568,13 +3568,60 @@ whose length is the sum of the lengths of the inputs where the most
 significant bits are taken from the left operand; the sign of the
 result is taken from the left operand.
 
+## Operations on arbitrary-precision integers { #sec-varint-ops }
+
+The type `int` denotes arbitrary-precision integers. In P4, all
+expressions of type `int` must be compile-time known values.  The type
+`int` supports the following operations:
+
+- Negation, denoted by unary `-`
+- Unary plus, denoted by `+`. This operation behaves like a no-op.
+- Addition, denoted by `+`.
+- Subtraction, denoted by `-`.
+- Comparison for equality and inequality, denoted by `==` and `!=` respectively. These operations produce a
+  Boolean result.
+- Numeric comparisons `<,<=,>`, and `>=`. These operations produce a Boolean result.
+- Multiplication, denoted by `*`.
+- Truncating integer division between positive values, denoted by `/`.
+- Modulo between positive values, denoted by `%`.
+- Arithmetic shift left and right denoted by `<<` and `>>`. These operations produce an `int` result.
+  The right operand must be either an unsigned constant of type `bit<S>` or a non-negative integer compile-time known value.
+  The expression `a << b` is equal to $a \times 2^b$ while `a >> b`
+  is equal to $\lfloor{a / 2^b}\rfloor$.
+
+Each operand that participates in any of these operation must have
+type `int` (except shifts). Binary operations cannot
+be used to combine values of type `int` with values of a fixed-width
+type (except shifts). However, the compiler automatically inserts casts from `int`
+to fixed-width types in certain situations---see Section [#sec-casts].
+
+All computations on `int` values are carried out without loss of
+information. For example, multiplying two 1024-bit values may produce
+a 2048-bit value (note that concrete representation of `int`
+values is not specified). `int` values can be cast to `bit<w>`
+and `int<w>` values. Casting an `int` value to a fixed-width
+type will preserve the least-significant bits. If truncation causes
+significant bits to be lost, the compiler should emit a warning.
+
+Note: bitwise-operations (`|`,`&`,`^`,`~`) are not
+defined on expressions of type `int`. In addition, it is illegal
+to apply division and modulo to negative values.
+
+Note: saturating arithmetic is not supported for arbitrary-precision integers.
+
 ### A note about shifts
 
-Shifts (on signed and unsigned values) deserve a special discussion
+The left operand of shifts can be any one out of unsigned bit-strings, signed bit-strings,
+and arbitrary-precision integers, and the right operand of shifts must be either
+an expression of type `bit<S>` or a non-negative integer compile-time known value. The result has the
+same type as the left operand.
+
+Shifts on signed and unsigned bit-strings deserve a special discussion
 for the following reasons:
 
 - Right shift behaves differently for signed and unsigned
-  values: right shift for signed values is an arithmetic shift.
+  bit-strings: right shift for signed bit-strings is an arithmetic shift,
+  and for unsigned bit-strings is a logical shift.
 - Shifting with a negative amount does not have a clear semantics:
    the P4 type system makes it
   illegal to shift with a negative amount.
@@ -3601,47 +3648,6 @@ as forbidding shifts by non-constant expressions, or by expressions
 whose width exceeds a certain bound.  For example, a target may forbid
 shifting an 8-bit value by a non-constant value whose width is greater
 than 3 bits.
-
-## Operations on arbitrary-precision integers { #sec-varint-ops }
-
-The type `int` denotes arbitrary-precision integers. In P4, all
-expressions of type `int` must be compile-time known values.  The type
-`int` supports the following operations:
-
-- Negation, denoted by unary `-`
-- Unary plus, denoted by `+`. This operation behaves like a no-op.
-- Addition, denoted by `+`.
-- Subtraction, denoted by `-`.
-- Comparison for equality and inequality, denoted by `==` and `!=` respectively. These operations produce a
-  Boolean result.
-- Numeric comparisons `<,<=,>`, and `>=`. These operations produce a Boolean result.
-- Multiplication, denoted by `*`.
-- Truncating integer division between positive values, denoted by `/`.
-- Modulo between positive values, denoted by `%`.
-- Arithmetic shift left and right denoted by `<<` and `>>`. These operations produce an `int` result.
-  The right operand must be constant and positive.
-  The expression `a << b` is equal to $a \times 2^b$ while `a >> b`
-  is equal to $\lfloor{a / 2^b}\rfloor$.
-
-Each operand that participates in any of these operation must have
-type `int`. Binary operations cannot
-be used to combine values of type `int` with values of a fixed-width
-type. However, the compiler automatically inserts casts from `int`
-to fixed-width types in certain situations---see Section [#sec-casts].
-
-All computations on `int` values are carried out without loss of
-information. For example, multiplying two 1024-bit values may produce
-a 2048-bit value (note that concrete representation of `int`
-values is not specified). `int` values can be cast to `bit<w>`
-and `int<w>` values. Casting an `int` value to a fixed-width
-type will preserve the least-significant bits. If truncation causes
-significant bits to be lost, the compiler should emit a warning.
-
-Note: bitwise-operations (`|`,`&`,`^`,`~`) are not
-defined on expressions of type `int`. In addition, it is illegal
-to apply division and modulo to negative values.
-
-Note: saturating arithmetic is not supported for arbitrary-precision integers.
 
 ## Operations on variable-size bit types { #sec-varbit-string }
 
@@ -3781,7 +3787,8 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 | `x << z`            | RHS of shift cannot be signed |  `x << (bit<8>)z ` |
 | `x < z`             | Different signs |  `X < (bit<8>)z ` |
 |                         |                           |  `(int<8>)x < z ` |
-| `1 << x`            | Width of `1` is unknown |  `32w1 << x ` |
+| `1 << x`            | Either LHS should have a fixed width (bit shift),  |  `32w1 << x ` |
+|                     | Or RHS must be compile-time known (int shift) |  None |
 | `~1`                | Bitwise operation on int |  `~32w1 ` |
 | `5 & -3`            | Bitwise operation on int |  `32w5 & -3 ` |
 |-----|-----|-----|
