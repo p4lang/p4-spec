@@ -4348,9 +4348,9 @@ operations can be used to manipulate `u`:
   sets the valid bit for all other headers to `false`, which implies
   that reading these headers will return an unspecified value.
 
-- `u.hi.setInvalid()`: if the valid bit for any member header of `u`
-  is `true` then sets it to `false`, which implies that reading any
-  member header of `u` will return an unspecified value.
+- `u.hi.setInvalid()`: sets the valid bit for header `hi` to `false` and
+  keeps the valid bit for all other headers untouched, which implies
+  that reading `u.hi` will return an unspecified value.
 
 We can understand an assignment to a union
 
@@ -4381,8 +4381,9 @@ If `u2` is not valid, then `u1` becomes invalid (i.e. if any
 header of `u1` was valid, it becomes invalid).
 
 `u.isValid()` returns true if any member of the header union `u` is
-valid, otherwise it returns false.  `setValid()` and `setInvalid()`
-methods are not defined for header unions.
+valid, otherwise it returns false.  
+`u.setInvalid()` sets all members of the header union `u` to invalid. 
+The `setValid()` method is not defined for header unions.
 
 Supplying an expression with a union type to `emit` simply emits the
 single header that is valid, if any.
