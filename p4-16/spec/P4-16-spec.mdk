@@ -4240,24 +4240,26 @@ are parsed:
 Finally, P4 offers the following computations that can be used to
 manipulate the elements at the front and back of the stack:
 
-- `hs.push_front(int count)`: shifts `hs` "right" by `count`. The
+- `hs.pushFront(int count)`: shifts `hs` "right" by `count`. The
   first `count` elements become invalid. The last `count`
   elements in the stack are discarded. The `hs.nextIndex` counter
   is incremented by `count`. The `count` argument must be a
   positive integer that is a compile-time known value. The return type
-  is `void`.
+  is `void`.  The original name for this operation is
+  `hs.push_front()`, also allowed for backwards compatibility reasons.
 
-- `hs.pop_front(int count)`: shifts `hs` "left" by `count` (i.e.,
+- `hs.popFront(int count)`: shifts `hs` "left" by `count` (i.e.,
   element with index `count` is copied in stack at index `0`).
   The last `count` elements become invalid. The `hs.nextIndex`
   counter is decremented by `count`. The `count` argument must
   be a positive integer that is a compile-time known value. The return
-  type is `void`.
+  type is `void`.  The original name for this operation is
+  `hs.pop_front()`, also allowed for backwards compatibility reasons.
 
-The following pseudocode defines the behavior of `push_front` and `pop_front`:
+The following pseudocode defines the behavior of `pushFront` and `popFront`:
 
 ~ Begin P4Pseudo
-void push_front(int count) {
+void pushFront(int count) {
     for (int i = this.size-1; i >= 0; i -= 1) {
         if (i >= count) {
             this[i] = this[i-count];
@@ -4270,7 +4272,7 @@ void push_front(int count) {
     // Note: this.last, this.next, and this.lastIndex adjust with this.nextIndex
 }
 
-void pop_front(int count) {
+void popFront(int count) {
     for (int i = 0; i < this.size; i++) {
         if (i+count < this.size) {
             this[i] = this[i+count];
@@ -5283,15 +5285,15 @@ with a block statement.
 There are two kinds of `switch` expressions allowed, described
 separately in the following two subsections.
 
-### Switch statement with `action_run` expression
+### Switch statement with `actionRun` expression
 
 For this variant of `switch` statement, the expression must be of the
-form `t.apply().action_run`, where `t` is the name of a table (see
+form `t.apply().actionRun`, where `t` is the name of a table (see
 Section [#sec-invoke-mau]).  All switch labels must be names of
 actions of the table `t`, or `default`.
 
 ~ Begin P4Example
-switch (t.apply().action_run) {
+switch (t.apply().actionRun) {
    action1:          // fall-through to action2:
    action2: { /* body omitted */ }
    action3: { /* body omitted */ }  // no fall-through from action2 to action3 labels
@@ -5303,6 +5305,9 @@ Note that the `default` label of the `switch` statement is used to
 match on the kind of action executed, no matter whether there was a
 table hit or miss. The `default` label does not indicate that the
 table missed and the `default_action` was executed.
+
+The original name for this was `t.apply().action_run`, which is also
+still allowed for backwards compatibility reasons.
 
 ### Switch statement with integer or enumerated type expression
 
@@ -6757,7 +6762,7 @@ enum action_list(T) {
 struct apply_result(T) {
     bool hit;
     bool miss;
-    action_list(T) action_run;
+    action_list(T) actionRun;
 }
 ~ End P4Pseudo
 
@@ -6779,12 +6784,12 @@ if (ipv4_host.apply().miss) {
 }
 ~ End P4Example
 
-The `action_run` field indicates which kind of action was executed
+The `actionRun` field indicates which kind of action was executed
 (irrespective of whether it was a hit or a miss). It can be used in a
 switch statement:
 
 ~ Begin P4Example
-switch (dmac.apply().action_run) {
+switch (dmac.apply().actionRun) {
     Drop_action: { return; }
 }
 ~ End P4Example
@@ -6814,7 +6819,7 @@ apply_result(m) m.apply() {
        result.hit = true;
     }
     result.miss = !result.hit;
-    result.action_run = action_type(RA);
+    result.actionRun = action_type(RA);
     evaluate_and_copy_in_RA_args(RA);
     execute(RA);
     copy_out_RA_args(RA);
