@@ -993,8 +993,8 @@ control TopPipe(inout Parsed_packet headers,
       */
      table check_ttl {
          key = { headers.ip.ttl: exact; }
-         actions = { Send_to_cpu; NoAction; }
-         const default_action = NoAction; // defined in core.p4
+         actions = { Send_to_cpu; noAction; }
+         const default_action = noAction; // defined in core.p4
      }
 
      /**
@@ -6356,7 +6356,7 @@ In addition, the tables may optionally define the following properties,
   lookup table fails to find a match for the key used.
 - `size`: an integer specifying the desired size of the table.
 
-The compiler must set the `default_action` to `NoAction` (and also
+The compiler must set the `default_action` to `noAction` (and also
 insert it into the list of `actions`) for tables that do not define
 the `default_action` property. This is consistent with the semantics
 given in Section [#sec-default-action]. Hence, all tables can be
@@ -8215,7 +8215,7 @@ The P4 compiler should provide:
 * Added support for conditional statements and empty statements in parsers (Section [#sec-parser-state-stmt]).
 * Added support for casts from `int` to `bool` (Section [#sec-casts]).
 * Added support for 0-width bitstrings and varbits (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
-* Clarified that `default_action` is `NoAction` if otherwise unspecified (Section [#sec-tables]).
+* Clarified that `default_action` is `noAction` if otherwise unspecified (Section [#sec-tables]).
 * Clarified the types of expressions that may be used as indexes for header stacks (Section [#sec-expr-hs]).
 * Clarified representation of Booleans in headers (Section [#sec-header-types]).
 * Clarified representation of empty types (Section [#sec-uninitialized-values-and-writing-invalid-headers]).
@@ -8387,6 +8387,9 @@ extern packet_out {
     /// containing fields with such types.
     void emit<T>(in T data);
 }
+action noAction() {}
+// NoAction is the original name for noAction, still allowed for
+// backwards compatibility reasons.
 action NoAction() {}
 /// Standard match kinds for table key fields.
 /// Some architectures may not support all these match kinds.
