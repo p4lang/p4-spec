@@ -2133,6 +2133,7 @@ to a `set` type. These types are used during type-checking.
 typeDeclaration
     : derivedTypeDeclaration
     | typedefDeclaration
+    | newtypeDeclaration
     | parserTypeDeclaration ';'
     | controlTypeDeclaration ';'
     | packageTypeDeclaration ';'
@@ -2974,7 +2975,8 @@ Similarly to `typedef`, the keyword `type` can be used to introduce a
 new type.
 
 ~ Begin P4Grammar
-    | optAnnotations TYPE typeRef name
+newtypeDeclaration
+    : optAnnotations TYPE typeRef name
     | optAnnotations TYPE derivedTypeDeclaration name
 ~ End P4Grammar
 
@@ -3484,7 +3486,7 @@ Bit-strings also support the following operations:
   unchanged.  A slice of an unsigned integer is an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
-  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width. 
+  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
@@ -3579,7 +3581,7 @@ The `int<W>` datatype also support the following operations:
   unchanged.  A slice of a signed integer is treated like an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
-  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width. 
+  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
 ### A note about concatenation { #sec-concatenation }
@@ -3755,7 +3757,7 @@ applying a binary operation (except shifts and concatenation) to an expression o
 expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
 type, it can be implicitly cast to its underlying type whenever appropriate,
-including but not limited to in shifts, concatenation, bit slicing indexes, 
+including but not limited to in shifts, concatenation, bit slicing indexes,
 header stack indexes as well as other unary and binary operations.
 
 For example, given the following declarations,
@@ -5128,10 +5130,10 @@ emptyStatement
 
 ## Block statement { #sec-block-stmt }
 
-A block statement is denoted by curly braces. It contains a
-sequence of statements and declarations, which are executed
-sequentially. The variables, constants, and instantiations within a
-block statement are only visible within the block.
+A block statement is denoted by curly braces. It contains a sequence
+of statements and declarations, which are executed sequentially. The
+variables, constants, typedefs, and instantiations within a block
+statement are only visible within the block.
 
 ~ Begin P4Grammar
 blockStatement
@@ -5146,6 +5148,7 @@ statOrDeclList
 statementOrDeclaration
     : variableDeclaration
     | constantDeclaration
+    | typedefDeclaration
     | statement
     | instantiation
     ;
