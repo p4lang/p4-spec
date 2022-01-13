@@ -3005,6 +3005,32 @@ datapath (e.g., a target specific tool-chain could include software
 that automatically converts values of type `PortId_t` to a different
 representation when exchanged with the control-plane software).
 
+## Using the type of an expression
+
+The `typeof` keyword can be used in a `typedef` declaration to obtain the
+type of an expression:
+
+~ Begin P4Grammar
+typedefDeclaration
+    : optAnnotations TYPEDEF typeofDeclaration name;
+
+typeofDeclaration
+    : TYPEOF "(" expression ")"
+    ;
+~ End P4Grammar
+
+~ Begin P4Example
+const bit<32> a = 6;
+const int b = 3;
+typedef typeof(a + b) T;
+~ End P4Example
+
+The `typeof` call does not evaluate the argument expression, either
+statically or dynamically, it only typechecks the expression and
+returns its type.  The result of this declaration is declare a new
+type name `T` that is the same as the type of the expression that is
+an argument to `typeof()`, i.e., `bit<32>`.
+
 # Expressions { #sec-exprs }
 
 This section describes all expressions that can be used in P4,
@@ -3484,7 +3510,7 @@ Bit-strings also support the following operations:
   unchanged.  A slice of an unsigned integer is an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
-  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width. 
+  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
@@ -3579,7 +3605,7 @@ The `int<W>` datatype also support the following operations:
   unchanged.  A slice of a signed integer is treated like an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
-  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width. 
+  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
 ### A note about concatenation { #sec-concatenation }
@@ -3755,7 +3781,7 @@ applying a binary operation (except shifts and concatenation) to an expression o
 expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
 type, it can be implicitly cast to its underlying type whenever appropriate,
-including but not limited to in shifts, concatenation, bit slicing indexes, 
+including but not limited to in shifts, concatenation, bit slicing indexes,
 header stack indexes as well as other unary and binary operations.
 
 For example, given the following declarations,
