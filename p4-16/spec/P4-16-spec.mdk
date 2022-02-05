@@ -1487,7 +1487,6 @@ Each parameter may be labeled with a direction:
   pass it to a callee as a non-`in` argument. `in` parameters
   are initialized by copying the value of the corresponding
   argument when the invocation is executed.
-
 - `out` parameters are, with a few exceptions listed below,
   uninitialized and are treated as l-values
   (See Section [#sec-lvalues]) within the body of the method or function.
@@ -1496,12 +1495,22 @@ Each parameter may be labeled with a direction:
   call, the value of the parameter is copied to the corresponding storage location
   for that l-value.
 - `inout` parameters are both `in` and `out`. An argument passed as
-    an `inout` parameter must be an l-value.
-- No direction indicates that value of parameter is either:
-	- a compile-time known value
-	- an action parameter that can only be set by the control plane
-	- an action parameter that can be set directly by another calling
-      action; in this case it behaves like an `in` parameter
+  an `inout` parameter must be an l-value.
+- The meaning of parameters with no direction depends upon the kind of
+  entity the parameter is for:
+  - For anything other than an action, e.g. a control, parser, or
+    function, a directionless parameter means that the value supplied
+    as an argument in a call must be a compile-time known value
+    (see Section [#sec-ct-constants]).
+  - For an action, a directionless parameter indicates that it is
+    "action data".  See Section [#sec-actions] for the meaning of
+    action data, but its meaning includes the following possibilities:
+    - The parameter's value is provided in the P4 program.  In this
+      case, the parameter behaves as if the direction were `in`.  Such
+      an argument expression need not be a compile-time known value.
+    - The parameter's value is provided by the control plane software
+      when an entry is added to a table that uses that action.  See
+      Section [#sec-actions].
 
 Direction `out` parameters are always initialized at the beginning of
 execution of the portion of the program that has the `out` parameters,
@@ -2074,6 +2083,14 @@ const int a = 5;
 const int b = 2 * a;
 const int c = b - a + 3;
 ~ End P4Example
+
+Parameters with type `int` are not supported for actions.  Parameters
+with type `int` for other callable entities of a program,
+e.g. controls, parsers, or functions, must be directionless,
+indicating that all calls must provide a compile-time known value as
+an argument for such a parameter.  See Section
+[#sec-calling-convention] for more details on directionless
+parameters.
 
 #### Integer literal types
 
