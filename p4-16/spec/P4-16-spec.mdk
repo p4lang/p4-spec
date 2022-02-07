@@ -3610,6 +3610,29 @@ expressions of type `int` must be compile-time known values.  The type
   The right operand must be either an unsigned constant of type `bit<S>` or a non-negative integer compile-time known value.
   The expression `a << b` is equal to $a \times 2^b$ while `a >> b`
   is equal to $\lfloor{a / 2^b}\rfloor$.
+- Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
+  where `m` and `l` must be expressions that evaluate to
+  non-negative compile-time known values, and `m >= l`. The types of `m` and `l` (which do not have to be identical)
+  must be one of the following:
+
+  - `int` - an infinite-precision integer (section
+    [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
+    [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
+    [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or
+    `int<W>` (section [#sec-enum-types]).
+
+  The result is an unsigned bit-string of width `m - l + 1`, including the bits numbered
+  from `l` (which becomes the least significant bit of the result) to `m` (the
+  most significant bit of the result) from the source operand.
+  The expression `a[m:l]` has the value of $\lfloor{a / 2^l}\rfloor \mod 2^{m - l + 1}$.
+  The conditions `0 <= l <= m` is checked statically. Note that both endpoints of
+  the extraction are inclusive. The bounds are required to be
+  compile-time known values so that the result width can be computed
+  at compile time. A slice of an infinite-precision integer is treated like an unsigned integer.
+
 
 Each operand that participates in any of these operation must have
 type `int` (except shifts). Binary operations cannot
