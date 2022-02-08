@@ -4839,20 +4839,35 @@ In other words, for any expression `e`,
 The definition of `e.minSizeInBits()` and `e.maxSizeInBits()` is given
 recursively on the type of `e` as described in the following table:
 
+|-----|---------------|---------------|
 |Type | minSizeInBits | maxSizeInBits |
----------------------------------------
++-----+:-------------:+:-------------:+
 | `bit<N>` | N | N |
++-----+---------------+---------------+
 | `int<N>` | N | N |
++-----+---------------+---------------+
 | `bool`   | 1 | 1 |
++-----+---------------+---------------+
 | `enum bit<N>` | N | N |
++-----+---------------+---------------+
 | `enum int<N>` | N | N |
-| `tuple` | foreach field(tuple) sum of `field.minSizeInBits()` | foreach field(tuple) sum of `field.maxSizeInBits()` |
++-----+---------------+---------------+
+| `tuple`   | foreach field(tuple) sum of | foreach field(tuple) sum of  |
+|           | `field.minSizeInBits()`     | `field.maxSizeInBits()`      |
++-----+---------------+---------------+
 | `varbit<N>` | 0 | N |
-| `struct` | foreach field(struct) sum of `field.minSizeInBits()` | foreach field(struct) sum of `field.maxSizeInBits()` |
-| `header` | foreach field(header) sum of `field.minSizeInBits()` | foreach field(header) sum of `field.maxSizeInBits()` |
-| H[N] | N * H.minSizeInBits() | N * H.maxSizeInBits() |
-| `header_union` | max(foreach field(header_union) `field.minSizeInBits()`) | max(foreach field(header_union) `field.maxSizeInBits()`) |
----------------------------------------
++-----+---------------+---------------+
+| `struct` | foreach field(struct) sum of | foreach field(struct) sum of |
+|          | `field.minSizeInBits()`      | `field.maxSizeInBits()`      |
++-----+---------------+---------------+
+| `header` | foreach field(header) sum of | foreach field(header) sum of |
+|          | `field.minSizeInBits()`      | `field.maxSizeInBits()`      |
++-----+---------------+---------------+
+| `H[N]`   | `N * H.minSizeInBits()`      | `N * H.maxSizeInBits()` |
++-----+---------------+---------------+
+| `header_union` | max(foreach field(header_union) | max(foreach field(header_union) |
+|                | `field.minSizeInBits()`) | `field.maxSizeInBits()`) |
+|-----|---------------|---------------|
 
 The methods can also be applied to type name expressions `e`:
 
@@ -4863,10 +4878,11 @@ The methods can also be applied to type name expressions `e`:
   then the result is obtained by applying the method to the underlying type.
 
 These methods are defined for:
+
 * all serializable types
 * for a type that does not contain `varbit` fields, both methods return the same result
 * for a type that does contain `varbit` fields, `maxSizeInBits` is the worst-case size
-  of the serialized representation of the data and `minSizeInBits` is the ``best'' case.
+  of the serialized representation of the data and `minSizeInBits` is the "best" case.
 
 Every other case is undefined and will produce a compile-time error.
 
