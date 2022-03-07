@@ -6008,17 +6008,16 @@ Note that since P4 requires declarations to precede uses, it is impossible to
 create recursive (or mutually recursive) parsers.
 
 When a parser is instantiated, all its local declarations of stateful instantiations are evaluated recursively.
-Each instantiation of a parser will have a unique set of value sets, extern objects, and inner parser instances.
+Each instantiation of a parser will have a unique set of local value sets, extern objects, and inner parser instances.
 Thus, invoking a parser instance twice is different from invoking two parser instances each once, where the former
-accesses the same stateful constructs while the latter access two different copies.
+accesses the same local stateful constructs while the latter access two different copies.
 
-The exactly-once evaluation only applies to stateful instantiations. For local variable declarations,
+The exactly-once evaluation only applies to local stateful instantiations. For local variable declarations,
 whether in `state`s or out, and whether with initializers or not, they are always evaluated
 when a parser instance is invoked. That is, local variables in a parser never persist across invocations. For variables
 declared outside `state`s, they are evaluated at the beginning of execution.
 
-This behavior applies to all parser instantiations, regardless of whether they are explicit instantiations,
-or direct type invocation (see Section [#sec-direct-invocation]).
+All the behavior above also applies to direct invocation (see Section [#sec-direct-invocation]).
 
 Architectures may impose (static or dynamic) constraints on the
 number of parser states that can be traversed for processing each
@@ -6848,17 +6847,16 @@ control Caller(inout Headers h) {
 ~ End P4Example
 
 When a control is instantiated, all its local declarations of stateful instantiations are evaluated recursively.
-Each instantiation of a control will have a unique set of tables, extern objects, and inner control instances.
+Each instantiation of a control will have a unique set of local tables, extern objects, and inner control instances.
 Thus, invoking a control instance twice is different from invoking two control instances each once, where the former
-accesses the same stateful constructs while the latter access two different copies.
+accesses the same local stateful constructs while the latter access two different copies.
 
-The exactly-once evaluation only applies to stateful instantiations. For local variable declarations,
+The exactly-once evaluation only applies to local stateful instantiations. For local variable declarations,
 whether in the `apply` block or out, and whether with initializers or not, they are always evaluated
 when a control instance is invoked. That is, local variables in a control never persist across invocations. For variables
 declared outside the `apply` block, they are evaluated at the beginning of execution.
 
-This behavior applies to all control instantiations, regardless of whether they are explicit instantiations,
-or direct type invocation (see Section [#sec-direct-invocation]).
+All the behavior above also applies to direct invocation (see Section [#sec-direct-invocation]).
 
 # Parameterization { #sec-parameterization }
 
