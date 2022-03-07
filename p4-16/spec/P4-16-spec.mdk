@@ -3938,6 +3938,9 @@ kvPair
 For a structure-valued expression `typeRef` is the name of a `struct`
 or `header` type.  The `typeRef` can be omitted if it can be inferred
 from context, e.g., when initializing a variable with a `struct` type.
+Structure-valued expressions that evaluate to a value of some `header`
+type are always valid.
+
 The following example shows a structure-valued expression used in an
 equality comparison expression:
 
@@ -3957,6 +3960,13 @@ Structure-valued expressions can be used in the right-hand side of
 assignments, in comparisons, in field selection expressions, and as
 arguments to functions, method or actions.  Structure-valued
 expressions are not left values.
+
+Structure-valued expressions must provide a value for every member of
+the struct or header type to which it evaluates, either by doing so
+explicitly with a literal expression of the appropriate type, or by
+using the `...` syntax for initializing with default values (see
+Section [#sec-initializing-with-default-values]).  It is a
+compile-time error if not all members have a specified value.
 
 ## Operations on sets { #sec-set-exprs }
 
@@ -4765,7 +4775,7 @@ they do not have to be explicitly initialized to have a legal value.
 
 (Header types with no fields always have a validity bit.)
 
-## Initializing with default values
+## Initializing with default values { #sec-initializing-with-default-values }
 
 A left-value can be initialized automatically with a default value of the
 suitable type using the syntax `...` (see Section [#sec-default-values]).  A value
