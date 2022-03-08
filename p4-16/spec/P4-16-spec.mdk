@@ -3894,7 +3894,7 @@ lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );
 
 A list may be used to initialize a structure if the list has the same
 number of elements as fields in the structure. The effect of such an
-initializer is to assign to the ith element of the list to the ith
+initializer is to assign to the i-th element of the list to the i-th
 field in the structure:
 
 ~ Begin P4Example
@@ -3914,7 +3914,7 @@ tuple<bit<32>, bool> x = { 10, false };
 
 The empty list expression has type `tuple<>` - a tuple with no components.
 
-## Structure-valued expressions { #sec-structure-expressions}
+## Operations on structure-valued expressions { #sec-structure-expressions}
 
 One can write expressions that evaluate to a structure or header.  The
 syntax of these expressions is given by:
@@ -3957,6 +3957,9 @@ Structure-valued expressions can be used in the right-hand side of
 assignments, in comparisons, in field selection expressions, and as
 arguments to functions, method or actions.  Structure-valued
 expressions are not left values.
+
+The compiler must raise an error if a field name appears more than
+once in the same structure-valued expression.
 
 ## Operations on sets { #sec-set-exprs }
 
@@ -4103,8 +4106,8 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
 with a list expression, as discussed in Section [#sec-list-exprs], or
-with a structure initializer, as described in
-[#sec-structure-initializers].  Both these cases must initialize all
+with a structure-valued expression, as described in
+[#sec-structure-expressions].  Both of these cases must initialize all
 fields of the structure.
 
 Two structs can be compared for equality (==) or inequality (!=) only
@@ -4112,23 +4115,18 @@ if they have the same type and all of their fields can be recursively
 compared for equality.  Two structures are equal if and only if all
 their corresponding fields are equal.
 
-## Structure initializers { #sec-structure-initializers }
-
-Structures can be initialized using structure-valued expression
-([#sec-structure-expressions]).  The following example shows a
-structure initialized using a structure-valued expression:
+The following example shows a structure initialized in several
+different ways:
 
 ~ Begin P4Example
 struct S {
     bit<32> a;
     bit<32> b;
 }
-const S x = { a = 10, b = 20 };
-const S x = (S){ a = 10, b = 20 }; // equivalent
+const S x = { 10, 20 };             // list expression
+const S x = { a = 10, b = 20 };     // structure-valued expression
+const S x = (S) { a = 10, b = 20 }; // structure-valued expression
 ~ End P4Example
-
-The compiler must raise an error if a field name appears more than
-once in the same structure initializer.
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
 for a description of the behavior if `struct` fields are read without
@@ -4150,7 +4148,7 @@ of the header.
 
 Similar to a `struct`, a header object can be initialized with a list
 expression [#sec-list-exprs] --- the list fields are assigned to the
-header fields in the order they appear --- or with a structure initializer
+header fields in the order they appear --- or with a structure-valued
 expression [#sec-ops-on-structs].  When initialized the header
 automatically becomes valid:
 
@@ -7393,7 +7391,7 @@ The following are compile-time known values:
 - Identifiers that represent declared types, actions, tables, parsers,
   controls, or packages.
 - List expression where all components are compile-time known values.
-- Structure initializer expressions, where all fields are compile-time
+- Structure-valued expressions, where all fields are compile-time
   known values.
 - Instances constructed by instance declarations (Section
   [#sec-instantiations]) and constructor invocations.
