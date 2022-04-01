@@ -1487,7 +1487,6 @@ Each parameter may be labeled with a direction:
   pass it to a callee as a non-`in` argument. `in` parameters
   are initialized by copying the value of the corresponding
   argument when the invocation is executed.
-
 - `out` parameters are, with a few exceptions listed below,
   uninitialized and are treated as l-values
   (See Section [#sec-lvalues]) within the body of the method or function.
@@ -1496,12 +1495,22 @@ Each parameter may be labeled with a direction:
   call, the value of the parameter is copied to the corresponding storage location
   for that l-value.
 - `inout` parameters are both `in` and `out`. An argument passed as
-    an `inout` parameter must be an l-value.
-- No direction indicates that value of parameter is either:
-	- a compile-time known value
-	- an action parameter that can only be set by the control plane
-	- an action parameter that can be set directly by another calling
-      action; in this case it behaves like an `in` parameter
+  an `inout` parameter must be an l-value.
+- The meaning of parameters with no direction depends upon the kind of
+  entity the parameter is for:
+  - For anything other than an action, e.g. a control, parser, or
+    function, a directionless parameter means that the value supplied
+    as an argument in a call must be a compile-time known value
+    (see Section [#sec-ct-constants]).
+  - For an action, a directionless parameter indicates that it is
+    "action data".  See Section [#sec-actions] for the meaning of
+    action data, but its meaning includes the following possibilities:
+    - The parameter's value is provided in the P4 program.  In this
+      case, the parameter behaves as if the direction were `in`.  Such
+      an argument expression need not be a compile-time known value.
+    - The parameter's value is provided by the control plane software
+      when an entry is added to a table that uses that action.  See
+      Section [#sec-actions].
 
 Direction `out` parameters are always initialized at the beginning of
 execution of the portion of the program that has the `out` parameters,
@@ -1819,6 +1828,7 @@ P4 supports the following built-in base types:
 baseType
     : BOOL
     | ERROR
+    | MATCH_KIND
     | BIT
     | INT
     | STRING
@@ -1982,7 +1992,7 @@ arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
 compile-time known value (see Section [#sec-ct-constants]) that is a
 non-negative integer.  When using an expression for
-the size, the epression must be parenthesized.  Bitstrings with width 0 are
+the size, the expression must be parenthesized.  Bitstrings with width 0 are
 allowed; they have no actual bits, and can only have the value 0.  See
 { #sec-uninitialized-values-and-writing-invalid-headers } for additional details.
 
@@ -2074,6 +2084,14 @@ const int a = 5;
 const int b = 2 * a;
 const int c = b - a + 3;
 ~ End P4Example
+
+Parameters with type `int` are not supported for actions.  Parameters
+with type `int` for other callable entities of a program,
+e.g. controls, parsers, or functions, must be directionless,
+indicating that all calls must provide a compile-time known value as
+an argument for such a parameter.  See Section
+[#sec-calling-convention] for more details on directionless
+parameters.
 
 #### Integer literal types
 
@@ -3712,7 +3730,7 @@ finding this information in a section dedicated to type `varbit`.
 
 P4 provides a limited set of casts between types. A cast is written
 `(t) e`, where `t` is a type and `e` is an expression. Casts are only
-permitted between base types. While this design is arguably more onerous
+permitted on base types and derived types introduced by `typedef`, `type`, and `enum`. While this design is arguably more onerous
 for programmers, it has several benefits:
 
 - It makes user intent unambiguous.
@@ -3878,7 +3896,7 @@ lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );
 
 A list may be used to initialize a structure if the list has the same
 number of elements as fields in the structure. The effect of such an
-initializer is to assign to the ith element of the list to the ith
+initializer is to assign to the i-th element of the list to the i-th
 field in the structure:
 
 ~ Begin P4Example
@@ -3898,7 +3916,7 @@ tuple<bit<32>, bool> x = { 10, false };
 
 The empty list expression has type `tuple<>` - a tuple with no components.
 
-## Structure-valued expressions { #sec-structure-expressions}
+## Operations on structure-valued expressions { #sec-structure-expressions}
 
 One can write expressions that evaluate to a structure or header.  The
 syntax of these expressions is given by:
@@ -3941,6 +3959,9 @@ Structure-valued expressions can be used in the right-hand side of
 assignments, in comparisons, in field selection expressions, and as
 arguments to functions, method or actions.  Structure-valued
 expressions are not left values.
+
+The compiler must raise an error if a field name appears more than
+once in the same structure-valued expression.
 
 ## Operations on sets { #sec-set-exprs }
 
@@ -4087,8 +4108,8 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
 with a list expression, as discussed in Section [#sec-list-exprs], or
-with a structure initializer, as described in
-[#sec-structure-initializers].  Both these cases must initialize all
+with a structure-valued expression, as described in
+[#sec-structure-expressions].  Both of these cases must initialize all
 fields of the structure.
 
 Two structs can be compared for equality (==) or inequality (!=) only
@@ -4096,23 +4117,18 @@ if they have the same type and all of their fields can be recursively
 compared for equality.  Two structures are equal if and only if all
 their corresponding fields are equal.
 
-## Structure initializers { #sec-structure-initializers }
-
-Structures can be initialized using structure-valued expression
-([#sec-structure-expressions]).  The following example shows a
-structure initialized using a structure-valued expression:
+The following example shows a structure initialized in several
+different ways:
 
 ~ Begin P4Example
 struct S {
     bit<32> a;
     bit<32> b;
 }
-const S x = { a = 10, b = 20 };
-const S x = (S){ a = 10, b = 20 }; // equivalent
+const S x = { 10, 20 };             // list expression
+const S x = { a = 10, b = 20 };     // structure-valued expression
+const S x = (S) { a = 10, b = 20 }; // structure-valued expression
 ~ End P4Example
-
-The compiler must raise an error if a field name appears more than
-once in the same structure initializer.
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
 for a description of the behavior if `struct` fields are read without
@@ -4134,7 +4150,7 @@ of the header.
 
 Similar to a `struct`, a header object can be initialized with a list
 expression [#sec-list-exprs] --- the list fields are assigned to the
-header fields in the order they appear --- or with a structure initializer
+header fields in the order they appear --- or with a structure-valued
 expression [#sec-ops-on-structs].  When initialized the header
 automatically becomes valid:
 
@@ -4824,20 +4840,35 @@ In other words, for any expression `e`,
 The definition of `e.minSizeInBits()` and `e.maxSizeInBits()` is given
 recursively on the type of `e` as described in the following table:
 
+|-----|---------------|---------------|
 |Type | minSizeInBits | maxSizeInBits |
----------------------------------------
++-----+:-------------:+:-------------:+
 | `bit<N>` | N | N |
++-----+---------------+---------------+
 | `int<N>` | N | N |
++-----+---------------+---------------+
 | `bool`   | 1 | 1 |
++-----+---------------+---------------+
 | `enum bit<N>` | N | N |
++-----+---------------+---------------+
 | `enum int<N>` | N | N |
-| `tuple` | foreach field(tuple) sum of `field.minSizeInBits()` | foreach field(tuple) sum of `field.maxSizeInBits()` |
++-----+---------------+---------------+
+| `tuple`   | foreach field(tuple) sum of | foreach field(tuple) sum of  |
+|           | `field.minSizeInBits()`     | `field.maxSizeInBits()`      |
++-----+---------------+---------------+
 | `varbit<N>` | 0 | N |
-| `struct` | foreach field(struct) sum of `field.minSizeInBits()` | foreach field(struct) sum of `field.maxSizeInBits()` |
-| `header` | foreach field(header) sum of `field.minSizeInBits()` | foreach field(header) sum of `field.maxSizeInBits()` |
-| H[N] | N * H.minSizeInBits() | N * H.maxSizeInBits() |
-| `header_union` | max(foreach field(header_union) `field.minSizeInBits()`) | max(foreach field(header_union) `field.maxSizeInBits()`) |
----------------------------------------
++-----+---------------+---------------+
+| `struct` | foreach field(struct) sum of | foreach field(struct) sum of |
+|          | `field.minSizeInBits()`      | `field.maxSizeInBits()`      |
++-----+---------------+---------------+
+| `header` | foreach field(header) sum of | foreach field(header) sum of |
+|          | `field.minSizeInBits()`      | `field.maxSizeInBits()`      |
++-----+---------------+---------------+
+| `H[N]`   | `N * H.minSizeInBits()`      | `N * H.maxSizeInBits()` |
++-----+---------------+---------------+
+| `header_union` | max(foreach field(header_union) | max(foreach field(header_union) |
+|                | `field.minSizeInBits()`) | `field.maxSizeInBits()`) |
+|-----|---------------|---------------|
 
 The methods can also be applied to type name expressions `e`:
 
@@ -4848,10 +4879,11 @@ The methods can also be applied to type name expressions `e`:
   then the result is obtained by applying the method to the underlying type.
 
 These methods are defined for:
+
 * all serializable types
 * for a type that does not contain `varbit` fields, both methods return the same result
 * for a type that does contain `varbit` fields, `maxSizeInBits` is the worst-case size
-  of the serialized representation of the data and `minSizeInBits` is the ``best'' case.
+  of the serialized representation of the data and `minSizeInBits` is the "best" case.
 
 Every other case is undefined and will produce a compile-time error.
 
@@ -5150,7 +5182,6 @@ statementOrDeclaration
     | constantDeclaration
     | typedefDeclaration
     | statement
-    | instantiation
     ;
 ~ End P4Grammar
 
@@ -5191,6 +5222,49 @@ exitStatement
     : EXIT ';'
     ;
 ~ End P4Grammar
+
+There are some expressions whose evaluation might cause an `exit`
+statement to be executed.  Examples include:
+
+- `table.apply().action_run`, which can only appear as the expression
+  of a `switch` statement (see Section [#sec-switch-stmt]), and when
+  it appears there, it must be the entire expression.
+- Any expression containing `table.apply().hit` or
+  `table.apply().miss` (see Section [#sec-invoke-mau]), which can be
+  part of arbitrarily complex expressions in many places of a P4
+  program, such as:
+  - the expression in an `if` statement.
+  - the expression `e1` in a conditional expression `e1 ? e2 : e3`.
+  - in an assignment statement, in the left and/or right hand sides.
+  - an argument passed to a function or method call.
+  - an expression to calculate a table key (see Section
+    [#sec-mau-semantics]).
+
+This list is not intended to be exhaustive.
+
+If applying the table causes an action to be executed, which in turn
+causes an `exit` statement to be executed, then evaluation of the
+expression ends immediately, and the rest of the current expression or
+statement does not complete its execution.  See Section
+[#sec-expr-eval-order] for the order of evaluation of the parts of an
+expression.  For the examples listed above, it also means the
+following behavior after the expression evaluation is interrupted.
+
+- For a `switch` statement, if `table.apply()` exits, then none of the
+  blocks in the `switch` statement are executed.
+- If `table.apply().hit` or `table.apply().miss` cause an exit during
+  the evaluation of an expression:
+  - If it is the expression of an `if` statement, then neither the
+    'then' nor 'else' branches of the `if` statement are executed.
+  - If it is the expression `e1` in a conditional expression `e1 ? e2 : e3`,
+    then neither expression `e2` nor `e3` are evaluated.
+  - If the expression is the right hand side of an assignment
+    statement, or part of the calculation of the L-value on the left
+    hand side (e.g. the index expression of a header stack reference),
+    then no assignment occurs.
+  - If the expression is an argument passed to a function or method
+    call, then the function/method call does not occur.
+  - If the expression is a table key, then the table is not applied.
 
 ## Conditional statement { #sec-cond-stmt }
 
@@ -5910,6 +5984,7 @@ parser Top(packet_in b, out Parsed_headers headers) {
        transition select (headers.ipv4.ihl) {
            5: dispatch_on_protocol;
            _: parse_ipv4_options;
+       }
    }
 
    state parse_ipv4_options {
@@ -6577,7 +6652,7 @@ tableProperty
  : const ENTRIES '=' '{' entriesLlist '}' /* immutable entries */
 
 entriesList
- : entry
+ : /* empty */
  | entriesList entry
  ;
 
@@ -7320,7 +7395,7 @@ The following are compile-time known values:
 - Identifiers that represent declared types, actions, tables, parsers,
   controls, or packages.
 - List expression where all components are compile-time known values.
-- Structure initializer expressions, where all fields are compile-time
+- Structure-valued expressions, where all fields are compile-time
   known values.
 - Instances constructed by instance declarations (Section
   [#sec-instantiations]) and constructor invocations.
@@ -8186,7 +8261,7 @@ The P4 compiler should provide:
 | 1.2.1     | June 11, 2020 | Added structure-value expressions, default values, concatenation, |
 |           |               | structured  annotations; standardized several new annotations;    |
 |           |               | generalized typing rule for masks; restricted typing rule for     |
-|           |               | shifts with infinite-precistion operands; clarified evaluation    |
+|           |               | shifts with infinite-precision operands; clarified evaluation     |
 |           |               | order for table keys; clarified copy-out behavior; clarified      |
 |           |               | semantics of invalid header stacks; clarified initialization      |
 |           |               | semantics; fixed several small issues in grammar.                 |
@@ -8200,6 +8275,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.3
 
+* Allow empty entries lists for tables
 * Extended minSizeInBits, and minSizeInBytes to apply to more
   expressions (Section [#sec-minsizeinbits]).  Added maxSizeInBits and maxSizeInBytes.
 
@@ -8303,7 +8379,7 @@ The following table shows all P4 reserved keywords. Some identifiers
 are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 
 |:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|:---{width:25%}---|
-| 'abstract' | `action`   |  `apply ` | `bit`        |
+| `abstract` | `action`   |  `apply ` | `bit`        |
 | `bool`  | `const`    |  `control` | `default` |
 | `else`  | `enum`   | `error`     |   `extern`  |
 | `exit`  | `false`   |  `header`   |  `header_union` |
@@ -8311,8 +8387,8 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `match_kind` | `package` | `parser` | `out` |
 | `return`  | `select` | `state` | `struct`   |
 |  `switch` | `table`   | `this` | `transition` |
-|  `true` |  `tuple` | `typedef` | `varbit`  |
-| `verify` | `void`   | |
+|  `true` |  `tuple` | `type` | `typedef` |
+| `varbit` | `verify` | `void` | |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
