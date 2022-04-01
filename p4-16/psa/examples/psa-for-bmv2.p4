@@ -27,14 +27,12 @@ limitations under the License.
 
 /* Target device for which this section is customized:
  *
- * This file is only intended for the purpose of including parts of it
- * in the PSA specification document.  It is not intended to be
- * compiled.
+ * BMv2 PSA as implemented by the psa_switch software switch from the
+ * repository https://github.com/p4lang/behavioral-model
  *
- * For examples of psa.p4 include files customized for their P4
- * targets, see p4include/bmv2/psa.p4 and p4include/dpdk/psa.p4 in the
- * https://github.com/p4lang/p4c repository. */
-#error "This file is for documentation purposes only and is not intended to be compiled"
+ * The bit widths for BMv2 psa_switch have been chosen to be the same
+ * as the corresponding InHeader types later.  This simplifies the
+ * implementation of P4Runtime for BMv2 psa_switch. */
 
 // BEGIN:Type_defns
 /* These are defined using `typedef`, not `type`, so they are truly
@@ -51,13 +49,22 @@ limitations under the License.
  *
  * Note that the width of typedef <name>Uint_t will always be the same
  * as the width of type <name>_t. */
-typedef bit<unspecified> PortIdUint_t;
-typedef bit<unspecified> MulticastGroupUint_t;
-typedef bit<unspecified> CloneSessionIdUint_t;
-typedef bit<unspecified> ClassOfServiceUint_t;
-typedef bit<unspecified> PacketLengthUint_t;
-typedef bit<unspecified> EgressInstanceUint_t;
-typedef bit<unspecified> TimestampUint_t;
+typedef bit<32> PortIdUint_t;
+typedef bit<32> MulticastGroupUint_t;
+typedef bit<16> CloneSessionIdUint_t;
+typedef bit<8>  ClassOfServiceUint_t;
+typedef bit<16> PacketLengthUint_t;
+typedef bit<16> EgressInstanceUint_t;
+typedef bit<64> TimestampUint_t;
+
+/* Note: clone_spec in BMv2 simple_switch v1model is 32 bits wide, but
+ * it is used such that 16 of its bits contain a clone/mirror session
+ * id, and 16 bits contain the numeric id of a field_list.  Only the
+ * 16 bits of clone/mirror session id are comparable to the type
+ * CloneSessionIdUint_t here.  See occurrences of clone_spec in this
+ * file for details:
+ * https://github.com/p4lang/behavioral-model/blob/main/targets/simple_switch/simple_switch.cpp
+ */
 
 @p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
 type PortIdUint_t         PortId_t;
@@ -75,10 +82,10 @@ type EgressInstanceUint_t EgressInstance_t;
 type TimestampUint_t      Timestamp_t;
 typedef error   ParserError_t;
 
-const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
-const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
+const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 0xfffffffa;
+const PortId_t PSA_PORT_CPU = (PortId_t) 0xfffffffd;
 
-const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessiontId_t) unspecified;
+const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessionId_t) 0;
 // END:Type_defns
 
 /**********************************************************************
