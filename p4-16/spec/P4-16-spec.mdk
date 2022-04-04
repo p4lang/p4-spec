@@ -6570,7 +6570,9 @@ Each action parameter that has a direction (`in`, `inout`, or `out`)
 must be bound in the `actions` list specification; conversely, no
 directionless parameters may be bound in the list. The expressions
 supplied as arguments to an `action` are not evaluated until the
-action is invoked.
+action is invoked. Applying tables, whether directly via an expression
+like `table1.apply().hit`, or indirectly, are forbidden in the
+expressions supplied as action arguments.
 
 ~ Begin P4Example
 action a(in bit<32> x) { /* body omitted */ }
@@ -6583,6 +6585,7 @@ table t {
        b(z);  // binding b's parameter x to z
        // b(z, 3); -- illegal, cannot bind directionless data parameter
        // b(); -- illegal, x parameter must be bound
+       // a(table2.apply().hit ? 5 : 3); -- illegal, cannot apply a table here
     }
 }
 ~ End P4Example
