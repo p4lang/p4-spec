@@ -1462,9 +1462,9 @@ lvalue
   (using the dot notation).
 - References to elements within header stacks (see Section
   [#sec-expr-hs]): indexing, and references to `last` and `next`.
-- The result of a bit-slice operator `[m:l]`.
+- The result of a bit-slice operator on a l-value `[m:l]`.
 
-The following is a legal l-value: `headers.stack[4].field`.  Note
+The following is a legal l-value: `headers.stack[4].field`, but not `32w8[3:0]`. Note
 that method and function calls cannot return l-values.
 
 ## Calling convention: call by copy in/copy out { #sec-calling-convention }
@@ -3194,8 +3194,35 @@ casts `a`, which was initialized to `E.e2` to a `bit<8>`, using the specified
 fixed-width unsigned integer representation for `E.e2`, `1`.  The variable `b` is then set to the
 symbolic value `E.e2`, which corresponds to the fixed-width unsigned integer value `1`.
 
-Because it is always safe to cast from an `enum` to its underlying fixed-width integer type,
-implicit casting from an `enum` to its fixed-width (signed or unsigned) integer type is also supported (see Section [#sec-implicit-casts]):
+We can apply a bit-slice operator on an `enum` with an underlying type 
+to extract a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
+where `m` and `l` must be expressions that evaluate to
+non-negative compile-time known values, and `m >= l`. The types of `m` and `l` (which do not have to be identical)
+must be one of the following:
+
+- `int` - an infinite-precision integer (section
+  [#sec-infinite-precision-integers])
+- `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
+  [#sec-unsigned-integers])
+- `int<W>` - a `W`-bit signed integer where `W >= 1` (section
+  [#sec-signed-integers])
+- a serializable `enum` with an underlying type that is `bit<W>` or
+  `int<W>` (section [#sec-enum-types]).
+
+The result is an unsigned bit-string of width `m - l + 1`, including the bits numbered
+from `l` (which becomes the least significant bit of the result) to `m` (the
+most significant bit of the result) from the source operand. The conditions `0 <= l < W`
+and `l <= m < W` are checked statically (where `W` is
+the length of the underlying type). Note that both endpoints of
+the extraction are inclusive. The bounds are required to be
+compile-time known values so that the result width can be computed
+at compile time. Slices of l-values are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
+The effect of this statement is to set bits `m` to `l` of `e` to the
+bit-pattern represented by `x`, and leaves all other bits of `e`
+unchanged.
+
+When an `enum` is not an l-value, it is always safe to cast to its underlying fixed-width integer type.
+Therefore, implicit casting from an non-l-lvalue `enum` to its fixed-width (signed or unsigned) integer type is also supported (see Section [#sec-implicit-casts]):
 
 ~ Begin P4Example
 bit<8> x = E.e2; // sets x to 1 (E.e2 is automatically casted to bit<8>)
@@ -3478,7 +3505,7 @@ Bit-strings also support the following operations:
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
   compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
+  at compile time. Slices of l-values are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.  A slice of an unsigned integer is an unsigned integer.
@@ -3573,7 +3600,7 @@ The `int<W>` datatype also support the following operations:
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
   compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
+  at compile time. Slices of l-values are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
   The effect of this statement is to set bits `m` to `l` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e`
   unchanged.  A slice of a signed integer is treated like an unsigned integer.
