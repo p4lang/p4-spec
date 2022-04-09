@@ -1490,7 +1490,7 @@ Each parameter may be labeled with a direction:
 - `out` parameters are, with a few exceptions listed below,
   uninitialized and are treated as l-values
   (See Section [#sec-lvalues]) within the body of the method or function.
-  An arguments passed as an `out`
+  An argument passed as an `out`
   parameter must be an l-value; after the execution of the
   call, the value of the parameter is copied to the corresponding storage location
   for that l-value.
@@ -3411,7 +3411,7 @@ operation is defined for all possible inputs.
 P4 target architectures may optionally support saturating arithmetic. All saturating
 operations are limited to a fixed range between a minimum and maximum value.
 Saturating arithmetic has advantages, in particular when used as counters. The
-the result of a saturating counter max-ing out is much closer to the real
+result of a saturating counter max-ing out is much closer to the real
 result than a counter that overflows and wraps around. According to Wikipedia
 [Saturating Arithmetic](https://en.wikipedia.org/wiki/Saturation_arithmetic) saturating arithmetic is
 as numerically close to the true answer as possible; for 8-bit binary signed
@@ -4368,7 +4368,7 @@ operations can be used to manipulate `u`:
   is `true` then sets it to `false`, which implies that reading any
   member header of `u` will return an unspecified value.
 
-We can understand an assignment to a union
+We can understand an assignment to a union field
 
 ~Begin P4Example
 u.hi = e
@@ -7274,7 +7274,7 @@ in Figure [#fig-switcharch]:
   chained in the `Egress` package.
 - The `Ingress.IPipe` is connected to the `Egress.EPipe`, because the
   first outputs a value of type `T`, which is an input to the
-  second. Note that the the occurrences of the type variable `T` are
+  second. Note that the occurrences of the type variable `T` are
   instantiated with the same type in `Switch`. In contrast,
   the `Ingress` type `IH` and the `Egress` type `IH` may be
   different. To force them to be the same, we could instead
@@ -7866,14 +7866,16 @@ This is legal:
 
 ~ Begin P4Example
 @my_anno(1) table T { /* body omitted */ }
-@my_anno[2] table U { /* body omitted */ } // OK - different scope than previous use of my_anno
+@my_anno[2] table U { /* body omitted */ } // OK - different scope than previous
+                                           // use of my_anno
 ~ End P4Example
 
 This is illegal:
 
 ~ Begin P4Example
 @my_anno(1)
-@my_anno[2] table U { /* body omitted */ } // Error - changed type of anno on an element
+@my_anno[2] table U { /* body omitted */ } // Error - changed type of anno
+                                           // on an element
 ~ End P4Example
 
 Multiple unstructured annotations using the same `name` can appear on a given
@@ -7892,7 +7894,8 @@ This is illegal:
 
 ~ Begin P4Example
 @my_anno[1]
-@my_anno[2] table U { /* body omitted */ } // Error - reused the same structured anno on an element
+@my_anno[2] table U { /* body omitted */ } // Error - reused the same structured
+                                           // anno on an element
 ~ End P4Example
 
 ## Bodies of Unstructured Annotations
