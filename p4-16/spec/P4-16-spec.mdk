@@ -3884,10 +3884,12 @@ For example, the following program fragment uses a list expression to
 pass several header fields simultaneously to a learning provider:
 
 ~ Begin P4Example
-extern LearningProvider {
-    void learn<T>(in T data);
+extern LearningProvider<T> {
+    LearningProvider();
+    void learn(in T data);
 }
-LearningProvider() lp;
+
+LearningProvider<tuple<bit<48>, bit<32>>>() lp;
 
 lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );
 ~ End P4Example
