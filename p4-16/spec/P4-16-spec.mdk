@@ -3023,6 +3023,32 @@ datapath (e.g., a target specific tool-chain could include software
 that automatically converts values of type `PortId_t` to a different
 representation when exchanged with the control-plane software).
 
+## Using the type of an expression
+
+The `typeof` keyword can be used in a `typedef` declaration to obtain the
+type of an expression:
+
+~ Begin P4Grammar
+typedefDeclaration
+    : optAnnotations TYPEDEF typeofDeclaration name;
+
+typeofDeclaration
+    : TYPEOF "(" expression ")"
+    ;
+~ End P4Grammar
+
+~ Begin P4Example
+const bit<32> a = 6;
+const int b = 3;
+typedef typeof(a + b) T;
+~ End P4Example
+
+The `typeof` call does not evaluate the argument expression, either
+statically or dynamically, it only typechecks the expression and
+returns its type.  The result of this declaration is declare a new
+type name `T` that is the same as the type of the expression that is
+an argument to `typeof()`, i.e., `bit<32>`.
+
 # Expressions { #sec-exprs }
 
 This section describes all expressions that can be used in P4,
