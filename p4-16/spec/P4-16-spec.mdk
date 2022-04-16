@@ -3525,12 +3525,12 @@ P4 also does not support arithmetic exceptions. The runtime result of an
 arithmetic operation is defined for all combinations of input
 arguments.
 
-All binary operations (except shifts and concatenation) require both operands to have
-the same exact type (signedness) and width and supplying operands with
-different widths or signedness produces a compile-time error. No
-implicit casts are inserted by the compiler to equalize the
-types. With the exception of shifts and concatenation, P4 does not have any binary operations that combine signed and unsigned
-values.
+All binary operations except shifts and concatenation require both operands
+to have the same exact type (signedness) and width and supplying operands
+with different widths or signedness produces a compile-time error.
+No implicit casts are inserted by the compiler to equalize the types.
+Except for shifts and concatenation, P4 does not have any binary operations
+that operate simultaneously on signed and unsigned values.
 
 Note that bitwise operations on signed integers are well-defined, since the
 representation is mandated to be two's complement.
@@ -3563,38 +3563,40 @@ The `int<W>` datatype also support the following operations:
   unsigned number of type `bit<S>` or a non-negative integer compile-time known value.
   The result has the same type as the left operand.
   Shifting left produces the exact same bit pattern as a shift left
-  of an unsigned value.  Shift left can thus overflow, when it leads to
-  a change of the sign bit.
-  Shifting by an amount greater than
-  the width of the input produces a "correct" result:
+  of an unsigned value.  Shift left can thus overflow,
+  when it leads to a change of the sign bit.
+  Shifting by an amount greater than the width of the input produces
+  a "correct" result:
   - all result bits are zero when shifting left
-  - all result bits are zero when shifting right a positive value
-  - all result bits are one when shifting right a negative value
-- Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
-  where `m` and `l` must be expressions that evaluate to
-  non-negative compile-time known values, and `m >= l`. The types of `m` and `l` (which do not have to be identical)
+  - all result bits are zero when shifting a non-negative value right
+  - all result bits are one when shifting a negative value right
+- Extraction of a set of contiguous bits, also known as a slice,
+  denoted by `[L:R]`, where `L` and `R` must be expressions that evaluate to
+  non-negative compile-time known values, and `L >= R` must be true.
+  The types of `L` and `R` (which do not need to be identical)
   must be one of the following:
 
-  - `int` - an infinite-precision integer (section
-    [#sec-infinite-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
-    [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
-    [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or
-    `int<W>` (section [#sec-enum-types]).
+  - `int` - an infinite-precision integer
+    (section [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
+    (section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1`
+    (section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>`
+    (section [#sec-enum-types]).
 
-  The result is an unsigned bit-string of width `m - l + 1`, including the bits numbered
-  from `l` (which becomes the least significant bit of the result) to `m` (the
-  most significant bit of the result) from the source operand. The conditions `0 <= l < W`
-  and `l <= m < W` are checked statically (where `W` is
+  The result is an unsigned bit-string of width `L - R + 1`, including the bits
+  numbered from `R` (which becomes the least significant bit of the result)
+  to `L` (the most significant bit of the result) from the source operand.
+  The conditions `0 <= R <= L < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
-  the extraction are inclusive. The bounds are required to be
-  compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
-  The effect of this statement is to set bits `m` to `l` of `e` to the
-  bit-pattern represented by `x`, and leaves all other bits of `e`
-  unchanged.  A slice of a signed integer is treated like an unsigned integer.
+  the extraction are inclusive. The bounds are required to be values
+  that are known at compile time so that the width of the result can be
+  computed at compile time. Slices are also l-values, which means that P4
+  supports assigning to a slice: ` e[L:R] = x `.
+  The effect of this statement is to set bits `L` through `R` of `e` to the
+  bit-pattern represented by `x`, and leaves all other bits of `e` unchanged.
+  A slice of a signed integer is treated as an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
   The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
