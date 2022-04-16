@@ -3401,7 +3401,7 @@ This section discusses all operations that can be performed on
 expressions of type `bit<W>` for some width `W`, also known as
 bit-strings.
 
-Arithmetic operations "wrap-around", similar to C operations on
+Arithmetic operations "wrap around", similar to C operations on
 unsigned values (i.e., representing a large value on W bits will only
 keep the least-significant W bits of the value). In particular, P4
 does not have arithmetic exceptions---the result of an arithmetic
@@ -3409,31 +3409,32 @@ operation is defined for all possible inputs.
 
 P4 target architectures may optionally support saturating arithmetic. All saturating
 operations are limited to a fixed range between a minimum and maximum value.
-Saturating arithmetic has advantages, in particular when used as counters. The
-result of a saturating counter max-ing out is much closer to the real
+Saturating arithmetic has advantages, in particular when used as counters.
+The result of a saturating counter max-ing out is much closer to the real
 result than a counter that overflows and wraps around. According to Wikipedia
-[Saturating Arithmetic](https://en.wikipedia.org/wiki/Saturation_arithmetic) saturating arithmetic is
-as numerically close to the true answer as possible; for 8-bit binary signed
-arithmetic, when the correct answer is 130, it is considerably less surprising
-to get an answer of 127 from saturating arithmetic than to get an answer of
-−126 from modular arithmetic. Likewise, for 8-bit binary unsigned arithmetic,
-when the correct answer is 258, it is less surprising to get an answer of 255
-from saturating arithmetic than to get an answer of 2 from modular arithmetic.
-At this time, P4 defines saturating operations only for addition and
-subtraction. For an unsigned integer with bit-width of `W`, the minimum value
-is `0` and the maximum value is `2^W-1`.
-The precedence of saturating addition and subtraction operations is the
-same as for modulo arithmetic addition and subtraction.
+[Saturating Arithmetic](https://en.wikipedia.org/wiki/Saturation_arithmetic)
+saturating arithmetic is as numerically close to the true answer as possible;
+for 8-bit binary signed arithmetic, when the correct answer is 130,
+it is considerably less surprising to get an answer of 127 from saturating
+arithmetic than to get an answer of −126 from modular arithmetic.
+Likewise, for 8-bit binary unsigned arithmetic, when the correct answer is 258,
+it is less surprising to get an answer of 255 from saturating arithmetic than
+to get an answer of 2 from modular arithmetic.  At this time, P4 defines
+saturating operations only for addition and subtraction. For an unsigned
+integer with bit-width of `W`, the minimum value is `0` and the maximum value
+is `2^W-1`.  The precedence of saturating addition and subtraction operations
+is the same as for modular arithmetic addition and subtraction.
 
-All binary operations (except shifts and concatenation) require both operands to have
-the same exact type and width; supplying operands with different
-widths produces an error at compile time. No implicit casts are
-inserted by the compiler to equalize the widths. There are no binary
-operations that combine signed and unsigned values (except shifts and concatenation).
-The following operations are provided on bit-string expressions:
+All binary operations except shifts and concatenation require both operands to
+have the same exact type and width; supplying operands with different widths
+produces an error at compile time. No implicit casts are inserted by the
+compiler to equalize the widths. There are no other binary operations that
+accept signed and unsigned values simultaneously besides shifts and
+concatenation.  The following operations are provided on bit-string
+expressions:
 
-- Test for equality between bit-strings of the same width, designated
-  by `==`. The result is a Boolean value.
+- Test for equality between bit-strings of the same width,
+  designated by `==`. The result is a Boolean value.
 - Test for inequality between bit-strings of the same width,
   designated by `!=`. The result is a Boolean value.
 - Unsigned comparisons `<,>,<=,>=`. Both operands must have the
@@ -3453,14 +3454,12 @@ to bit-strings of the same width:
 - Subtraction, denoted by `-`. The result is unsigned, and has the
   same type as the operands. It is computed by adding the negation
   of the second operand (similar to C).
-- Multiplication, denoted by `*`. The result has the same width as the
-  operands and is computed by truncating the result to the output's width.
-  P4 architectures may impose additional restrictions---e.g., they may
-  only allow multiplication by a power of two.
-- Bitwise "and" between two bit-strings of the same width, denoted
-  by `&`.
-- Bitwise "or" between two bit-strings of the same width, denoted
-  by `|`.
+- Multiplication, denoted by `*`. The result has the same width as the operands
+  and is computed by truncating the result to the output's width.
+  P4 architectures may impose additional restrictions --- e.g., they may only
+  allow multiplication by a non-negative integer power of two.
+- Bitwise "and" between two bit-strings of the same width, denoted by `&`.
+- Bitwise "or" between two bit-strings of the same width, denoted by `|`.
 - Bitwise "complement" of a single bit-string, denoted by `~`.
 - Bitwise "xor" of two bit-strings of the same width, denoted by `^`.
 - Saturating addition, denoted by `|+|`.
@@ -3468,40 +3467,43 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
-- Logical shift left and right with a runtime known unsigned integer
-  value, denoted by `<<` and `>>` respectively. In a shift, the left operand is unsigned, and right operand must be either an
-  expression of type `bit<S>` or a non-negative integer compile-time known value.
-  The result has the
-  same type as the left operand. Shifting by an amount greater than
-  the width of the input produces a result where all bits are zero.
-- Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
-  where `m` and `l` must be expressions that evaluate to
-  non-negative compile-time known values, and `m >= l`. The types of `m` and `l` (which do not have to be identical)
-  must be one of the following:
+- Logical shift left and right by a (not-necessarily-known-at-compile-time)
+  non-negative integer value, denoted by `<<` and `>>` respectively.
+  In a shift, the left operand is unsigned, and right operand must be either an
+  expression of type `bit<S>` or a non-negative integer value that is known at
+  compile time.  The result has the same type as the left operand.
+  Shifting by an amount greater than or equal to the width of the input
+  produces a result where all bits are zero.
+- Extraction of a set of contiguous bits, also known as a slice,
+  denoted by `[L:R]`, where `L` and `R` must be expressions that evaluate to
+  non-negative compile-time known values, and `L >= R`. The types of `L` and `R`
+  (which do not need to be identical) must be one of the following:
 
-  - `int` - an infinite-precision integer (section
-    [#sec-infinite-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
-    [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
-    [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or
-    `int<W>` (section [#sec-enum-types]).
+  - `int` - an infinite-precision integer
+    (section [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
+    (section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1`
+    (section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is
+    `bit<W>` or `int<W>` (section [#sec-enum-types]).
 
-  The result is a bit-string of width `m - l + 1`, including the bits numbered
-  from `l` (which becomes the least significant bit of the result) to `m` (the
-  most significant bit of the result) from the source operand. The conditions `0 <= l < W`
-  and `l <= m < W` are checked statically (where `W` is
+  The result is a bit-string of width `L - R + 1`, including the bits numbered
+  from `R` (which becomes the least significant bit of the result) to `L` (the
+  most significant bit of the result) from the source operand. The conditions
+  `0 <= R <= L < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
-  compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
-  The effect of this statement is to set bits `m` to `l` of `e` to the
-  bit-pattern represented by `x`, and leaves all other bits of `e`
-  unchanged.  A slice of an unsigned integer is an unsigned integer.
+  known-at-compile-time values so that the result width can be computed
+  at compile time. Slices are also l-values, which means that P4 supports
+  assigning to a slice: ` e[L:R] = x `.
+  The effect of this statement is to set bits `L` through `R` (inclusive of
+  both) of `e` to the bit-pattern represented by `x`, and leaves all other bits
+  of `e` unchanged.  A slice of an unsigned integer is an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
-  The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
-  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
+  The two operands must be either `bit<W>` or `int<W>`, and they can be of
+  different signedness and width.  The result has the same signedness as the
+  left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
