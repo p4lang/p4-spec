@@ -1265,8 +1265,8 @@ There are two Boolean literal constants: `true` and `false`.
 
 #### Integer literals { #sec-integer-literals }
 
-Integer literals are positive, arbitrary-precision integers. By
-default, literals are represented in base 10. The following prefixes
+Integer literals are non-negative arbitrary-precision integers.
+By default, literals are represented in base 10. The following prefixes
 must be employed to specify the base explicitly:
 
 - `0x` or `0X` indicates base 16 (hexadecimal)
@@ -1306,8 +1306,8 @@ literal. Here are some examples of numeric literals:
 #### String literals { #sec-string-literals }
 
 String literals (string constants) are specified as an arbitrary
-sequence of 8-bit characters, enclosed within double quote signs `"`
-(ASCII code 34). Strings start with a double quote sign
+sequence of 8-bit characters, enclosed within double quote characters `"`
+(ASCII code 34). Strings start with a double quote character
 and extend to the first double quote sign which is not immediately
 preceded by an odd number of backslash characters (ASCII code 92). P4
 does not make any validity checks on strings (i.e., it does not check
@@ -2098,7 +2098,7 @@ parameters.
 The types of integer literals (constants) are as follows:
 
 - A simple integer constant has type `int`.
-- A positive integer prefixed with an integer width `N` and the
+- A non-negative integer prefixed with an integer width `N` and the
   character `w` has type `bit<N>`.
 - An integer prefixed with an integer width `N` and the character `s`
   has type `int<N>`.
@@ -2469,8 +2469,7 @@ headerUnionDeclaration
 
 This declaration introduces a new type with the specified name in the
 current scope. Each element of the list of fields used to declare a
-header union must be a header type. However, the empty list of fields
-is legal.
+header union must be of header type. An empty list of fields is legal.
 
 As an example, the type `Ip_h` below represents the union of an IPv4
 and IPv6 headers:
@@ -2482,7 +2481,7 @@ header_union IP_h {
 }
 ~ End P4Example
 
-A header union is not considered a type with fixed width.
+A header union is not considered a type with fixed length.
 
 ### Struct types { #sec-struct-types }
 
@@ -2532,7 +2531,8 @@ The type `tuple<>` is a tuple type with no components.
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
-header unions, structs, and tuples.  Note that `int` means an
+header unions, structs, and tuples.  Note that `int` by itself
+(i.e. not as part of an `int<N>` type expression) means an
 infinite-precision integer, without a width specified.
 
 |--------------------|--------------------------------------------|
@@ -2649,8 +2649,8 @@ These declarations describe two objects:
 * `random`, which has a function type, representing the following information:
     - the result type is `void`
     - the function has two inputs
-    - first input has direction `in`, type `bit<5>`, and name `logRange`
-    - second input has direction `out`, type `bit<32>`, and name `value`
+    - the first formal parameter has direction `in`, type `bit<5>`, and name `logRange`
+    - the second formal parameter has direction `out`, type `bit<32>`, and name `value`
 * `add`, also has a function type, representing the following information:
     - the result type is `bit<32>`
     - the function has two inputs
@@ -2860,9 +2860,9 @@ have no return values. Declarations of parsers and control block types
 in architectures may be generic
 (i.e., have type parameters).
 
-The types `parser`, `control`, and `package` cannot be
-used as types of arguments for methods, parsers, controls, tables,
-actions. They _can_ be used as types for the arguments passed to
+The types `parser`, `control`, and `package` cannot be used as
+types of arguments for methods, parsers, controls, tables, or actions.
+They _can_ be used as types for the arguments passed to
 constructors (see Section [#sec-parameterization]).
 
 #### Parser type declarations
@@ -2879,9 +2879,8 @@ parserTypeDeclaration
 ~ End P4Grammar
 
 For example, the following is a type declaration of a parser type
-named `P` that is parameterized on a type variable `H`. The parser
-that receives as input a `packet_in` value `b` and produces
-two values:
+named `P` that is parameterized on a type variable `H`. That parser
+receives as input a `packet_in` value `b` and produces two values:
 
 - A value with a user-defined type `H`
 - A value with a predefined type `Counters`
@@ -2918,7 +2917,7 @@ packageTypeDeclaration
     ;
 ~ End P4Grammar
 
-All parameters of a package are evaluated at compilation-time, and in
+All parameters of a package are evaluated at compilation time, and in
 consequence they must all be directionless (they cannot be `in`, `out`,
 or `inout`). Otherwise package types are very similar to
 parser type declarations. Packages can only be instantiated; there are
@@ -3002,15 +3001,15 @@ type bit<32> U32;
 U32 x = (U32)0;
 ~ End P4Example
 
-While similar to `typedef`, the `type` keyword introduces in fact a
-new type, which is not a synonym with the original type: values of the
+While similar to `typedef`, the `type` keyword introduces a new type
+which is not a synonym with the original type: values of the
 original type and the newly introduced type cannot be mixed in
 expressions.
 
 One important use of such types is in describing P4 values that need
-to be exchanged with the control-plane through communication channels
+to be exchanged with the control plane through communication channels
 (e.g., through the control-plane API or through network packets sent
-to the control-plane).  For example, a P4 architecture may define a
+to the control plane).  For example, a P4 architecture may define a
 type for the switch ports:
 
 ~Begin P4Example
@@ -3018,9 +3017,9 @@ type bit<9> PortId_t;
 ~End P4Example
 
 This declaration will prevent `PortId_t` values from being used in
-arithmetic expressions.  Moreover, this declaration may enable special
+arithmetic expressions without casts.  Moreover, this declaration may enable special
 manipulation or such values by software that lies outside of the
-datapath (e.g., a target specific tool-chain could include software
+datapath (e.g., a target-specific toolchain could include software
 that automatically converts values of type `PortId_t` to a different
 representation when exchanged with the control-plane software).
 
@@ -3185,7 +3184,7 @@ enum bit<8> E {
 }
 ~ End P4Example
 
-More than one symbolic value in an `enum` may map to the same fixed-with
+More than one symbolic value in an `enum` may map to the same fixed-width
 integer value.
 
 ~ Begin P4Example
@@ -3209,9 +3208,9 @@ x = (bit<8>) a; // sets x to 1
 b = (E) x;      // sets b to E.e2
 ~ End P4Example
 
-casts `a`, which was initialized to `E.e2` to a `bit<8>`, using the specified
-fixed-width unsigned integer representation for `E.e2`, `1`.  The variable `b` is then set to the
-symbolic value `E.e2`, which corresponds to the fixed-width unsigned integer value `1`.
+... casts `a` (which was initialized with `E.e2`) to a `bit<8>`, using the specified
+fixed-width unsigned integer representation for `E.e2`, i.e. `1`.  The variable `b` is then set
+to the symbolic value `E.e2`, which corresponds to the fixed-width unsigned integer value `1`.
 
 Because it is always safe to cast from an `enum` to its underlying fixed-width integer type,
 implicit casting from an `enum` to its fixed-width (signed or unsigned) integer type is also supported (see Section [#sec-implicit-casts]):
@@ -3334,38 +3333,37 @@ parser my_parser(/* parameters omitted */) {
 }
 ~ End P4Example
 
-Any variable with an `enum` type that contains an unnamed value, whether as the result of a cast
-to an `enum` with an underlying type, parse into the field of an `enum` with an
-underlying type, or simply the declaration of any `enum` without a specified
-initial value will not be equal to any of the values defined for that
-type.  Such an unnamed value should still lead to predictable
-behavior in cases where any legal value would match, e.g. it should
-match in any of these situations:
+Any variable with an `enum` type that contains an unnamed value (whether as the
+result of a cast to an `enum` with an underlying type, parse into the field of
+an `enum` with an underlying type, or simply the declaration of any `enum`
+without a specified initial value) will not be equal to any of the values
+defined for that type.  Such an unnamed value should still lead to predictable
+behavior in cases where any legal value would match, e.g. it should match in
+any of these situations:
 
 - If used in a `select` expression, it should match `default` or `_`
   in a key set expression.
 - If used as a key with `match_kind` `ternary` in a table, it should
-  match a table entry where the field has all bit positions "don't
-  care".
+  match a table entry where the field has all bit positions "don't care".
 - If used as a key with `match_kind` `lpm` in a table, it should match
   a table entry where the field has a prefix length of 0.
 
-Note that if an `enum` value lacking an underlying type appears in the control-plane API, the
-compiler must select a suitable serialization data type and
-representation.
-For `enum` values with an underlying type and representations, the compiler should
-use the specified underlying type as the serialization data type and
-representation.
+Note that if an `enum` value lacking an underlying type appears in the
+control-plane API, the compiler must select a suitable serialization data type
+and representation.  For `enum` values with an underlying type and
+representations, the compiler should use the specified underlying type as the
+serialization data type and representation.
 
 ## Expressions on Booleans { #sec-bool-exprs }
 
 The following operations are provided on Boolean expressions:
-- And, denoted by `&&`,
-- Or denoted by `||`,
-- Negation, denoted by `!`, and
+- "And", denoted by `&&`
+- "Or", denoted by `||`
+- Negation, denoted by `!`
 - Equality and inequality tests, denoted by `==` and `!=` respectively.
 
-The precedence of these operators is similar to C and uses short-circuit evaluation.
+The precedence of these operators is similar to C and uses short-circuited
+evaluation where relevant.
 
 P4 does not implicitly cast from bit-strings to Booleans or
 vice versa. As a consequence, a program that is valid in a language like C such as,
@@ -3388,22 +3386,22 @@ expression is evaluated.
 
 A conditional expression of the form `e1 ? e2 : e3` behaves the
 same as in languages like C. As described above, the expression `e1` is evaluated first,
-and either `e2` or `e3` is evaluated depending on the result.
+and second either `e2` or `e3` is evaluated depending on the result.
 
-The first sub-expression `e1` must have type Boolean, and the second
-and third sub-expressions must have the same type, which cannot both
-be infinite precision integers unless the condition itself can be
-evaluated at compilation time. This restriction is designed to ensure
-that the width of the result of the conditional expression can be
-inferred statically at compile time.
+The first sub-expression `e1` must have Boolean type (i.e. "bit" or "bit<1>"),
+and the second and third sub-expressions must have the same type,
+which cannot both be infinite-precision integers unless the condition
+itself can be evaluated at compilation time. This restriction is
+designed to ensure that the width of the result of the conditional
+expression can be inferred statically at compile time.
 
-## Operations on bit types (unsigned integers) { #sec-bit-ops }
+## Operations on fixed-width bit types (unsigned integers) { #sec-bit-ops }
 
 This section discusses all operations that can be performed on
 expressions of type `bit<W>` for some width `W`, also known as
 bit-strings.
 
-Arithmetic operations "wrap-around", similar to C operations on
+Arithmetic operations "wrap around", similar to C operations on
 unsigned values (i.e., representing a large value on W bits will only
 keep the least-significant W bits of the value). In particular, P4
 does not have arithmetic exceptions---the result of an arithmetic
@@ -3411,31 +3409,32 @@ operation is defined for all possible inputs.
 
 P4 target architectures may optionally support saturating arithmetic. All saturating
 operations are limited to a fixed range between a minimum and maximum value.
-Saturating arithmetic has advantages, in particular when used as counters. The
-result of a saturating counter max-ing out is much closer to the real
+Saturating arithmetic has advantages, in particular when used as counters.
+The result of a saturating counter max-ing out is much closer to the real
 result than a counter that overflows and wraps around. According to Wikipedia
-[Saturating Arithmetic](https://en.wikipedia.org/wiki/Saturation_arithmetic) saturating arithmetic is
-as numerically close to the true answer as possible; for 8-bit binary signed
-arithmetic, when the correct answer is 130, it is considerably less surprising
-to get an answer of 127 from saturating arithmetic than to get an answer of
-−126 from modular arithmetic. Likewise, for 8-bit binary unsigned arithmetic,
-when the correct answer is 258, it is less surprising to get an answer of 255
-from saturating arithmetic than to get an answer of 2 from modular arithmetic.
-At this time, P4 defines saturating operations only for addition and
-subtraction. For an unsigned integer with bit-width of `W`, the minimum value
-is `0` and the maximum value is `2^W-1`.
-The precedence of saturating addition and subtraction operations is the
-same as for modulo arithmetic addition and subtraction.
+[Saturating Arithmetic](https://en.wikipedia.org/wiki/Saturation_arithmetic)
+saturating arithmetic is as numerically close to the true answer as possible;
+for 8-bit binary signed arithmetic, when the correct answer is 130,
+it is considerably less surprising to get an answer of 127 from saturating
+arithmetic than to get an answer of −126 from modular arithmetic.
+Likewise, for 8-bit binary unsigned arithmetic, when the correct answer is 258,
+it is less surprising to get an answer of 255 from saturating arithmetic than
+to get an answer of 2 from modular arithmetic.  At this time, P4 defines
+saturating operations only for addition and subtraction. For an unsigned
+integer with bit-width of `W`, the minimum value is `0` and the maximum value
+is `2^W-1`.  The precedence of saturating addition and subtraction operations
+is the same as for modular arithmetic addition and subtraction.
 
-All binary operations (except shifts and concatenation) require both operands to have
-the same exact type and width; supplying operands with different
-widths produces an error at compile time. No implicit casts are
-inserted by the compiler to equalize the widths. There are no binary
-operations that combine signed and unsigned values (except shifts and concatenation).
-The following operations are provided on bit-string expressions:
+All binary operations except shifts and concatenation require both operands to
+have the same exact type and width; supplying operands with different widths
+produces an error at compile time. No implicit casts are inserted by the
+compiler to equalize the widths. There are no other binary operations that
+accept signed and unsigned values simultaneously besides shifts and
+concatenation.  The following operations are provided on bit-string
+expressions:
 
-- Test for equality between bit-strings of the same width, designated
-  by `==`. The result is a Boolean value.
+- Test for equality between bit-strings of the same width,
+  designated by `==`. The result is a Boolean value.
 - Test for inequality between bit-strings of the same width,
   designated by `!=`. The result is a Boolean value.
 - Unsigned comparisons `<,>,<=,>=`. Both operands must have the
@@ -3455,14 +3454,12 @@ to bit-strings of the same width:
 - Subtraction, denoted by `-`. The result is unsigned, and has the
   same type as the operands. It is computed by adding the negation
   of the second operand (similar to C).
-- Multiplication, denoted by `*`. The result has the same width as the
-  operands and is computed by truncating the result to the output's width.
-  P4 architectures may impose additional restrictions---e.g., they may
-  only allow multiplication by a power of two.
-- Bitwise "and" between two bit-strings of the same width, denoted
-  by `&`.
-- Bitwise "or" between two bit-strings of the same width, denoted
-  by `|`.
+- Multiplication, denoted by `*`. The result has the same width as the operands
+  and is computed by truncating the result to the output's width.
+  P4 architectures may impose additional restrictions --- e.g., they may only
+  allow multiplication by a non-negative integer power of two.
+- Bitwise "and" between two bit-strings of the same width, denoted by `&`.
+- Bitwise "or" between two bit-strings of the same width, denoted by `|`.
 - Bitwise "complement" of a single bit-string, denoted by `~`.
 - Bitwise "xor" of two bit-strings of the same width, denoted by `^`.
 - Saturating addition, denoted by `|+|`.
@@ -3470,40 +3467,43 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
-- Logical shift left and right with a runtime known unsigned integer
-  value, denoted by `<<` and `>>` respectively. In a shift, the left operand is unsigned, and right operand must be either an
-  expression of type `bit<S>` or a non-negative integer compile-time known value.
-  The result has the
-  same type as the left operand. Shifting by an amount greater than
-  the width of the input produces a result where all bits are zero.
-- Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
-  where `m` and `l` must be expressions that evaluate to
-  non-negative compile-time known values, and `m >= l`. The types of `m` and `l` (which do not have to be identical)
-  must be one of the following:
+- Logical shift left and right by a (not-necessarily-known-at-compile-time)
+  non-negative integer value, denoted by `<<` and `>>` respectively.
+  In a shift, the left operand is unsigned, and right operand must be either an
+  expression of type `bit<S>` or a non-negative integer value that is known at
+  compile time.  The result has the same type as the left operand.
+  Shifting by an amount greater than or equal to the width of the input
+  produces a result where all bits are zero.
+- Extraction of a set of contiguous bits, also known as a slice,
+  denoted by `[L:R]`, where `L` and `R` must be expressions that evaluate to
+  non-negative compile-time known values, and `L >= R`. The types of `L` and `R`
+  (which do not need to be identical) must be one of the following:
 
-  - `int` - an infinite-precision integer (section
-    [#sec-infinite-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
-    [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
-    [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or
-    `int<W>` (section [#sec-enum-types]).
+  - `int` - an infinite-precision integer
+    (section [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
+    (section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1`
+    (section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is
+    `bit<W>` or `int<W>` (section [#sec-enum-types]).
 
-  The result is a bit-string of width `m - l + 1`, including the bits numbered
-  from `l` (which becomes the least significant bit of the result) to `m` (the
-  most significant bit of the result) from the source operand. The conditions `0 <= l < W`
-  and `l <= m < W` are checked statically (where `W` is
+  The result is a bit-string of width `L - R + 1`, including the bits numbered
+  from `R` (which becomes the least significant bit of the result) to `L` (the
+  most significant bit of the result) from the source operand. The conditions
+  `0 <= R <= L < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
-  compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
-  The effect of this statement is to set bits `m` to `l` of `e` to the
-  bit-pattern represented by `x`, and leaves all other bits of `e`
-  unchanged.  A slice of an unsigned integer is an unsigned integer.
+  known-at-compile-time values so that the result width can be computed
+  at compile time. Slices are also l-values, which means that P4 supports
+  assigning to a slice: ` e[L:R] = x `.
+  The effect of this statement is to set bits `L` through `R` (inclusive of
+  both) of `e` to the bit-pattern represented by `x`, and leaves all other bits
+  of `e` unchanged.  A slice of an unsigned integer is an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
-  The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
-  The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
+  The two operands must be either `bit<W>` or `int<W>`, and they can be of
+  different signedness and width.  The result has the same signedness as the
+  left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
@@ -3526,12 +3526,12 @@ P4 also does not support arithmetic exceptions. The runtime result of an
 arithmetic operation is defined for all combinations of input
 arguments.
 
-All binary operations (except shifts and concatenation) require both operands to have
-the same exact type (signedness) and width and supplying operands with
-different widths or signedness produces a compile-time error. No
-implicit casts are inserted by the compiler to equalize the
-types. With the exception of shifts and concatenation, P4 does not have any binary operations that combine signed and unsigned
-values.
+All binary operations except shifts and concatenation require both operands
+to have the same exact type (signedness) and width and supplying operands
+with different widths or signedness produces a compile-time error.
+No implicit casts are inserted by the compiler to equalize the types.
+Except for shifts and concatenation, P4 does not have any binary operations
+that operate simultaneously on signed and unsigned values.
 
 Note that bitwise operations on signed integers are well-defined, since the
 representation is mandated to be two's complement.
@@ -3564,50 +3564,44 @@ The `int<W>` datatype also support the following operations:
   unsigned number of type `bit<S>` or a non-negative integer compile-time known value.
   The result has the same type as the left operand.
   Shifting left produces the exact same bit pattern as a shift left
-  of an unsigned value.  Shift left can thus overflow, when it leads to
-  a change of the sign bit.
-  Shifting by an amount greater than
-  the width of the input produces a "correct" result:
+  of an unsigned value.  Shift left can thus overflow,
+  when it leads to a change of the sign bit.
+  Shifting by an amount greater than the width of the input produces
+  a "correct" result:
   - all result bits are zero when shifting left
-  - all result bits are zero when shifting right a positive value
-  - all result bits are one when shifting right a negative value
-- Extraction of a set of contiguous bits, also known as a slice, denoted by `[m:l]`,
-  where `m` and `l` must be expressions that evaluate to
-  non-negative compile-time known values, and `m >= l`. The types of `m` and `l` (which do not have to be identical)
+  - all result bits are zero when shifting a non-negative value right
+  - all result bits are one when shifting a negative value right
+- Extraction of a set of contiguous bits, also known as a slice,
+  denoted by `[L:R]`, where `L` and `R` must be expressions that evaluate to
+  non-negative compile-time known values, and `L >= R` must be true.
+  The types of `L` and `R` (which do not need to be identical)
   must be one of the following:
 
-  - `int` - an infinite-precision integer (section
-    [#sec-infinite-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
-    [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
-    [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or
-    `int<W>` (section [#sec-enum-types]).
+  - `int` - an infinite-precision integer
+    (section [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
+    (section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1`
+    (section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>`
+    (section [#sec-enum-types]).
 
-  The result is an unsigned bit-string of width `m - l + 1`, including the bits numbered
-  from `l` (which becomes the least significant bit of the result) to `m` (the
-  most significant bit of the result) from the source operand. The conditions `0 <= l < W`
-  and `l <= m < W` are checked statically (where `W` is
+  The result is an unsigned bit-string of width `L - R + 1`, including the bits
+  numbered from `R` (which becomes the least significant bit of the result)
+  to `L` (the most significant bit of the result) from the source operand.
+  The conditions `0 <= R <= L < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
-  the extraction are inclusive. The bounds are required to be
-  compile-time known values so that the result width can be computed
-  at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: ` e[m:l] = x `.
-  The effect of this statement is to set bits `m` to `l` of `e` to the
-  bit-pattern represented by `x`, and leaves all other bits of `e`
-  unchanged.  A slice of a signed integer is treated like an unsigned integer.
+  the extraction are inclusive. The bounds are required to be values
+  that are known at compile time so that the width of the result can be
+  computed at compile time. Slices are also l-values, which means that P4
+  supports assigning to a slice: ` e[L:R] = x `.
+  The effect of this statement is to set bits `L` through `R` of `e` to the
+  bit-pattern represented by `x`, and leaves all other bits of `e` unchanged.
+  A slice of a signed integer is treated as an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
   The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
-
-### A note about concatenation { #sec-concatenation }
-
-Concatenation is applied to two bit-strings (signed or unsigned).  It
-is denoted by the infix operator `++`.  The result is a bit-string
-whose length is the sum of the lengths of the inputs where the most
-significant bits are taken from the left operand; the sign of the
-result is taken from the left operand.
 
 ## Operations on arbitrary-precision integers { #sec-varint-ops }
 
@@ -3650,12 +3644,22 @@ to apply division and modulo to negative values.
 
 Note: saturating arithmetic is not supported for arbitrary-precision integers.
 
+## Concatenation and shifts
+
+### Concatenation { #sec-concatenation }
+
+Concatenation is applied to two bit-strings (signed or unsigned).
+It is denoted by the infix operator `++`.  The result is a bit-string
+whose length is the sum of the lengths of the inputs where the most
+significant bits are taken from the left operand; the sign of the
+result is taken from the left operand.
+
 ### A note about shifts
 
 The left operand of shifts can be any one out of unsigned bit-strings, signed bit-strings,
 and arbitrary-precision integers, and the right operand of shifts must be either
-an expression of type `bit<S>` or a non-negative integer compile-time known value. The result has the
-same type as the left operand.
+an expression of type `bit<S>` or a non-negative integer compile-time known value.
+The result has the same type as the left operand.
 
 Shifts on signed and unsigned bit-strings deserve a special discussion
 for the following reasons:
@@ -3664,9 +3668,8 @@ for the following reasons:
   bit-strings: right shift for signed bit-strings is an arithmetic shift,
   and for unsigned bit-strings is a logical shift.
 - Shifting with a negative amount does not have a clear semantics:
-   the P4 type system makes it
-  illegal to shift with a negative amount.
-- Unlike C, shifting by an amount larger or equal to the number of bits
+  the P4 type system makes it illegal to shift with a negative amount.
+- Unlike C, shifting by an amount larger than or equal to the number of bits
   has a well-defined result.
 - Finally, depending on the capabilities of the target, shifting may
   require doing work which is exponential in the number of bits of the
