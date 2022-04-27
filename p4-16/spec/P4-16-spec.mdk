@@ -1882,19 +1882,16 @@ The `match_kind` type is very similar to the `error` type and
 is used to declare a set of names that may be
 used in a table's key property (described in Section
 [#sec-table-props]).
+All identifiers are inserted into the
+top-level namespace.
+It is an error to declare the same `match_kind`
+identifier multiple times.
 
 ~ Begin P4Grammar
 matchKindDeclaration
     : MATCH_KIND '{' identifierList '}'
     ;
 ~ End P4Grammar
-
-All `match_kind` constants are inserted into the `match_kind`
-namespace. `match_kind` is similar to an enumeration (`enum`)
-type in other languages. A program can contain multiple `match_kind` declarations, which
-the compiler will merge together. It is an error to declare the same
-identifier multiple times. Expressions of type `match_kind` are
-described in Section [#sec-match_kind-exprs].
 
 The P4 core library contains the following match_kind declaration:
 
@@ -3148,16 +3145,6 @@ side-effects. P4 expressions are evaluated as follows:
   the source program.
 - Method and function calls are evaluated as described in Section
   [#sec-calling-convention].
-
-## Expressions on `match_kind` value { #sec-match_kind-exprs }
-
-Symbolic names declared by an `match_kind` declaration belong to the `match_kind`
-namespace.  The `match_kind` type only supports equality (`==`) and inequality (`!=`) comparisons.
-The result of such a comparison is a Boolean value.
-
-As an exception to the standard name lookup rules of P4,
-constants of type `match_kind` can be used without the `match_kind.` prefix
-when used in a table key field (see Section [#sec-table-keys]).
 
 ## Operations on `error` types { #sec-error-exprs }
 
