@@ -3746,20 +3746,20 @@ While this design is arguably more onerous for programmers, it has several benef
 
 The following casts are legal in P4:
 
-- `bit<1> <-> bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
-- `int -> bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
-- `int<W> -> bit<W>`: preserves all bits unchanged and reinterprets negative
+- `bit<1> ↔ bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
+- `int → bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
+- `int<W> → bit<W>`: preserves all bits unchanged and reinterprets negative
   values as positive values
-- `bit<W> -> int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
-- `bit<W> -> bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
-- `int<W> -> int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
-- `bit<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is always positive
-- `int<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
-- `int -> bit<W>`: converts the integer value into a sufficiently
-  large two's complement bit string to avoid information loss, and
-  then truncates the result to `W` bits. The compiler should emit a
-  warning on overflow or on conversion of negative value.
-- `int -> int<W>`: converts the integer value into a
+- `bit<W> → int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
+- `bit<W> → bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
+- `int<W> → int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
+- `bit<W> → int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is always positive
+- `int<W> → int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
+- `int → bit<W>`: converts the integer value into a sufficiently
+  large two's complement bit string to avoid information loss,
+  and then truncates the result to `W` bits. The compiler should
+  emit a warning on overflow or on conversion of negative value.
+- `int → int<W>`: converts the integer value into a
   sufficiently-large two's complement bit string to avoid information
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
