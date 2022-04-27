@@ -4663,13 +4663,13 @@ behavior of the expressions `hs.next` and `hs.last`, and the behaviors
 specified there take precedence over anything in this section for
 those expressions.
 
-All mentions of header stack elements in this section only apply for
-expressions `hs[index]` where `index` is a run time variable
-expression, i.e. not a compile-time constant value.  A P4
-implementation is allowed not to support `hs[index]` where `index` is
-a run time variable expression, but if it does support these
-expressions, the implementation should conform to the behaviors
-specified in this section.
+All mentions of header stack elements in this section only apply
+for expressions `hs[index]` where `index` is a runtime variable
+expression, i.e. not a compile-time constant value.
+A P4 implementation is allowed not to support `hs[index]` where
+`index` is a runtime variable expression, but if it does support
+these expressions, the implementation should conform to the
+behaviors specified in this section.
 
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
@@ -4681,8 +4681,7 @@ some unspecified value will be used for that field.
   from a `struct`, any uninitialized variable inside of an `action` or
   `control`, or an `out` parameter of a `control` or `action` you have
   called, which was not assigned a value during the execution of that
-  `control` or `action` (this list of examples is not intended to be
-  exhaustive).
+  `control` or `action` (this list of examples is not intended to be exhaustive).
 - reading a field of a header that is an element of a header stack,
   where the index is out of range for the header stack.
 
@@ -4707,8 +4706,7 @@ would match, e.g. it should match in any of these situations:
 - If used in a `select` expression, it should match `default` or `_`
   in a key set expression.
 - If used as a key with `match_kind` `ternary` in a table, it should
-  match a table entry where the field has all bit positions "don't
-  care".
+  match a table entry where the field has all bit positions "don't care".
 - If used as a key with `match_kind` `lpm` in a table, it should match
   a table entry where the field has a prefix length of 0.
 
