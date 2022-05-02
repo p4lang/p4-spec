@@ -7087,7 +7087,7 @@ control Callee(/* parameters omitted */) { /* body omitted */ }
 
 control Caller(/* parameters omitted */)(/* parameters omitted */) {
     apply {
-        Callee.apply(/* arguments omitted */); // callee is treated as an instance
+        Callee.apply(/* arguments omitted */); // Callee is treated as an instance
     }
 }
 ~ End P4Example
@@ -7110,9 +7110,24 @@ directApplication
     ;
 ~ End P4Grammar
 
-This feature is intended to streamline the common case where a type is instantiated
-exactly once.  For completeness, the behavior of directly invoking the
-same type more than once is defined as follows.
+This feature is intended to streamline the common case where a type is
+instantiated exactly once.
+
+The second production in the grammar allows direct calls for generic
+controls or parsers:
+
+~ Begin P4Example
+control Callee<T>(/* parameters omitted */) { /* body omitted */ }
+
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
+    apply {
+        Callee<bit<32>>.apply(/* arguments omitted */); // Callee<bit<32>> is treated as an instance
+    }
+}
+~ End P4Example
+
+For completeness, the behavior of directly invoking the same type more
+than once is defined as follows.
 
 - Direct type invocation in different scopes will result in different
   local instances with different fully-qualified control names.
