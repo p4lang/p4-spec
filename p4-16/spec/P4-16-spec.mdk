@@ -4687,6 +4687,32 @@ bool b1 = (bit<32>)x == z;  // cast needed
 bool b2 = x == y;  // no cast needed
 ~ End P4Example
 
+## Operations on types that are type variables { #sec-type-variable-operations }
+
+Because functions, methods, control, and parsers can be generic,
+they offer the possibility of declaring values with types that
+are type variables:
+
+~ Begin P4Example
+control C<T>() {
+    apply {
+        T x;  // the type of x is T, a type variable
+    }
+}
+~ End P4Example
+
+The type of such objects is not known until the control is
+instantiated with specific type arguments.
+
+Currently the only operations that are available for such values are
+assignment (explicit through `=`, or implicit, through argument passing).
+This behavior is similar to languages such as Java, and different from
+languages such as C++.
+
+A future version of P4 may introduce a notion of _type constraints_
+which would enable more operations on such values.  Because of this
+limitation, such values are currently of limited utility.
+
 ## Reading uninitialized values and writing fields of invalid headers { #sec-uninitialized-values-and-writing-invalid-headers }
 
 As mentioned in Section [#sec-expr-hs], any reference to an element of
@@ -8325,6 +8351,7 @@ The P4 compiler should provide:
 * Allow empty entries lists for tables
 * Extended minSizeInBits, and minSizeInBytes to apply to more
   expressions (Section [#sec-minsizeinbits]).  Added maxSizeInBits and maxSizeInBytes.
+* Specify operations on values typed as type variables.
 
 ## Summary of changes made in version 1.2.2
 
