@@ -2986,6 +2986,18 @@ The two types are treated as synonyms, and all operations that can be
 executed using the original type can be also executed using the newly
 created type.
 
+If `typedef` is used with a generic type the type must be specialized
+with the suitable number of type arguments:
+
+~ Begin P4Example
+struct S<T> {
+   T field;
+}
+
+// typedef S X;  -- illegal: S does not have type arguments
+typedef S<bit<32>> X;  // -- legal
+~ End P4Example
+
 ## Introducing new types { #sec-newtype }
 
 Similarly to `typedef`, the keyword `type` can be used to introduce a
