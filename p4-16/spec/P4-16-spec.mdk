@@ -3911,6 +3911,21 @@ struct S {
 const S x = { 10, 20 }; //a = 10, b = 20
 ~ End P4Example
 
+A list expression can have an explicit structure or header type
+specified, and then it is converted automatically to a
+structure-valued expression (see [#sec-structure-expressions]):
+
+~ Begin P4Example
+struct S {
+    bit<32> a;
+    bit<32> b;
+}
+
+extern void f<T>(in T data);
+
+f((S){ 10, 20 }); // automatically converted to f((S){a = 10, b = 20});
+~ End P4Example
+
 List expressions can also be used to initialize variables whose type
 is a `tuple` type.
 
