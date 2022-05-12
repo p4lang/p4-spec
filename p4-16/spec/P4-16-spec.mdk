@@ -2418,6 +2418,9 @@ variable-length fields is to define two headers -- one fixed length,
 one containing a `varbit` field -- and extract each part in separate
 parsing steps.
 
+Notice that the names `isValid`, `setValid`, `minSizeInBits`, etc. are all
+valid header field names.
+
 ### Header stacks { #sec-header-stacks }
 
 A header stack represents an array of headers. A header stack type is
@@ -2985,6 +2988,18 @@ typedef Empty_h[32] HeaderStack;
 The two types are treated as synonyms, and all operations that can be
 executed using the original type can be also executed using the newly
 created type.
+
+If `typedef` is used with a generic type the type must be specialized
+with the suitable number of type arguments:
+
+~ Begin P4Example
+struct S<T> {
+   T field;
+}
+
+// typedef S X;  -- illegal: S does not have type arguments
+typedef S<bit<32>> X;  // -- legal
+~ End P4Example
 
 ## Introducing new types { #sec-newtype }
 
@@ -3784,7 +3799,7 @@ For example, given the following declarations,
 
 ~ Begin P4Example
 enum bit<8> E {
-   a = 5;
+   a = 5
 }
 
 bit<8>  x;
@@ -3909,6 +3924,21 @@ struct S {
     bit<32> b;
 }
 const S x = { 10, 20 }; //a = 10, b = 20
+~ End P4Example
+
+A list expression can have an explicit structure or header type
+specified, and then it is converted automatically to a
+structure-valued expression (see [#sec-structure-expressions]):
+
+~ Begin P4Example
+struct S {
+    bit<32> a;
+    bit<32> b;
+}
+
+extern void f<T>(in T data);
+
+f((S){ 10, 20 }); // automatically converted to f((S){a = 10, b = 20});
 ~ End P4Example
 
 List expressions can also be used to initialize variables whose type
@@ -4546,6 +4576,7 @@ argument
     : expression  /* positional argument */
     | name '=' expression  /* named argument */
     | DONTCARE
+    | name '=' DONTCARE
     ;
 
 realTypeArgumentList
@@ -4617,6 +4648,8 @@ constructors can also be called using named arguments.
 Constructors are evaluated entirely at compilation time (see Section
 [#sec-p4-abstract-mach]). In consequence, all constructor arguments
 must also be expressions that can be evaluated at compilation time.
+When performing type inference and overload resolution, constructor
+invocations are treated similar to methods or functions.
 
 The following example shows a constructor invocation for setting the
 target-dependent implementation property of a table:
@@ -4648,6 +4681,32 @@ bool b0 = x == (U32)z; // cast needed
 bool b1 = (bit<32>)x == z;  // cast needed
 bool b2 = x == y;  // no cast needed
 ~ End P4Example
+
+## Operations on types that are type variables { #sec-type-variable-operations }
+
+Because functions, methods, control, and parsers can be generic,
+they offer the possibility of declaring values with types that
+are type variables:
+
+~ Begin P4Example
+control C<T>() {
+    apply {
+        T x;  // the type of x is T, a type variable
+    }
+}
+~ End P4Example
+
+The type of such objects is not known until the control is
+instantiated with specific type arguments.
+
+Currently the only operations that are available for such values are
+assignment (explicit through `=`, or implicit, through argument passing).
+This behavior is similar to languages such as Java, and different from
+languages such as C++.
+
+A future version of P4 may introduce a notion of _type constraints_
+which would enable more operations on such values.  Because of this
+limitation, such values are currently of limited utility.
 
 ## Reading uninitialized values and writing fields of invalid headers { #sec-uninitialized-values-and-writing-invalid-headers }
 
@@ -5266,8 +5325,9 @@ following behavior after the expression evaluation is interrupted.
 ## Conditional statement { #sec-cond-stmt }
 
 The conditional statement uses standard syntax and semantics familiar from many programming languages.
-However, the condition expression in P4 is required to be a Boolean (and not an integer).
-Conditional statements cannot be used within a `parser`.
+
+However, the condition expression in P4 is required to be a Boolean (and not
+an integ
 
 ~ Begin P4Grammar
 conditionalStatement
@@ -6443,7 +6503,7 @@ constant, so the `const` keyword is not needed for these.
 
 ### Table properties { #sec-table-props }
 
-#### Keys
+#### Keys { #sec-table-keys }
 
 The `key` is a table property which specifies the data plane
 values that should be used to look up an entry. A key is a list of
@@ -7086,7 +7146,7 @@ control Callee(/* parameters omitted */) { /* body omitted */ }
 
 control Caller(/* parameters omitted */)(/* parameters omitted */) {
     apply {
-        Callee.apply(/* arguments omitted */); // callee is treated as an instance
+        Callee.apply(/* arguments omitted */); // Callee is treated as an instance
     }
 }
 ~ End P4Example
@@ -7102,9 +7162,31 @@ control Caller(/* parameters omitted */)(/* parameters omitted */) {
 }
 ~ End P4Example
 
-This feature is intended to streamline the common case where a type is instantiated
-exactly once.  For completeness, the behavior of directly invoking the
-same type more than once is defined as follows.
+~ Begin P4Grammar
+directApplication
+    : typeName "." APPLY "(" argumentList ")" ";"
+    | specializedType "." APPLY "(" argumentList ")" ";"
+    ;
+~ End P4Grammar
+
+This feature is intended to streamline the common case where a type is
+instantiated exactly once.
+
+The second production in the grammar allows direct calls for generic
+controls or parsers:
+
+~ Begin P4Example
+control Callee<T>(/* parameters omitted */) { /* body omitted */ }
+
+control Caller(/* parameters omitted */)(/* parameters omitted */) {
+    apply {
+        Callee<bit<32>>.apply(/* arguments omitted */); // Callee<bit<32>> is treated as an instance
+    }
+}
+~ End P4Example
+
+For completeness, the behavior of directly invoking the same type more
+than once is defined as follows.
 
 - Direct type invocation in different scopes will result in different
   local instances with different fully-qualified control names.
@@ -8282,6 +8364,7 @@ The P4 compiler should provide:
 * Allow empty entries lists for tables
 * Extended minSizeInBits, and minSizeInBytes to apply to more
   expressions (Section [#sec-minsizeinbits]).  Added maxSizeInBits and maxSizeInBytes.
+* Specify operations on values typed as type variables.
 
 ## Summary of changes made in version 1.2.2
 
@@ -8392,7 +8475,7 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `return`  | `select` | `state` | `struct`   |
 |  `switch` | `table`   | `this` | `transition` |
 |  `true` |  `tuple` | `type` | `typedef` |
-| `varbit` | `verify` | `void` | |
+| `value_set` | `varbit` | `verify` | `void` | |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
