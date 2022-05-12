@@ -3747,14 +3747,13 @@ finding this information in a section dedicated to type `varbit`.
 
 P4 provides a limited set of casts between types. A cast is written
 `(t) e`, where `t` is a type and `e` is an expression. Casts are only
-permitted on base types and derived types introduced by `typedef`, `type`, and `enum`. While this design is arguably more onerous
-for programmers, it has several benefits:
+permitted on base types and derived types introduced by `typedef`, `type`, and `enum`.
+While this design is arguably more onerous for programmers, it has several benefits:
 
 - It makes user intent unambiguous.
 - It makes the costs associated with converting numeric values
-  explicit. Implementing certain casts involve sign-extensions, and
-  thus can require significant computational resources on some
-  targets.
+  explicit. Implementing certain casts involves sign extensions,
+  and thus can require significant computational resources on some targets.
 - It reduces the number of cases that have to be considered in the P4
   specification. Some targets may not support all casts.
 
@@ -3762,24 +3761,25 @@ for programmers, it has several benefits:
 
 The following casts are legal in P4:
 
-- `bit<1> <-> bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
-- `int -> bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
-- `int<W> -> bit<W>`: preserves all bits unchanged and reinterprets negative
+- `bit<1>` &harr; `bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
+- `int` &rarr; `bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
+- `int<W>` &rarr; `bit<W>`: preserves all bits unchanged and reinterprets negative
   values as positive values
-- `bit<W> -> int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
-- `bit<W> -> bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
-- `int<W> -> int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
-- `bit<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is always positive
-- `int<W> -> int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
-- `int -> bit<W>`: converts the integer value into a sufficiently
-  large two's complement bit string to avoid information loss, and
-  then truncates the result to `W` bits. The compiler should emit a
-  warning on overflow or on conversion of negative value.
-- `int -> int<W>`: converts the integer value into a
+- `bit<W>` &rarr; `int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
+- `bit<W>` &rarr; `bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
+- `int<W>` &rarr; `int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
+- `bit<W>` &rarr; `int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is always non-negative
+- `int<W>` &rarr; `int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
+- `int` &rarr; `bit<W>`: converts the integer value into a sufficiently
+  large two's complement bit string to avoid information loss,
+  and then truncates the result to `W` bits. The compiler should
+  emit a warning on overflow or on conversion of negative value.
+- `int` &rarr; `int<W>`: converts the integer value into a
   sufficiently-large two's complement bit string to avoid information
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
 - casts between two types that are introduced by `typedef` and are equivalent to one of the above combinations.
+- casts between a typedef and the original type.
 - casts between a type introduced by `type` and the original type.
 - casts between an `enum` with an explicit type and its underlying type
 
@@ -3841,7 +3841,7 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 +----------------:+:---------------------+:-----------------+
 | `x + y`             | Different widths | `(bit<16>)x + y`|
 |                         |                           | `x + (bit<8>)y` |
-| `x + z`             | Different signs   |  `(int<8>)x + z` |
+| `x + z`             | Different signedness   |  `(int<8>)x + z` |
 |                         |                           |  `x + (bit<8>)z `   |
 | `(int<8>)y`         | Cannot change both sign and width |  `(int<8>)(bit<8>)y ` |
 |                         |                           |  `(int<8>)(int<16>)y ` |
@@ -3915,7 +3915,7 @@ lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );
 
 A list may be used to initialize a structure if the list has the same
 number of elements as fields in the structure. The effect of such an
-initializer is to assign to the i-th element of the list to the i-th
+initializer is to assign the n^th^ element of the list to the n^th^
 field in the structure:
 
 ~ Begin P4Example
@@ -4186,9 +4186,9 @@ of the header.
 "false". It can only be applied to an l-value.
 
 Similar to a `struct`, a header object can be initialized with a list
-expression [#sec-list-exprs] --- the list fields are assigned to the
+expression (see Section [#sec-list-exprs]) --- the list fields are assigned to the
 header fields in the order they appear --- or with a structure-valued
-expression [#sec-ops-on-structs].  When initialized the header
+expression (see Section [#sec-ops-on-structs]).  When initialized the header
 automatically becomes valid:
 
 ~ Begin P4Example
@@ -4240,11 +4240,11 @@ Given a header stack value `hs` of size `n`, the following
 expressions are legal:
 
 - `hs[index]`: produces a reference to the header at the
-  specified position within the stack; if `hs` is an l-value, the
-  result is also an l-value. The header may be invalid. Some implementations
+  specified position within the stack; if `hs` is an l-value,
+  the result is also an l-value. The header may be invalid. Some implementations
   may impose the constraint that the index expression evaluates to a
-  compile-time known value. A P4 compiler must give an error if an
-  index value that is a compile-time constant is out of range.
+  value that is known at compile time. A P4 compiler must give an error
+  if an index value that is a compile-time constant is out of range.
 
   Accessing a header stack ``hs`` with an index less than `0` or
   greater than or equal to `hs.size` results in an undefined value.  See Section
@@ -4253,14 +4253,10 @@ expressions are legal:
 
   The `index` is an expression that must be one of the following types:
 
-  - `int` - an infinite-precision integer (section
-    [#sec-infinite-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
-    [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
-    [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or
-    `int<W>` (section [#sec-enum-types]).
+  - `int` - an infinite-precision integer (Section [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where W≥0 (Section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where W≥1 (Section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>` where W≥1 (Section [#sec-enum-types]).
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -4302,8 +4298,8 @@ manipulate the elements at the front and back of the stack:
   positive integer that is a compile-time known value. The return type
   is `void`.
 
-- `hs.pop_front(int count)`: shifts `hs` "left" by `count` (i.e.,
-  element with index `count` is copied in stack at index `0`).
+- `hs.pop_front(int count)`: shifts `hs` "left" by `count`
+  (i.e., element with index `count` is copied in stack at index `0`).
   The last `count` elements become invalid. The `hs.nextIndex`
   counter is decremented by `count`. The `count` argument must
   be a positive integer that is a compile-time known value. The return
@@ -4400,12 +4396,12 @@ More formally, if `u` is an expression whose type is a header union
 operations can be used to manipulate `u`:
 
 - `u.hi.setValid():` sets the valid bit for header `hi` to `true` and
-  sets the valid bit for all other headers to `false`, which implies
-  that reading these headers will return an unspecified value.
+  sets the valid bit for all other headers to `false`, which implies that
+  it is unspecified what value reading any member header of `u` will return.
 
 - `u.hi.setInvalid()`: if the valid bit for any member header of `u`
-  is `true` then sets it to `false`, which implies that reading any
-  member header of `u` will return an unspecified value.
+  is `true` then sets it to `false`, which implies that it is unspecified
+  what value reading any member header of `u` will return.
 
 We can understand an assignment to a union field
 
@@ -4597,10 +4593,9 @@ realTypeArg
 
 A function call or method invocation can optionally specify for each
 argument the corresponding parameter name.  It is illegal to use names
-only for some arguments: either all or no arguments should specify
+only for some arguments: either all or no arguments must specify
 the parameter name.  Function arguments are evaluated in the order
-they appear, left to right, before the function invocation takes
-place.
+they appear, left to right, before the function invocation takes place.
 
 ~ Begin P4Example
 extern void f(in bit<32> x, out bit<16> y);
@@ -4649,8 +4644,8 @@ Allocation of such objects can be performed in two ways:
 - Using instantiations, described in Section [#sec-instantiations].
 
 The syntax for a constructor invocation is similar to a function call;
-constructors can also be called using named arguments.  Constructors
-are evaluated entirely at compilation-time (see Section
+constructors can also be called using named arguments.
+Constructors are evaluated entirely at compilation time (see Section
 [#sec-p4-abstract-mach]). In consequence, all constructor arguments
 must also be expressions that can be evaluated at compilation time.
 When performing type inference and overload resolution, constructor
@@ -4671,7 +4666,7 @@ table tbl {
 
 ## Operations on types introduced by `type` { #sec-newtype-operations }
 
-Values with a type introduced by the `type` keyword provide only few operations:
+Values with a type introduced by the `type` keyword provide only a few operations:
 
 - assignment to left-values of the same type
 - comparisons for equality and inequality if the original type supported such comparisons
@@ -4723,13 +4718,13 @@ behavior of the expressions `hs.next` and `hs.last`, and the behaviors
 specified there take precedence over anything in this section for
 those expressions.
 
-All mentions of header stack elements in this section only apply for
-expressions `hs[index]` where `index` is a run time variable
-expression, i.e. not a compile-time constant value.  A P4
-implementation is allowed not to support `hs[index]` where `index` is
-a run time variable expression, but if it does support these
-expressions, the implementation should conform to the behaviors
-specified in this section.
+All mentions of header stack elements in this section only apply
+for expressions `hs[index]` where `index` is a runtime variable
+expression, i.e. not a compile-time constant value.
+A P4 implementation is allowed not to support `hs[index]` where
+`index` is a runtime variable expression, but if it does support
+these expressions, the implementation should conform to the
+behaviors specified in this section.
 
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
@@ -4741,8 +4736,7 @@ some unspecified value will be used for that field.
   from a `struct`, any uninitialized variable inside of an `action` or
   `control`, or an `out` parameter of a `control` or `action` you have
   called, which was not assigned a value during the execution of that
-  `control` or `action` (this list of examples is not intended to be
-  exhaustive).
+  `control` or `action` (this list of examples is not intended to be exhaustive).
 - reading a field of a header that is an element of a header stack,
   where the index is out of range for the header stack.
 
@@ -4750,7 +4744,7 @@ Calling the `isValid()` method on an element of a header stack, where
 the index is out of range, returns an undefined boolean value, i.e.,
 it is either `true` or `false`, but the specification does not require
 one or the other, nor that a consistent value is returned across
-multiple such calls.  Assigning an out of range header stack element
+multiple such calls.  Assigning an out-of-range header stack element
 to another header variable `h` leads to a state where `h` is undefined
 in all of its field values, and its validity is also undefined.
 
@@ -4767,8 +4761,7 @@ would match, e.g. it should match in any of these situations:
 - If used in a `select` expression, it should match `default` or `_`
   in a key set expression.
 - If used as a key with `match_kind` `ternary` in a table, it should
-  match a table entry where the field has all bit positions "don't
-  care".
+  match a table entry where the field has all bit positions "don't care".
 - If used as a key with `match_kind` `lpm` in a table, it should match
   a table entry where the field has a prefix length of 0.
 
@@ -4955,9 +4948,9 @@ Every other case is undefined and will produce a compile-time error.
 
 # Function declarations { #sec-functions }
 
-Functions can only be declared at the top-level and all parameters must have a direction.
+Functions can only be declared at the top level and all parameters must have a direction.
 P4 functions are modeled after functions as found in most other programming languages,
-however, the language does not permit recursive functions.
+but the language does not permit recursive functions.
 
 ~ Begin P4Grammar
 functionDeclaration
@@ -4973,14 +4966,12 @@ Here is an example of a function that returns the maximum of two 32-bit values:
 
 ~ Begin P4Example
 bit<32> max(in bit<32> left, in bit<32> right) {
-   if (left > right)
-      return left;
-   return right;
+   return (left > right) ? left : right;
 }
 ~ End P4Example
 
 A function returns a value using the `return` statement.  A function
-that returns `void` can simply use the `return` statement with no
+with a return type of `void` can simply use the `return` statement with no
 arguments.  A function with a non-void return type must return a value
 of the suitable type on all possible execution paths.
 
@@ -5051,20 +5042,20 @@ program:
 - In a block statement,
 - In a `parser` state,
 - In an `action` body,
-- In a `control` block apply block,
+- In a `control` block's `apply` sub-block,
 - In the list of local declarations in a `parser`, and
 - In the list of local declarations in a `control`.
 
-Variables have local scope, and behave like stack-allocated variables in
-languages such as C. The value of a variable is never preserved from
-one invocation of its enclosing block to the next. In particular, variables cannot
-be used to maintain state between different network packets.
+Variables have local scope, and behave like stack-allocated variables
+in languages such as C. The value of a variable is never preserved
+from one invocation of its enclosing block to the next. In particular,
+variables cannot be used to maintain state between different network packets.
 
 ## Instantiations { #sec-instantiations }
 
-Instantiations are similar to variable declarations, but are
-reserved for the types with constructors (`extern` objects, `control`
-blocks, `parser`s, and `package`s):
+Instantiations are similar to variable declarations,
+but are reserved for the types with constructors
+(`extern` objects, `control` blocks, `parser`s, and `package`s):
 
 ~ Begin P4Grammar
 instantiation
@@ -5073,14 +5064,14 @@ instantiation
     ;
 ~ End P4Grammar
 
-An instantiation is written as a constructor invocation followed by a
-name.  Instantiations are always executed at compilation-time (Section
-[#sec-ct-constants]). The effect is to allocate an object with the
-specified name, and to bind it to the result of the constructor
-invocation.  Note that instantiation arguments can be specified by name.
+An instantiation is written as a constructor invocation followed by a name.
+Instantiations are always executed at compilation time (Section [#sec-ct-constants]).
+The effect is to allocate an object with the specified name,
+and to bind it to the result of the constructor invocation.
+Note that instantiation arguments can be specified by name.
 
-For example, a hypothetical bank of counter objects can be
-instantiated as follows:
+For example, a hypothetical bank of counter
+objects can be instantiated as follows:
 
 ~ Begin P4Example
 // from target library
@@ -5143,7 +5134,7 @@ current object instance:
 // Instantiate a balancer
 Balancer() b = {  // provide an implementation for the abstract methods
     bit<4> on_new_flow(in bit<32> address) {
-        // uses the address and the number of flows to load balance
+        // uses the address and the number of flows to balance the load
         bit<32> count = this.getFlowCount();  // call method of the same instance
         return (address + count)[3:0];
     }
@@ -5158,9 +5149,9 @@ impose additional constraints on abstract methods.
 
 ### Restrictions on top-level instantiations
 
-A P4 program may not instantiate controls and parsers at the top-level
-package. This restriction is designed to ensure that most state
-resides in the architecture itself, or is local to a `parser` or `control`.
+A P4 program may not instantiate controls and parsers in the top-level package.
+This restriction is designed to ensure that most state resides in
+the architecture itself, or is local to a `parser` or `control`.
 For example, the following program is not valid:
 
 ~ Begin P4Example
@@ -5174,8 +5165,7 @@ constants and instantiations of extern objects are permitted.
 
 # Statements { #sec-stmts }
 
-Every statement in P4 (except block statements) must end with a
-semicolon.
+Every statement in P4 except block statements must end with a semicolon.
 Statements can appear in several places:
 
 - Within `parser` states
@@ -5335,8 +5325,9 @@ following behavior after the expression evaluation is interrupted.
 ## Conditional statement { #sec-cond-stmt }
 
 The conditional statement uses standard syntax and semantics familiar from many programming languages.
+
 However, the condition expression in P4 is required to be a Boolean (and not
-an integer).
+an integ
 
 ~ Begin P4Grammar
 conditionalStatement
