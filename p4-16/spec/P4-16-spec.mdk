@@ -5914,7 +5914,7 @@ packet_in {
 }
 ~ End P4Pseudo
 
-### Fixed width extraction { #sec-packet-extract-one }
+### Fixed-width extraction { #sec-packet-extract-one }
 
 The single-argument `extract` method handles fixed-width headers,
 and is declared in P4 as follows:
@@ -5923,7 +5923,7 @@ and is declared in P4 as follows:
 void extract<T>(out T headerLeftValue);
 ~ End P4Example
 
-The expression `headerLeftValue` must evaluate to a l-value (see
+The expression `headerLeftValue` must evaluate to an l-value (see
 Section [#sec-lvalues]) of type `header` with a fixed width. If
 this method executes successfully, on completion the `headerLvalue`
 is filled with data from the packet and its validity bit is set to `true`. This
@@ -5933,7 +5933,7 @@ enough bits left in the packet to fill the specified header.
 For example, the following program fragment extracts an Ethernet header:
 
 ~ Begin P4Example
-struct Result { Ethernet_h ethernet;  /* more field omitted */ }
+struct Result { Ethernet_h ethernet;  /* more fields omitted */ }
 parser P(packet_in b, out Result r) {
     state start {
         b.extract(r.ethernet);
