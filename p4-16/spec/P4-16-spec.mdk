@@ -5628,7 +5628,7 @@ parserState
 
 Each state has a name and a body. The body consists of a sequence of
 statements that describe the processing performed when the parser
-transitions to that state including:
+transitions to that state, including:
 
 - Local variable declarations,
 - Assignment statements,
@@ -5800,12 +5800,12 @@ select (p.tcp.port) {
 The expression `16w0 &&& 16w0xFC00` describes the set of 16-bit
 values whose most significant six bits are zero.
 
-Some targets may support parser value set, see Section [#sec-value-set]. Given
+Some targets may support parser value sets; see Section [#sec-value-set]. Given
 a type `T` for the type parameter of the value set, the type of the value set
 is `set<T>`. The type of the value set must match to the type of all other
-`keysetExpression` in the same `select` expression. If there is a mismatch, the
-compiler must raise an error. The type of the values in the set must be one of
-bit<>, int<>, tuple, struct, and serializable `enum`.
+`keysetExpression`s in the same `select` expression. If there is a mismatch, the
+compiler must raise an error. The type of the values in the set must be either
+bit<>, int<>, tuple, struct, or serializable `enum`.
 
 For example, to allow the control plane API to specify TCP reserved ports at
 runtime, one could write:
@@ -5914,7 +5914,7 @@ packet_in {
 }
 ~ End P4Pseudo
 
-### Fixed width extraction { #sec-packet-extract-one }
+### Fixed-width extraction { #sec-packet-extract-one }
 
 The single-argument `extract` method handles fixed-width headers,
 and is declared in P4 as follows:
@@ -5923,7 +5923,7 @@ and is declared in P4 as follows:
 void extract<T>(out T headerLeftValue);
 ~ End P4Example
 
-The expression `headerLeftValue` must evaluate to a l-value (see
+The expression `headerLeftValue` must evaluate to an l-value (see
 Section [#sec-lvalues]) of type `header` with a fixed width. If
 this method executes successfully, on completion the `headerLvalue`
 is filled with data from the packet and its validity bit is set to `true`. This
@@ -5933,7 +5933,7 @@ enough bits left in the packet to fill the specified header.
 For example, the following program fragment extracts an Ethernet header:
 
 ~ Begin P4Example
-struct Result { Ethernet_h ethernet;  /* more field omitted */ }
+struct Result { Ethernet_h ethernet;  /* more fields omitted */ }
 parser P(packet_in b, out Result r) {
     state start {
         b.extract(r.ethernet);
@@ -5964,7 +5964,7 @@ void packet_in.extract<T>(out T headerLValue) {
 }
 ~ End P4Pseudo
 
-### Variable width extraction { #sec-packet-extract-two }
+### Variable-width extraction { #sec-packet-extract-two }
 
 The two-argument `extract` handles variable-width headers, and is declared in P4 as follows:
 
@@ -5972,7 +5972,7 @@ The two-argument `extract` handles variable-width headers, and is declared in P4
 void extract<T>(out T headerLvalue, in bit<32> variableFieldSize);
 ~ End P4Example
 
-The expression `headerLvalue` must be a l-value representing a
+The expression `headerLvalue` must be an l-value representing a
 header that contains *exactly one* `varbit` field. The expression `variableFieldSize`
 must evaluate to a `bit<32>` value that indicates the number of
 bits to be extracted into the unique `varbit` field of the header
