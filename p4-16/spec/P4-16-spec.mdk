@@ -6045,8 +6045,7 @@ parser Top(packet_in b, out Parsed_headers headers) {
    }
 
    state parse_ipv4_options {
-       // use information in the ipv4 header to compute the number
-       // of bits to extract
+       // use information in the ipv4 header to compute the number of bits to extract
        b.extract(headers.ipv4options,
                  (bit<32>)(((bit<16>)headers.ipv4.ihl - 5) * 32));
        transition dispatch_on_protocol;
