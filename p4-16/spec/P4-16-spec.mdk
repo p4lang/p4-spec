@@ -6045,8 +6045,7 @@ parser Top(packet_in b, out Parsed_headers headers) {
    }
 
    state parse_ipv4_options {
-       // use information in the ipv4 header to compute the number
-       // of bits to extract
+       // use information in the ipv4 header to compute the number of bits to extract
        b.extract(headers.ipv4options,
                  (bit<32>)(((bit<16>)headers.ipv4.ihl - 5) * 32));
        transition dispatch_on_protocol;
@@ -6071,7 +6070,7 @@ where `T` must be a type with fixed width. In case of success the
 result of the evaluation of `lookahead` returns a value of type `T`.
 
 In terms of the `ParserModel`, the semantics of `lookahead` is
-given by the following pseudo-code:
+given by the following pseudocode:
 
 ~ Begin P4Pseudo
 T packet_in.lookahead<T>() {
@@ -6121,7 +6120,7 @@ Another way is to use the `advance` method of the packet when the
 number of bits to skip is known.
 
 In terms of the `ParserModel`, the meaning of `advance` is
-given in pseudo-code as follows:
+given in pseudocode as follows:
 
 ~ Begin P4Pseudo
 void packet_in.advance(bit<32> bits) {
@@ -6196,7 +6195,7 @@ parser P(packet_in b, out Pkthdr p) {
 P4 allows parsers to invoke the services of other parsers, similar to
 subroutines. To invoke the services of another parser, the sub-parser
 must be first instantiated; the services of an instance are invoked by
-calling it using its apply method.
+calling it using its `apply` method.
 
 The following example shows a sub-parser invocation:
 
@@ -6230,7 +6229,7 @@ The semantics of a sub-parser invocation can be described as follows:
 []{tex-cmd: "\indent"}
 Figure [#fig-subparser] shows a diagram of this process.
 
-Note that since P4 requires declarations to precede uses, it is impossible to
+Note that since P4 requires definitions to precede uses, it is impossible to
 create recursive (or mutually recursive) parsers.
 
 Architectures may impose (static or dynamic) constraints on the
@@ -6270,7 +6269,7 @@ valueSetDeclaration
 ~ End P4Grammar
 
 Parser Value Sets support a `size` argument to provide hints to the compiler to
-reserve hardware resource to implement the value set. For example, this parser
+reserve hardware resources to implement the value set. For example, this parser
 value set:
 
 ~ Begin P4Example
@@ -6286,7 +6285,7 @@ storing `N` value set entries. See "Size property of P4 tables and parser value
 sets" [P4SizeProperty] for further discussion on the implementation of parser
 value set size.
 
-The value set is populated by the control-plane by methods specified in the
+The value set is populated by the control plane by methods specified in the
 P4Runtime specification.
 
 # Control blocks { #sec-control }
