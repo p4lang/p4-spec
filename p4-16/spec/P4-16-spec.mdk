@@ -7368,7 +7368,7 @@ separate channels between the ingress and egress pipeline:
   `T`. On a software target with shared memory between ingress and
   egress this could be implemented by passing directly a pointer; on
   an architecture without shared memory presumably the compiler will
-  need to synthesize automatically serialization code.
+  need to automatically synthesize serialization code.
 - A channel that can pass data indirectly using a parser and deparser
   that serializes data into a packet and back.
 
@@ -7429,18 +7429,18 @@ Switch<bit<32>>(P(), Pipe1()) main;
 ~
 [packetfilter]: figs/packetfilter.png { width: 5cm; page-align: here }
 
-To illustrate the versatility of P4 architecture description language,
-we give an example of another architecture, which models a packet
+To illustrate the versatility of the P4 architecture description language,
+we give an example of another architecture: one which models a packet
 filter that makes a drop/no drop decision based only on the
 computation in a P4 parser, as shown in Figure [#fig-packetfilter].
 
 This model could be used to program packet filters running in the
-Linux kernel. For example, we could replace the TCP dump language with
+Linux kernel. For example, we could replace the `tcpdump` language with
 the much more powerful P4 language; P4 can seamlessly support new
 protocols, while providing complete "type safety" during packet
-processing. For such a target the P4 compiler could generate an eBPF
+processing. For such a target, the P4 compiler could generate an eBPF
 (Extended Berkeley Packet Filter) program, which is injected by the
-TCP dump utility into the Linux kernel, and executed by the EBPF
+`tcpdump` utility into the Linux kernel, and executed by the eBPF
 kernel JIT compiler/runtime.
 
 In this case the target is the Linux kernel, and the architecture
