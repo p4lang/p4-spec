@@ -6435,7 +6435,7 @@ multiple instances of a table, it must be declared within a control
 block that is itself instantiated multiple times.
 
 The look-up table is a finite map whose contents are manipulated
-asynchronously (read/write) by the target control-plane, through a
+asynchronously (read/write) by the target control plane, through a
 separate control-plane API (see Figure [#fig-maudataflow]). Note that
 the term "table" is overloaded: it can refer to the P4 `table`
 objects that appear in P4 programs, as well as the internal look-up
@@ -6497,14 +6497,14 @@ In addition, tables may contain architecture-specific properties (see
 Section [#sec-additional-table-properties]).
 
 A property marked as `const` cannot be changed dynamically by the
-control-plane. The `key`, `actions`, and `size` properties are always
+control plane. The `key`, `actions`, and `size` properties are always
 constant, so the `const` keyword is not needed for these.
 
 ### Table properties { #sec-table-props }
 
 #### Keys { #sec-table-keys }
 
-The `key` is a table property which specifies the data plane
+The `key` is a table property which specifies the data-plane
 values that should be used to look up an entry. A key is a list of
 pairs of the form `(e : m)`, where `e` is an expression that describes
 the data to be matched in the table, and `m` is a `match_kind`
@@ -6537,7 +6537,7 @@ Here the key comprises two fields from the `ipv4header`
 header: `dstAddress` and `version`. The `match_kind` constants
 serve three purposes:
 
-- They specify the algorithm used to match data plane values against
+- They specify the algorithm used to match data-plane values against
   the entries in the table at runtime.
 - They are used to synthesize the control-plane API that is used to
   populate the table.
@@ -6568,7 +6568,7 @@ table, just a default action---i.e., the associated lookup table is
 always the empty map.
 
 Each key element can have an optional `@name` annotation which is
-used to synthesize the control-plane visible name for the key field.
+used to synthesize the controlplane-visible name for the key field.
 
 #### Actions { #sec-table-action-list }
 
@@ -6670,14 +6670,14 @@ const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
 ~ End P4Example
 
 Note that the specified default action must supply arguments for the
-control-plane bound parameters (i.e., the directionless parameters),
+controlplane-bound parameters (i.e., the directionless parameters),
 since the action is synthesized at compilation time. The expressions
 supplied as arguments for parameters with a direction (`in`, `inout`,
 or `out`) are evaluated when the action is invoked while the
 expressions supplied as arguments for directionless parameters are
 evaluated at compile time.
 
-Continuing the example from the previous section, following are several legal
+Continuing the example from the previous section, the following are several legal
 and illegal specifications of default actions for the `table t`:
 
 ~ Begin P4Example
@@ -6696,7 +6696,7 @@ flow of the program.
 #### Entries { #sec-entries }
 
 While table entries are typically installed by the control plane,
-tables may also be initialized at compile-time with a set of entries.
+tables may also be initialized at compile time with a set of entries.
 This is useful in situations where tables are
 used to implement fixed algorithms---defining table entries statically
 enables expressing these algorithm directly in P4,
@@ -6809,7 +6809,7 @@ program.
 #### Size {#sec-size-table-property}
 
 The `size` is an optional property of a table.  When present, its
-value is always an integer compile-time known value.  It is specified
+value must always be an integer compile-time known value.  It is specified
 in units of number of table entries.
 
 If a table has a `size` value specified for it with value `N`, it is
@@ -6913,7 +6913,7 @@ if (ipv4_match.apply().hit) {
 }
 
 if (ipv4_host.apply().miss) {
-    ipv4_lpm.apply(); // Lookup the route only if host table missed
+    ipv4_lpm.apply(); // Look up the route only if host table missed
 }
 ~ End P4Example
 
@@ -6935,7 +6935,7 @@ The semantics of a table invocation statement:
 m.apply();
 ~ End P4Example
 
-is given by the following pseudo-code (see also Figure
+is given by the following pseudocode (see also Figure
 [#fig-maudataflow]):
 
 ~ Begin P4Pseudo
