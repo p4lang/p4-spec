@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.2.2
+Title Note: version 1.2.3
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -39,6 +39,9 @@ pre, code {
   language: p4;
   font-family: LuxiMono;
   font-size: 75%;
+}
+table { 
+  breakable: true;
 }
 }
 
@@ -1994,7 +1997,7 @@ compile-time known value (see Section [#sec-ct-constants]) that is a
 non-negative integer.  When using an expression for
 the size, the expression must be parenthesized.  Bitstrings with width 0 are
 allowed; they have no actual bits, and can only have the value 0.  See
-{ #sec-uninitialized-values-and-writing-invalid-headers } for additional details.
+[#sec-uninitialized-values-and-writing-invalid-headers] for additional details.
 
 ~ Begin P4Example
 const bit<32> x = 10;   // 32-bit constant with value 10.
@@ -7600,7 +7603,7 @@ names.
 Evaluation may create multiple instances from one type, each of which
 must have a unique, fully-qualified name.
 
-### Computing control names
+### Computing control-plane names
 
 The fully-qualified name of a construct is derived by concatenating
 the fully-qualified name of its enclosing construct with its local
@@ -7609,7 +7612,7 @@ the global scope, have the same local and fully-qualified names.  The
 local names of controllable entities and enclosing constructs are
 derived from the syntax of a P4 program as follows.
 
-#### Value sets { #sec-cp-tables }
+#### Value sets { #sec-cp-value-set }
 For each `value_set` construct, its syntactic name becomes the local
 name of the value set.  For example:
 
@@ -8325,47 +8328,26 @@ The P4 compiler should provide:
 
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
-|:---{width:12%}---|:---{width:20%}---|:---{width:68%}---|
-| **Release** | **Release Date** | **Summary of Changes** |
-|-----|-----|-----|
-| 1.0.0 | May 17, 2017 | Initial version. |
-|-----|-----|-----|
-| 1.1.0 | November 26, 2018 | Added top-level functions, optional and named parameters, |
-|       |          | `enum` representations, parser value sets, type definitions, |
-|       |          | saturating arithmetic, and structured annotations. |
-|       |          | Removed `globalname` annotation and added a table `size` property. |
-|       |          | Clarified semantics of operations on invalid headers, added |
-|       |          | restrictions on arguments to calls, and modified precedence of |
-|       |          | bitwise operators. |
-|-----|-----|-----|
-| 1.2.0 | October 14, 2019 | Added error `ParserInvalidArgument`, order of `const` entries, |
-|       |               | header size methods, 1-bit signed values, signed bit slices, empty |
-|       |               | tuples, `@deprecated` annotation, free-form annotations, `int` type |
-|       |               | `table.apply().miss`, `string` type.                                |
-|-----|-----|-----|
-| 1.2.1     | June 11, 2020 | Added structure-value expressions, default values, concatenation, |
-|           |               | structured  annotations; standardized several new annotations;    |
-|           |               | generalized typing rule for masks; restricted typing rule for     |
-|           |               | shifts with infinite-precision operands; clarified evaluation     |
-|           |               | order for table keys; clarified copy-out behavior; clarified      |
-|           |               | semantics of invalid header stacks; clarified initialization      |
-|           |               | semantics; fixed several small issues in grammar.                 |
-|-----|-----|-----|
-| 1.2.2     | May 17, 2021 | Added support for tuple access, generic structures, additional     |
-|           |              | enumeration types, abstract methods, conditional and empty         |
-|           |              | statements in parsers, additional casts, and 0-width types;        |
-|           |              | clarified semantics of default actions, headers, empty types, and  |
-|           |              | action data; fixed typos and inconsistencies in the grammar.       |
-|-----|-----|-----|
+## Summary of changes made in version 1.2.3, released July 11, 2022.
 
-## Summary of changes made in version 1.2.3
+* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).  
+* Added support for `maxSizeInBits` and `maxSizeInBytes` (Section [#sec-minsizeinbits]).
+* Added support for empty lists of const entries in tables (Section [#sec-entries]).
+* Added support for `switch` statements in actions (Section [#sec-actions]).
+* Added support for direct invocation of controls and parsers (Section [#sec-parameterization]).
+* Added parser `value_set` to list of control-plane visible names (Section [#sec-cp-names]).
+* Added `match_kind` as a base type (Section [#sec-match-kind-type]).
+* Removed structure initializers as they are subsumed by structure-valued expressions (Section [#sec-structure-expressions]).
+* Specified operations on values typed as type variables (Section [#sec-type-variable-operations]).
+* Clarified semantics of compile-time known values (Section [#sec-ct-constants]).
+* Clarified semantics of directionless parameters (Section [#sec-calling-convention]).
+* Clarified semantics of infinite precision integers (Section [#sec-infinite-precision-integers]).
+* Clarified semantics of bit slices, shifts, and concatenation (Section [#sec-bit-ops]).
+* Clarified semantics of optional parameters (Section [#sec-optional-parameters]).
+* Clarified restrictions on extern method and function invocation (Section [#sec-calling-restrictions]).
+* Clarified semantics of implicit casts (Section [#sec-implicit-casts]).
 
-* Allow empty entries lists for tables
-* Extended minSizeInBits, and minSizeInBytes to apply to more
-  expressions (Section [#sec-minsizeinbits]).  Added maxSizeInBits and maxSizeInBytes.
-* Specify operations on values typed as type variables.
-
-## Summary of changes made in version 1.2.2
+## Summary of changes made in version 1.2.2, released May 17, 2021
 
 * Added support for accessing tuple fields (Section [#sec-tuple-exprs]).
 * Added support for generic structures (Section [#sec-type-spec]).
@@ -8383,7 +8365,7 @@ The P4 compiler should provide:
 * Fixed several typos and inconsistencies in grammar (Section [#sec-grammar]).
 * Eliminated annotations on `const` entries in grammar (Section [#sec-grammar]).
 
-## Summary of changes made in version 1.2.1
+## Summary of changes made in version 1.2.1, released June 11, 2020
 
 * Added structure-value expressions (Section
   [#sec-structure-expressions]).
@@ -8413,7 +8395,7 @@ The P4 compiler should provide:
   allow empty statements in parser (Section [#sec-parser-state-stmt]),
   and eliminate annotations on const entries (Section [#sec-entries]).
 
-## Summary of changes made in version 1.2.0
+## Summary of changes made in version 1.2.0, released October 14, 2019
 
 * Added `table.apply().miss` (Section [#sec-invoke-mau]).
 * Added `string` type (Section [#sec-string-type]).
@@ -8430,7 +8412,7 @@ The P4 compiler should provide:
 * Clarified the significance of order of entries in `const entries` (Section [#sec-entries]).
 * Added methods to calculate header size (Section [#sec-ops-on-hdrs]).
 
-## Summary of changes made in version 1.1.0
+## Summary of changes made in version 1.1.0, released November 26, 2017.
 
 * Top-level functions (Section [#sec-functions])
     - Functions may be declared at the top-level of a P4 program.
@@ -8458,6 +8440,8 @@ The P4 compiler should provide:
     - Modified precedence conventions so that bitwise operators `&` `|` and `^` have higher precedence than relation operators `<` `>` `<=` `>=`.
 * Computed bitwidths (Section [#sec-base-types])
     - Added support for specifying widths using expressions in `bit` and `varbit` types.
+
+## Initial version 1.0.0, released May 17, 2017
 
 # Appendix: P4 reserved keywords { #sec-p4-keywords }
 
