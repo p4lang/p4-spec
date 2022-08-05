@@ -40,7 +40,7 @@ pre, code {
   font-family: LuxiMono;
   font-size: 75%;
 }
-table { 
+table {
   breakable: true;
 }
 }
@@ -4116,15 +4116,19 @@ values.
 ### Ranges { #sec-ranges }
 
 The infix operator `..` takes two arguments of the same type `T`,
-where `T` is either `bit<W>` or `int<W>`, and creates a value of
-type `set<T>`. The set contains all values numerically between the
-first and the second, inclusively. For example:
+where `T` is either `bit<W>`, `int<W>`, or a serializable enum value,
+and creates a value of type `set<T>`. The set contains all values
+numerically between the first and the second, inclusively. For
+example:
 
 ~ Begin P4Example
 4w5 .. 4w8
 ~ End P4Example
 
 denotes a set with values `4w5, 4w6, 4w7`, and `4w8`.
+
+A range where the second value is smaller than the first one
+represents an empty set.
 
 ### Products { #sec-tuples-of-sets }
 
@@ -8328,9 +8332,14 @@ The P4 compiler should provide:
 
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
+## Summary of changes made in version 1.2.4
+
+* clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
+* allow ranges to be specified by serializable enums (Section [#sec-ranges]).
+
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
-* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).  
+* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).
 * Added support for `maxSizeInBits` and `maxSizeInBytes` (Section [#sec-minsizeinbits]).
 * Added support for empty lists of const entries in tables (Section [#sec-entries]).
 * Added support for `switch` statements in actions (Section [#sec-actions]).
