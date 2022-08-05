@@ -40,7 +40,7 @@ pre, code {
   font-family: LuxiMono;
   font-size: 75%;
 }
-table { 
+table {
   breakable: true;
 }
 }
@@ -2066,9 +2066,9 @@ values to always contain an integer number of bytes at runtime.
 All operations that can be performed on varbits are described in
 Section [#sec-varbit-string].
 
-#### Infinite-precision integers {#sec-infinite-precision-integers}
+#### Arbitrary-precision integers {#sec-arbitrary-precision-integers}
 
-The infinite-precision data type describes integers with an unlimited
+The arbitrary-precision data type describes integers with an unlimited
 precision. This type is written as `int`.
 
 This type is reserved for integer literals and expressions that
@@ -2077,9 +2077,9 @@ type; at compile time the compiler will convert all int values that
 have a runtime component to fixed-width types, according to the rules
 described below.
 
-All operations that can be performed on infinite-precision integers
+All operations that can be performed on arbitrary-precision integers
 are described in Section [#sec-varint-ops].  The following example
-shows three constant definitions whose values are infinite-precision
+shows three constant definitions whose values are arbitrary-precision
 integers.
 
 ~ Begin P4Example
@@ -2539,7 +2539,7 @@ The type `tuple<>` is a tuple type with no components.
 The table below lists all types that may appear as members of headers,
 header unions, structs, and tuples.  Note that `int` by itself
 (i.e. not as part of an `int<N>` type expression) means an
-infinite-precision integer, without a width specified.
+arbitrary-precision integer, without a width specified.
 
 |--------------------|--------------------------------------------|
 |                    | Container type                           |||
@@ -3396,7 +3396,7 @@ if (x) /* body omitted */
 if (x != 0) /* body omitted */
 ~ End P4Example
 
-See the discussion on infinite-precision types and implicit casts
+See the discussion on arbitrary-precision types and implicit casts
 in Section [#sec-implicit-casts] for details on how the `0` in this
 expression is evaluated.
 
@@ -3408,7 +3408,7 @@ and second either `e2` or `e3` is evaluated depending on the result.
 
 The first sub-expression `e1` must have Boolean type (i.e. "bit" or "bit<1>"),
 and the second and third sub-expressions must have the same type,
-which cannot both be infinite-precision integers unless the condition
+which cannot both be arbitrary-precision integers unless the condition
 itself can be evaluated at compilation time. This restriction is
 designed to ensure that the width of the result of the conditional
 expression can be inferred statically at compile time.
@@ -3497,8 +3497,8 @@ Bit-strings also support the following operations:
   non-negative compile-time known values, and `L >= R`. The types of `L` and `R`
   (which do not need to be identical) must be one of the following:
 
-  - `int` - an infinite-precision integer
-    (section [#sec-infinite-precision-integers])
+  - `int` - an arbitrary-precision integer
+    (section [#sec-arbitrary-precision-integers])
   - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
     (section [#sec-unsigned-integers])
   - `int<W>` - a `W`-bit signed integer where `W >= 1`
@@ -3595,8 +3595,8 @@ The `int<W>` datatype also support the following operations:
   The types of `L` and `R` (which do not need to be identical)
   must be one of the following:
 
-  - `int` - an infinite-precision integer
-    (section [#sec-infinite-precision-integers])
+  - `int` - an arbitrary-precision integer
+    (section [#sec-arbitrary-precision-integers])
   - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
     (section [#sec-unsigned-integers])
   - `int<W>` - a `W`-bit signed integer where `W >= 1`
@@ -4256,7 +4256,7 @@ expressions are legal:
 
   The `index` is an expression that must be one of the following types:
 
-  - `int` - an infinite-precision integer (Section [#sec-infinite-precision-integers])
+  - `int` - an arbitrary-precision integer (Section [#sec-arbitrary-precision-integers])
   - `bit<W>` - a `W`-bit unsigned integer where W≥0 (Section [#sec-unsigned-integers])
   - `int<W>` - a `W`-bit signed integer where W≥1 (Section [#sec-signed-integers])
   - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>` where W≥1 (Section [#sec-enum-types]).
@@ -8013,7 +8013,7 @@ Appendix [#sec-grammar] for details.
 
 All `expression`s within a `structuredAnnotationBody` must be compile-time known
 values, either literals or expressions requiring compile-time evaluation, with a
-result type that is one of: string literals, infinite-precision integer, or
+result type that is one of: string literals, arbitrary-precision integer, or
 boolean. Structured `expression`s (e.g. an `expression` containing an
 `expressionList`, a `kvList`, etc.) are not allowed. Note that P4Runtime
 information (P4Info) may stipulate additional restrictions. For example, an
@@ -8330,7 +8330,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
-* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).  
+* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).
 * Added support for `maxSizeInBits` and `maxSizeInBytes` (Section [#sec-minsizeinbits]).
 * Added support for empty lists of const entries in tables (Section [#sec-entries]).
 * Added support for `switch` statements in actions (Section [#sec-actions]).
@@ -8341,7 +8341,7 @@ The P4 compiler should provide:
 * Specified operations on values typed as type variables (Section [#sec-type-variable-operations]).
 * Clarified semantics of compile-time known values (Section [#sec-ct-constants]).
 * Clarified semantics of directionless parameters (Section [#sec-calling-convention]).
-* Clarified semantics of infinite precision integers (Section [#sec-infinite-precision-integers]).
+* Clarified semantics of arbitrary precision integers (Section [#sec-arbitrary-precision-integers]).
 * Clarified semantics of bit slices, shifts, and concatenation (Section [#sec-bit-ops]).
 * Clarified semantics of optional parameters (Section [#sec-optional-parameters]).
 * Clarified restrictions on extern method and function invocation (Section [#sec-calling-restrictions]).
@@ -8380,7 +8380,7 @@ The P4 compiler should provide:
 * Generalized typing for masks to allow serializable `enum`s (Section
   [#sec-cubes]).
 * Restricted the right operands of bit shifts involving
-  infinite-precision integers to be constant and positive (Section
+  arbitrary-precision integers to be constant and positive (Section
   [#sec-varint-ops]).
 * Clarified copy-out behavior for `return` (Section
   [#sec-return-stmt]) and `exit` (Section [#sec-exit-stmt])
@@ -8407,7 +8407,7 @@ The P4 compiler should provide:
 * Added `@deprecated` annotation.
 * Relaxed the structure of annotation bodies.
 * Removed the `@pkginfo` annotation, which is now defined by the P4Runtime specification.
-* Added `int` type (Section [#sec-infinite-precision-integers]).
+* Added `int` type (Section [#sec-arbitrary-precision-integers]).
 * Added error `ParserInvalidArgument` (Sections [#sec-packet-extract-two], [#sec-skip-bits]).
 * Clarified the significance of order of entries in `const entries` (Section [#sec-entries]).
 * Added methods to calculate header size (Section [#sec-ops-on-hdrs]).
