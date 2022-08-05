@@ -40,7 +40,7 @@ pre, code {
   font-family: LuxiMono;
   font-size: 75%;
 }
-table { 
+table {
   breakable: true;
 }
 }
@@ -4885,9 +4885,10 @@ H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field
 The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`,
 and `maxSizeInBytes` can be applied to some expressions.  Each of
 these method calls evaluate to compile-time known values that return
-the minimum size in bits required to store the expression.  None of these
-methods evaluates the expression itself.  In consequence, the expression
-may be invalid (e.g., an out-of-bounds header stack access).
+the minimum size in bits required to store the expression (thus the
+result type of these methods has type `int`).  None of these methods
+evaluates the expression itself.  In consequence, the expression may
+be invalid (e.g., an out-of-bounds header stack access).
 
 The method `minSizeInBytes` always returns the result of
 `minSizeInBits` rounded up to the next whole number of bytes.
@@ -8328,9 +8329,13 @@ The P4 compiler should provide:
 
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
+## Summary of changes made in version 1.2.4
+
+* Specified type produced by the *sizeInB* methods.
+
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
-* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).  
+* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).
 * Added support for `maxSizeInBits` and `maxSizeInBytes` (Section [#sec-minsizeinbits]).
 * Added support for empty lists of const entries in tables (Section [#sec-entries]).
 * Added support for `switch` statements in actions (Section [#sec-actions]).
