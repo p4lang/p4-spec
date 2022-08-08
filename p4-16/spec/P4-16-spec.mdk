@@ -1910,6 +1910,9 @@ Architectures may support additional `match_kind`s. The
 declaration of new `match_kind`s can only occur within model
 description files; P4 programmers cannot declare new match kinds.
 
+Operations on values of type `match_kind` are described in Section
+[#sec-match-kind-exprs].
+
 ### The Boolean type { #sec-bool-type }
 
 The Boolean type `bool` contains just two values, `false` and `true`.
@@ -3371,6 +3374,16 @@ control-plane API, the compiler must select a suitable serialization data type
 and representation.  For `enum` values with an underlying type and
 representations, the compiler should use the specified underlying type as the
 serialization data type and representation.
+
+## Operations on `match_kind` types { #sec-match-kind-exprs }
+
+Values of type `match_kind` are similar to `enum` values.  They
+support only assignment and comparisons for equality and inequality.
+
+~ Begin P4Example
+match_kind { fuzzy }
+const bool same = exact == fuzzy;  // always 'false'
+~ End P4Example
 
 ## Expressions on Booleans { #sec-bool-exprs }
 
@@ -4889,9 +4902,10 @@ H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field
 The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`,
 and `maxSizeInBytes` can be applied to some expressions.  Each of
 these method calls evaluate to compile-time known values that return
-the minimum size in bits required to store the expression.  None of these
-methods evaluates the expression itself.  In consequence, the expression
-may be invalid (e.g., an out-of-bounds header stack access).
+the minimum size in bits required to store the expression (thus the
+result type of these methods has type `int`).  None of these methods
+evaluates the expression itself.  In consequence, the expression may
+be invalid (e.g., an out-of-bounds header stack access).
 
 The method `minSizeInBytes` always returns the result of
 `minSizeInBits` rounded up to the next whole number of bytes.
@@ -8334,8 +8348,10 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
-* clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
-* allow ranges to be specified by serializable enums (Section [#sec-ranges]).
+* Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
+* Allow ranges to be specified by serializable enums (Section [#sec-ranges]).
+* Specified type produced by the `*sizeInB*` methods (Section [#sec-minsizeinbits]).
+* Added section with operations on `match_kind` values (Section [#sec-match-kind-exprs]).
 
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
