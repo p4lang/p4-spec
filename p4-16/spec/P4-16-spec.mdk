@@ -40,7 +40,7 @@ pre, code {
   font-family: LuxiMono;
   font-size: 75%;
 }
-table { 
+table {
   breakable: true;
 }
 }
@@ -1910,6 +1910,9 @@ Architectures may support additional `match_kind`s. The
 declaration of new `match_kind`s can only occur within model
 description files; P4 programmers cannot declare new match kinds.
 
+Operations on values of type `match_kind` are described in Section
+[#sec-match-kind-exprs].
+
 ### The Boolean type { #sec-bool-type }
 
 The Boolean type `bool` contains just two values, `false` and `true`.
@@ -3371,6 +3374,16 @@ control-plane API, the compiler must select a suitable serialization data type
 and representation.  For `enum` values with an underlying type and
 representations, the compiler should use the specified underlying type as the
 serialization data type and representation.
+
+## Operations on `match_kind` types { #sec-match-kind-exprs }
+
+Values of type `match_kind` are similar to `enum` values.  They
+support only assignment and comparisons for equality and inequality.
+
+~ Begin P4Example
+match_kind { fuzzy }
+const bool same = exact == fuzzy;  // always 'false'
+~ End P4Example
 
 ## Expressions on Booleans { #sec-bool-exprs }
 
@@ -8328,9 +8341,14 @@ The P4 compiler should provide:
 
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
+## Summary of changes made in version 1.2.4
+
+* Added section with operations on `match_kind` values (Section
+  [#sec-match-kind-exprs]).
+
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
-* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).  
+* Extended `minSizeInBits` and `minSizeInBytes` to apply to more expressions (Section [#sec-minsizeinbits]).
 * Added support for `maxSizeInBits` and `maxSizeInBytes` (Section [#sec-minsizeinbits]).
 * Added support for empty lists of const entries in tables (Section [#sec-entries]).
 * Added support for `switch` statements in actions (Section [#sec-actions]).
