@@ -4129,15 +4129,19 @@ values.
 ### Ranges { #sec-ranges }
 
 The infix operator `..` takes two arguments of the same type `T`,
-where `T` is either `bit<W>` or `int<W>`, and creates a value of
-type `set<T>`. The set contains all values numerically between the
-first and the second, inclusively. For example:
+where `T` is either `bit<W>`, `int<W>`, or a serializable enum value,
+and creates a value of type `set<T>`. The set contains all values
+numerically between the first and the second, inclusively. For
+example:
 
 ~ Begin P4Example
 4w5 .. 4w8
 ~ End P4Example
 
 denotes a set with values `4w5, 4w6, 4w7`, and `4w8`.
+
+A range where the second value is smaller than the first one
+represents an empty set.
 
 ### Products { #sec-tuples-of-sets }
 
@@ -8344,6 +8348,8 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
+* Allow ranges to be specified by serializable enums (Section [#sec-ranges]).
 * Specified type produced by the `*sizeInB*` methods (Section [#sec-minsizeinbits]).
 * Added section with operations on `match_kind` values (Section [#sec-match-kind-exprs]).
 
