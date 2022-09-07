@@ -6509,9 +6509,8 @@ In addition, the tables may optionally define the following properties,
 
 The compiler must set the `default_action` to `NoAction` (and also
 insert it into the list of `actions`) for tables that do not define
-the `default_action` property. This is consistent with the semantics
-given in Section [#sec-default-action]. Hence, all tables can be
-thought of as having a `default_action` property, either implicitly or
+the `default_action` property`.  Hence, all tables can be thought of
+as having a `default_action` property, either implicitly or
 explicitly.
 
 In addition, tables may contain architecture-specific properties (see
@@ -6709,11 +6708,6 @@ and illegal specifications of default actions for the `table t`:
   // default_action = b(z); -- illegal, b's data parameter is not bound
   // default_action = b(x, 3); -- illegal: x parameter of b bound to x instead of z
 ~ End P4Example
-
-If a table does not specify the `default_action` property and no
-entry matches a given packet, then the table does not affect the
-packet and processing continues according to the imperative control
-flow of the program.
 
 #### Entries { #sec-entries }
 
@@ -8359,6 +8353,7 @@ The P4 compiler should provide:
 * Specified type produced by the `*sizeInB*` methods (Section [#sec-minsizeinbits]).
 * Added section with operations on `match_kind` values (Section [#sec-match-kind-exprs]).
 * Renamed infinite-precision integers to arbitrary-precision integers (Section [#sec-arbitrary-precision-integers]).
+* compiler-inserted `default_action` is not `const` (Section [#sec-tables]).
 
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
