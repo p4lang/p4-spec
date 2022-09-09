@@ -3177,6 +3177,8 @@ side-effects. P4 expressions are evaluated as follows:
   the second operand is only evaluated if necessary.
 - The conditional operator `e1 ? e2 : e3` evaluates `e1`, and then
   either evaluates `e2` or `e3`.
+- Compound assignment expressions are evaluated as described in Section
+  [#sec-compound-assignment].
 - All other expressions are evaluated left-to-right as they appear in
   the source program.
 - Method and function calls are evaluated as described in Section
@@ -5274,6 +5276,38 @@ to a value, and finally copies the value into the l-value. Derived
 types (e.g. `structs`) are copied recursively, and all components
 of `header`s are copied, including "validity" bits. Assignment is
 not defined for `extern` values.
+
+### Compound assignment { #sec-compound-assignment }
+
+Compound assignment operators provide a shorter syntax for assigning
+the result of an arithmetic or bitwise operator. The compound assignment
+operator expressions have the form `LHS op RHS`, where `op` is one of those
+in the table below, and `LHS` and `RHS` are expressions with types appropriate
+for the operator.
+
+|----------|-----------------------------------|------------|---------------|
+| Operator | Operator name                     | Example    | Equivalent of |
++----------+:---------------------------------:+:----------:+:-------------:+
+| `=`      | basic assignment                  | `a = b`    | NA            |
+| `+=`     | addition assignment               | `a += b`   | `a = a + b`   |
+| `-=`     | subtraction assignment            | `a -= b`   | `a = a - b`   |
+| `*=`     | multiplication assignment         | `a *= b`   | `a = a * b`   |
+| `/=`     | division assignment               | `a /= b`   | `a = a / b`   |
+| `%=`     | modulo assignment                 | `a %= b`   | `a = a % b`   |
+| `&=`     | bitwise AND assignment            | `a &= b`   | `a = a & b`   |
+| `|=`     | bitwise OR assignment             | `a |= b`   | `a = a | b`   |
+| `^=`     | bitwise XOR assignment            | `a ^= b`   | `a = a ^ b`   |
+| `<<=`    | bitwise left shift assignment     | `a <<= b`  | `a = a << b`  |
+| `>>=`    | bitwise right shift assignment    | `a >>= b`  | `a = a >> b`  |
+| `|+|=`   | saturating addition assignment    | `a |+|= b` | `a = a |+| b` |
+| `|-|=`   | saturating subtraction assignment | `a |-|= b` | `a = a |-| b` |
+|----------|-----------------------------------|----------- |---------------|
+
+The behavior of every builtin compound assignment expression with the form `E1 op= E2`,
+where `E1` is a modifiable l-value expression and `E2` is an r-value expression, is exactly
+the same as the behavior of the expression `E1 = E1 op E2`, except that `E1` is evaluated
+only once. Like other P4 expressions where subexpressions are evaluated left to right,
+`E1` is evaluated before `E2`.
 
 ## Empty statement { #sec-empty-stmt }
 
