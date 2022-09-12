@@ -6113,12 +6113,15 @@ parser Top(packet_in b, out Parsed_headers headers) {
 
 ### Lookahead { #sec-packet-lookahead }
 
-The `lookahead` method provided by the `packet_in` packet
-abstraction evaluates to a set of bits from the input packet without
-advancing the `nextBitIndex` pointer. Similar to `extract`, it
-will transition to `reject` and set the error if there are not
-enough bits in the packet. The `lookahead` method can be invoked
-as follows,
+The `lookahead` method provided by the `packet_in` packet abstraction
+evaluates to a set of bits from the input packet without advancing the
+`nextBitIndex` pointer. Similar to `extract`, it will transition to
+`reject` and set the error if there are not enough bits in the packet.
+When `lookahead` returns a value of a header type, the returned header
+is always valid (otherwise `lookahead` must have transitioned to the
+`reject` state).
+
+The `lookahead` method can be invoked as follows:
 
 ~ Begin P4Example
 b.lookahead<T>()
