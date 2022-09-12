@@ -7929,6 +7929,35 @@ blocks if it cannot implement the atomic execution of the instruction
 sequence. In such cases, the compiler should provide reasonable
 diagnostics.
 
+# Static assertions { #sec-static-assert }
+
+The P4 core library contains two overloaded declarations for a
+`static_assert` function, as follows:
+
+/// Static assert evaluates a boolean expression
+/// at compilation time.  If the expression evaluates to
+/// false, compilation is stopped and the corresponding message is printed.
+extern bool static_assert(bool check, string message);
+
+/// Like the above but using a default message.
+extern bool static_assert(bool check);
+
+These functions both return boolean values.  Since the parameters are
+directionless, these functions require compile-time constant values as
+arguments, thus they can be used to enforce compile-time invariants.
+Since P4 does not allow statements at the program top-level (outside
+of apply blocks), these functions can be used at the top-level by
+assigning their result to a dummy constant, e.g.:
+
+~ Begin P4Example
+const bool _check = static_assert(V1MODEL_VERSION > 20180000,
+                                  "Expected a v1 model version >= 20180000");
+~ End P4Example
+
+As the comment indicates, if `static_assert` returns `false`, it
+causes the program compilation to be terminated immediately with an
+error.
+
 # Annotations { #sec-annotations }
 
 Annotations are similar to C# attributes and Java annotations. They are a simple
@@ -8348,6 +8377,7 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.2.4
 
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
+* Added `static_assert` function (Section [#sec-static-assert]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
 * Allow ranges to be specified by serializable enums (Section [#sec-ranges]).
 * Specified type produced by the `*sizeInB*` methods (Section [#sec-minsizeinbits]).
@@ -8570,6 +8600,18 @@ match_kind {
     /// Longest-prefix match.
     lpm
 }
+
+/// Static assert evaluates a boolean expression
+/// at compilation time.  If the expression evaluates to
+/// false, compilation is stopped and the corresponding message is printed.
+/// The function returns a boolean, so that it can be used
+/// as a global constant value in a program, e.g.:
+/// const version = static_assert(V1MODEL_VERSION > 20180000, "Expected a v1 model version >= 20180000");
+extern bool static_assert(bool check, string message);
+
+/// Like the above but using a default message.
+extern bool static_assert(bool check);
+
 ~ End P4Example
 
 # Appendix: Checksums { #sec-checksums }
