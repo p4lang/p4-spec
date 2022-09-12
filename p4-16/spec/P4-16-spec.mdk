@@ -3506,8 +3506,8 @@ Bit-strings also support the following operations:
   Shifting by an amount greater than or equal to the width of the input
   produces a result where all bits are zero.
 - Extraction of a set of contiguous bits, also known as a slice,
-  denoted by `[L:R]`, where `L` and `R` must be expressions that evaluate to
-  non-negative compile-time known values, and `L >= R`. The types of `L` and `R`
+  denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
+  non-negative compile-time known values, and `H >= L`. The types of `H` and `L`
   (which do not need to be identical) must be one of the following:
 
   - `int` - an arbitrary-precision integer
@@ -3519,16 +3519,16 @@ Bit-strings also support the following operations:
   - a serializable `enum` with an underlying type that is
     `bit<W>` or `int<W>` (section [#sec-enum-types]).
 
-  The result is a bit-string of width `L - R + 1`, including the bits numbered
-  from `R` (which becomes the least significant bit of the result) to `L` (the
+  The result is a bit-string of width `H - L + 1`, including the bits numbered
+  from `L` (which becomes the least significant bit of the result) to `H` (the
   most significant bit of the result) from the source operand. The conditions
-  `0 <= R <= L < W` are checked statically (where `W` is
+  `0 <= L <= H < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
   known-at-compile-time values so that the result width can be computed
   at compile time. Slices are also l-values, which means that P4 supports
-  assigning to a slice: ` e[L:R] = x `.
-  The effect of this statement is to set bits `L` through `R` (inclusive of
+  assigning to a slice: ` e[H:L] = x `.
+  The effect of this statement is to set bits `H` through `L` (inclusive of
   both) of `e` to the bit-pattern represented by `x`, and leaves all other bits
   of `e` unchanged.  A slice of an unsigned integer is an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
@@ -3603,9 +3603,9 @@ The `int<W>` datatype also support the following operations:
   - all result bits are zero when shifting a non-negative value right
   - all result bits are one when shifting a negative value right
 - Extraction of a set of contiguous bits, also known as a slice,
-  denoted by `[L:R]`, where `L` and `R` must be expressions that evaluate to
-  non-negative compile-time known values, and `L >= R` must be true.
-  The types of `L` and `R` (which do not need to be identical)
+  denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
+  non-negative compile-time known values, and `H >= L` must be true.
+  The types of `H` and `L` (which do not need to be identical)
   must be one of the following:
 
   - `int` - an arbitrary-precision integer
@@ -3617,16 +3617,16 @@ The `int<W>` datatype also support the following operations:
   - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>`
     (section [#sec-enum-types]).
 
-  The result is an unsigned bit-string of width `L - R + 1`, including the bits
-  numbered from `R` (which becomes the least significant bit of the result)
-  to `L` (the most significant bit of the result) from the source operand.
-  The conditions `0 <= R <= L < W` are checked statically (where `W` is
+  The result is an unsigned bit-string of width `H - L + 1`, including the bits
+  numbered from `L` (which becomes the least significant bit of the result)
+  to `H` (the most significant bit of the result) from the source operand.
+  The conditions `0 <= L <= H < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be values
   that are known at compile time so that the width of the result can be
   computed at compile time. Slices are also l-values, which means that P4
-  supports assigning to a slice: ` e[L:R] = x `.
-  The effect of this statement is to set bits `L` through `R` of `e` to the
+  supports assigning to a slice: ` e[H:L] = x `.
+  The effect of this statement is to set bits `H` through `L` of `e` to the
   bit-pattern represented by `x`, and leaves all other bits of `e` unchanged.
   A slice of a signed integer is treated as an unsigned integer.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
@@ -3654,6 +3654,30 @@ expressions of type `int` must be compile-time known values.  The type
   The right operand must be either an unsigned constant of type `bit<S>` or a non-negative integer compile-time known value.
   The expression `a << b` is equal to $a \times 2^b$ while `a >> b`
   is equal to $\lfloor{a / 2^b}\rfloor$.
+- Bit slices, denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
+  non-negative compile-time known values, and `H >= L` must be true.
+  The types of `H` and `L` (which do not need to be identical)
+  must be one of the following:
+
+  - `int` - an arbitrary-precision integer
+    (section [#sec-arbitrary-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
+    (section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1`
+    (section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>`
+    (section [#sec-enum-types]).
+
+  The result is an unsigned bit-string of width `H - L + 1`, including the bits
+  numbered from `L` (which becomes the least significant bit of the result)
+  to `H` (the most significant bit of the result) from the source operand.
+  The conditions `0 <= L <= H` are checked statically. If necessary, the source
+  integer value that is sliced is automatically extended to have a width with `H`
+  bits. Note that both endpoints of
+  the extraction are inclusive. The bounds are required to be values
+  that are known at compile time so that the width of the result can be
+  computed at compile time. A slice of a negative or positive value is always
+  a positive value.
 
 Each operand that participates in any of these operation must have
 type `int` (except shifts). Binary operations cannot
@@ -8376,6 +8400,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified that slices can be applied to arbitary-precision integers ([#sec-varint-ops]).
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
