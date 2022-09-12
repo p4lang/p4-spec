@@ -3834,6 +3834,14 @@ the compiler will add implicit casts as follows:
 - `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
 - `E.a ++ 8w0` becomes `(bit<8>)E.a ++ 8w0`
 
+The compiler also adds implicit casts when types of different
+expressions need to ``match''; for example, as described in Section
+[#sec-select], since select labels are compared againt the selected
+expression, the compiler will insert implicit casts for the select
+labels when they have `int` types.  Similarly, when assigning a
+structure-valued expression to a structure or header, the compiler will
+add implicit casts for `int` fields.
+
 ### Illegal arithmetic expressions { #sec-illegal-arith }
 
 Many arithmetic expressions that would be allowed in other languages
