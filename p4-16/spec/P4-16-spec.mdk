@@ -5756,7 +5756,10 @@ selectCase
 ~ End P4Grammar
 
 In a `select` expression, if the `expressionList` has type `tuple<T>`,
-then each `keysetExpression` must have type `set<tuple<T>>`.
+then each `keysetExpression` must have type `set<tuple<T>>`.  In
+particular, if a set is specified as a range or mask expression, the
+endpoints of the range and mask expression are implicitly cast to type
+`T` using the standard rules for casts.
 
 In terms of the `ParserModel`, the meaning of a select expression:
 
@@ -8347,6 +8350,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified implicit casts present in select expressions ([#sec-select]).
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
 * Allow ranges to be specified by serializable enums (Section [#sec-ranges]).
