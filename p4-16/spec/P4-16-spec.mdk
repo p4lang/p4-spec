@@ -3860,6 +3860,14 @@ the compiler will add implicit casts as follows:
 - `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
 - `E.a ++ 8w0` becomes `(bit<8>)E.a ++ 8w0`
 
+The compiler also adds implicit casts when types of different
+expressions need to ``match''; for example, as described in Section
+[#sec-select], since select labels are compared againt the selected
+expression, the compiler will insert implicit casts for the select
+labels when they have `int` types.  Similarly, when assigning a
+structure-valued expression to a structure or header, the compiler will
+add implicit casts for `int` fields.
+
 ### Illegal arithmetic expressions { #sec-illegal-arith }
 
 Many arithmetic expressions that would be allowed in other languages
@@ -5782,7 +5790,10 @@ selectCase
 ~ End P4Grammar
 
 In a `select` expression, if the `expressionList` has type `tuple<T>`,
-then each `keysetExpression` must have type `set<tuple<T>>`.
+then each `keysetExpression` must have type `set<tuple<T>>`.  In
+particular, if a set is specified as a range or mask expression, the
+endpoints of the range and mask expression are implicitly cast to type
+`T` using the standard rules for casts.
 
 In terms of the `ParserModel`, the meaning of a select expression:
 
@@ -8402,6 +8413,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified implicit casts present in select expressions ([#sec-select]).
 * Clarified that slices can be applied to arbitary-precision integers ([#sec-varint-ops]).
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
