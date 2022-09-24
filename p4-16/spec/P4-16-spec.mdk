@@ -2159,6 +2159,7 @@ to a `set` type. These types are used during type-checking.
 typeDeclaration
     : derivedTypeDeclaration
     | typedefDeclaration
+    | newtypeDeclaration
     | parserTypeDeclaration ';'
     | controlTypeDeclaration ';'
     | packageTypeDeclaration ';'
@@ -3015,7 +3016,8 @@ Similarly to `typedef`, the keyword `type` can be used to introduce a
 new type.
 
 ~ Begin P4Grammar
-    | optAnnotations TYPE typeRef name
+newtypeDeclaration
+    : optAnnotations TYPE typeRef name
     | optAnnotations TYPE derivedTypeDeclaration name
 ~ End P4Grammar
 
@@ -5274,10 +5276,10 @@ emptyStatement
 
 ## Block statement { #sec-block-stmt }
 
-A block statement is denoted by curly braces. It contains a
-sequence of statements and declarations, which are executed
-sequentially. The variables and constants within a
-block statement are only visible within the block.
+A block statement is denoted by curly braces. It contains a sequence
+of statements and declarations, which are executed sequentially. The
+variables, constants, typedefs, and instantiations within a block
+statement are only visible within the block.
 
 ~ Begin P4Grammar
 blockStatement
@@ -5292,6 +5294,7 @@ statOrDeclList
 statementOrDeclaration
     : variableDeclaration
     | constantDeclaration
+    | typedefDeclaration
     | statement
     ;
 ~ End P4Grammar
