@@ -6113,12 +6113,16 @@ parser Top(packet_in b, out Parsed_headers headers) {
 
 ### Lookahead { #sec-packet-lookahead }
 
-The `lookahead` method provided by the `packet_in` packet
-abstraction evaluates to a set of bits from the input packet without
-advancing the `nextBitIndex` pointer. Similar to `extract`, it
-will transition to `reject` and set the error if there are not
-enough bits in the packet. The `lookahead` method can be invoked
-as follows,
+The `lookahead` method provided by the `packet_in` packet abstraction
+evaluates to a set of bits from the input packet without advancing the
+`nextBitIndex` pointer. Similar to `extract`, it will transition to
+`reject` and set the error if there are not enough bits in the packet.
+When `lookahead` returns a value that contains headers (e.g., a header
+type, or a struct containing headers), the headers values in the
+returned result are always valid (otherwise `lookahead` must have
+transitioned to the `reject` state).
+
+The `lookahead` method can be invoked as follows:
 
 ~ Begin P4Example
 b.lookahead<T>()
@@ -8414,8 +8418,9 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
-* Clarified implicit casts present in select expressions ([#sec-select]).
-* Clarified that slices can be applied to arbitary-precision integers ([#sec-varint-rrops]).
+* Clarified implicit casts present in select expressions (Section [#sec-select]).
+* Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-rrops]).
+* Clarified the behavior of `lookahead` on header-typed values (Section [#sec-packet-lookahead]).
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
