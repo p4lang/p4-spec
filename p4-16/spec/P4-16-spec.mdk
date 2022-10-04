@@ -2763,6 +2763,19 @@ either by the number of arguments or by the names of the arguments,
 when calls are specifying argument names.  Argument type information
 is not used in disambiguating calls.
 
+Notice that overloading of parsers, controls, or packages is not allowed:
+
+~ Begin P4
+parser p(packet_in p, out bit<32> value) {
+  ...
+}
+
+// The following will cause an error about a duplicate declaration
+//parser p(packet_in p, out Headers headers) {
+//   ...
+//}
+~ End P4
+
 ##### Abstract methods { #sec-abstract-methods }
 
 Typical extern object methods are built-in, and are implemented by the
@@ -3421,7 +3434,7 @@ A conditional expression of the form `e1 ? e2 : e3` behaves the
 same as in languages like C. As described above, the expression `e1` is evaluated first,
 and second either `e2` or `e3` is evaluated depending on the result.
 
-The first sub-expression `e1` must have Boolean type (i.e. "bit" or "bit<1>"),
+The first sub-expression `e1` must have Boolean type
 and the second and third sub-expressions must have the same type,
 which cannot both be arbitrary-precision integers unless the condition
 itself can be evaluated at compilation time. This restriction is
@@ -6111,12 +6124,16 @@ parser Top(packet_in b, out Parsed_headers headers) {
 
 ### Lookahead { #sec-packet-lookahead }
 
-The `lookahead` method provided by the `packet_in` packet
-abstraction evaluates to a set of bits from the input packet without
-advancing the `nextBitIndex` pointer. Similar to `extract`, it
-will transition to `reject` and set the error if there are not
-enough bits in the packet. The `lookahead` method can be invoked
-as follows,
+The `lookahead` method provided by the `packet_in` packet abstraction
+evaluates to a set of bits from the input packet without advancing the
+`nextBitIndex` pointer. Similar to `extract`, it will transition to
+`reject` and set the error if there are not enough bits in the packet.
+When `lookahead` returns a value that contains headers (e.g., a header
+type, or a struct containing headers), the headers values in the
+returned result are always valid (otherwise `lookahead` must have
+transitioned to the `reject` state).
+
+The `lookahead` method can be invoked as follows:
 
 ~ Begin P4Example
 b.lookahead<T>()
@@ -6754,7 +6771,8 @@ enables expressing these algorithm directly in P4,
 which allows the compiler to infer how the table is actually used and
 potentially make better allocation decisions for targets with limited
 resources. Entries declared in the P4 source are installed in the
-table when the program is loaded onto the target.
+table when the program is loaded onto the target. Entries cannot be
+specified for a table with no key (see Sec. [#sec-table-keys]).
 
 Table entries are defined using the following syntax:
 
@@ -7995,13 +8013,13 @@ error.
 
 # Annotations { #sec-annotations }
 
-Annotations are similar to C# attributes and Java annotations. They are a simple
-mechanism for extending the P4 language to some limited degree without changing
-the grammar. To some degree they subsume C `#pragma`s. Annotations are attached
-to types, fields, variables, etc. using the `@` syntax (as shown explicitly in
-the P4 grammar). Unstructured annotations, or just "annotations," have an
-optional body; structured annotations have a mandatory body, containing at least
-a pair of square brackets `[]`.
+Annotations are a simple mechanism for extending the P4 language to
+some limited degree without changing the grammar. Annotations are
+attached to types, fields, variables, etc. using the `@` syntax
+(as shown explicitly in the P4 grammar). Unstructured annotations,
+or just "annotations," have an optional body; structured annotations
+have a mandatory body, containing at least a pair of square brackets
+`[]`.
 
 ~ Begin P4Grammar
 optAnnotations
@@ -8411,8 +8429,9 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
-* Clarified implicit casts present in select expressions ([#sec-select]).
-* Clarified that slices can be applied to arbitary-precision integers ([#sec-varint-ops]).
+* Clarified implicit casts present in select expressions (Section [#sec-select]).
+* Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-rrops]).
+* Clarified the behavior of `lookahead` on header-typed values (Section [#sec-packet-lookahead]).
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
