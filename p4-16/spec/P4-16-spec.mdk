@@ -4065,7 +4065,7 @@ the `struct` or `header` types do need to be initialized though.
 
 Some P4 expressions denote sets of values (`set<T>`, for some type `T`;
 see Section [#sec-set-types]). These expressions can
-appear only in a few contexts---parsers and constant table
+appear only in a few contexts---parsers and table
 entries. For example, the `select` expression (Section
 [#sec-select]) has the following structure:
 
@@ -6463,7 +6463,7 @@ have no direction (e.g., `port` in the previous example) indicate
 parameter list. When used in a match-action table (see Section
 [#sec-table-action-list]), these parameters will be provided by the
 table entries (e.g., as specified by the control plane, the
-`default_action` table property, or the `const entries` table
+`default_action` table property, or the `entries` table
 property).
 
 The body of an action consists of a sequence of statements and
@@ -6767,7 +6767,7 @@ While table entries are typically installed by the control plane,
 tables may also be initialized at compile time with a set of entries.
 This is useful in situations where tables are
 used to implement fixed algorithms---defining table entries statically
-enables expressing these algorithm directly in P4,
+enables expressing these algorithms directly in P4,
 which allows the compiler to infer how the table is actually used and
 potentially make better allocation decisions for targets with limited
 resources. Entries declared in the P4 source are installed in the
@@ -6790,9 +6790,17 @@ entry
  ;
 ~ End P4Grammar
 
-Table entries are immutable (const)---i.e., they can only be read and
-cannot be changed or removed by the control plane. It follows that
-tables that define entries in the P4 source are immutable. This design
+Table entries defined using `const entries` are immutable---i.e., they
+can only be read by the control plane.  The control plane is not
+allowed to remove or modify any entries defined within `const
+entries`, nor is it allowed to add entries to such a table.
+
+Whether the control plane is allowed to modify a table's default
+action at run time is determined by the table's `default_action` table
+property (see Section [#sec-default-action]), independently of whether
+the control plane is allowed to modify the entries of the table.
+
+This design
 choice has important ramifications for the P4 runtime since it does
 not have to keep track of different types of entries in one table
 (mutable and immutable).  Future versions of P4 may add the ability to
@@ -8440,6 +8448,7 @@ The P4 compiler should provide:
 * Added section with operations on `match_kind` values (Section [#sec-match-kind-exprs]).
 * Renamed infinite-precision integers to arbitrary-precision integers (Section [#sec-arbitrary-precision-integers]).
 * compiler-inserted `default_action` is not `const` (Section [#sec-tables]).
+* Clarified the restrictions on run time for tables with `const entries` (Section [#sec-entries]).
 
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
