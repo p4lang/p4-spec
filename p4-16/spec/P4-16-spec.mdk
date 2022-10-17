@@ -2539,6 +2539,25 @@ Operations that manipulate tuple types are described in Sections
 
 The type `tuple<>` is a tuple type with no components.
 
+### List types { #sec-list-types }
+
+A list holds zero or more values, where every element must have the
+same type.  The type of a list where all elements have type `T` is
+written as
+
+~ Begin P4Example
+list<T>
+~ End P4Example
+
+~ Begin P4Grammar
+listType
+    : LIST '<' typeArg '>'
+    ;
+~ End P4Grammar
+
+Operations that manipulate list types are described in Section
+[#sec-list-exprs].
+
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
@@ -4062,6 +4081,35 @@ once in the same structure-valued expression. The order of the fields
 of the `struct` or `header` type does not need to match the order of
 the values of the structure-valued expression. All of the fields of
 the `struct` or `header` types do need to be initialized though.
+
+## Operations on list expressions { #sec-list-exprs }
+
+Literal list values can be represented as list expressions, and passed
+as arguments, e.g. to extern constructor functions.
+
+A literal list value is written using curly braces, with each element
+separated by a comma.  The left curly brace is preceded by a
+`(list<T>)` where `T` is the list element type.  This `(list<T>)` can
+be omitted if it can be inferred from context.
+
+~ Begin P4Example
+struct pair_t {
+    bit<16> a;
+    bit<32> b;
+}
+
+extern E {
+    E(list<pair_t> data);
+    void run();
+}
+
+control c() {
+    E((list<pair_t>) {{2, 3}, {4, 5}}) e;
+    apply {
+        e.run();
+    }
+}
+~ End P4Example
 
 ## Operations on sets { #sec-set-exprs }
 
