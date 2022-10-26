@@ -353,7 +353,7 @@ extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
  * If you use a P4 compiler whose front end is based on the open
  * source p4c front end, then providing the --ndebug command line
  * option to p4c causes the compiled program to behave as if all
- * assert statements were not present in the source code.  Consule the
+ * assert statements were not present in the source code.  Consult the
  * documentation of your device's P4 compiler for information on how
  * it handles assert statements, and if it supports a similar option.
  *
