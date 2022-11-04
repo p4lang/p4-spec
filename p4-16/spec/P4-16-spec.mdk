@@ -3029,7 +3029,6 @@ new type.
 
 ~ Begin P4Grammar
     | optAnnotations TYPE typeRef name
-    | optAnnotations TYPE derivedTypeDeclaration name
 ~ End P4Grammar
 
 ~ Begin P4Example
@@ -3041,6 +3040,10 @@ While similar to `typedef`, the `type` keyword introduces a new type
 which is not a synonym with the original type: values of the
 original type and the newly introduced type cannot be mixed in
 expressions.
+
+Currently the types that can be created by the `type` keyword are
+restricted to one of: `bit<>`, `int<>`, `bool`, or types defined using
+`type` from such types.
 
 One important use of such types is in describing P4 values that need
 to be exchanged with the control plane through communication channels
@@ -4999,7 +5002,7 @@ recursively on the type of `e` as described in the following table:
 
 The methods can also be applied to type name expressions `e`:
 
-* if the type of `e` is a type introduced by `newtype`, the result
+* if the type of `e` is a type introduced by `type`, the result
   is the application of the method to the underlying type
 * if `e` is the name of a type (e.g., introduced by a `typedef` declaration),
   where the type given a name is one of the above,
