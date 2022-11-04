@@ -7722,9 +7722,24 @@ This table's local name is `t`.
 #### Keys { #sec-cp-keys }
 
 Syntactically, table keys are expressions.  For simple expressions,
-the local key name can be generated from the expression itself.  In
-the following example, the table `t` has keys with names `data.f1`
-and `hdrs[3].f2`.
+the local key name can be generated from the expression itself; the
+algorithm by which a compiler derives control-plane names for complex
+key expressions is target-dependent.
+
+The spec suggests, but does not mandate, the following algorithm for
+generating names for some kinds of key expressions:
+
+| Kind | Example | Name |
+| ---- | ------- | ---- |
+| The `isValid()` method. | `h.isValid()` | `"h.isValid()"` |
+| Array accesses. | `header_stack[1]` | `"header_stack[1]"` |
+| Constants. | `1` | `"1"` |
+| Field projections. | `data.f1` | `"data.f1"` |
+| Slices. | `f1[3:0]` | `"f1[3:0]"` |
+| Masks. | `h.src & 0xFFFF` | `"h.sec & 0xFFFF"` |
+
+In the following example, the previous algorithm would derive for
+table `t` two keys with names `data.f1` and `hdrs[3].f2`.
 
 ~ Begin P4Example
 table t {
@@ -7736,20 +7751,9 @@ table t {
 }
 ~ End P4Example
 
-The following kinds of expressions have local names derived from their
-syntactic names:
-
-| Kind | Example | Name |
-| ---- | ------- | ---- |
-| The `isValid()` method. | `h.isValid()` | `"h.isValid()"` |
-| Array accesses. | `header_stack[1]` | `"header_stack[1]"` |
-| Constants. | `1` | `"1"` |
-| Field projections. | `data.f1` | `"data.f1"` |
-| Slices. | `f1[3:0]` | `"f1[3:0]"` |
-
-All other kinds of expressions **must** be annotated with a `@name`
-annotation (Section [#sec-control-plane-api-annotations]), as in the
-following example.
+If a compiler cannot generate a name for a key it **requires** the key
+expression to be annotated with a `@name` annotation (Section
+[#sec-control-plane-api-annotations]), as in the following example:
 
 ~ Begin P4Example
 table t {
@@ -8439,11 +8443,12 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Added automatically-generated names for keys with masks (Section [#sec-cp-keys]).
 * Explicitly disallow overloading of parsers, controls, and packages (Section [#sec-extern-objects]).
 * Clarified implicit casts present in select expressions (Section [#sec-select]).
 * Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-ops]).
+* Clarified that no direct invocation is possible for objects that have constructor arguments (Section [#sec-direct-type-invocation]).
 * Clarified the behavior of `lookahead` on header-typed values (Section [#sec-packet-lookahead]).
-* Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
 * Allow ranges to be specified by serializable enums (Section [#sec-ranges]).
