@@ -2561,31 +2561,32 @@ Operations that manipulate list types are described in Section
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
-header unions, structs, and tuples.  Note that `int` by itself
+header unions, structs, tuples, and lists.  Note that `int` by itself
 (i.e. not as part of an `int<N>` type expression) means an
 arbitrary-precision integer, without a width specified.
 
-|--------------------|--------------------------------------------|
-|                    | Container type                           |||
-|                    |-----------|--------------|-----------------|
-| Element type       | header    | header_union | struct or tuple |
-+:-------------------+:----------+:-------------+:----------------+
-| `bit<W>`       | allowed   | error   |  allowed |
-| `int<W>`       | allowed   | error   |  allowed |
-| `varbit<W>`    | allowed   | error   |  allowed |
-| `int`          | error     | error   |  error   |
-| `void`         | error     | error   |  error   |
-| `string`       | error     | error   |  error   |
-| `error`        | error     | error   |  allowed |
-| `match_kind`   | error     | error   |  error   |
-| `bool`         | allowed   | error   |  allowed |
-| `enum`         | allowed[^enum_header]     | error   |  allowed |
-| `header`       | error     | allowed |  allowed |
-| header stack   | error     | error   |  allowed |
-| `header_union` | error     | error   |  allowed |
-| `struct`       | allowed[^struct_header]   | error   |  allowed |
-| `tuple`        | error     | error   |  allowed |
-|----------------|-----------|---------|----------|
+|--------------------|------------------------------------------------||||
+|                    | Container type                                 ||||
+|                    |-----------|--------------|-----------------|------|
+| Element type       | header    | header_union | struct or tuple | list |
++:-------------------+:----------+:-------------+:----------------+:-----+
+| `bit<W>`       | allowed   | error   |  allowed | allowed |
+| `int<W>`       | allowed   | error   |  allowed | allowed |
+| `varbit<W>`    | allowed   | error   |  allowed | allowed |
+| `int`          | error     | error   |  error   | allowed |
+| `void`         | error     | error   |  error   | error   |
+| `string`       | error     | error   |  error   | allowed |
+| `error`        | error     | error   |  allowed | allowed |
+| `match_kind`   | error     | error   |  error   | allowed |
+| `bool`         | allowed   | error   |  allowed | allowed |
+| `enum`         | allowed[^enum_header]     | error   |  allowed | allowed |
+| `header`       | error     | allowed |  allowed | allowed |
+| header stack   | error     | error   |  allowed | allowed |
+| `header_union` | error     | error   |  allowed | allowed |
+| `struct`       | allowed[^struct_header]   | error   |  allowed | allowed |
+| `tuple`        | error     | error   |  allowed | allowed |
+| `list`         | error     | error   |  error   | allowed |
+|----------------|-----------|---------|----------|---------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
@@ -8625,11 +8626,12 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `else`  | `enum`   | `error`     |   `extern`  |
 | `exit`  | `false`   |  `header`   |  `header_union` |
 | `if`    |   `in`   | `inout` | `int`  |
-| `match_kind` | `package` | `parser` | `out` |
-| `return`  | `select` | `state` | `struct`   |
-|  `switch` | `table`   | `this` | `transition` |
-|  `true` |  `tuple` | `type` | `typedef` |
-| `value_set` | `varbit` | `verify` | `void` | |
+| `list`  | `match_kind` | `package` | `parser` |
+| `out`   | `return`  | `select` | `state` |
+| `struct` | `switch` | `table`   | `this` |
+| `transition` | `true` |  `tuple` | `type` |
+| `typedef` | `value_set` | `varbit` | `verify` |
+| `void` | | | |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
