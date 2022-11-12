@@ -4266,10 +4266,22 @@ h = { 10, 12 };  // This also makes the header h valid
 h = { y = 12, x = 10 };  // Same effect as above
 ~ End P4Example
 
-Two headers can be compared for equality (==) or inequality (!=) only
+Two headers can be compared for equality (`==`) or inequality (`!=`) only
 if they have the same type.  Two headers are equal if and only if they
 are both invalid, or they are both valid and all their corresponding
 fields are equal.
+
+The expression `(H) {#}` represents an invalid header of type `H`,
+where `H` is a header type.  For example:
+
+~ Begin P4Example
+header H { bit<32> x; bit<32> y; }
+H h;
+h = (H) {#};  // This makes the header h invalid
+if (h == (H) {#}) {  // This is equivalent to the condition !h.isValid()
+    // ...
+}
+~ End P4Example
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
 for a description of the behavior if header fields are read without
