@@ -337,6 +337,7 @@ extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
                             in psa_egress_deparser_input_metadata_t edstd);
 
 
+// BEGIN:assert_extern_function
 /***
  * Calling assert when the argument is true has no effect, except any
  * effect that might occur due to evaluation of the argument (but see
@@ -349,6 +350,10 @@ extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
  * statement with a false argument causes a log message with the file
  * name and line number of the assert statement to be printed, and
  * then the simple_switch_psa process exits.
+ *
+ * It is expected that many hardware targets will compile PSA programs
+ * as if all calls to `assert` were not present.  Consult your target
+ * device's documentation for details.
  *
  * If you use a P4 compiler whose front end is based on the open
  * source p4c front end, then providing the --ndebug command line
@@ -365,12 +370,18 @@ extern bool psa_recirculate(in psa_egress_output_metadata_t istd,
  * same way when assert statements are removed.
  */
 extern void assert(in bool check);
+// END:assert_extern_function
 
+// BEGIN:assume_extern_function
 /***
  * For the purposes of compiling and executing P4 programs on a target
  * device, assert and assume are identical, including the use of the
  * --ndebug option to compilers based on the open source p4c front end
  * to elide them.  See documentation for assert.
+ *
+ * It is expected that many hardware targets will compile PSA programs
+ * as if all calls to `assume` were not present.  Consult your target
+ * device's documentation for details.
  *
  * The reason that assume exists as a separate function from assert is
  * because they are expected to be used differently by formal
@@ -401,6 +412,7 @@ extern void assert(in bool check);
  * is likely that your assumption was wrong, and should be reexamined.
  */
 extern void assume(in bool check);
+// END:assume_extern_function
 
 // BEGIN:Match_kinds
 match_kind {
