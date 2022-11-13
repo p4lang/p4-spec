@@ -307,7 +307,7 @@
 <div class="authors align-center" data-line="43" style="text-align:center;width:80%;line-adjust:0"><table class="authorrow columns block" data-line="43" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="43" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="43" style="font-size:large;line-adjust:0"><span data-line="43"></span>The P4.org Architecture Working Group</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2022-11-08</div></div>
+<div class="titlefooter align-center" data-line="52" style="text-align:center;margin-top:0.5ex;line-adjust:0"><span data-line="52"></span>2022-11-13</div></div>
 <p class="p noindent para-continued" data-line="36"><span data-line="36"></span><span data-line="36"></span>
 <span data-line="37"></span><span data-line="37"></span>
 <span data-line="38"></span><span data-line="38"></span>
@@ -358,7 +358,7 @@ interface ports.
 <div class="tocitem tocitem3" data-toc-target-elem="h3" data-toc-target="sec-unicast-operation" data-toc-depth="3" data-toc-line="[6.3.1]{.heading-label}.&#8194;Unicast operation" style="toctarget:sec-unicast-operation"><a href="#sec-unicast-operation" class="localref"><span class="heading-label">6.3.1</span>.&#8194;Unicast operation</a></div>
 <div class="tocitem tocitem3" data-toc-target-elem="h3" data-toc-target="sec-multicast-operation" data-toc-depth="3" data-toc-line="[6.3.2]{.heading-label}.&#8194;Multicast operation" style="toctarget:sec-multicast-operation"><a href="#sec-multicast-operation" class="localref"><span class="heading-label">6.3.2</span>.&#8194;Multicast operation</a></div>
 <div class="tocitem tocitem3" data-toc-target-elem="h3" data-toc-target="sec-drop-operation" data-toc-depth="3" data-toc-line="[6.3.3]{.heading-label}.&#8194;Drop operation" style="toctarget:sec-drop-operation"><a href="#sec-drop-operation" class="localref"><span class="heading-label">6.3.3</span>.&#8194;Drop operation</a></div></div>
-<div class="tocitem tocitem2" data-toc-target-elem="h2" data-toc-target="sec-initial-values-of-packets-processed-by-egress" data-toc-depth="2" data-toc-line="[6.4]{.heading-label}.&#8194;Initial values of packets processed by egress" style="toctarget:sec-initial-values-of-packets-processed-by-egress"><a href="#sec-initial-values-of-packets-processed-by-egress" class="localref"><span class="heading-label">6.4</span>.&#8194;Initial values of packets processed by egress</a></div>
+<div class="tocitem tocitem2" data-toc-target-elem="h2" data-toc-target="sec-initial-values-egress" data-toc-depth="2" data-toc-line="[6.4]{.heading-label}.&#8194;Initial values of packets processed by egress" style="toctarget:sec-initial-values-egress"><a href="#sec-initial-values-egress" class="localref"><span class="heading-label">6.4</span>.&#8194;Initial values of packets processed by egress</a></div>
 <div class="tocblock tocblock3">
 <div class="tocitem tocitem3" data-toc-target-elem="h3" data-toc-target="sec-initial-packet-contents-for-normal-packets" data-toc-depth="3" data-toc-line="[6.4.1]{.heading-label}.&#8194;Initial packet contents for normal packets" style="toctarget:sec-initial-packet-contents-for-normal-packets"><a href="#sec-initial-packet-contents-for-normal-packets" class="localref"><span class="heading-label">6.4.1</span>.&#8194;Initial packet contents for normal packets</a></div>
 <div class="tocitem tocitem3" data-toc-target-elem="h3" data-toc-target="sec-initial-packet-contents-for-packets-cloned-from-ingress-to-egress" data-toc-depth="3" data-toc-line="[6.4.2]{.heading-label}.&#8194;Initial packet contents for packets cloned from ingress to egress" style="toctarget:sec-initial-packet-contents-for-packets-cloned-from-ingress-to-egress"><a href="#sec-initial-packet-contents-for-packets-cloned-from-ingress-to-egress" class="localref"><span class="heading-label">6.4.2</span>.&#8194;Initial packet contents for packets cloned from ingress to egress</a></div>
@@ -1596,7 +1596,7 @@ mechanism such as the P4Runtime API.
 <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">action</span> ingress_drop(<span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">inout</span> psa_ingress_output_metadata_t meta)
 {
     meta.drop = <span style="color:blue;font-weight:bold;font-family:monospace;font-size:10pt">true</span>;
-}</code></pre><h3 id="sec-initial-values-of-packets-processed-by-egress" class="h2" data-line="1002" data-heading-depth="2" style="display:block"><span data-line="1002"></span><span class="heading-before"><span class="heading-label">6.4</span>.&#8194;</span><span data-line="1002"></span>Initial values of packets processed by egress</h3>
+}</code></pre><h3 id="sec-initial-values-egress" class="h2" data-line="1002" data-heading-depth="2" style="display:block"><span data-line="1002"></span><span class="heading-before"><span class="heading-label">6.4</span>.&#8194;</span><span data-line="1002"></span>Initial values of packets processed by egress</h3>
 <p class="p noindent" data-line="1004"><span data-line="1004"></span>Table<span data-line="1004"></span>&nbsp;<a href="#egress-initial-values" title="Initial values for packets processed by egress." class="localref" style="target-element:tablefigure"><span class="table-label">4</span></a><span data-line="1004"></span> describes the initial values of the
 packet contents and metadata when a packet begins egress processing.
 </p>
@@ -4601,49 +4601,53 @@ required by PSA.
 <p class="p indent" data-line="3598"><span data-line="3598"></span>Summary of changes.  For some of these, additional explanation is
 provided in sub-sections below.
 </p>
-<ul class="ul list-plus compact" data-line="3602">
-<li class="li ul-li list-plus-li compact-li" data-line="3602"><span data-line="3602"></span>Add <span data-line="3602"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">p4runtime_translation</span></code><span data-line="3602"></span> annotations for all seven PSA numeric
-types in <span data-line="3603"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3603"></span>.
+<ul class="ul list-plus compact" data-line="3601">
+<li class="li ul-li list-plus-li compact-li" data-line="3601"><span data-line="3601"></span>Add <span data-line="3601"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">p4runtime_translation</span></code><span data-line="3601"></span> annotations for all seven PSA numeric
+types in <span data-line="3602"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3602"></span> (all changes in file <span data-line="3602"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3602"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3604"><span data-line="3604"></span>Add clarifications on <span data-line="3604"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">p4runtime_translation</span></code><span data-line="3604"></span> annotation behavior.
+<li class="li ul-li list-plus-li compact-li" data-line="3603"><span data-line="3603"></span>Add clarifications on <span data-line="3603"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">p4runtime_translation</span></code><span data-line="3603"></span> annotation behavior
+(section<span data-line="3604"></span>&nbsp;<a href="#sec-data-plane-vs-control-plane-values" title="4.4.&#8194;Data plane vs. control plane data representations" class="localref" style="target-element:h2"><span class="heading-label">4.4</span></a><span data-line="3604"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3605"><span data-line="3605"></span>Add documentation about the behavior of each <span data-line="3605"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">match_kind</span></code><span data-line="3605"></span>.
+<li class="li ul-li list-plus-li compact-li" data-line="3605"><span data-line="3605"></span>Add documentation about the behavior of each <span data-line="3605"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:teal;font-weight:bold;font-family:monospace;font-size:10pt">match_kind</span></code><span data-line="3605"></span> (section
+<span data-line="3606"></span><a href="#sec-match-kinds" title="4.3.&#8194;Match kinds" class="localref" style="target-element:h2"><span class="heading-label">4.3</span></a><span data-line="3606"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3606"><span data-line="3606"></span>Add explanation why there is no packet length field defined in PSA.
+<li class="li ul-li list-plus-li compact-li" data-line="3607"><span data-line="3607"></span>Add explanation why there is no packet length field defined in PSA
+(section<span data-line="3608"></span>&nbsp;<a href="#sec-initial-values-egress" title="6.4.&#8194;Initial values of packets processed by egress" class="localref" style="target-element:h2"><span class="heading-label">6.4</span></a><span data-line="3608"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3607"><span data-line="3607"></span>Add match<span data-line="3607"></span>_<span data-line="3607"></span>kind <span data-line="3607"></span><code class="code code1 language-p4 lang-p4 p4 colorized">optional</code><span data-line="3607"></span>.
+<li class="li ul-li list-plus-li compact-li" data-line="3609"><span data-line="3609"></span>Add match<span data-line="3609"></span>_<span data-line="3609"></span>kind <span data-line="3609"></span><code class="code code1 language-p4 lang-p4 p4 colorized">optional</code><span data-line="3609"></span> (section<span data-line="3609"></span>&nbsp;<a href="#sec-match-kinds" title="4.3.&#8194;Match kinds" class="localref" style="target-element:h2"><span class="heading-label">4.3</span></a><span data-line="3609"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3608"><span data-line="3608"></span>Changed <span data-line="3608"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3608"></span> file explicitly <span data-line="3608"></span><em class="em-low1">not</em><span data-line="3608"></span> usable for compiling using
-<span data-line="3609"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">#</span><span style="color:gray">error</span></code><span data-line="3609"></span> preprocessor directive.  Added a copy of <span data-line="3609"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa-for-bmv2.p4</code><span data-line="3609"></span>
-from open source <span data-line="3610"></span><code class="code code1 language-p4 lang-p4 p4 colorized">p4c</code><span data-line="3610"></span> compiler to <span data-line="3610"></span><code class="code code1 language-p4 lang-p4 p4 colorized">examples</code><span data-line="3610"></span> directory for quick
-testing of correct syntax of example programs.
+<li class="li ul-li list-plus-li compact-li" data-line="3610"><span data-line="3610"></span>Changed <span data-line="3610"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3610"></span> file explicitly so that it is <span data-line="3610"></span><em class="em-low1">not</em><span data-line="3610"></span> usable for
+compiling, by adding an <span data-line="3611"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">#</span><span style="color:gray">error</span></code><span data-line="3611"></span> preprocessor directive to it.
+Added a copy of <span data-line="3612"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa-for-bmv2.p4</code><span data-line="3612"></span> from open source <span data-line="3612"></span><code class="code code1 language-p4 lang-p4 p4 colorized">p4c</code><span data-line="3612"></span> compiler to
+<span data-line="3613"></span><code class="code code1 language-p4 lang-p4 p4 colorized">examples</code><span data-line="3613"></span> directory for quick testing of correct syntax of example
+programs (all changes in file <span data-line="3614"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3614"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3612"><span data-line="3612"></span>Remove control plane API function signatures from comments in file
-<span data-line="3613"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3613"></span>.
+<li class="li ul-li list-plus-li compact-li" data-line="3615"><span data-line="3615"></span>Remove control plane API function signatures from comments in file
+<span data-line="3616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3616"></span> (all changes in file <span data-line="3616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3616"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3614"><span data-line="3614"></span>Replace <span data-line="3614"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">noWarnUnused</span></code><span data-line="3614"></span> with standard <span data-line="3614"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">noWarn</span><span style="color:maroon">(&quot;unused&quot;)</span></code><span data-line="3614"></span>
-annotations in <span data-line="3615"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3615"></span>.
+<li class="li ul-li list-plus-li compact-li" data-line="3617"><span data-line="3617"></span>Replace <span data-line="3617"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">noWarnUnused</span></code><span data-line="3617"></span> with standard <span data-line="3617"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">noWarn</span><span style="color:maroon">(&quot;unused&quot;)</span></code><span data-line="3617"></span>
+annotations in <span data-line="3618"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3618"></span> (all changes in file <span data-line="3618"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3618"></span>).
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3616"><span data-line="3616"></span>Add <span data-line="3616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">assert</code><span data-line="3616"></span> and <span data-line="3616"></span><code class="code code1 language-p4 lang-p4 p4 colorized">assume</code><span data-line="3616"></span> extern functions.
+<li class="li ul-li list-plus-li compact-li" data-line="3619"><span data-line="3619"></span>Add <span data-line="3619"></span><code class="code code1 language-p4 lang-p4 p4 colorized">assert</code><span data-line="3619"></span> and <span data-line="3619"></span><code class="code code1 language-p4 lang-p4 p4 colorized">assume</code><span data-line="3619"></span> extern functions (all changes in file <span data-line="3619"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3619"></span>).
 </li></ul>
 
-<p class="p noindent" data-line="3618"><span data-line="3618"></span>TODO: The list above is complete up to the following commit.  Any
+<p class="p noindent" data-line="3621"><span data-line="3621"></span>TODO: The list above is complete up to the following commit.  Any
 later commits should be considered for describing as additional
 entries in the list above:
 </p>
-<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="3622" data-line-first="3623" style="display:block"><code data-line="3623">commit e7a17fbc9ac910c773f7c0def54976f8ffddb3c4
+<pre class="para-block pre-fenced pre-fenced3 language-p4 lang-p4 p4 colorized" data-line="3625" data-line-first="3626" style="display:block"><code data-line="3626">commit e7a17fbc9ac910c773f7c0def54976f8ffddb3c4
 Author: Andy Fingerhut &lt;andy_fingerhut@alum.wustl.edu&gt;
-Date:   Fri Oct <span class="constant" style="color:purple">28</span> <span class="constant" style="color:purple">00</span>:<span class="constant" style="color:purple">03</span>:<span class="constant" style="color:purple">42</span> <span class="constant" style="color:purple">2022</span> -<span class="constant" style="color:purple">0400</span></code></pre><h4 id="sec-add-match_kind-optional" class="h3" data-line="3629" data-heading-depth="3" style="display:block"><span data-line="3629"></span><span class="heading-before"><span class="heading-label">H.1.1</span>.&#8194;</span><span data-line="3629"></span>Add match<span data-line="3629"></span>_<span data-line="3629"></span>kind <span data-line="3629"></span><code class="code code1 language-p4 lang-p4 p4 colorized">optional</code></h4>
-<p class="p noindent" data-line="3631"><span data-line="3631"></span>This match kind was added to the v1model architecture in early 2020,
+Date:   Fri Oct <span class="constant" style="color:purple">28</span> <span class="constant" style="color:purple">00</span>:<span class="constant" style="color:purple">03</span>:<span class="constant" style="color:purple">42</span> <span class="constant" style="color:purple">2022</span> -<span class="constant" style="color:purple">0400</span></code></pre><h4 id="sec-add-match_kind-optional" class="h3" data-line="3632" data-heading-depth="3" style="display:block"><span data-line="3632"></span><span class="heading-before"><span class="heading-label">H.1.1</span>.&#8194;</span><span data-line="3632"></span>Add match<span data-line="3632"></span>_<span data-line="3632"></span>kind <span data-line="3632"></span><code class="code code1 language-p4 lang-p4 p4 colorized">optional</code></h4>
+<p class="p noindent" data-line="3634"><span data-line="3634"></span>This match kind was added to the v1model architecture in early 2020,
 and seems useful in that it (a) provides additional information about
 how the control plane plans to configure the matching rules of a
 table, and (b) the additional restrictions it has over match kind
-<span data-line="3635"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ternary</code><span data-line="3635"></span> provides opportunities for target devices to implement it
-more efficiently than <span data-line="3636"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ternary</code><span data-line="3636"></span>.
-</p><h4 id="sec-remove-control-plane-api-function-signatures" class="h3" data-line="3639" data-heading-depth="3" style="display:block"><span data-line="3639"></span><span class="heading-before"><span class="heading-label">H.1.2</span>.&#8194;</span><span data-line="3639"></span>Remove control plane API function signatures</h4>
-<p class="p noindent" data-line="3641"><span data-line="3641"></span>As a historical note, the control plane API function signatures that
+<span data-line="3638"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ternary</code><span data-line="3638"></span> provides opportunities for target devices to implement it
+more efficiently than <span data-line="3639"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ternary</code><span data-line="3639"></span>.
+</p><h4 id="sec-remove-control-plane-api-function-signatures" class="h3" data-line="3642" data-heading-depth="3" style="display:block"><span data-line="3642"></span><span class="heading-before"><span class="heading-label">H.1.2</span>.&#8194;</span><span data-line="3642"></span>Remove control plane API function signatures</h4>
+<p class="p noindent" data-line="3644"><span data-line="3644"></span>As a historical note, the control plane API function signatures that
 were formerly given in comments preceded by the string
-<span data-line="3643"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">ControlPlaneAPI</span></code><span data-line="3643"></span> were added very early in the process of writing
+<span data-line="3646"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:gray">@</span><span style="color:gray">ControlPlaneAPI</span></code><span data-line="3646"></span> were added very early in the process of writing
 version 1.0 of the PSA specification, and were never reviewed
 thoroughly.  The P4Runtime API specification version 1.0 was being
 developed at the same time as version 1.0 of the PSA specification.
@@ -4652,108 +4656,108 @@ precisely those APIs for any P4-programmable device (although similar
 APIs have been implemented), and their presence was confusing those
 new to the PSA specification, who believed that those function
 signatures were required to be implemented.
-</p><h3 id="sec-changes-made-in-version-11" class="h2" data-line="3654" data-heading-depth="2" style="display:block"><span data-line="3654"></span><span class="heading-before"><span class="heading-label">H.2</span>.&#8194;</span><span data-line="3654"></span>Changes made in version 1.1</h3>
-<p class="p noindent" data-line="3656"><span data-line="3656"></span>Version 1.1 was released November 22, 2018.
+</p><h3 id="sec-changes-made-in-version-11" class="h2" data-line="3657" data-heading-depth="2" style="display:block"><span data-line="3657"></span><span class="heading-before"><span class="heading-label">H.2</span>.&#8194;</span><span data-line="3657"></span>Changes made in version 1.1</h3>
+<p class="p noindent" data-line="3659"><span data-line="3659"></span>Version 1.1 was released November 22, 2018.
 </p>
-<p class="p indent" data-line="3658"><span data-line="3658"></span>Summary of changes.  For some of these, additional explanation is
+<p class="p indent" data-line="3661"><span data-line="3661"></span>Summary of changes.  For some of these, additional explanation is
 provided in sub-sections below.
 </p>
-<ul class="ul list-plus compact" data-line="3661">
-<li class="li ul-li list-plus-li compact-li" data-line="3661"><span data-line="3661"></span>Define numeric translation between P4Runtime API control plane and
+<ul class="ul list-plus compact" data-line="3664">
+<li class="li ul-li list-plus-li compact-li" data-line="3664"><span data-line="3664"></span>Define numeric translation between P4Runtime API control plane and
 data plane values.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3663"><span data-line="3663"></span>Add the ability for packet clone sessions to create multiple copies.
+<li class="li ul-li list-plus-li compact-li" data-line="3666"><span data-line="3666"></span>Add the ability for packet clone sessions to create multiple copies.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3664"><span data-line="3664"></span>Add <span data-line="3664"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_idle_timeout</code><span data-line="3664"></span> table property.
+<li class="li ul-li list-plus-li compact-li" data-line="3667"><span data-line="3667"></span>Add <span data-line="3667"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_idle_timeout</code><span data-line="3667"></span> table property.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3665"><span data-line="3665"></span>Add <span data-line="3665"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_empty_group_action</code><span data-line="3665"></span> table property.
+<li class="li ul-li list-plus-li compact-li" data-line="3668"><span data-line="3668"></span>Add <span data-line="3668"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_empty_group_action</code><span data-line="3668"></span> table property.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3666"><span data-line="3666"></span>No longer require PSA implementation to support <span data-line="3666"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Digest</code><span data-line="3666"></span> extern
+<li class="li ul-li list-plus-li compact-li" data-line="3669"><span data-line="3669"></span>No longer require PSA implementation to support <span data-line="3669"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Digest</code><span data-line="3669"></span> extern
 instances in the egress pipeline.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3668"><span data-line="3668"></span>Several changes to the <span data-line="3668"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3668"></span> include file.
+<li class="li ul-li list-plus-li compact-li" data-line="3671"><span data-line="3671"></span>Several changes to the <span data-line="3671"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa.p4</code><span data-line="3671"></span> include file.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3669"><span data-line="3669"></span>Several changes to example PSA programs in the <span data-line="3669"></span><code class="code code1 language-p4 lang-p4 p4 colorized">examples</code><span data-line="3669"></span> directory.
+<li class="li ul-li list-plus-li compact-li" data-line="3672"><span data-line="3672"></span>Several changes to example PSA programs in the <span data-line="3672"></span><code class="code code1 language-p4 lang-p4 p4 colorized">examples</code><span data-line="3672"></span> directory.
 </li></ul>
-<h4 id="sec-numeric-translation-between-p4runtime-api-values-and-data-plane-values" class="h3" data-line="3672" data-heading-depth="3" style="display:block"><span data-line="3672"></span><span class="heading-before"><span class="heading-label">H.2.1</span>.&#8194;</span><span data-line="3672"></span>Numeric translation between P4Runtime API values and data plane values</h4>
-<p class="p noindent" data-line="3674"><span data-line="3674"></span>There was a series of meetings after PSA v1.0 was released to refine
+<h4 id="sec-numeric-translation-between-p4runtime-api-values-and-data-plane-values" class="h3" data-line="3675" data-heading-depth="3" style="display:block"><span data-line="3675"></span><span class="heading-before"><span class="heading-label">H.2.1</span>.&#8194;</span><span data-line="3675"></span>Numeric translation between P4Runtime API values and data plane values</h4>
+<p class="p noindent" data-line="3677"><span data-line="3677"></span>There was a series of meetings after PSA v1.0 was released to refine
 the details of the plan to do numeric translation of values with type
-<span data-line="3676"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="3676"></span> (and <span data-line="3676"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ClassOfService_t</code><span data-line="3676"></span>, and optionally other types in the
+<span data-line="3679"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="3679"></span> (and <span data-line="3679"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ClassOfService_t</code><span data-line="3679"></span>, and optionally other types in the
 future).  PSA v1.1 reflects the latest design for how to accomplish
 this.  Changes can be found here:
 </p>
-<ul class="ul list-plus compact" data-line="3680">
-<li class="li ul-li list-plus-li compact-li" data-line="3680"><span data-line="3680"></span>Section 4.1 <span data-line="3680"></span>&#8220;PSA type definitions&#8221;<span data-line="3680"></span>
+<ul class="ul list-plus compact" data-line="3683">
+<li class="li ul-li list-plus-li compact-li" data-line="3683"><span data-line="3683"></span>Section 4.1 <span data-line="3683"></span>&#8220;PSA type definitions&#8221;<span data-line="3683"></span>
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3681"><span data-line="3681"></span>Section 4.4 <span data-line="3681"></span>&#8220;Data plane vs. control plane data representations&#8221;<span data-line="3681"></span>
+<li class="li ul-li list-plus-li compact-li" data-line="3684"><span data-line="3684"></span>Section 4.4 <span data-line="3684"></span>&#8220;Data plane vs. control plane data representations&#8221;<span data-line="3684"></span>
 </li></ul>
-<h4 id="sec-add-the-ability-for-packet-clone-sessions-to-create-multiple-copies" class="h3" data-line="3684" data-heading-depth="3" style="display:block"><span data-line="3684"></span><span class="heading-before"><span class="heading-label">H.2.2</span>.&#8194;</span><span data-line="3684"></span>Add the ability for packet clone sessions to create multiple copies</h4>
-<p class="p noindent" data-line="3686"><span data-line="3686"></span>In PSA v1.0, requesting to make a clone of a packet was restricted to
+<h4 id="sec-add-the-ability-for-packet-clone-sessions-to-create-multiple-copies" class="h3" data-line="3687" data-heading-depth="3" style="display:block"><span data-line="3687"></span><span class="heading-before"><span class="heading-label">H.2.2</span>.&#8194;</span><span data-line="3687"></span>Add the ability for packet clone sessions to create multiple copies</h4>
+<p class="p noindent" data-line="3689"><span data-line="3689"></span>In PSA v1.0, requesting to make a clone of a packet was restricted to
 creating a single clone, sent to a single output port.  In PSA v1.1
 you may now configure a clone session with a set of
-<span data-line="3689"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_port, instance)</code><span data-line="3689"></span> pairs, similar to how a multicast group can
+<span data-line="3692"></span><code class="code code1 language-p4 lang-p4 p4 colorized">(egress_port, instance)</code><span data-line="3692"></span> pairs, similar to how a multicast group can
 be configured.  Changes can be found here:
 </p>
-<ul class="ul list-plus compact" data-line="3692">
-<li class="li ul-li list-plus-li compact-li" data-line="3692"><span data-line="3692"></span>Section 6.2. <span data-line="3692"></span>&#8220;Behavior of packets after ingress processing is complete&#8221;<span data-line="3692"></span>
+<ul class="ul list-plus compact" data-line="3695">
+<li class="li ul-li list-plus-li compact-li" data-line="3695"><span data-line="3695"></span>Section 6.2. <span data-line="3695"></span>&#8220;Behavior of packets after ingress processing is complete&#8221;<span data-line="3695"></span>
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3693"><span data-line="3693"></span>Section 6.4.5 <span data-line="3693"></span>&#8220;Multicast and clone copies&#8221;<span data-line="3693"></span> (formerly called <span data-line="3693"></span>&#8220;Multicast copies&#8221;<span data-line="3693"></span>)
+<li class="li ul-li list-plus-li compact-li" data-line="3696"><span data-line="3696"></span>Section 6.4.5 <span data-line="3696"></span>&#8220;Multicast and clone copies&#8221;<span data-line="3696"></span> (formerly called <span data-line="3696"></span>&#8220;Multicast copies&#8221;<span data-line="3696"></span>)
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3694"><span data-line="3694"></span>Section 6.5 <span data-line="3694"></span>&#8220;Behavior of packets after egress processing is complete&#8221;<span data-line="3694"></span>
+<li class="li ul-li list-plus-li compact-li" data-line="3697"><span data-line="3697"></span>Section 6.5 <span data-line="3697"></span>&#8220;Behavior of packets after egress processing is complete&#8221;<span data-line="3697"></span>
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3695"><span data-line="3695"></span>Section 6.8 <span data-line="3695"></span>&#8220;Packet Cloning&#8221;<span data-line="3695"></span>
+<li class="li ul-li list-plus-li compact-li" data-line="3698"><span data-line="3698"></span>Section 6.8 <span data-line="3698"></span>&#8220;Packet Cloning&#8221;<span data-line="3698"></span>
 </li></ul>
-<h4 id="sec-add-psa_idle_timeout-table-property" class="h3" data-line="3698" data-heading-depth="3" style="display:block"><span data-line="3698"></span><span class="heading-before"><span class="heading-label">H.2.3</span>.&#8194;</span><span data-line="3698"></span>Add psa<span data-line="3698"></span>_<span data-line="3698"></span>idle<span data-line="3698"></span>_<span data-line="3698"></span>timeout table property</h4>
-<p class="p noindent" data-line="3700"><span data-line="3700"></span>Adding this brings PSA v1.1 up to date with the support for this
+<h4 id="sec-add-psa_idle_timeout-table-property" class="h3" data-line="3701" data-heading-depth="3" style="display:block"><span data-line="3701"></span><span class="heading-before"><span class="heading-label">H.2.3</span>.&#8194;</span><span data-line="3701"></span>Add psa<span data-line="3701"></span>_<span data-line="3701"></span>idle<span data-line="3701"></span>_<span data-line="3701"></span>timeout table property</h4>
+<p class="p noindent" data-line="3703"><span data-line="3703"></span>Adding this brings PSA v1.1 up to date with the support for this
 feature in the P4Runtime API.  Using this table property enables the
 P4 developer to specify that a table must maintain some state of when
 the last time each table entry was matched, and if an entry remains
 unmatched for longer than a time configured by the controller, then a
 notification message should be sent to the controller.
 </p>
-<ul class="ul list-plus compact" data-line="3707">
-<li class="li ul-li list-plus-li compact-li" data-line="3707"><span data-line="3707"></span>Section 7.2.1 <span data-line="3707"></span>&#8220;Table entry timeout notification&#8221;<span data-line="3707"></span>
+<ul class="ul list-plus compact" data-line="3710">
+<li class="li ul-li list-plus-li compact-li" data-line="3710"><span data-line="3710"></span>Section 7.2.1 <span data-line="3710"></span>&#8220;Table entry timeout notification&#8221;<span data-line="3710"></span>
 </li></ul>
-<h4 id="sec-add-psa_empty_group_action-table-property" class="h3" data-line="3710" data-heading-depth="3" style="display:block"><span data-line="3710"></span><span class="heading-before"><span class="heading-label">H.2.4</span>.&#8194;</span><span data-line="3710"></span>Add psa<span data-line="3710"></span>_<span data-line="3710"></span>empty<span data-line="3710"></span>_<span data-line="3710"></span>group<span data-line="3710"></span>_<span data-line="3710"></span>action table property</h4>
-<p class="p noindent" data-line="3712"><span data-line="3712"></span>PSA v1.0 did not specify the behavior of a table with an
-<span data-line="3713"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ActionSelector</code><span data-line="3713"></span> implementation, if a packet matched a table entry
+<h4 id="sec-add-psa_empty_group_action-table-property" class="h3" data-line="3713" data-heading-depth="3" style="display:block"><span data-line="3713"></span><span class="heading-before"><span class="heading-label">H.2.4</span>.&#8194;</span><span data-line="3713"></span>Add psa<span data-line="3713"></span>_<span data-line="3713"></span>empty<span data-line="3713"></span>_<span data-line="3713"></span>group<span data-line="3713"></span>_<span data-line="3713"></span>action table property</h4>
+<p class="p noindent" data-line="3715"><span data-line="3715"></span>PSA v1.0 did not specify the behavior of a table with an
+<span data-line="3716"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ActionSelector</code><span data-line="3716"></span> implementation, if a packet matched a table entry
 that was configured with an empty action selector group.
 </p>
-<p class="p indent" data-line="3716"><span data-line="3716"></span>PSA v1.1 recommends (but does not require) that implementations
-support a new <span data-line="3717"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_empty_group_action</code><span data-line="3717"></span> table property, whose value is
+<p class="p indent" data-line="3719"><span data-line="3719"></span>PSA v1.1 recommends (but does not require) that implementations
+support a new <span data-line="3720"></span><code class="code code1 language-p4 lang-p4 p4 colorized">psa_empty_group_action</code><span data-line="3720"></span> table property, whose value is
 an action that should be executed when this situation occurs.
 </p>
-<ul class="ul list-plus compact" data-line="3720">
-<li class="li ul-li list-plus-li compact-li" data-line="3720"><span data-line="3720"></span>Section 7.12 <span data-line="3720"></span>&#8220;Action Selector&#8221;<span data-line="3720"></span>
+<ul class="ul list-plus compact" data-line="3723">
+<li class="li ul-li list-plus-li compact-li" data-line="3723"><span data-line="3723"></span>Section 7.12 <span data-line="3723"></span>&#8220;Action Selector&#8221;<span data-line="3723"></span>
 </li></ul>
-<h4 id="sec-other-changes" class="h3" data-line="3723" data-heading-depth="3" style="display:block"><span data-line="3723"></span><span class="heading-before"><span class="heading-label">H.2.5</span>.&#8194;</span><span data-line="3723"></span>Other changes</h4>
-<p class="p noindent" data-line="3725"><span data-line="3725"></span>In PSA v1.0, the <span data-line="3725"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Digest</code><span data-line="3725"></span> extern was required to be supported in both
-the <span data-line="3726"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IngressDeparser</code><span data-line="3726"></span> and <span data-line="3726"></span><code class="code code1 language-p4 lang-p4 p4 colorized">EgressDeparser</code><span data-line="3726"></span> control blocks.  It is now
-no longer required to be supported in the <span data-line="3727"></span><code class="code code1 language-p4 lang-p4 p4 colorized">EgressDeparser</code><span data-line="3727"></span> control
+<h4 id="sec-other-changes" class="h3" data-line="3726" data-heading-depth="3" style="display:block"><span data-line="3726"></span><span class="heading-before"><span class="heading-label">H.2.5</span>.&#8194;</span><span data-line="3726"></span>Other changes</h4>
+<p class="p noindent" data-line="3728"><span data-line="3728"></span>In PSA v1.0, the <span data-line="3728"></span><code class="code code1 language-p4 lang-p4 p4 colorized">Digest</code><span data-line="3728"></span> extern was required to be supported in both
+the <span data-line="3729"></span><code class="code code1 language-p4 lang-p4 p4 colorized">IngressDeparser</code><span data-line="3729"></span> and <span data-line="3729"></span><code class="code code1 language-p4 lang-p4 p4 colorized">EgressDeparser</code><span data-line="3729"></span> control blocks.  It is now
+no longer required to be supported in the <span data-line="3730"></span><code class="code code1 language-p4 lang-p4 p4 colorized">EgressDeparser</code><span data-line="3730"></span> control
 block.
 </p>
-<ul class="ul list-plus compact" data-line="3730">
-<li class="li ul-li list-plus-li compact-li" data-line="3730"><span data-line="3730"></span>Table 5 <span data-line="3730"></span>&#8220;Summary of controls that can instantiate and invoke externs&#8221;<span data-line="3730"></span>
+<ul class="ul list-plus compact" data-line="3733">
+<li class="li ul-li list-plus-li compact-li" data-line="3733"><span data-line="3733"></span>Table 5 <span data-line="3733"></span>&#8220;Summary of controls that can instantiate and invoke externs&#8221;<span data-line="3733"></span>
 </li></ul>
-<h4 id="sec-changes-to-the-psap4-include-file" class="h3" data-line="3733" data-heading-depth="3" style="display:block"><span data-line="3733"></span><span class="heading-before"><span class="heading-label">H.2.6</span>.&#8194;</span><span data-line="3733"></span>Changes to the psa.p4 include file</h4>
-<ul class="ul list-plus compact" data-line="3735">
-<li class="li ul-li list-plus-li compact-li" data-line="3735"><span data-line="3735"></span>Updates for the latest plan on P4Runtime API numerical translation
-of type <span data-line="3736"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="3736"></span> and <span data-line="3736"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ClassOfService_t</code><span data-line="3736"></span>.
+<h4 id="sec-changes-to-the-psap4-include-file" class="h3" data-line="3736" data-heading-depth="3" style="display:block"><span data-line="3736"></span><span class="heading-before"><span class="heading-label">H.2.6</span>.&#8194;</span><span data-line="3736"></span>Changes to the psa.p4 include file</h4>
+<ul class="ul list-plus compact" data-line="3738">
+<li class="li ul-li list-plus-li compact-li" data-line="3738"><span data-line="3738"></span>Updates for the latest plan on P4Runtime API numerical translation
+of type <span data-line="3739"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="3739"></span> and <span data-line="3739"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ClassOfService_t</code><span data-line="3739"></span>.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3737"><span data-line="3737"></span>Eliminate obsolete <span data-line="3737"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="3737"></span> extern, because the <span data-line="3737"></span><code class="code code1 language-p4 lang-p4 p4 colorized">value_set</code><span data-line="3737"></span>
-construct was added to the P4<span data-line="3738"></span><sub>16</sub><span data-line="3738"></span> language specification in version
+<li class="li ul-li list-plus-li compact-li" data-line="3740"><span data-line="3740"></span>Eliminate obsolete <span data-line="3740"></span><code class="code code1 language-p4 lang-p4 p4 colorized">ValueSet</code><span data-line="3740"></span> extern, because the <span data-line="3740"></span><code class="code code1 language-p4 lang-p4 p4 colorized">value_set</code><span data-line="3740"></span>
+construct was added to the P4<span data-line="3741"></span><sub>16</sub><span data-line="3741"></span> language specification in version
 1.1.0.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3740"><span data-line="3740"></span>Fix a few typos in example control plane APIs in comments.
+<li class="li ul-li list-plus-li compact-li" data-line="3743"><span data-line="3743"></span>Fix a few typos in example control plane APIs in comments.
 </li>
-<li class="li ul-li list-plus-li compact-li" data-line="3741"><span data-line="3741"></span>Eliminate <span data-line="3741"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_SWITCH</code><span data-line="3741"></span> <span data-line="3741"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">#</span><span style="color:navy">define</span></code><span data-line="3741"></span> macro with arguments, since the
-P4<span data-line="3742"></span><sub>16</sub><span data-line="3742"></span> language spec does not require that the P4<span data-line="3742"></span><sub>16</sub><span data-line="3742"></span> pre-processor
+<li class="li ul-li list-plus-li compact-li" data-line="3744"><span data-line="3744"></span>Eliminate <span data-line="3744"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PSA_SWITCH</code><span data-line="3744"></span> <span data-line="3744"></span><code class="code code1 language-p4 lang-p4 p4 colorized"><span style="color:navy">#</span><span style="color:navy">define</span></code><span data-line="3744"></span> macro with arguments, since the
+P4<span data-line="3745"></span><sub>16</sub><span data-line="3745"></span> language spec does not require that the P4<span data-line="3745"></span><sub>16</sub><span data-line="3745"></span> pre-processor
 support such macros.
 </li></ul>
-<h4 id="sec-changes-to-example-psa-programs-in-the-p4-16psaexamples-directory" class="h3" data-line="3746" data-heading-depth="3" style="display:block"><span data-line="3746"></span><span class="heading-before"><span class="heading-label">H.2.7</span>.&#8194;</span><span data-line="3746"></span>Changes to example PSA programs in the <span data-line="3746"></span><code class="code code1 language-p4 lang-p4 p4 colorized">p4-<span class="constant" style="color:purple">16</span>/psa/examples</code><span data-line="3746"></span> directory</h4>
-<ul class="ul list-plus compact" data-line="3748">
-<li class="li ul-li list-plus-li compact-li" data-line="3748"><span data-line="3748"></span>Small changes required to bring them in harmony with the latest
-details on P4Runtime API numerical translation of type <span data-line="3749"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="3749"></span>.
+<h4 id="sec-changes-to-example-psa-programs-in-the-p4-16psaexamples-directory" class="h3" data-line="3749" data-heading-depth="3" style="display:block"><span data-line="3749"></span><span class="heading-before"><span class="heading-label">H.2.7</span>.&#8194;</span><span data-line="3749"></span>Changes to example PSA programs in the <span data-line="3749"></span><code class="code code1 language-p4 lang-p4 p4 colorized">p4-<span class="constant" style="color:purple">16</span>/psa/examples</code><span data-line="3749"></span> directory</h4>
+<ul class="ul list-plus compact" data-line="3751">
+<li class="li ul-li list-plus-li compact-li" data-line="3751"><span data-line="3751"></span>Small changes required to bring them in harmony with the latest
+details on P4Runtime API numerical translation of type <span data-line="3752"></span><code class="code code1 language-p4 lang-p4 p4 colorized">PortId_t</code><span data-line="3752"></span>.
 </li></ul>
 <span data-line=""></span>
 <div class="footnotes madoko">
