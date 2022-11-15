@@ -6566,6 +6566,13 @@ In addition, the tables may optionally define the following properties,
 - `default_action`: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
 - `size`: an integer specifying the desired size of the table.
+- `entries`: entries that are initially added to a table when the P4
+  program is loaded, some or all of which may be unchangeable by the
+  control plane software.
+- `largest_priority_wins` - Only useful for some tables with the
+  `entries` property.  See section [#sec-entries] for details.
+- `priority_delta` - Only useful for some tables with the `entries`
+  property.  See section [#sec-entries] for details.
 
 The compiler must set the `default_action` to `NoAction` (and also
 insert it into the list of `actions`) for tables that do not define
@@ -6803,9 +6810,18 @@ entriesList
  | entriesList entry
  ;
 
+optCONST
+ : /* empty */
+ | const
+ ;
+
+optEntryPriority
+ : /* empty */
+ | priority '=' INTEGER
+ ;
+
 entry
- : keysetExpression ':' actionRef optAnnotations ';'
- | const keysetExpression ':' actionRef optAnnotations ';'
+ : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
  ;
 ~ End P4Grammar
 
@@ -6942,6 +6958,138 @@ TDI requires numeric priorities to be non-negative integers, i.e. 0 or
 larger, and defines that entries with smaller priorities must win over
 entries with larger priorities.  We will call this convention
 `smallest_priority_wins`.
+
+We wish to support either of these conventions when developers specify
+priorities for initial table entries in the program.  Thus there is a
+table property `largest_priority_wins`.  If explicitly specified for a
+table, its value must be boolean.  If `true`, then the priority values
+use the `largest_priority_wins` convention.  If `false`, then the
+priority values use the `smallest_priority_wins` convention.  If the
+table property is not present at all, then the default convention is
+`true`, corresponding to `largest_priority_wins`.
+
+We also wish to support developers that want the convenience of
+predictable entry priority values automatically selected by the
+compiler, without having to write them in the program, plus the
+control to choose to specify entry priorities explicitly, if they
+wish.
+
+In some cases, developers may wish the initial priority values to have
+"gaps" between their values, to leave room for possible later
+insertion of new entries between two initial entries.  They can
+achieve this by explicitly specifying all priority values, of course,
+but as a convenience we define the table property `priority_delta` to
+be a positive integer value, with a default value of 1 if not
+specified for a table, to use as a default difference between the
+priorities of consecutive entries.
+
+There are two steps that occur at compile time for a table with the
+`entries` property involving entry priorities:
+
+- Determine the value of the priority of every entry in the `entries`
+  list.
+- Issue any errors or warnings that are appropriate for these priority
+  values.  Warnings may be suppressed via an appropriate `@noWarn`
+  annotation.
+
+These steps are performed independently for each table with the
+`entries` property, and each is described in more detail below.
+
+In general, if the developer specifies a priority value for an entry,
+that is the value that will be used.
+
+If the developer does not specify priority values for any entry, then
+the compiler calculates priority values for every entry as follows:
+
+~ Begin P4Pseudo
+// For this pseudocode, table entries in the `entries` list are
+// numbered 0 through n-1, 0 being the first to appear in order in the
+// source code.  Their priority values are named prio[0] through
+// prio[n-1].
+int p = 1;
+if (largest_priority_wins == true) {
+    for (int j = n-1; j >= 0; j -= 1) {
+        prio[j] = p;
+        p += priority_delta;
+    }
+} else {
+    for (int j = 0; j < n; j += 1) {
+        prio[j] = p;
+        p += priority_delta;
+    }
+}
+~ End P4Pseudo
+
+If the developer specifies priority values for at least one entry,
+then in order to simplify the rules for determining priorities of
+entries without one in the source code, the first entry _must_ have a
+priority value explicitly provided.  The priorities of entries that do
+not have one in the source code (if any) are determined as follows:
+
+~ Begin P4Pseudo
+// Same conventions here as in the previous block of pseudocode above.
+// If entry j has a priority value specified in the source code,
+// prio_specified[j] is true, otherwise it is false.
+assert(prio_specified[0]);  // compile time error if prio_specified[0] is false
+p = prio[0];
+for (int j = 1; j < n; j += 1) {
+    if (prio_specified[j]) {
+        p = prio[j];
+    } else {
+        if (largest_priority_wins == true) {
+            p -= priority_delta;
+        } else {
+            p += priority_delta;
+        }
+        prio[j] = p;
+    }
+}
+~ End P4Pseudo
+
+This is the end of the first step: determining entry priorities.
+
+In the second step, the compiler issues errors for out of range
+priority values, and/or warnings for certain combinations of entry
+priorities that might be unintended by the developer, unless the
+developer explicitly disables those warnings.
+
+If any priority values are negative, or larger than the maximum
+supported value, that is a compile time error.
+
+If the annotation `@noWarn("duplicate_priorities")` is _not_ used on
+the `entries` table property, then the compiler issues a warning if
+any two entries for the same table have equal priority values.  Both
+P4Runtime and TDI leave it unspecified which entry is the winner if a
+lookup key matches multiple keys that all have the same priority,
+hence a warning is useful to less experienced developers that are
+unfamiliar with this unspecified behavior.
+
+If the annotation `@noWarn("duplicate_priorities")` is used on the
+`entries` table property, then no warnings of this type are ever
+issued by the compiler.  Using equal priority values for multiple
+entries in the same table is sometimes useful in reducing the number
+of hardware updates required when adding entries to such a table.
+
+If the annotation `@noWarn("entries_out_of_priority_order")` is _not_
+used on the `entries` table property, then the compiler issues a
+warning if:
+
+- If `largest_priority_wins` is `true` for the table, and there is any
+  pair of consecutive entries where `prio[j] < prio[j+1]`, then a
+  warning is issued for that pair of entries.
+- If `largest_priority_wins` is `false` for the table, and there is any
+  pair of consecutive entries where `prio[j] > prio[j+1]`, then a
+  warning is issued for that pair of entries.
+
+This warning is useful to developers that want the relative priority
+of entries in the source code to match the relative priority of
+entries in the target device.
+
+If the annotation `@noWarn("entries_out_of_priority_order")` is used
+on the `entries` table property, then no warnings of this type are
+ever issued by the compiler for this table.  This option is provided
+for developers who explicitly choose to specify entries in an order
+that do not match their relative priority order.
 
 #### Size {#sec-size-table-property}
 
