@@ -6888,7 +6888,7 @@ control ingress(inout Header_t h, inout Meta_t m,
                 inout standard_metadata_t standard_meta) {
 
     action a() { standard_meta.egress_spec = 0; }
-    action a_with_control_params(bit<9> x) { standard_meta.egress_spec = x; }
+    action a_params(bit<9> x) { standard_meta.egress_spec = x; }
 
     table t_exact_ternary {
 
@@ -6899,18 +6899,18 @@ control ingress(inout Header_t h, inout Meta_t m,
 
 	actions = {
             a;
-            a_with_control_params;
+            a_params;
         }
 
 	default_action = a;
 
         const entries = {
-            (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
-            (0x02, 0x1181           ) : a_with_control_params(2);
-            (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
-            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4);
-            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5);
-            (0x06, _                ) : a_with_control_params(6);
+            (0x01, 0x1111 &&& 0xF   ) : a_params(1);
+            (0x02, 0x1181           ) : a_params(2);
+            (0x03, 0x1111 &&& 0xF000) : a_params(3);
+            (0x04, 0x1211 &&& 0x02F0) : a_params(4);
+            (0x04, 0x1311 &&& 0x02F0) : a_params(5);
+            (0x06, _                ) : a_params(6);
             _                         : a;
         }
     }
@@ -6919,7 +6919,7 @@ control ingress(inout Header_t h, inout Meta_t m,
 ~ End P4Example
 
 In this example we define a set of 7 entries, all of which invoke
-action `a_with_control_params` except for the final entry which
+action `a_params` except for the final entry which
 invokes action `a`. Once the program is loaded, these entries are
 installed in the table in the order they are enumerated in the
 program.
@@ -7090,6 +7090,47 @@ on the `entries` table property, then no warnings of this type are
 ever issued by the compiler for this table.  This option is provided
 for developers who explicitly choose to specify entries in an order
 that do not match their relative priority order.
+
+The following example is the same as the first example in section
+[#sec-entries], except for the definition of table `t_entry_ternary`
+shown below.
+
+~ Begin P4Example
+table t_exact_ternary {
+    key = {
+        h.h.e : exact;
+        h.h.t : ternary;
+    }
+
+    actions = {
+        a;
+        a_params;
+    }
+
+    default_action = a;
+
+    largest_priority_wins = false;
+    priority_delta = 10;
+    @noWarn("duplicate_priorities")
+    entries = {
+        const priority=10 (0x01, 0x1111 &&& 0xF   ) : a_params(1);
+                          (0x02, 0x1181           ) : a_params(2); // priority=20
+                          (0x03, 0x1000 &&& 0xF000) : a_params(3); // priority=30
+        const             (0x04, 0x0210 &&& 0x02F0) : a_params(4); // priority=40
+              priority=40 (0x04, 0x0010 &&& 0x02F0) : a_params(5);
+                          (0x06, _                ) : a_params(6); // priority=50
+    }
+}
+~ End P4Example
+
+The entries that do not have an explicit priority specified will be
+assigned the priority values shown in the comments, because
+`priority_delta` is 10, and because of those entries that do have
+priority values specified.
+
+Normally this program would cause a warning about multiple entries
+with the same priority of 40, but those warnings will be suppressed
+because of the `@noWarn("duplicate_priorities")` annotation.
 
 #### Size {#sec-size-table-property}
 
