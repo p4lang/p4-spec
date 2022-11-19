@@ -2534,8 +2534,8 @@ tupleType
     ;
 ~ End P4Grammar
 
-Operations that manipulate tuple types are described in Sections
-[#sec-tuple-exprs] and [#sec-list-exprs].
+Operations that manipulate tuple types are described in Section
+[#sec-tuple-exprs].
 
 The type `tuple<>` is a tuple type with no components.
 
@@ -2694,7 +2694,7 @@ functionPrototype
 For an example of an `extern` function declaration, see Section
 [#sec-function-type].
 
-#### Extern objects
+#### Extern objects { #sec-extern-objects }
 
 []{tex-cmd: "\indent"}
 An extern object declaration declares an object and all methods that
@@ -3875,7 +3875,7 @@ the compiler will add implicit casts as follows:
 
 The compiler also adds implicit casts when types of different
 expressions need to ``match''; for example, as described in Section
-[#sec-select], since select labels are compared againt the selected
+[#sec-select], since select labels are compared against the selected
 expression, the compiler will insert implicit casts for the select
 labels when they have `int` types.  Similarly, when assigning a
 structure-valued expression to a structure or header, the compiler will
@@ -3925,7 +3925,7 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 
 Tuples can be assigned to other tuples with the same type, passed as
 arguments and returned from functions, and can be initialized with
-list expressions.
+tuple expressions.
 
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
@@ -3935,14 +3935,15 @@ The fields of a tuple can be accessed using array index syntax `x[0]`,
 `x[1]`.  The array indexes *must* be compile-time constants, to enable
 the type-checker to identify the field types statically.
 
+Tuples can be compared for equality using `==` and `!=`; two tuples are
+equal if and only if all their fields are respectively equal.
+
 Currently tuple fields are not left-values, even if the tuple itself
 is.  (I.e. a tuple can only be assigned monolithically, and the field
 values cannot be changed individually.)  This restriction may be
 lifted in a future version of the language.
 
-## Operations on lists { #sec-list-exprs }
-
-A list expression is written using curly braces, with each element
+A tuple expression is written using curly braces, with each element
 separated by a comma:
 
 ~ Begin P4Grammar
@@ -3956,13 +3957,13 @@ expressionList
     ;
 ~ End P4Grammar
 
-The type of a list expression is a tuple type (Section
-[#sec-tuple-types]). List expressions can be assigned to expressions
+The type of a tuple expression is a tuple type (Section
+[#sec-tuple-types]). Tuple expressions can be assigned to expressions
 of type `tuple`, `struct` or `header`, and can also be
-passed as arguments to methods. Lists may be nested. However, list
+passed as arguments to methods. Tuples may be nested. However, tuple
 expressions are not l-values.
 
-For example, the following program fragment uses a list expression to
+For example, the following program fragment uses a tuple expression to
 pass several header fields simultaneously to a learning provider:
 
 ~ Begin P4Example
@@ -3976,9 +3977,9 @@ LearningProvider<tuple<bit<48>, bit<32>>>() lp;
 lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );
 ~ End P4Example
 
-A list may be used to initialize a structure if the list has the same
+A tuple may be used to initialize a structure if the tuple has the same
 number of elements as fields in the structure. The effect of such an
-initializer is to assign the n^th^ element of the list to the n^th^
+initializer is to assign the n^th^ element of the tuple to the n^th^
 field in the structure:
 
 ~ Begin P4Example
@@ -3989,7 +3990,7 @@ struct S {
 const S x = { 10, 20 }; //a = 10, b = 20
 ~ End P4Example
 
-A list expression can have an explicit structure or header type
+A tuple expression can have an explicit structure or header type
 specified, and then it is converted automatically to a
 structure-valued expression (see [#sec-structure-expressions]):
 
@@ -4004,14 +4005,14 @@ extern void f<T>(in T data);
 f((S){ 10, 20 }); // automatically converted to f((S){a = 10, b = 20});
 ~ End P4Example
 
-List expressions can also be used to initialize variables whose type
+Tuple expressions can also be used to initialize variables whose type
 is a `tuple` type.
 
 ~ Begin P4Example
 tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
 
-The empty list expression has type `tuple<>` - a tuple with no components.
+The empty tuple expression has type `tuple<>` - a tuple with no components.
 
 ## Operations on structure-valued expressions { #sec-structure-expressions}
 
@@ -4211,7 +4212,7 @@ field access, written using dot (".") notation---e.g., `s.field`. If
 `s` is an l-value, then `s.field` is also an l-value. P4 also allows
 copying `struct`s using assignment when the source and target of the
 assignment have the same type. Finally, `struct`s can be initialized
-with a list expression, as discussed in Section [#sec-list-exprs], or
+with a tuple expression, as discussed in Section [#sec-tuple-exprs], or
 with a structure-valued expression, as described in
 [#sec-structure-expressions].  Both of these cases must initialize all
 fields of the structure.
@@ -4229,7 +4230,7 @@ struct S {
     bit<32> a;
     bit<32> b;
 }
-const S x = { 10, 20 };             // list expression
+const S x = { 10, 20 };             // tuple expression
 const S x = { a = 10, b = 20 };     // structure-valued expression
 const S x = (S) { a = 10, b = 20 }; // structure-valued expression
 ~ End P4Example
@@ -4252,8 +4253,8 @@ of the header.
 - The method `setInvalid()` sets the header's validity bit to
 "false". It can only be applied to an l-value.
 
-Similar to a `struct`, a header object can be initialized with a list
-expression (see Section [#sec-list-exprs]) --- the list fields are assigned to the
+Similar to a `struct`, a header object can be initialized with a tuple
+expression (see Section [#sec-tuple-exprs]) --- the tuple fields are assigned to the
 header fields in the order they appear --- or with a structure-valued
 expression (see Section [#sec-ops-on-structs]).  When initialized the header
 automatically becomes valid:
@@ -4440,7 +4441,7 @@ H1 my_h1 = { 8w0 }; // my_h1 is valid
 u.h1 = my_h1;       // u and u.h1 are both valid
 ~End P4Example
 
-We can also assign a list to an element of a header union,
+We can also assign a tuple to an element of a header union,
 
 ~Begin P4Example
 U u;
@@ -4896,7 +4897,7 @@ they do not have to be explicitly initialized to have a legal value.
 A left-value can be initialized automatically with a default value of the
 suitable type using the syntax `...` (see Section [#sec-default-values]).  A value
 of type `struct`, `header`, or `tuple` can also be initialized using a mix of
-explicit values and default values by using the notation `...` in a list
+explicit values and default values by using the notation `...` in a tuple
 expression initializer; in this case all fields not explicitly
 initialized are initialized with default values.  When initializing a `struct`,
 `header`, and `tuple` with a value containing partially default values
@@ -6525,7 +6526,8 @@ necessary to disambiguate.
 Syntactically a table is defined in terms of a set of key-value
 properties. Some of these properties are "standard" properties, but
 the set of properties can be extended by target-specific compilers as
-needed.
+needed. Note duplicated properties are invalid and the compiler should
+reject them.
 
 ~ Begin P4Grammar
 tableDeclaration
@@ -6651,7 +6653,7 @@ result either an action or a "miss" indication, as described in
 Section [#sec-mau-semantics].
 
 If a table has no `key` property, or if the value of its `key`
-property is the empty list, i.e. `key = {}`, then it contains no
+property is the empty tuple, i.e. `key = {}`, then it contains no
 look-up table, just a default action---i.e., the associated lookup
 table is always the empty map.
 
@@ -7806,7 +7808,7 @@ The following are compile-time known values:
 - The `_` identifier when used as a `select` expression label
 - Identifiers that represent declared types, actions, tables, parsers,
   controls, or packages.
-- List expression where all components are compile-time known values.
+- Tuple expression where all components are compile-time known values.
 - Structure-valued expressions, where all fields are compile-time
   known values.
 - Instances constructed by instance declarations (Section
@@ -8687,8 +8689,10 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Added comparison for tuples as a legal operation (Section [#sec-tuple-exprs]).
+* Explicitly disallow overloading of parsers, controls, and packages (Section [#sec-extern-objects]).
 * Clarified implicit casts present in select expressions (Section [#sec-select]).
-* Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-ops]).
+* Clarified that slices can be applied to arbitrary-precision integers (Section [#sec-varint-ops]).
 * Clarified the behavior of `lookahead` on header-typed values (Section [#sec-packet-lookahead]).
 * Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
@@ -8699,6 +8703,7 @@ The P4 compiler should provide:
 * Renamed infinite-precision integers to arbitrary-precision integers (Section [#sec-arbitrary-precision-integers]).
 * compiler-inserted `default_action` is not `const` (Section [#sec-tables]).
 * Clarified the restrictions on run time for tables with `const entries` (Section [#sec-entries]).
+* renamed list expressions to tuple expressions
 
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 

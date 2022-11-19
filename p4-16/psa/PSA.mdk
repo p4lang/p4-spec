@@ -329,7 +329,7 @@ plane sizes for these types no wider than the corresponding
 [INCLUDE=psa.p4:Metadata_types]
 ```
 
-## Match kinds
+## Match kinds {#sec-match-kinds}
 
 PSA supports the following additional `match_kind` types, over and
 above the three defined in the P4~16~ language specification:
@@ -999,7 +999,7 @@ Do not send a copy of the packet for normal egress processing.
 ```
 
 
-## Initial values of packets processed by egress
+## Initial values of packets processed by egress {#sec-initial-values-egress}
 
 Table [#egress-initial-values] describes the initial values of the
 packet contents and metadata when a packet begins egress processing.
@@ -3590,18 +3590,43 @@ required by PSA.
 
 # Appendix: Revision History {#appendix-revision-history}
 
-|-----|-----|-----|
-| Release | Release Date | Summary of Changes |
-+:---:+-----+-----+
-| 1.0 | March 1, 2018 | Initial version. |
-+-----+-----+-----+
-| 1.1 | November 22, 2018 | Version 1.1.  See changes below |
-+-----+-----+-----+
-| 1.2 | TBD , 2021 | Version 1.2.  See changes below |
-+-----+-----+-----+
-
 
 ## Changes made in version 1.2
+
+Version 1.2 was released TODO
+
+Summary of changes.  For some of these, additional explanation is
+provided in sub-sections below.
+
++ Add `@p4runtime_translation` annotations for all seven PSA numeric
+  types in `psa.p4` (all changes in file `psa.p4`).
++ Add clarifications on `@p4runtime_translation` annotation behavior
+  (section [#sec-data-plane-vs-control-plane-values]).
++ Add documentation about the behavior of each `match_kind` (section
+  [#sec-match-kinds]).
++ Add explanation why there is no packet length field defined in PSA
+  (section [#sec-initial-values-egress]).
++ Add match_kind `optional` (section [#sec-match-kinds]).
++ Changed `psa.p4` file explicitly so that it is _not_ usable for
+  compiling, by adding an `#error` preprocessor directive to it.
+  Added a copy of `psa-for-bmv2.p4` from open source `p4c` compiler to
+  `examples` directory for quick testing of correct syntax of example
+  programs (all changes in file `psa.p4`).
++ Remove control plane API function signatures from comments in file
+  `psa.p4` (all changes in file `psa.p4`).
++ Replace `@noWarnUnused` with standard `@noWarn("unused")`
+  annotations in `psa.p4` (all changes in file `psa.p4`).
++ Add `assert` and `assume` extern functions (all changes in file `psa.p4`).
+
+TODO: The list above is complete up to the following commit.  Any
+later commits should be considered for describing as additional
+entries in the list above:
+
+```
+commit e7a17fbc9ac910c773f7c0def54976f8ffddb3c4
+Author: Andy Fingerhut <andy_fingerhut@alum.wustl.edu>
+Date:   Fri Oct 28 00:03:42 2022 -0400
+```
 
 
 ### Add match_kind `optional`
@@ -3630,6 +3655,21 @@ signatures were required to be implemented.
 
 
 ## Changes made in version 1.1
+
+Version 1.1 was released November 22, 2018.
+
+Summary of changes.  For some of these, additional explanation is
+provided in sub-sections below.
+
++ Define numeric translation between P4Runtime API control plane and
+  data plane values.
++ Add the ability for packet clone sessions to create multiple copies.
++ Add `psa_idle_timeout` table property.
++ Add `psa_empty_group_action` table property.
++ No longer require PSA implementation to support `Digest` extern
+  instances in the egress pipeline.
++ Several changes to the `psa.p4` include file.
++ Several changes to example PSA programs in the `examples` directory.
 
 
 ### Numeric translation between P4Runtime API values and data plane values
