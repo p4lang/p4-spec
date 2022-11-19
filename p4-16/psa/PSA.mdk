@@ -57,7 +57,6 @@ interface ports.
 
 # Target Architecture Model
 
-
 As an analogy, the PSA is to the P4~16~ language as the C standard
 library is to the C programming language.  PSA defines a library of
 types, P4~16~ externs for frequently used constructs such as counters,
@@ -128,7 +127,7 @@ In this document we use the following naming conventions:
 
 - Types are named using CamelCase followed by `_t`. For example, `PortId_t`.
 - Control types and extern object types are named using CamelCase. For
-example `IngressParser`.
+  example `IngressParser`.
 - Struct types are named using lower case words separated by `_`
   followed by `_t`. For example `psa_ingress_input_metadata_t`.
 - Actions, extern methods, extern functions, headers, structs, and
@@ -311,9 +310,9 @@ from one PSA implementation to another[^PSAP4TargetSpecific].
     for different targets would be annotations on externs, etc. that
     the P4 compiler for that target needs to do its job.
 
-For each of these types, the P4 Runtime API[^P4RuntimeAPI] may use bit
-widths independent of the targets.  These widths are defined by the P4
-Runtime API specification, and they are expected to be at least as
+For each of these types, the P4Runtime API[^P4RuntimeAPI] may use bit
+widths independent of the targets.  These widths are defined by the
+P4Runtime API specification, and they are expected to be at least as
 large as the corresponding `InHeader_t` type below, such that they
 hold a value for any target.  All PSA implementations must use data
 plane sizes for these types no wider than the corresponding
@@ -330,7 +329,7 @@ plane sizes for these types no wider than the corresponding
 [INCLUDE=psa.p4:Metadata_types]
 ```
 
-## Match kinds
+## Match kinds {#sec-match-kinds}
 
 PSA supports the following additional `match_kind` types, over and
 above the three defined in the P4~16~ language specification:
@@ -413,11 +412,18 @@ determining which entry will win.
 
 ## Data plane vs. control plane data representations {#sec-data-plane-vs-control-plane-values}
 
-A PSA data plane implementation that supports the P4 Runtime
-API[^P4RuntimeAPI] includes software called a "P4 Runtime Server" that
-enables runtime programming of the PSA device from one or more "P4
-Runtime Clients".  For brevity, here we will call a P4 Runtime Server
-an "agent", and a P4 Runtime Client a "controller".  A controller may
+A PSA data plane may support multiple control plane APIs. Some of the
+notes in this section apply specifically to the case of the P4Runtime
+API[^P4RuntimeAPI] when used to control a PSA device. If you are using
+a different control plane API to control a PSA device, you should
+consult the documentation for that control plane API to learn exactly
+what API it provides to configure your PSA device.
+
+A PSA data plane implementation that supports the P4Runtime
+API[^P4RuntimeAPI] includes software called a "P4Runtime Server" that
+enables runtime programming of the PSA device from one or more
+"P4Runtime Clients".  For brevity, here we will call a P4Runtime Server
+an "agent", and a P4Runtime Client a "controller".  A controller may
 control multiple devices with different PSA implementations.
 
 As mentioned in section [#sec-psa-type-definitions], different PSA
@@ -435,7 +441,7 @@ table with a million entries[^CacheCost].
 
 [^CacheCost]: While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache.  <https://en.wikipedia.org/wiki/List_of_Intel_microprocessors>
 
-The P4 Runtime API uses quantities with bit widths independent
+The P4Runtime API uses quantities with bit widths independent
 of the target device to hold values of the types
 listed in section [#sec-psa-type-definitions], to simplify the
 manipulation of these values in the controller and agent software.
@@ -580,7 +586,7 @@ supported value for each of these types.
 ~ TBD
 Values of type `Timestamp_t` are being considered for numerical
 translation in the agent software, between target-specific values, and
-a value with a common unit and 0 value reference across all targts.
+a value with a common unit and 0 value reference across all targets.
 ~
 
 Note that all of these types have a `p4runtime_translation` annotation
@@ -686,7 +692,7 @@ The PSA does not put further restrictions on `packet_in.length()`
 as defined in the P4~16~ spec. Targets that do not support it, should provide mechanisms
 to raise an error.
 
-The P4 Runtime has a "Packet Out" capability to send a packet from the
+The P4Runtime has a "Packet Out" capability to send a packet from the
 controller to a PSA device.  Such packets are sent into the PSA device
 as NFCPU path packets.  There is no metadata associated with such
 packets, only the contents of the packet that are parsed normally by
@@ -812,7 +818,7 @@ reader convenience -- it is not the specification for the behavior.
     else { PRE sends one copy of packet to ostd.egress_port; }
 ```
 
-The pseucode below defines the behavior a PSA implementation must
+The pseudocode below defines the behavior a PSA implementation must
 follow.
 
 ```
@@ -829,7 +835,7 @@ follow.
             }
             if (cos value is not supported) {
                 cos = 0;
-                // Recommmended to log error about unsupported cos value.
+                // Recommended to log error about unsupported cos value.
             }
             for each pair (egress_port, instance) in the set {
                 Create a clone of the packet and send it to the packet
@@ -840,7 +846,7 @@ follow.
                 if trunc is true, otherwise the entire packet.
             }
         } else {
-            // Do not create a clone.  Recommmended to log error about
+            // Do not create a clone.  Recommended to log error about
             // unsupported ostd.clone_session_id value.
         }
     }
@@ -901,7 +907,7 @@ queues for each class of service.  See appendix
 [#appendix-packet-ordering] for more on packet ordering
 recommendations in PSA devices.
 
-The P4 Runtime API specification defines how a controller may discover
+The P4Runtime API specification defines how a controller may discover
 the number of distinct class of service values that a PSA device
 supports.
 
@@ -991,7 +997,7 @@ egress processing.
 
 The `multicast_group` parameter is the multicast group id.  The
 control plane must configure the multicast groups through a separate
-mechanism such as the P4 Runtime API.
+mechanism such as the P4Runtime API.
 
 ```
 [INCLUDE=psa.p4:Action_multicast]
@@ -1006,7 +1012,7 @@ Do not send a copy of the packet for normal egress processing.
 ```
 
 
-## Initial values of packets processed by egress
+## Initial values of packets processed by egress {#sec-initial-values-egress}
 
 Table [#egress-initial-values] describes the initial values of the
 packet contents and metadata when a packet begins egress processing.
@@ -1196,7 +1202,7 @@ the contents of several metadata fields in the struct
             }
             if (cos value is not supported) {
                 cos = 0;
-                // Recommmended to log error about unsupported cos
+                // Recommended to log error about unsupported cos
                 // value.
             }
             for each pair (egress_port, instance) in the set {
@@ -1209,7 +1215,7 @@ the contents of several metadata fields in the struct
                 packet.
             }
         } else {
-            // Do not create a clone.  Recommmended to log error about
+            // Do not create a clone.  Recommended to log error about
             // unsupported ostd.clone_session_id value.
         }
     }
@@ -1274,7 +1280,7 @@ typical implementation will drop frames larger than this maximum
 supported size.  It is recommended that they maintain error counters
 for such dropped frames.
 
-The P4 Runtime has a "Packet In" capability to receive packets sent by
+The P4Runtime has a "Packet In" capability to receive packets sent by
 a PSA device to the port `PSA_PORT_CPU`.  There is no metadata
 associated with such packets, only the contents of the packet that are
 emitted normally by the P4 program's EgressDeparser code.  There may
@@ -1667,7 +1673,7 @@ Restrictions on the TTL values and notifications:
   notification.
 
 - PSA does not require a timeout value for a default action entry. The reason
-  for not making this mandatory in the specification is that tthe default
+  for not making this mandatory in the specification is that the default
   action may not have an explicit table entry to represent it, and also there
   are no known compelling use cases for a controller knowing when no misses
   have occurred for a particular table for a long time. The default action entry will not be aged out.
@@ -1975,7 +1981,7 @@ conditions under which one of these three results is returned.  The P4
 program is responsible for examining that returned result, and making
 changes to packet forwarding behavior as a result.
 The value returned by an uninitialized meter shall be GREEN. This is in
-accordance with the P4 Runtime specification.
+accordance with the P4Runtime specification.
 
 
 RFC 2698 describes "color aware" and "color blind" variations of
@@ -1987,7 +1993,7 @@ Similar to counters, there are two flavors of meters: indexed and
 direct.  (Indexed) meters are addressed by index, while direct meters
 always update a meter state corresponding to the matched table entry
 or action, and from the control plane API are addressed using
-P4 Runtime table entry as key.
+P4Runtime table entry as key.
 
 There are many other similarities between counters and meters,
 including:
@@ -2108,7 +2114,7 @@ seen for a particular type of flow.  A register cell would be
 allocated to the flow, initialized to "clear".  When the protocol
 signaled a "first packet", the table would match on this value and
 update the flow's cell to "marked".  Subsequent packets in the flow
-could would be mapped to the same cell; the current cell value would
+would be mapped to the same cell; the current cell value would
 be stored in metadata for the packet and a subsequent table could
 check that the flow was marked as active.
 
@@ -2425,10 +2431,10 @@ control Ctrl(inout H hdr, inout M meta) {
 
 Note that the management of action selector entries in the presence of
 link failures is outside the scope of the PSA. Fast-failover requires
-information from the control plane and will be addressed as part of the P4
-Runtime API[^P4RuntimeAPI] working group.
+information from the control plane and will be addressed as part of the
+P4Runtime API[^P4RuntimeAPI] working group.
 
-[^P4RuntimeAPI]: The P4 Runtime API is defined as a Google Protocol
+[^P4RuntimeAPI]: The P4Runtime API is defined as a Google Protocol
     Buffer `.proto` file and an accompanying English specification document
     here:
     <https://github.com/p4lang/p4runtime>
@@ -2516,7 +2522,7 @@ synchronization, e.g. via PTP[^PTP] or NTP[^NTP].
 [^NTP]: <https://en.wikipedia.org/wiki/Network_Time_Protocol>
 
 The control plane API excerpt below is intended to be added as part of
-the P4 Runtime API.
+the P4Runtime API.
 
 ```
 // The TimestampInfo and Timestamp messages should be added to the
@@ -2616,7 +2622,7 @@ instance.  The argument is the value to be included in the digest,
 often a collection of values in a P4 `struct` type.  The compiler
 decides the best serialization format to send the digest contents to a
 local software agent, which is responsible for sending the digest data
-in a form defined by the P4 Runtime API specification.
+in a form defined by the P4Runtime API specification.
 
 A PSA program can instantiate multiple Digest instances in the same
 IngressDeparser control block, and make at most one `pack` call on
@@ -2699,7 +2705,7 @@ Every packet doing an `apply` on table `T` and matching the entry with
 key `K` should execute action `A` with either the old 100 bits of
 action parameters, or the new 100 bits of action parameters.
 
-The P4 Runtime API enables controllers to create "batch" messages that perform
+The P4Runtime API enables controllers to create "batch" messages that perform
 more than one single operation, as defined here.  If so, a PSA
 implementation need only ensure that each single operation is atomic.
 There is no requirement that a sequence of _multiple_ table entry add,
@@ -2726,7 +2732,7 @@ plane to atomically read, modify, then write back a Register array
 element, you should write your P4 program such that the desired read,
 modify, and write operation can be done by a packet that your control
 plane can inject into the data plane, e.g. via packet in / packet out
-P4 Runtime API operations.
+P4Runtime API operations.
 
 A high speed PSA implementation might process hundreds or thousands of
 packets between each single control plane operation.  There are common
@@ -3079,7 +3085,7 @@ P4-programmable network devices will have their scheduling algorithms
 run just slightly faster than the port to handle cases where many
 packets in a row are decreased in size during egress processing, and
 have tight control loops monitoring the size of packets leaving egress
-processing to make small adustments in the rate that the scheduling
+processing to make small adjustments in the rate that the scheduling
 algorithm operates for each port.  Either that, or they will just
 leave some fraction of the output port's capacity unused during times
 when all packet sizes are being decreased.
@@ -3161,7 +3167,7 @@ Due to these issues, if one wishes to create a switch ASIC that
 achieves a packet processing rate of N times the clock rate, e.g. 2
 billion packets per second in a 1 GHz ASIC, the most straightforward
 way to do this is to take advantage of the fact that packet processing
-is (mostly) an embarrasingly parallel
+is (mostly) an embarrassingly parallel
 problem[^EmbarrassinglyParallel], and create a device with N
 pipelines[^PipelineNote], each pipeline processing packets at 1
 billion packets per second.
@@ -3380,7 +3386,7 @@ device's internal implementation reordered packets, it would be an
 independent source of network reordering.
 
 [^Kandula2007]: S. Kandula, D. Katabi, S. Sinha, and A. Berger, "Dynamic load balancing without packet reordering", ACM SIGCOMM Computer Communication Review, Vol. 37, No. 2, April 2007
-[^LG2002]: M. Laor and L. Gendel, "The effect of packet reordering in a backbone link on application throghput", IEEE Network, 2002.
+[^LG2002]: M. Laor and L. Gendel, "The effect of packet reordering in a backbone link on application throughput", IEEE Network, 2002.
 
 
 2. Implementation of stateful protocols
@@ -3606,18 +3612,43 @@ required by PSA.
 
 # Appendix: Revision History {#appendix-revision-history}
 
-|-----|-----|-----|
-| Release | Release Date | Summary of Changes |
-+:---:+-----+-----+
-| 1.0 | March 1, 2018 | Initial version. |
-+-----+-----+-----+
-| 1.1 | November 22, 2018 | Version 1.1.  See changes below |
-+-----+-----+-----+
-| 1.2 | TBD , 2021 | Version 1.2.  See changes below |
-+-----+-----+-----+
-
 
 ## Changes made in version 1.2
+
+Version 1.2 was released TODO
+
+Summary of changes.  For some of these, additional explanation is
+provided in sub-sections below.
+
++ Add `@p4runtime_translation` annotations for all seven PSA numeric
+  types in `psa.p4` (all changes in file `psa.p4`).
++ Add clarifications on `@p4runtime_translation` annotation behavior
+  (section [#sec-data-plane-vs-control-plane-values]).
++ Add documentation about the behavior of each `match_kind` (section
+  [#sec-match-kinds]).
++ Add explanation why there is no packet length field defined in PSA
+  (section [#sec-initial-values-egress]).
++ Add match_kind `optional` (section [#sec-match-kinds]).
++ Changed `psa.p4` file explicitly so that it is _not_ usable for
+  compiling, by adding an `#error` preprocessor directive to it.
+  Added a copy of `psa-for-bmv2.p4` from open source `p4c` compiler to
+  `examples` directory for quick testing of correct syntax of example
+  programs (all changes in file `psa.p4`).
++ Remove control plane API function signatures from comments in file
+  `psa.p4` (all changes in file `psa.p4`).
++ Replace `@noWarnUnused` with standard `@noWarn("unused")`
+  annotations in `psa.p4` (all changes in file `psa.p4`).
++ Add `assert` and `assume` extern functions (all changes in file `psa.p4`).
+
+TODO: The list above is complete up to the following commit.  Any
+later commits should be considered for describing as additional
+entries in the list above:
+
+```
+commit e7a17fbc9ac910c773f7c0def54976f8ffddb3c4
+Author: Andy Fingerhut <andy_fingerhut@alum.wustl.edu>
+Date:   Fri Oct 28 00:03:42 2022 -0400
+```
 
 
 ### Add match_kind `optional`
@@ -3630,13 +3661,37 @@ table, and (b) the additional restrictions it has over match kind
 more efficiently than `ternary`.
 
 
-### Explicitly document that packets experiencing parsing errors are not automatically dropped.
+### Remove control plane API function signatures
 
-This is detailed in two new sections, [#sec-after-ingress-parser] and
-[#sec-after-egress-parser].
+As a historical note, the control plane API function signatures that
+were formerly given in comments preceded by the string
+`@ControlPlaneAPI` were added very early in the process of writing
+version 1.0 of the PSA specification, and were never reviewed
+thoroughly.  The P4Runtime API specification version 1.0 was being
+developed at the same time as version 1.0 of the PSA specification.
+They were removed because we believe that no one ever implemented
+precisely those APIs for any P4-programmable device (although similar
+APIs have been implemented), and their presence was confusing those
+new to the PSA specification, who believed that those function
+signatures were required to be implemented.
 
 
 ## Changes made in version 1.1
+
+Version 1.1 was released November 22, 2018.
+
+Summary of changes.  For some of these, additional explanation is
+provided in sub-sections below.
+
++ Define numeric translation between P4Runtime API control plane and
+  data plane values.
++ Add the ability for packet clone sessions to create multiple copies.
++ Add `psa_idle_timeout` table property.
++ Add `psa_empty_group_action` table property.
++ No longer require PSA implementation to support `Digest` extern
+  instances in the egress pipeline.
++ Several changes to the `psa.p4` include file.
++ Several changes to example PSA programs in the `examples` directory.
 
 
 ### Numeric translation between P4Runtime API values and data plane values
@@ -3709,7 +3764,7 @@ block.
   1.1.0.
 + Fix a few typos in example control plane APIs in comments.
 + Eliminate `PSA_SWITCH` `#define` macro with arguments, since the
-  P4~16~ language spec does not require that the P4~16~ preprocessor
+  P4~16~ language spec does not require that the P4~16~ pre-processor
   support such macros.
 
 
