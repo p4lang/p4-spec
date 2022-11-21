@@ -1603,19 +1603,24 @@ A PSA implementation need not support both `psa_implementation` and
 
 ### Table entry timeout notification {#sec-idle-timeout}
 
-PSA uses the `psa_idle_timeout` to enable a table implementation send
-notifications from the PSA device when a configurable time has passed since an
-entry was last matched. The property may take one of two values --
-`NO_TIMEOUT`, and `NOTIFY_CONTROL`. `NO_TIMEOUT` disables idle timeout support
-for the table and it is the default value when the property is not present.
-`NOTIFY_CONTROL` enables the notification. A PSA implementation will then
-generate an API for the control plane to set time-to-live (TTL) values for table
-entries and if at any time during its lifetime, the table entry is not "hit"
-(&ie; not selected by any packet lookup) for a lapse of time greater or equal
-to its TTL, the device should generate a notification to the control plane.
-The rate and mode of how the notifications are generated and delivered to the
-control plane are subject to configuration parameters specified by the control
-plane API.
+The `psa_idle_timeout` property may take one of two values --
+`NO_TIMEOUT` or `NOTIFY_CONTROL`.
+
+A value of `NO_TIMEOUT` disables idle timeout support for the table,
+and this is the default value when the property is not present.
+
+When a table `t` has `psa_idle_timeout` assigned a value of
+`NOTIFY_CONTROL`, this enables idle timeout notifications for the
+table.  There is an API for the control plane to set idle timeout
+values for entries of table `t`.
+
+If a table entry `e` has not been "hit" (&ie; not matched by an
+invocation of `t.apply()`) for a time interval at least as long as its
+idle timeout value, the device should generate a notification to the
+control plane for entry `e`.  The rate and mode of how the
+notifications are generated and delivered to the control plane are
+subject to configuration parameters specified by the control plane
+API.
 
 Example:
 ```
@@ -1634,12 +1639,12 @@ table t {
 }
 ```
 
-Restrictions on the TTL values and notifications:
+Restrictions on the idle timeout values and notifications:
 
 - It is likely that any hardware implementation will have a limited number of
   bits to represent the values, and, since the values are programmed at
   runtime, it is the responsibility of the runtime (P4Runtime or other
-  controller software) to guarantee that the TTL values can be represented in
+  controller software) to guarantee that the idle timeout values can be represented in
   the device. This can be done by scaling the values to the number of bits
   available on the platform, ensuring that the range of values between
   different entries are representable. A PSA implementation should only enable
@@ -1657,6 +1662,21 @@ Restrictions on the TTL values and notifications:
   have occurred for a particular table for a long time. The default action entry will not be aged out.
 
 - Currently, tables implemented using ActionSelectors and ActionProfiles do not support the `psa_idle_timeout` property. Future versions of the specification may remove this restriction.
+
+Devices are allowed to send idle timeout notifications on a best
+effort basis.  For example, if a table has one million entries, and
+every entry reaches its idle timeout duration at the same instant in
+time, an implementation cannot send all of these notifications
+instantaneously, but only at some finite rate.  Possible behaviors
+include:
+
++ If the control plane deletes entry `e`, the deletion might occur
+  even though the device never notified the control plane that `e`'s
+  idle timeout was reached before it was deleted.
++ If entry `e` is matched some time after its idle timeout has
+  elapsed, and the device has not yet generated an idle timeout
+  notification for `e`, it is possible that the device will never
+  generate a notification to the control plane for that entry.
 
 ## Packet Replication Engine {#sec-pre}
 
