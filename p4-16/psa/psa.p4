@@ -204,11 +204,13 @@ TimestampInHeader_t psa_Timestamp_int_to_header (in Timestamp_t x) {
     return (TimestampInHeader_t) (TimestampInHeaderUint_t) (TimestampUint_t) x;
 }
 
-/// Supported range of values for the psa_idle_timeout table properties
+// BEGIN:enum_PSA_IdleTimeout_t
+/// Supported range of values for the psa_idle_timeout table property
 enum PSA_IdleTimeout_t {
-  NO_TIMEOUT,
-  NOTIFY_CONTROL
+    NO_TIMEOUT,
+    NOTIFY_CONTROL
 };
+// END:enum_PSA_IdleTimeout_t
 
 // BEGIN:Metadata_types
 enum PSA_PacketPath_t {

@@ -1603,16 +1603,27 @@ A PSA implementation need not support both `psa_implementation` and
 
 ### Table entry timeout notification {#sec-idle-timeout}
 
-The `psa_idle_timeout` property may take one of two values --
-`NO_TIMEOUT` or `NOTIFY_CONTROL`.
+PSA defines the table property `psa_idle_timeout` to enable specifying
+whether a table should maintain an idle time for each of its entries,
+and if so, what the data plane should do when a table entry has not
+been matched for a length of time at least its configured idle time.
 
-A value of `NO_TIMEOUT` disables idle timeout support for the table,
-and this is the default value when the property is not present.
+The value assigned to `psa_idle_timeout` must be a value of type
+`PSA_IdleTimeout_t`:
 
-When a table `t` has `psa_idle_timeout` assigned a value of
-`NOTIFY_CONTROL`, this enables idle timeout notifications for the
-table.  There is an API for the control plane to set idle timeout
-values for entries of table `t`.
+~Begin P4Example
+[INCLUDE=psa.p4:enum_PSA_IdleTimeout_t]
+~End P4Example
+
+If the property `psa_idle_timeout` is not specified for a table, its
+default value is `NO_TIMEOUT`.  Such tables need not maintain an idle
+time for any of its table entries, and will not perform any special
+action regardless of how long a table entry remains unmatched.
+
+If the property `pna_idle_timeout` is assigned a value of
+`NOTIFY_CONTROL` for a table `t`, this enables idle timeout
+notifications for the table.  There is an API for the control plane to
+set idle timeout values for entries of table `t`.
 
 If a table entry `e` has not been "hit" (&ie; not matched by an
 invocation of `t.apply()`) for a time interval at least as long as its
@@ -1624,11 +1635,6 @@ API.
 
 Example:
 ```
-enum PSA_IdleTimeout_t {
-  NO_TIMEOUT,
-  NOTIFY_CONTROL
-}
-
 table t {
   action a1 () { ... }
   action a2 () { ... }
