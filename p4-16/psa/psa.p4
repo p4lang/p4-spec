@@ -205,7 +205,7 @@ TimestampInHeader_t psa_Timestamp_int_to_header (in Timestamp_t x) {
 }
 
 // BEGIN:enum_PSA_IdleTimeout_t
-/// Supported range of values for the psa_idle_timeout table property
+/// Supported values for the psa_idle_timeout table property
 enum PSA_IdleTimeout_t {
     NO_TIMEOUT,
     NOTIFY_CONTROL
