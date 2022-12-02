@@ -6542,10 +6542,8 @@ tablePropertyList
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
-    | optAnnotations ENTRIES '=' '{' entriesList '}' /* mix of mutable and/or immutable entries */
-    | optAnnotations CONST nonTableKwName '=' initializer ';'
-    | optAnnotations nonTableKwName '=' initializer ';'
+    | optAnnotations optCONST ENTRIES '=' '{' entriesList '}'
+    | optAnnotations optCONST nonTableKwName '=' initializer ';'
     ;
 
 nonTableKwName
@@ -6804,8 +6802,8 @@ Table entries are defined using the following syntax:
 
 ~ Begin P4Grammar
 tableProperty
- : optAnnotations const ENTRIES '=' '{' entriesLlist '}' /* immutable entries */
- | optAnnotations ENTRIES '=' '{' entriesList '}' /* mix of mutable and/or immutable entries */
+ : optAnnotations optCONST ENTRIES '=' '{' entriesList '}'
+ ;
 
 entriesList
  : /* empty */
