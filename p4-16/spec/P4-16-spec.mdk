@@ -5803,11 +5803,15 @@ selectCase
     ;
 ~ End P4Grammar
 
+Each expression in the `expressionList` must have a type of `bit<W>`,
+`int<W>`, `bool`, `enum`, serializable `enum`, or a `tuple` type with
+fields of one of the above types.
+
 In a `select` expression, if the `expressionList` has type `tuple<T>`,
-then each `keysetExpression` must have type `set<tuple<T>>`.  Each
-expression in the `expressionList` must have a type of `bit<W>`,
-`int<W>`, `bool`, `enum`, serializable `enum`, or a `tuple` type
-with fields of one of the above types.
+then each `keysetExpression` must have type `set<tuple<T>>`.  In
+particular, if a set is specified as a range or mask expression, the
+endpoints of the range and mask expression are implicitly cast to type
+`T` using the standard rules for casts.
 
 In terms of the `ParserModel`, the meaning of a select expression:
 
@@ -8446,6 +8450,7 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.2.4
 
 * Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
+* Clarified types of expressions that may appear in `select` (Section [#sec-select]).
 * Explicitly disallow overloading of parsers, controls, and packages (Section [#sec-extern-objects]).
 * Clarified implicit casts present in select expressions (Section [#sec-select]).
 * Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-ops]).
