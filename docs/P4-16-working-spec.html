@@ -306,7 +306,7 @@
 <div class="authors align-center" data-line="149" style="text-align:center;width:80%;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><table class="authorrow columns block" data-line="149" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="149" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="149" style="font-size:large;line-adjust:0"><span data-line="149"></span>The P4 Language Consortium</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="158" style="text-align:center;margin-top:0.5ex;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><span data-line="158"></span>2022-12-06</div></div>
+<div class="titlefooter align-center" data-line="158" style="text-align:center;margin-top:0.5ex;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><span data-line="158"></span>2022-12-08</div></div>
 <div class="abstract" data-line="143" style="margin-left:3em;margin-right:3em;font-size:small">
 <p class="p noindent" data-line="144"><span data-line="144"></span><strong class="strong-star2">Abstract.</strong><span data-line="144"></span> P4 is a language for programming the data plane of network
 devices. This document provides a precise definition of the P4<span data-line="145"></span><sub>16</sub><span data-line="145"></span>
@@ -9541,7 +9541,7 @@ lexer when parsing the keyword return.
 <pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="9117;grammar.mdk:3" data-line-first="9117;grammar.mdk:4" style="display:block;font-family:monospace;font-size:10pt"><code data-line="9117;grammar.mdk:4">p4program
     : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
     | p4program declaration
-    | p4program <span style="color:maroon">&#39;;&#39;</span>  <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty declaration </span><span style="color:darkgreen">*/</span>
+    | p4program <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>  <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty declaration </span><span style="color:darkgreen">*/</span>
     ;
 
 declaration
@@ -9581,6 +9581,11 @@ nonTableKwName
    | TYPE
    ;
 
+optCONST
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | CONST
+    ;
+
 optAnnotations
     : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
     | annotations
@@ -9592,604 +9597,20 @@ annotations
     ;
 
 annotation
-    : <span style="color:maroon">&#39;@&#39;</span> name
-    | <span style="color:maroon">&#39;@&#39;</span> name <span style="color:maroon">&#39;(&#39;</span> annotationBody <span style="color:maroon">&#39;)&#39;</span>
-    | <span style="color:maroon">&#39;@&#39;</span> name <span style="color:maroon">&#39;[&#39;</span> structuredAnnotationBody <span style="color:maroon">&#39;]&#39;</span>
+    : <span style="color:maroon">&quot;</span><span style="color:maroon">@</span><span style="color:maroon">&quot;</span> name
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">@</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> annotationBody <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">@</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> structuredAnnotationBody <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
     ;
-
-parameterList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | nonEmptyParameterList
-    ;
-
-nonEmptyParameterList
-    : parameter
-    | nonEmptyParameterList <span style="color:maroon">&#39;,&#39;</span> parameter
-    ;
-
-parameter
-    : optAnnotations direction typeRef name
-    | optAnnotations direction typeRef name <span style="color:maroon">&#39;=&#39;</span> expression
-    ;
-
-direction
-    : IN
-    | OUT
-    | INOUT
-    | <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    ;
-
-packageTypeDeclaration
-    : optAnnotations PACKAGE name optTypeParameters
-      <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span>
-    ;
-
-instantiation
-    : typeRef <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;;&#39;</span>
-    | annotations typeRef <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;;&#39;</span>
-    | annotations typeRef <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;=&#39;</span> objInitializer <span style="color:maroon">&#39;;&#39;</span>
-    | typeRef <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;=&#39;</span> objInitializer <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-objInitializer
-    : <span style="color:maroon">&#39;{&#39;</span> objDeclarations <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-objDeclarations
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | objDeclarations objDeclaration
-    ;
-
-objDeclaration
-    : functionDeclaration
-    | instantiation
-    ;
-
-optConstructorParameters
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span>
-    ;
-
-dotPrefix
-    : <span style="color:maroon">&#39;.&#39;</span>
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> PARSER </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-parserDeclaration
-    : parserTypeDeclaration optConstructorParameters
-      <span style="color:darkgreen">/*</span><span style="color:darkgreen"> no type parameters allowed in the parserTypeDeclaration </span><span style="color:darkgreen">*/</span>
-      <span style="color:maroon">&#39;{&#39;</span> parserLocalElements parserStates <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-parserLocalElements
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | parserLocalElements parserLocalElement
-    ;
-
-parserLocalElement
-    : constantDeclaration
-    | variableDeclaration
-    | instantiation
-    | valueSetDeclaration
-    ;
-
-parserTypeDeclaration
-    : optAnnotations PARSER name optTypeParameters <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span>
-    ;
-
-parserStates
-    : parserState
-    | parserStates parserState
-    ;
-
-parserState
-    : optAnnotations STATE name <span style="color:maroon">&#39;{&#39;</span> parserStatements transitionStatement <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-parserStatements
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | parserStatements parserStatement
-    ;
-
-parserStatement
-    : assignmentOrMethodCallStatement
-    | directApplication
-    | parserBlockStatement
-    | constantDeclaration
-    | variableDeclaration
-    | emptyStatement
-    | conditionalStatement
-    ;
-
-parserBlockStatement
-    : optAnnotations <span style="color:maroon">&#39;{&#39;</span> parserStatements <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-transitionStatement
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | TRANSITION stateExpression
-    ;
-
-stateExpression
-    : name <span style="color:maroon">&#39;;&#39;</span>
-    | selectExpression
-    ;
-
-selectExpression
-    : SELECT <span style="color:maroon">&#39;(&#39;</span> expressionList <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;{&#39;</span> selectCaseList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-selectCaseList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | selectCaseList selectCase
-    ;
-
-selectCase
-    : keysetExpression <span style="color:maroon">&#39;:&#39;</span> name <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-keysetExpression
-    : tupleKeysetExpression
-    | simpleKeysetExpression
-    ;
-
-tupleKeysetExpression
-    : <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> simpleKeysetExpression <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> simpleExpressionList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
-    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> reducedSimpleKeysetExpression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
-    ;
-
-simpleExpressionList
-    : simpleKeysetExpression
-    | simpleExpressionList <span style="color:maroon">&#39;,&#39;</span> simpleKeysetExpression
-    ;
-
-reducedSimpleKeysetExpression
-    : expression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;&amp;&amp;</span><span style="color:maroon">&quot;</span> expression
-    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">..</span><span style="color:maroon">&quot;</span> expression
-    | DEFAULT
-    | <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
-    ;
-
-simpleKeysetExpression
-    : expression
-    | DEFAULT
-    | DONTCARE
-    | expression MASK expression
-    | expression RANGE expression
-    ;
-
-valueSetDeclaration
-  : optAnnotations
-      VALUESET <span style="color:maroon">&#39;&lt;&#39;</span> baseType <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;;&#39;</span>
-  | optAnnotations
-      VALUESET <span style="color:maroon">&#39;&lt;&#39;</span> tupleType <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;;&#39;</span>
-  | optAnnotations
-      VALUESET <span style="color:maroon">&#39;&lt;&#39;</span> typeName <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> name <span style="color:maroon">&#39;;&#39;</span>
-  ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> CONTROL </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-controlDeclaration
-    : controlTypeDeclaration optConstructorParameters
-      <span style="color:darkgreen">/*</span><span style="color:darkgreen"> no type parameters allowed in controlTypeDeclaration </span><span style="color:darkgreen">*/</span>
-      <span style="color:maroon">&#39;{&#39;</span> controlLocalDeclarations APPLY controlBody <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-controlTypeDeclaration
-    : optAnnotations CONTROL name optTypeParameters
-      <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span>
-    ;
-
-controlLocalDeclarations
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | controlLocalDeclarations controlLocalDeclaration
-    ;
-
-controlLocalDeclaration
-    : constantDeclaration
-    | actionDeclaration
-    | tableDeclaration
-    | instantiation
-    | variableDeclaration
-    ;
-
-controlBody
-    : blockStatement
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> EXTERN </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-externDeclaration
-    : optAnnotations EXTERN nonTypeName optTypeParameters <span style="color:maroon">&#39;{&#39;</span> methodPrototypes <span style="color:maroon">&#39;}&#39;</span>
-    | optAnnotations EXTERN functionPrototype <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-methodPrototypes
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | methodPrototypes methodPrototype
-    ;
-
-functionPrototype
-    : typeOrVoid name optTypeParameters <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span>
-    ;
-
-methodPrototype
-    : optAnnotations functionPrototype <span style="color:maroon">&#39;;&#39;</span>
-    | optAnnotations TYPE_IDENTIFIER <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> TYPES </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-typeRef
-    : baseType
-    | typeName
-    | specializedType
-    | headerStackType
-    | p4listType
-    | tupleType
-    ;
-
-namedType
-    : typeName
-    | specializedType
-    ;
-
-prefixedType
-    : TYPE_IDENTIFIER
-    | dotPrefix TYPE_IDENTIFIER
-    ;
-
-typeName
-    : prefixedType
-    ;
-
-p4listType
-    : LIST <span style="color:maroon">&#39;&lt;&#39;</span> typeArg <span style="color:maroon">&#39;&gt;&#39;</span>
-    ;
-
-tupleType
-    : TUPLE <span style="color:maroon">&#39;&lt;&#39;</span> typeArgumentList <span style="color:maroon">&#39;&gt;&#39;</span>
-    ;
-
-headerStackType
-    : typeName <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    | specializedType <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    ;
-
-specializedType
-    : prefixedType <span style="color:maroon">&#39;&lt;&#39;</span> typeArgumentList <span style="color:maroon">&#39;&gt;&#39;</span>
-    ;
-
-baseType
-    : BOOL
-    | ERROR
-    | MATCH_KIND
-    | STRING
-    | INT
-    | BIT
-    | BIT <span style="color:maroon">&#39;&lt;&#39;</span> INTEGER <span style="color:maroon">&#39;&gt;&#39;</span>
-    | INT <span style="color:maroon">&#39;&lt;&#39;</span> INTEGER <span style="color:maroon">&#39;&gt;&#39;</span>
-    | VARBIT <span style="color:maroon">&#39;&lt;&#39;</span> INTEGER <span style="color:maroon">&#39;&gt;&#39;</span>
-    | BIT <span style="color:maroon">&#39;&lt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;&gt;&#39;</span>
-    | INT <span style="color:maroon">&#39;&lt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;&gt;&#39;</span>
-    | VARBIT <span style="color:maroon">&#39;&lt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;&gt;&#39;</span>
-    ;
-
-typeOrVoid
-    : typeRef
-    | VOID
-    | IDENTIFIER     <span style="color:darkgreen">// may be a type variable</span>
-    ;
-
-optTypeParameters
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | typeParameters
-    ;
-
-typeParameters
-    : <span style="color:maroon">&#39;&lt;&#39;</span> typeParameterList <span style="color:maroon">&#39;&gt;&#39;</span>
-    ;
-
-typeParameterList
-    : name
-    | typeParameterList <span style="color:maroon">&#39;,&#39;</span> name
-    ;
-
-realTypeArg
-    : DONTCARE
-    | typeRef
-    | VOID
-    ;
-
-typeArg
-    : DONTCARE
-    | typeRef
-    | nonTypeName
-    | VOID
-    ;
-
-realTypeArgumentList
-    : realTypeArg
-    | realTypeArgumentList COMMA typeArg
-    ;
-
-typeArgumentList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | typeArg
-    | typeArgumentList <span style="color:maroon">&#39;,&#39;</span> typeArg
-    ;
-
-typeDeclaration
-    : derivedTypeDeclaration
-    | typedefDeclaration
-    | parserTypeDeclaration <span style="color:maroon">&#39;;&#39;</span>
-    | controlTypeDeclaration <span style="color:maroon">&#39;;&#39;</span>
-    | packageTypeDeclaration <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-derivedTypeDeclaration
-    : headerTypeDeclaration
-    | headerUnionDeclaration
-    | structTypeDeclaration
-    | enumDeclaration
-    ;
-
-headerTypeDeclaration
-    : optAnnotations HEADER name optTypeParameters <span style="color:maroon">&#39;{&#39;</span> structFieldList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-headerUnionDeclaration
-    : optAnnotations HEADER_UNION name optTypeParameters <span style="color:maroon">&#39;{&#39;</span> structFieldList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-structTypeDeclaration
-    : optAnnotations STRUCT name optTypeParameters <span style="color:maroon">&#39;{&#39;</span> structFieldList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-structFieldList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | structFieldList structField
-    ;
-
-structField
-    : optAnnotations typeRef name <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-enumDeclaration
-    : optAnnotations ENUM name <span style="color:maroon">&#39;{&#39;</span> identifierList <span style="color:maroon">&#39;}&#39;</span>
-    | optAnnotations ENUM typeRef name <span style="color:maroon">&#39;{&#39;</span> specifiedIdentifierList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-errorDeclaration
-    : ERROR <span style="color:maroon">&#39;{&#39;</span> identifierList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-matchKindDeclaration
-    : MATCH_KIND <span style="color:maroon">&#39;{&#39;</span> identifierList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-identifierList
-    : name
-    | identifierList <span style="color:maroon">&#39;,&#39;</span> name
-    ;
-
-specifiedIdentifierList
-    : specifiedIdentifier
-    | specifiedIdentifierList <span style="color:maroon">&#39;,&#39;</span> specifiedIdentifier
-    ;
-
-specifiedIdentifier
-    : name <span style="color:maroon">&#39;=&#39;</span> initializer
-    ;
-
-typedefDeclaration
-    : optAnnotations TYPEDEF typeRef name <span style="color:maroon">&#39;;&#39;</span>
-    | optAnnotations TYPEDEF derivedTypeDeclaration name <span style="color:maroon">&#39;;&#39;</span>
-    | optAnnotations TYPE typeRef name <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> STATEMENTS </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-assignmentOrMethodCallStatement
-    : lvalue <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;;&#39;</span>
-    | lvalue <span style="color:maroon">&#39;&lt;&#39;</span> typeArgumentList <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;;&#39;</span>
-    | lvalue <span style="color:maroon">&#39;=&#39;</span>  expression <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-emptyStatement
-    : <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-returnStatement
-    : RETURN <span style="color:maroon">&#39;;&#39;</span>
-    | RETURN expression <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-exitStatement
-    : EXIT <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-conditionalStatement
-    : IF <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> statement
-    | IF <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> statement ELSE statement
-    ;
-
-<span style="color:darkgreen">// To support direct invocation of a control or parser without instantiation</span>
-directApplication
-    : typeName <span style="color:maroon">&#39;.&#39;</span> APPLY <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;;&#39;</span>
-    | specializedType <span style="color:maroon">&#39;.&#39;</span> APPLY <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-statement
-    : assignmentOrMethodCallStatement
-    | directApplication
-    | conditionalStatement
-    | emptyStatement
-    | blockStatement
-    | exitStatement
-    | returnStatement
-    | switchStatement
-    ;
-
-blockStatement
-    : optAnnotations <span style="color:maroon">&#39;{&#39;</span> statOrDeclList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-statOrDeclList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | statOrDeclList statementOrDeclaration
-    ;
-
-switchStatement
-    : SWITCH <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&#39;{&#39;</span> switchCases <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-switchCases
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | switchCases switchCase
-    ;
-
-switchCase
-    : switchLabel <span style="color:maroon">&#39;:&#39;</span> blockStatement
-    | switchLabel <span style="color:maroon">&#39;:&#39;</span>
-    ;
-
-switchLabel
-    : DEFAULT
-    | nonBraceExpression
-    ;
-
-statementOrDeclaration
-    : variableDeclaration
-    | constantDeclaration
-    | statement
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> TABLES </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-tableDeclaration
-    : optAnnotations TABLE name <span style="color:maroon">&#39;{&#39;</span> tablePropertyList <span style="color:maroon">&#39;}&#39;</span>
-    ;
-
-tablePropertyList
-    : tableProperty
-    | tablePropertyList tableProperty
-    ;
-
-tableProperty
-    : KEY <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> keyElementList <span style="color:maroon">&#39;}&#39;</span>
-    | ACTIONS <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> actionList <span style="color:maroon">&#39;}&#39;</span>
-    | optAnnotations CONST ENTRIES <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;{&#39;</span> entriesList <span style="color:maroon">&#39;}&#39;</span> <span style="color:darkgreen">/*</span><span style="color:darkgreen"> immutable entries </span><span style="color:darkgreen">*/</span>
-    | optAnnotations CONST nonTableKwName <span style="color:maroon">&#39;=&#39;</span> initializer <span style="color:maroon">&#39;;&#39;</span>
-    | optAnnotations nonTableKwName <span style="color:maroon">&#39;=&#39;</span> initializer <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-keyElementList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | keyElementList keyElement
-    ;
-
-keyElement
-    : expression <span style="color:maroon">&#39;:&#39;</span> name optAnnotations <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-actionList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | actionList optAnnotations actionRef <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-actionRef
-    : prefixedNonTypeName
-    | prefixedNonTypeName <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    ;
-
-entriesList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | entriesList entry
-    ;
-
-entry
-    : keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> ACTION </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-actionDeclaration
-    : optAnnotations ACTION name <span style="color:maroon">&#39;(&#39;</span> parameterList <span style="color:maroon">&#39;)&#39;</span> blockStatement
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> VARIABLES </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-variableDeclaration
-    : annotations typeRef name optInitializer <span style="color:maroon">&#39;;&#39;</span>
-    | typeRef name optInitializer <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-constantDeclaration
-    : optAnnotations CONST typeRef name <span style="color:maroon">&#39;=&#39;</span> initializer <span style="color:maroon">&#39;;&#39;</span>
-    ;
-
-optInitializer
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | <span style="color:maroon">&#39;=&#39;</span> initializer
-    ;
-
-initializer
-    : expression
-    ;
-
-<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> Expressions </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
-
-functionDeclaration
-    : functionPrototype blockStatement
-    ;
-
-argumentList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | nonEmptyArgList
-    ;
-
-nonEmptyArgList
-    : argument
-    | nonEmptyArgList <span style="color:maroon">&#39;,&#39;</span> argument
-    ;
-
-argument
-    : expression
-    | name <span style="color:maroon">&#39;=&#39;</span> expression
-    | DONTCARE
-    | name <span style="color:maroon">&#39;=&#39;</span> DONTCARE
-    ;
-
-kvList
-    : kvPair
-    | kvList <span style="color:maroon">&#39;,&#39;</span> kvPair
-    ;
-
-kvPair
-    : name <span style="color:maroon">&#39;=&#39;</span> expression
-    ;
-
-expressionList
-    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | expression
-    | expressionList <span style="color:maroon">&#39;,&#39;</span> expression
-    ;
-
 
 annotationBody
     : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
-    | annotationBody <span style="color:maroon">&#39;(&#39;</span> annotationBody <span style="color:maroon">&#39;)&#39;</span>
+    | annotationBody <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> annotationBody <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
     | annotationBody annotationToken
     ;
 
-structuredAnnotationBody
-    : expressionList
-    | kvList
-    ;
-
 annotationToken
-    : ABSTRACT
+    : UNEXPECTED_TOKEN
+    | ABSTRACT
     | ACTION
     | ACTIONS
     | APPLY
@@ -10225,6 +9646,7 @@ annotationToken
     | STRUCT
     | SWITCH
     | TABLE
+    | THIS
     | TRANSITION
     | TRUE
     | TUPLE
@@ -10273,7 +9695,591 @@ annotationToken
     | <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span>
     | <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
     | <span style="color:maroon">&quot;</span><span style="color:maroon">@</span><span style="color:maroon">&quot;</span>
-    | UNKNOWN_TOKEN
+    ;
+
+kvList
+    : kvPair
+    | kvList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> kvPair
+    ;
+
+kvPair
+    : name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> expression
+    ;
+
+parameterList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | nonEmptyParameterList
+    ;
+
+nonEmptyParameterList
+    : parameter
+    | nonEmptyParameterList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> parameter
+    ;
+
+parameter
+    : optAnnotations direction typeRef name
+    | optAnnotations direction typeRef name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> expression
+    ;
+
+direction
+    : IN
+    | OUT
+    | INOUT
+    | <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    ;
+
+packageTypeDeclaration
+    : optAnnotations PACKAGE name optTypeParameters
+      <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+instantiation
+    : annotations typeRef <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | typeRef <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | annotations typeRef <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> objInitializer <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | typeRef <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> objInitializer <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+objInitializer
+    : <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> objDeclarations <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+objDeclarations
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | objDeclarations objDeclaration
+    ;
+
+objDeclaration
+    : functionDeclaration
+    | instantiation
+    ;
+
+optConstructorParameters
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+dotPrefix
+    : <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span>
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> PARSER </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+parserDeclaration
+    : parserTypeDeclaration optConstructorParameters
+      <span style="color:darkgreen">/*</span><span style="color:darkgreen"> no type parameters allowed in the parserTypeDeclaration </span><span style="color:darkgreen">*/</span>
+      <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> parserLocalElements parserStates <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+parserLocalElements
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | parserLocalElements parserLocalElement
+    ;
+
+parserLocalElement
+    : constantDeclaration
+    | instantiation
+    | variableDeclaration
+    | valueSetDeclaration
+    ;
+
+parserTypeDeclaration
+    : optAnnotations PARSER name optTypeParameters <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+parserStates
+    : parserState
+    | parserStates parserState
+    ;
+
+parserState
+    : optAnnotations STATE name <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> parserStatements transitionStatement <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+parserStatements
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | parserStatements parserStatement
+    ;
+
+parserStatement
+    : assignmentOrMethodCallStatement
+    | directApplication
+    | emptyStatement
+    | variableDeclaration
+    | constantDeclaration
+    | parserBlockStatement
+    | conditionalStatement
+    ;
+
+parserBlockStatement
+    : optAnnotations <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> parserStatements <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+transitionStatement
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | TRANSITION stateExpression
+    ;
+
+stateExpression
+    : name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | selectExpression
+    ;
+
+selectExpression
+    : SELECT <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expressionList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> selectCaseList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+selectCaseList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | selectCaseList selectCase
+    ;
+
+selectCase
+    : keysetExpression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+keysetExpression
+    : tupleKeysetExpression
+    | simpleKeysetExpression
+    ;
+
+tupleKeysetExpression
+    : <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> simpleKeysetExpression <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> simpleExpressionList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> reducedSimpleKeysetExpression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+simpleExpressionList
+    : simpleKeysetExpression
+    | simpleExpressionList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> simpleKeysetExpression
+    ;
+
+reducedSimpleKeysetExpression
+    : expression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;&amp;&amp;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">..</span><span style="color:maroon">&quot;</span> expression
+    | DEFAULT
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
+    ;
+
+simpleKeysetExpression
+    : expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;&amp;&amp;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">..</span><span style="color:maroon">&quot;</span> expression
+    | DEFAULT
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
+    ;
+
+valueSetDeclaration
+  : optAnnotations
+      VALUESET <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> baseType <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+  | optAnnotations
+      VALUESET <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> tupleType <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+  | optAnnotations
+      VALUESET <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> typeName <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+  ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> CONTROL </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+controlDeclaration
+    : controlTypeDeclaration optConstructorParameters
+      <span style="color:darkgreen">/*</span><span style="color:darkgreen"> no type parameters allowed in controlTypeDeclaration </span><span style="color:darkgreen">*/</span>
+      <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> controlLocalDeclarations APPLY controlBody <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+controlTypeDeclaration
+    : optAnnotations CONTROL name optTypeParameters
+      <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+controlLocalDeclarations
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | controlLocalDeclarations controlLocalDeclaration
+    ;
+
+controlLocalDeclaration
+    : constantDeclaration
+    | actionDeclaration
+    | tableDeclaration
+    | instantiation
+    | variableDeclaration
+    ;
+
+controlBody
+    : blockStatement
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> EXTERN </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+externDeclaration
+    : optAnnotations EXTERN nonTypeName optTypeParameters <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> methodPrototypes <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    | optAnnotations EXTERN functionPrototype <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+methodPrototypes
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | methodPrototypes methodPrototype
+    ;
+
+functionPrototype
+    : typeOrVoid name optTypeParameters <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+methodPrototype
+    : optAnnotations functionPrototype <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | optAnnotations TYPE_IDENTIFIER <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> TYPES </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+typeRef
+    : baseType
+    | typeName
+    | specializedType
+    | headerStackType
+    | p4listType
+    | tupleType
+    ;
+
+namedType
+    : typeName
+    | specializedType
+    ;
+
+prefixedType
+    : TYPE_IDENTIFIER
+    | dotPrefix TYPE_IDENTIFIER
+    ;
+
+typeName
+    : prefixedType
+    ;
+
+p4listType
+    : LIST <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> typeArg <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    ;
+
+tupleType
+    : TUPLE <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> typeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    ;
+
+headerStackType
+    : typeName <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    | specializedType <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    ;
+
+specializedType
+    : prefixedType <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> typeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    ;
+
+baseType
+    : BOOL
+    | MATCH_KIND
+    | ERROR
+    | BIT
+    | STRING
+    | INT
+    | BIT <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    | INT <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    | VARBIT <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    | BIT <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    | INT <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    | VARBIT <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    ;
+
+typeOrVoid
+    : typeRef
+    | VOID
+    | IDENTIFIER     <span style="color:darkgreen">// may be a type variable</span>
+    ;
+
+optTypeParameters
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | typeParameters
+    ;
+
+typeParameters
+    : <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> typeParameterList <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span>
+    ;
+
+typeParameterList
+    : name
+    | typeParameterList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> name
+    ;
+
+typeArg
+    : typeRef
+    | nonTypeName
+    | VOID
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
+    ;
+
+typeArgumentList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | typeArg
+    | typeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> typeArg
+    ;
+
+realTypeArg
+    : typeRef
+    | VOID
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
+    ;
+
+realTypeArgumentList
+    : realTypeArg
+    | realTypeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> typeArg
+    ;
+
+typeDeclaration
+    : derivedTypeDeclaration
+    | typedefDeclaration
+    | parserTypeDeclaration <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | controlTypeDeclaration <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | packageTypeDeclaration <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+derivedTypeDeclaration
+    : headerTypeDeclaration
+    | headerUnionDeclaration
+    | structTypeDeclaration
+    | enumDeclaration
+    ;
+
+headerTypeDeclaration
+    : optAnnotations HEADER name optTypeParameters <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> structFieldList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+structTypeDeclaration
+    : optAnnotations STRUCT name optTypeParameters <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> structFieldList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+headerUnionDeclaration
+    : optAnnotations HEADER_UNION name optTypeParameters <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> structFieldList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+structFieldList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | structFieldList structField
+    ;
+
+structField
+    : optAnnotations typeRef name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+enumDeclaration
+    : optAnnotations ENUM name <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> identifierList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    | optAnnotations ENUM typeRef name <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> specifiedIdentifierList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+specifiedIdentifierList
+    : specifiedIdentifier
+    | specifiedIdentifierList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> specifiedIdentifier
+    ;
+
+specifiedIdentifier
+    : name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> initializer
+    ;
+
+errorDeclaration
+    : ERROR <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> identifierList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+matchKindDeclaration
+    : MATCH_KIND <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> identifierList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+identifierList
+    : name
+    | identifierList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> name
+    ;
+
+typedefDeclaration
+    : optAnnotations TYPEDEF typeRef name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | optAnnotations TYPEDEF derivedTypeDeclaration name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | optAnnotations TYPE typeRef name <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> STATEMENTS </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+assignmentOrMethodCallStatement
+    : lvalue <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | lvalue <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> typeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | lvalue <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span>  expression <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+emptyStatement
+    : <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+exitStatement
+    : EXIT <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+returnStatement
+    : RETURN <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | RETURN expression <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+conditionalStatement
+    : IF <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> statement
+    | IF <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> statement ELSE statement
+    ;
+
+<span style="color:darkgreen">// To support direct invocation of a control or parser without instantiation</span>
+directApplication
+    : typeName <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> APPLY <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | specializedType <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> APPLY <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+statement
+    : assignmentOrMethodCallStatement
+    | directApplication
+    | conditionalStatement
+    | emptyStatement
+    | blockStatement
+    | returnStatement
+    | exitStatement
+    | switchStatement
+    ;
+
+blockStatement
+    : optAnnotations <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> statOrDeclList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+statOrDeclList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | statOrDeclList statementOrDeclaration
+    ;
+
+switchStatement
+    : SWITCH <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> switchCases <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+switchCases
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | switchCases switchCase
+    ;
+
+switchCase
+    : switchLabel <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> blockStatement
+    | switchLabel <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
+    ;
+
+switchLabel
+    : DEFAULT
+    | nonBraceExpression
+    ;
+
+statementOrDeclaration
+    : variableDeclaration
+    | constantDeclaration
+    | statement
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> TABLE </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+tableDeclaration
+    : optAnnotations TABLE name <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> tablePropertyList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    ;
+
+tablePropertyList
+    : tableProperty
+    | tablePropertyList tableProperty
+    ;
+
+tableProperty
+    : KEY <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> keyElementList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    | ACTIONS <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> actionList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    | optAnnotations optCONST ENTRIES <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> entriesList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span> <span style="color:darkgreen">/*</span><span style="color:darkgreen"> immutable entries </span><span style="color:darkgreen">*/</span>
+    | optAnnotations optCONST nonTableKwName <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> initializer <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+keyElementList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | keyElementList keyElement
+    ;
+
+keyElement
+    : expression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> name optAnnotations <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+actionList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | actionList optAnnotations actionRef <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+actionRef
+    : prefixedNonTypeName
+    | prefixedNonTypeName <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    ;
+
+entry
+    : keysetExpression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> actionRef optAnnotations <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+entriesList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | entriesList entry
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> ACTION </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+actionDeclaration
+    : optAnnotations ACTION name <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> parameterList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> blockStatement
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> VARIABLES </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+variableDeclaration
+    : annotations typeRef name optInitializer <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    | typeRef name optInitializer <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+constantDeclaration
+    : optAnnotations CONST typeRef name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> initializer <span style="color:maroon">&quot;</span><span style="color:maroon">;</span><span style="color:maroon">&quot;</span>
+    ;
+
+optInitializer
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> initializer
+    ;
+
+initializer
+    : expression
+    ;
+
+<span style="color:darkgreen">/*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen"> Expressions </span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*</span><span style="color:darkgreen">*/</span>
+
+functionDeclaration
+    : functionPrototype blockStatement
+    ;
+
+argumentList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | nonEmptyArgList
+    ;
+
+nonEmptyArgList
+    : argument
+    | nonEmptyArgList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> argument
+    ;
+
+argument
+    : expression
+    | name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> expression
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
+    | name <span style="color:maroon">&quot;</span><span style="color:maroon">=</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">_</span><span style="color:maroon">&quot;</span>
+    ;
+
+expressionList
+    : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
+    | expression
+    | expressionList <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span> expression
+    ;
+
+
+structuredAnnotationBody
+    : expressionList
+    | kvList
     ;
 
 member
@@ -10288,76 +10294,76 @@ prefixedNonTypeName
 lvalue
     : prefixedNonTypeName
     | THIS
-    | lvalue <span style="color:maroon">&#39;.&#39;</span> member
-    | lvalue <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    | lvalue <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;:&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
+    | lvalue <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | lvalue <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    | lvalue <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
     ;
 
-%left <span style="color:maroon">&#39;,&#39;</span>
-%nonassoc <span style="color:maroon">&#39;?&#39;</span>
-%nonassoc <span style="color:maroon">&#39;:&#39;</span>
-%left <span style="color:red">&#39;</span>||<span style="color:red">&#39;</span>
-%left <span style="color:red">&#39;</span>&amp;&amp;<span style="color:red">&#39;</span>
-%left <span style="color:red">&#39;</span>==<span style="color:maroon">&#39; &#39;</span>!=<span style="color:red">&#39;</span>
-%left <span style="color:maroon">&#39;&lt;&#39;</span> <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:red">&#39;</span>&lt;=<span style="color:maroon">&#39; &#39;</span>&gt;=<span style="color:red">&#39;</span>
-%left <span style="color:maroon">&#39;|&#39;</span>
-%left <span style="color:maroon">&#39;^&#39;</span>
-%left <span style="color:maroon">&#39;&amp;&#39;</span>
-%left <span style="color:red">&#39;</span>&lt;&lt;<span style="color:maroon">&#39; &#39;</span>&gt;&gt;<span style="color:red">&#39;</span>
-%left <span style="color:red">&#39;</span>++<span style="color:maroon">&#39; &#39;</span>+<span style="color:maroon">&#39; &#39;</span>-<span style="color:maroon">&#39; &#39;</span>|+|<span style="color:maroon">&#39; &#39;</span>|-|<span style="color:red">&#39;</span>
-%left <span style="color:maroon">&#39;*&#39;</span> <span style="color:maroon">&#39;/&#39;</span> <span style="color:maroon">&#39;%&#39;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">,</span><span style="color:maroon">&quot;</span>
+%nonassoc <span style="color:maroon">&quot;</span><span style="color:maroon">?</span><span style="color:maroon">&quot;</span>
+%nonassoc <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">||</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;&amp;</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">==</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">!=</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;=</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;=</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">|</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">^</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;&lt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;&gt;</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">++</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">+</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">-</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">|+|</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">|-|</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">*</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">/</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">%</span><span style="color:maroon">&quot;</span>
 %right PREFIX
-%nonassoc <span style="color:maroon">&#39;]&#39;</span> <span style="color:maroon">&#39;(&#39;</span> <span style="color:maroon">&#39;[&#39;</span>
-%left <span style="color:maroon">&#39;.&#39;</span>
+%nonassoc <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span>
+%left <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span>
 
 <span style="color:darkgreen">// Additional precedences need to be specified</span>
 
 expression
     : INTEGER
+    | STRING_LITERAL
     | TRUE
     | FALSE
     | THIS
-    | STRING_LITERAL
     | nonTypeName
     | dotPrefix nonTypeName
-    | expression <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    | expression <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;:&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    | <span style="color:maroon">&#39;{&#39;</span> expressionList <span style="color:maroon">&#39;}&#39;</span>
-    | <span style="color:maroon">&#39;{&#39;</span> kvList <span style="color:maroon">&#39;}&#39;</span>
-    | <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span>
-    | <span style="color:maroon">&#39;!&#39;</span> expression %prec PREFIX
-    | <span style="color:maroon">&#39;~&#39;</span> expression %prec PREFIX
-    | <span style="color:maroon">&#39;-&#39;</span> expression %prec PREFIX
-    | <span style="color:maroon">&#39;+&#39;</span> expression %prec PREFIX
-    | typeName <span style="color:maroon">&#39;.&#39;</span> member
-    | ERROR <span style="color:maroon">&#39;.&#39;</span> member
-    | expression <span style="color:maroon">&#39;.&#39;</span> member
-    | expression <span style="color:maroon">&#39;*&#39;</span> expression
-    | expression <span style="color:maroon">&#39;/&#39;</span> expression
-    | expression <span style="color:maroon">&#39;%&#39;</span> expression
-    | expression <span style="color:maroon">&#39;+&#39;</span> expression
-    | expression <span style="color:maroon">&#39;-&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>|+|<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>|-|<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>&lt;&lt;<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>&gt;&gt;<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>&lt;=<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>&gt;=<span style="color:red">&#39;</span> expression
-    | expression <span style="color:maroon">&#39;&lt;&#39;</span> expression
-    | expression <span style="color:maroon">&#39;&gt;&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>!=<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>==<span style="color:red">&#39;</span> expression
-    | expression <span style="color:maroon">&#39;&amp;&#39;</span> expression
-    | expression <span style="color:maroon">&#39;^&#39;</span> expression
-    | expression <span style="color:maroon">&#39;|&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>++<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>&amp;&amp;<span style="color:red">&#39;</span> expression
-    | expression <span style="color:red">&#39;</span>||<span style="color:red">&#39;</span> expression
-    | expression <span style="color:maroon">&#39;?&#39;</span> expression <span style="color:maroon">&#39;:&#39;</span> expression
-    | expression <span style="color:maroon">&#39;&lt;&#39;</span> realTypeArgumentList <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    | expression <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    | namedType <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    | <span style="color:maroon">&#39;(&#39;</span> typeRef <span style="color:maroon">&#39;)&#39;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> expressionList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">{</span><span style="color:maroon">&quot;</span> kvList <span style="color:maroon">&quot;</span><span style="color:maroon">}</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">!</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">~</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">-</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">+</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | typeName <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | ERROR <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">*</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">/</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">%</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">+</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">-</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">|+|</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">|-|</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;&lt;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;&gt;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;=</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;=</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">!=</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">==</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">^</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">|</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">++</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;&amp;</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">||</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">?</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> expression
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> realTypeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | expression <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | namedType <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> typeRef <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> expression
     ;
 
 nonBraceExpression
@@ -10368,42 +10374,42 @@ nonBraceExpression
     | THIS
     | nonTypeName
     | dotPrefix nonTypeName
-    | nonBraceExpression <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    | nonBraceExpression <span style="color:maroon">&#39;[&#39;</span> expression <span style="color:maroon">&#39;:&#39;</span> expression <span style="color:maroon">&#39;]&#39;</span>
-    | <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span>
-    | <span style="color:maroon">&#39;!&#39;</span> expression %prec PREFIX
-    | <span style="color:maroon">&#39;~&#39;</span> expression %prec PREFIX
-    | <span style="color:maroon">&#39;-&#39;</span> expression %prec PREFIX
-    | <span style="color:maroon">&#39;+&#39;</span> expression %prec PREFIX
-    | typeName <span style="color:maroon">&#39;.&#39;</span> member
-    | ERROR <span style="color:maroon">&#39;.&#39;</span> member
-    | nonBraceExpression <span style="color:maroon">&#39;.&#39;</span> member
-    | nonBraceExpression <span style="color:maroon">&#39;*&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;/&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;%&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;+&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;-&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>|+|<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>|-|<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>&lt;&lt;<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>&gt;&gt;<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>&lt;=<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>&gt;=<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;&lt;&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;&gt;&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>!=<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>==<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;&amp;&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;^&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;|&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>++<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>&amp;&amp;<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:red">&#39;</span>||<span style="color:red">&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;?&#39;</span> expression <span style="color:maroon">&#39;:&#39;</span> expression
-    | nonBraceExpression <span style="color:maroon">&#39;&lt;&#39;</span> realTypeArgumentList <span style="color:maroon">&#39;&gt;&#39;</span> <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    | nonBraceExpression <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    | namedType <span style="color:maroon">&#39;(&#39;</span> argumentList <span style="color:maroon">&#39;)&#39;</span>
-    | <span style="color:maroon">&#39;(&#39;</span> typeRef <span style="color:maroon">&#39;)&#39;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">[</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">]</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">!</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">~</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">-</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">+</span><span style="color:maroon">&quot;</span> expression %prec PREFIX
+    | typeName <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | ERROR <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">.</span><span style="color:maroon">&quot;</span> member
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">*</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">/</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">%</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">+</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">-</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">|+|</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">|-|</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;&lt;</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;&gt;</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;=</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;=</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">!=</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">==</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">^</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">|</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">++</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&amp;&amp;</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">||</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">?</span><span style="color:maroon">&quot;</span> expression <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span> expression
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">&lt;</span><span style="color:maroon">&quot;</span> realTypeArgumentList <span style="color:maroon">&quot;</span><span style="color:maroon">&gt;</span><span style="color:maroon">&quot;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | nonBraceExpression <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | namedType <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> argumentList <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span>
+    | <span style="color:maroon">&quot;</span><span style="color:maroon">(</span><span style="color:maroon">&quot;</span> typeRef <span style="color:maroon">&quot;</span><span style="color:maroon">)</span><span style="color:maroon">&quot;</span> expression
     ;</code></pre></div></div><span data-line=""></span>
 <div class="footnotes madoko">
 <hr >
