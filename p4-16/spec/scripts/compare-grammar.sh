@@ -5,11 +5,11 @@ THIS_SCRIPT_DIR_MAYBE_RELATIVE="${THIS_SCRIPT_FILE_MAYBE_RELATIVE%/*}"
 THIS_SCRIPT_DIR_ABSOLUTE=`readlink -f "${THIS_SCRIPT_DIR_MAYBE_RELATIVE}"`
 
 usage() {
-    1>&2 echo "usage: $0 [ -c ] <spec grammar.mdk file> <p4c p4parser.ypp file>"
+    1>&2 echo "usage: $0 <spec grammar.mdk file> <p4c p4parser.ypp file>"
     1>&2 echo ""
     1>&2 echo "Sample command line:"
     1>&2 echo ""
-    1>&2 echo "    $0 -c ../grammar.mdk \$HOME/p4c/frontends/parsers/p4/p4parser.ypp"
+    1>&2 echo "    $0 ../grammar.mdk \$HOME/p4c/frontends/parsers/p4/p4parser.ypp"
     1>&2 echo ""
     1>&2 echo "Program to trim C++ code and various other things from"
     1>&2 echo "a Bison grammar file like this one for the open source"
@@ -24,19 +24,6 @@ usage() {
     1>&2 echo ""
     1>&2 echo "    https://github.com/p4lang/p4-spec/blob/main/p4-16/spec/grammar.mdk"
 }
-
-if [ $# -lt 2 ]
-then
-    usage
-    exit 1
-fi
-
-OPTS=""
-if [ "$1" == "-c" ]
-then
-    OPTS="-c"
-    shift
-fi
 
 if [ $# -ne 2 ]
 then
@@ -59,19 +46,13 @@ then
     exit 1
 fi
 
-TRIMMED_GRAMMAR_FILE="${GRAMMAR_MDK_FILE}"
-if [ "${OPTS}" == "-c" ]
-then
-    TRIMMED_GRAMMAR_FILE="trimmed-grammar-file.txt"
-    "${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${GRAMMAR_MDK_FILE}" > "${TRIMMED_GRAMMAR_FILE}"
-fi
-
+TRIMMED_GRAMMAR_FILE="trimmed-grammar-file.txt"
+"${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${GRAMMAR_MDK_FILE}" > "${TRIMMED_GRAMMAR_FILE}"
 TRIMMED_PARSER_FILE="trimmed-p4parser-file.txt"
+"${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${P4PARSER_YPP_FILE}" > "${TRIMMED_PARSER_FILE}"
 
 echo "File names to compare:"
 echo "\"${TRIMMED_GRAMMAR_FILE}\" \"${TRIMMED_PARSER_FILE}\""
-
-"${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${P4PARSER_YPP_FILE}" > "${TRIMMED_PARSER_FILE}"
 
 echo ""
 echo "Command to use emacs ediff-files feature to view the differences:"

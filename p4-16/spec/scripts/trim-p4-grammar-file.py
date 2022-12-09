@@ -16,7 +16,6 @@ grammar.mdk file from the P4_16 language specification repository here:
 
     https://github.com/p4lang/p4-spec/blob/main/p4-16/spec/grammar.mdk
 """)
-parser.add_argument('-c', '--remove-comments', action='store_true')
 parser.add_argument('filename')
 args = parser.parse_known_args()[0]
 
@@ -31,6 +30,10 @@ for line in fileinput.input(files=(args.filename)):
         keep = True
         #print("First line kept:\n%s" % (line))
     if keep:
+        match3 = re.match(r"^%%", line)
+        match4 = re.match(r"^~ End P4Grammar", line)
+        if match3 or match4:
+            break
         lines.append(line)
 
 content = ''.join(lines)
@@ -82,37 +85,49 @@ content = re.sub('%empty', '/* empty */', content)
 lines = content.split('\n')
 
 for i in range(len(lines)):
-    if args.remove_comments:
-        # Remove end-of line comments beginning with //
-        lines[i] = re.sub(r"//.*$", "", lines[i])
-        # Remove comments of the form /* ... */
-        lines[i] = re.sub(r"/\*.*\*/", "", lines[i])
+    if lines[i][0:1] == '%':
+        lines[i] = ''
+    # Remove end-of line comments beginning with //
+    lines[i] = re.sub(r"//.*$", "", lines[i])
+    # Remove comments of the form /* ... */
+    lines[i] = re.sub(r"/\*.*\*/", "", lines[i])
     # Remove end-of-line whitespace
     lines[i] = lines[i].rstrip()
 
-lines2 = []
+content = ' '.join(lines)
 
-# Remove completely blank lines in the middle of the definition of a
-# nonterminal.
-i = 0
-while i < len(lines):
-    nonterminal = re.match(r"^[a-zA-Z]", lines[i])
-    lines2.append(lines[i])
-    i += 1
-    if nonterminal:
-        while i < len(lines):
-            end_of_defn = re.match(r"^\s+;", lines[i])
-            if end_of_defn:
-                lines2.append(lines[i])
-                i += 1
-                break
-            else:
-                blank = re.match(r"^\s*$", lines[i])
-                if not blank:
-                    lines2.append(lines[i])
-                i += 1
+# Reformat grammar rules so that each alternative appears on exactly
+# one line.
+rules = content.split(';')
+lines = []
+for i in range(len(rules)):
+    rule = rules[i].strip()
+    if (i == len(rules) - 1) and (rule == ''):
+        break
+    xs = rule.split(':')
+    if len(xs) != 2:
+        print("debug:")
+        print("i=%d" % (i))
+        print("rule=%s" % (rule))
+        print("xs=%s" % (xs))
+        sys.exit(1)
+    nonterminal_name = xs[0].strip()
+    alts = xs[1].split('|')
+    lines.append('')
+    lines.append(nonterminal_name)
+    for j in range(len(alts)):
+        ln = '    '
+        if j == 0:
+            ln += ':'
+        else:
+            ln += '|'
+        a = alts[j].strip()
+        if a != '':
+            ln += (' ' + a)
+        lines.append(ln)
+    lines.append('    ;')
 
-content = '\n'.join(lines2)
+content = '\n'.join(lines)
 
 # Restore the contents of double-quoted strings from hexadecimal back
 # to ASCII.
