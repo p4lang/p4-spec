@@ -35,19 +35,30 @@ for line in fileinput.input(files=(args.filename)):
 
 content = ''.join(lines)
 
-# Temporarily replace all occurrences of "{" and "}" (with the double
-# quotes there) with a string that does not exist anywhere else in the
-# file (I checked manually in 2022-Dec that this was true at that time
-# -- adjust the temporary replacement strings if necessary later).
-# The plan is that soon below we will replace the temporary
-# substitutions back with their original form, but we will take
-# advantage of the fact that there are no occurrences of { or } inside
-# of "quoted strings" to do simpler string manipulations in this
-# program.
+# Temporarily replace the contents of strings (within double quotes)
+# so that each character is replaced with a 2-digit hexadecimal
+# encoding of the character's ASCII value (there should be only ASCII
+# character in these files, no Unicode).
 
-#content = re.sub(pattern, replacement, content)
-content = re.sub('"{"', '"leftbrace"', content)
-content = re.sub('"}"', '"rightbrace"', content)
+# Thus all characters that are "special" such as { } : | ; in the
+# syntax of Bison grammars with C++ code in { } will become "not
+# special", and we can use very simple regex matching techniques to
+# look for these characters, without worrying about string contents.
+
+# Later below we will restore all string contents from hex digits back
+# to their original character sequences.
+
+def string2hex(match):
+    return '"%s"' % (match.group(0)[1:-1].encode('utf-8').hex())
+
+def hex2string(match):
+    return '"%s"' % (bytes.fromhex(match.group(0)[1:-1]).decode("ASCII"))
+
+
+content = re.sub('l_angle', '"<"', content)
+content = re.sub('r_angle', '">"', content)
+
+content = re.sub('"[^"]+"', string2hex, content)
 
 # Try replacing all balanced sets of curly braces, and whatever is
 # between them, with empty strings.
@@ -58,13 +69,7 @@ while True:
         break
     content = next
 
-# Change curly brackes in strings back
-content = re.sub('"leftbrace"', '"{"', content)
-content = re.sub('"rightbrace"', '"}"', content)
-
 content = re.sub('%empty', '/* empty */', content)
-content = re.sub('l_angle', '"<"', content)
-content = re.sub('r_angle', '">"', content)
 
 # Remove blank lines that occur in the middle of the definition of a
 # non-terminal.  Relies on the following assumptions, which are
@@ -108,4 +113,9 @@ while i < len(lines):
                 i += 1
 
 content = '\n'.join(lines2)
+
+# Restore the contents of double-quoted strings from hexadecimal back
+# to ASCII.
+content = re.sub('"[^"]+"', hex2string, content)
+
 print(content)
