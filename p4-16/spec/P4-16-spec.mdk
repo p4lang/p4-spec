@@ -2176,6 +2176,7 @@ typeRef
     | typeName
     | specializedType
     | headerStackType
+    | p4listType
     | tupleType
     ;
 
@@ -2539,34 +2540,54 @@ Operations that manipulate tuple types are described in Section
 
 The type `tuple<>` is a tuple type with no components.
 
+### List types { #sec-list-types }
+
+A list holds zero or more values, where every element must have the
+same type.  The type of a list where all elements have type `T` is
+written as
+
+~ Begin P4Example
+list<T>
+~ End P4Example
+
+~ Begin P4Grammar
+p4listType
+    : LIST '<' typeArg '>'
+    ;
+~ End P4Grammar
+
+Operations that manipulate list types are described in Section
+[#sec-list-exprs].
+
 ### Type nesting rules { #sec-type-nesting }
 
 The table below lists all types that may appear as members of headers,
-header unions, structs, and tuples.  Note that `int` by itself
+header unions, structs, tuples, and lists.  Note that `int` by itself
 (i.e. not as part of an `int<N>` type expression) means an
 arbitrary-precision integer, without a width specified.
 
-|--------------------|--------------------------------------------|
-|                    | Container type                           |||
-|                    |-----------|--------------|-----------------|
-| Element type       | header    | header_union | struct or tuple |
-+:-------------------+:----------+:-------------+:----------------+
-| `bit<W>`       | allowed   | error   |  allowed |
-| `int<W>`       | allowed   | error   |  allowed |
-| `varbit<W>`    | allowed   | error   |  allowed |
-| `int`          | error     | error   |  error   |
-| `void`         | error     | error   |  error   |
-| `string`       | error     | error   |  error   |
-| `error`        | error     | error   |  allowed |
-| `match_kind`   | error     | error   |  error   |
-| `bool`         | allowed   | error   |  allowed |
-| `enum`         | allowed[^enum_header]     | error   |  allowed |
-| `header`       | error     | allowed |  allowed |
-| header stack   | error     | error   |  allowed |
-| `header_union` | error     | error   |  allowed |
-| `struct`       | allowed[^struct_header]   | error   |  allowed |
-| `tuple`        | error     | error   |  allowed |
-|----------------|-----------|---------|----------|
+|--------------------|------------------------------------------------||||
+|                    | Container type                                 ||||
+|                    |-----------|--------------|-----------------|------|
+| Element type       | header    | header_union | struct or tuple | list |
++:-------------------+:----------+:-------------+:----------------+:-----+
+| `bit<W>`       | allowed   | error   |  allowed | allowed |
+| `int<W>`       | allowed   | error   |  allowed | allowed |
+| `varbit<W>`    | allowed   | error   |  allowed | allowed |
+| `int`          | error     | error   |  error   | allowed |
+| `void`         | error     | error   |  error   | error   |
+| `string`       | error     | error   |  error   | allowed |
+| `error`        | error     | error   |  allowed | allowed |
+| `match_kind`   | error     | error   |  error   | allowed |
+| `bool`         | allowed   | error   |  allowed | allowed |
+| `enum`         | allowed[^enum_header]     | error   |  allowed | allowed |
+| `header`       | error     | allowed |  allowed | allowed |
+| header stack   | error     | error   |  allowed | allowed |
+| `header_union` | error     | error   |  allowed | allowed |
+| `struct`       | allowed[^struct_header]   | error   |  allowed | allowed |
+| `tuple`        | error     | error   |  allowed | allowed |
+| `list`         | error     | error   |  error   | allowed |
+|----------------|-----------|---------|----------|---------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
@@ -3029,7 +3050,6 @@ new type.
 
 ~ Begin P4Grammar
     | optAnnotations TYPE typeRef name
-    | optAnnotations TYPE derivedTypeDeclaration name
 ~ End P4Grammar
 
 ~ Begin P4Example
@@ -3041,6 +3061,10 @@ While similar to `typedef`, the `type` keyword introduces a new type
 which is not a synonym with the original type: values of the
 original type and the newly introduced type cannot be mixed in
 expressions.
+
+Currently the types that can be created by the `type` keyword are
+restricted to one of: `bit<>`, `int<>`, `bool`, or types defined using
+`type` from such types.
 
 One important use of such types is in describing P4 values that need
 to be exchanged with the control plane through communication channels
@@ -4064,6 +4088,32 @@ of the `struct` or `header` type does not need to match the order of
 the values of the structure-valued expression. All of the fields of
 the `struct` or `header` types do need to be initialized though.
 
+## Operations on lists { #sec-list-exprs }
+
+The value of a list is written using curly braces, with each element
+separated by a comma.  The left curly brace is preceded by a
+`(list<T>)` where `T` is the list element type.  Such a value can be
+passed as an argument, e.g. to extern constructor functions.
+
+~ Begin P4Example
+struct pair_t {
+    bit<16> a;
+    bit<32> b;
+}
+
+extern E {
+    E(list<pair_t> data);
+    void run();
+}
+
+control c() {
+    E((list<pair_t>) {{2, 3}, {4, 5}}) e;
+    apply {
+        e.run();
+    }
+}
+~ End P4Example
+
 ## Operations on sets { #sec-set-exprs }
 
 Some P4 expressions denote sets of values (`set<T>`, for some type `T`;
@@ -5000,7 +5050,7 @@ recursively on the type of `e` as described in the following table:
 
 The methods can also be applied to type name expressions `e`:
 
-* if the type of `e` is a type introduced by `newtype`, the result
+* if the type of `e` is a type introduced by `type`, the result
   is the application of the method to the underlying type
 * if `e` is the name of a type (e.g., introduced by a `typedef` declaration),
   where the type given a name is one of the above,
@@ -5802,6 +5852,10 @@ selectCase
     : keysetExpression ':' name ';'
     ;
 ~ End P4Grammar
+
+Each expression in the `expressionList` must have a type of `bit<W>`,
+`int<W>`, `bool`, `enum`, serializable `enum`, or a `tuple` type with
+fields of one of the above types.
 
 In a `select` expression, if the `expressionList` has type `tuple<T>`,
 then each `keysetExpression` must have type `set<tuple<T>>`.  In
@@ -7724,9 +7778,24 @@ This table's local name is `t`.
 #### Keys { #sec-cp-keys }
 
 Syntactically, table keys are expressions.  For simple expressions,
-the local key name can be generated from the expression itself.  In
-the following example, the table `t` has keys with names `data.f1`
-and `hdrs[3].f2`.
+the local key name can be generated from the expression itself; the
+algorithm by which a compiler derives control-plane names for complex
+key expressions is target-dependent.
+
+The spec suggests, but does not mandate, the following algorithm for
+generating names for some kinds of key expressions:
+
+| Kind | Example | Name |
+| ---- | ------- | ---- |
+| The `isValid()` method. | `h.isValid()` | `"h.isValid()"` |
+| Array accesses. | `header_stack[1]` | `"header_stack[1]"` |
+| Constants. | `1` | `"1"` |
+| Field projections. | `data.f1` | `"data.f1"` |
+| Slices. | `f1[3:0]` | `"f1[3:0]"` |
+| Masks. | `h.src & 0xFFFF` | `"h.src & 0xFFFF"` |
+
+In the following example, the previous algorithm would derive for
+table `t` two keys with names `data.f1` and `hdrs[3].f2`.
 
 ~ Begin P4Example
 table t {
@@ -7738,20 +7807,9 @@ table t {
 }
 ~ End P4Example
 
-The following kinds of expressions have local names derived from their
-syntactic names:
-
-| Kind | Example | Name |
-| ---- | ------- | ---- |
-| The `isValid()` method. | `h.isValid()` | `"h.isValid()"` |
-| Array accesses. | `header_stack[1]` | `"header_stack[1]"` |
-| Constants. | `1` | `"1"` |
-| Field projections. | `data.f1` | `"data.f1"` |
-| Slices. | `f1[3:0]` | `"f1[3:0]"` |
-
-All other kinds of expressions **must** be annotated with a `@name`
-annotation (Section [#sec-control-plane-api-annotations]), as in the
-following example.
+If a compiler cannot generate a name for a key it **requires** the key
+expression to be annotated with a `@name` annotation (Section
+[#sec-control-plane-api-annotations]), as in the following example:
 
 ~ Begin P4Example
 table t {
@@ -8441,12 +8499,14 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
-* Added comparison for tuples as a legal operation (Section [#sec-tuple-exprs]).
+* Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
+* Clarified types of expressions that may appear in `select` (Section [#sec-select]).
 * Explicitly disallow overloading of parsers, controls, and packages (Section [#sec-extern-objects]).
 * Clarified implicit casts present in select expressions (Section [#sec-select]).
-* Clarified that slices can be applied to arbitrary-precision integers (Section [#sec-varint-ops]).
+* Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-ops]).
+* Clarified that no direct invocation is possible for objects that have constructor arguments (Section [#sec-direct-type-invocation]).
+* Added comparison for tuples as a legal operation (Section [#sec-tuple-exprs]).
 * Clarified the behavior of `lookahead` on header-typed values (Section [#sec-packet-lookahead]).
-* Clarified that no direct invocation is possible for objects that have constructor arguments ([#sec-direct-type-invocation]).
 * Added `static_assert` function (Section [#sec-static-assert]).
 * Clarified semantics of ranges where the start is bigger than the end (Section [#sec-ranges]).
 * Allow ranges to be specified by serializable enums (Section [#sec-ranges]).
@@ -8456,6 +8516,7 @@ The P4 compiler should provide:
 * compiler-inserted `default_action` is not `const` (Section [#sec-tables]).
 * Clarified the restrictions on run time for tables with `const entries` (Section [#sec-entries]).
 * renamed list expressions to tuple expressions
+* Added `list` type (Section [#sec-list-types]).
 
 ## Summary of changes made in version 1.2.3, released July 11, 2022.
 
@@ -8583,11 +8644,12 @@ are treated as keywords only in specific contexts (e.g., the keyword `actions`).
 | `else`  | `enum`   | `error`     |   `extern`  |
 | `exit`  | `false`   |  `header`   |  `header_union` |
 | `if`    |   `in`   | `inout` | `int`  |
-| `match_kind` | `package` | `parser` | `out` |
-| `return`  | `select` | `state` | `struct`   |
-|  `switch` | `table`   | `this` | `transition` |
-|  `true` |  `tuple` | `type` | `typedef` |
-| `value_set` | `varbit` | `verify` | `void` | |
+| `list`  | `match_kind` | `package` | `parser` |
+| `out`   | `return`  | `select` | `state` |
+| `string` | `struct` | `switch` | `table`   |
+| `this` | `transition` | `true` |  `tuple` |
+| `type` | `typedef` | `value_set` | `varbit` |
+| `verify` | `void` | | |
 |------|------|------|------|
 
 # Appendix: P4 reserved annotations { #sec-p4-reserved-annotations }
