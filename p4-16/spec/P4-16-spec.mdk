@@ -1226,7 +1226,10 @@ can be used as identifiers if the context makes it unambiguous.
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:nonTypeName]
 
-[INCLUDE=grammar.mdk:name]
+name
+    : nonTypeName
+    | TYPE_IDENTIFIER
+    ;
 ~ End P4Grammar
 
 ### Comments { #sec-comments }
@@ -1419,7 +1422,12 @@ following expressions are legal l-values:
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:prefixedNonTypeName]
 
-[INCLUDE=grammar.mdk:lvalue]
+lvalue
+    : prefixedNonTypeName
+    | lvalue "." member
+    | lvalue "[" expression "]"
+    | lvalue "[" expression ":" expression "]"
+    ;
 ~ End P4Grammar
 
 - Identifiers of a base or derived type.
@@ -1621,27 +1629,13 @@ There are additional benefits of using copy-in copy-out semantics:
   never alias to each other within the function body.
 
 ~ Begin P4Grammar
-parameterList
-    : /* empty */
-    | nonEmptyParameterList
-    ;
+[INCLUDE=grammar.mdk:parameterList]
 
-nonEmptyParameterList
-    : parameter
-    | nonEmptyParameterList ',' parameter
-    ;
+[INCLUDE=grammar.mdk:nonEmptyParameterList]
 
-parameter
-    : optAnnotations direction typeRef name
-    | optAnnotations direction typeRef name '=' expression
-    ;
+[INCLUDE=grammar.mdk:parameter]
 
-direction
-    : IN
-    | OUT
-    | INOUT
-    | /* empty */
-    ;
+[INCLUDE=grammar.mdk:direction]
 ~ End P4Grammar
 
 Following is a summary of the constraints imposed by the parameter
@@ -1792,20 +1786,7 @@ P4 supports the following built-in base types:
 - Bit-strings of dynamically-computed width with a fixed maximum width `varbit<>`
 
 ~ Begin P4Grammar
-baseType
-    : BOOL
-    | ERROR
-    | MATCH_KIND
-    | BIT
-    | INT
-    | STRING
-    | BIT '<' INTEGER '>'
-    | INT '<' INTEGER '>'
-    | VARBIT '<' INTEGER '>'
-    | BIT '<' '(' expression ')' '>'
-    | INT '<' '(' expression ')' '>'
-    | VARBIT '<' '(' expression ')' '>'
-    ;
+[INCLUDE=grammar.mdk:baseType]
 ~ End P4Grammar
 
 ### The void type
@@ -1821,9 +1802,7 @@ errors. It is written as `error`. New constants of the error type
 are defined with the syntax:
 
 ~ Begin P4Grammar
-errorDeclaration
-    : ERROR '{' identifierList '}'
-    ;
+[INCLUDE=grammar.mdk:errorDeclaration]
 ~ End P4Grammar
 
 All `error` constants are inserted into the `error`
@@ -1855,9 +1834,7 @@ It is an error to declare the same `match_kind`
 identifier multiple times.
 
 ~ Begin P4Grammar
-matchKindDeclaration
-    : MATCH_KIND '{' identifierList '}'
-    ;
+[INCLUDE=grammar.mdk:matchKindDeclaration]
 ~ End P4Grammar
 
 The P4 core library contains the following match_kind declaration:
@@ -2118,43 +2095,17 @@ with type "set", but she can write an expression whose value evaluates
 to a `set` type. These types are used during type-checking.
 
 ~ Begin P4Grammar
-typeDeclaration
-    : derivedTypeDeclaration
-    | typedefDeclaration
-    | parserTypeDeclaration ';'
-    | controlTypeDeclaration ';'
-    | packageTypeDeclaration ';'
-    ;
+[INCLUDE=grammar.mdk:typeDeclaration]
 
-derivedTypeDeclaration
-    : headerTypeDeclaration
-    | headerUnionDeclaration
-    | structTypeDeclaration
-    | enumDeclaration
-    ;
+[INCLUDE=grammar.mdk:derivedTypeDeclaration]
 
-typeRef
-    : baseType
-    | typeName
-    | specializedType
-    | headerStackType
-    | p4listType
-    | tupleType
-    ;
+[INCLUDE=grammar.mdk:typeRef]
 
-namedType
-    : typeName
-    | specializedType
-    ;
+[INCLUDE=grammar.mdk:namedType]
 
-prefixedType
-    : TYPE_IDENTIFIER
-    | dotPrefix TYPE_IDENTIFIER
-    ;
+[INCLUDE=grammar.mdk:prefixedType]
 
-typeName
-    : prefixedType
-    ;
+[INCLUDE=grammar.mdk:typeName]
 ~ End P4Grammar
 
 ### Enumeration types { #sec-enum-types }
@@ -2162,24 +2113,13 @@ typeName
 An enumeration type is defined using the following syntax:
 
 ~ Begin P4Grammar
-enumDeclaration
-    : optAnnotations ENUM name '{' identifierList '}'
-    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
-    ;
+[INCLUDE=grammar.mdk:enumDeclaration]
 
-identifierList
-    : name
-    | identifierList ',' name
-    ;
+[INCLUDE=grammar.mdk:identifierList]
 
-specifiedIdentifierList
-    : specifiedIdentifier
-    | specifiedIdentifierList ',' specifiedIdentifier
-    ;
+[INCLUDE=grammar.mdk:specifiedIdentifierList]
 
-specifiedIdentifier
-    : name '=' initializer
-    ;
+[INCLUDE=grammar.mdk:specifiedIdentifier]
 ~ End P4Grammar
 
 For example, the declaration
@@ -2259,18 +2199,11 @@ The declaration of a `header` type is given by the following
 syntax:
 
 ~ Begin P4Grammar
-headerTypeDeclaration
-    : optAnnotations HEADER name optTypeParameters '{' structFieldList '}'
-    ;
+[INCLUDE=grammar.mdk:headerTypeDeclaration]
 
-structFieldList
-    : /* empty */
-    | structFieldList structField
-    ;
+[INCLUDE=grammar.mdk:structFieldList]
 
-structField
-    : optAnnotations typeRef name ';'
-    ;
+[INCLUDE=grammar.mdk:structField]
 ~ End P4Grammar
 
 where each `typeRef` is restricted to a bit-string type (fixed or
@@ -2398,10 +2331,7 @@ A header stack represents an array of headers. A header stack type is
 defined as:
 
 ~ Begin P4Grammar
-headerStackType
-    : typeName '[' expression ']'
-    : specializedType '[' expression ']'
-    ;
+[INCLUDE=grammar.mdk:headerStackType]
 ~ End P4Grammar
 
 where `typeName` is the name of a header type. For a header stack `hs[n]`,
@@ -2436,9 +2366,7 @@ alternative will be present, allowing them to conserve storage resources.
 A header union is defined as:
 
 ~ Begin P4Grammar
-headerUnionDeclaration
-    : optAnnotations HEADER_UNION name optTypeParameters '{' structFieldList '}'
-    ;
+[INCLUDE=grammar.mdk:headerUnionDeclaration]
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
@@ -2462,9 +2390,7 @@ A header union is not considered a type with fixed length.
 P4 `struct` types are defined with the following syntax:
 
 ~ Begin P4Grammar
-structTypeDeclaration
-    : optAnnotations STRUCT name optTypeParameters '{' structFieldList '}'
-    ;
+[INCLUDE=grammar.mdk:structTypeDeclaration]
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
@@ -2492,9 +2418,7 @@ tuple<T1,/* more fields omitted */,Tn>
 ~ End P4Example
 
 ~ Begin P4Grammar
-tupleType
-    : TUPLE '<' typeArgumentList '>'
-    ;
+[INCLUDE=grammar.mdk:tupleType]
 ~ End P4Grammar
 
 Operations that manipulate tuple types are described in Section
@@ -2513,9 +2437,7 @@ list<T>
 ~ End P4Example
 
 ~ Begin P4Grammar
-p4listType
-    : LIST '<' typeArg '>'
-    ;
+[INCLUDE=grammar.mdk:p4listType]
 ~ End P4Grammar
 
 Operations that manipulate list types are described in Section
@@ -2656,10 +2578,7 @@ These declarations describe two objects:
 P4 supports extern object declarations and extern function declarations using the following syntax.
 
 ~ Begin P4Grammar
-externDeclaration
-    : optAnnotations EXTERN nonTypeName optTypeParameters '{' methodPrototypes '}'
-    | optAnnotations EXTERN functionPrototype ';'
-    ;
+[INCLUDE=grammar.mdk:externDeclaration]
 ~ End P4Grammar
 
 #### Extern functions
@@ -2669,9 +2588,7 @@ An extern function declaration describes the name and type signature of the func
 but not its implementation.
 
 ~ Begin P4Grammar
-functionPrototype
-    : typeOrVoid name optTypeParameters '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:functionPrototype]
 ~ End P4Grammar
 
 For an example of an `extern` function declaration, see Section
@@ -2689,10 +2606,7 @@ only appear as allowed by the architecture model and may be specific
 to a target.
 
 ~ Begin P4Grammar
-methodPrototypes
-    : /* empty */
-    | methodPrototypes methodPrototype
-    ;
+[INCLUDE=grammar.mdk:methodPrototypes]
 
 methodPrototype
     : optAnnotations functionPrototype ';'
@@ -2700,25 +2614,13 @@ methodPrototype
     | optAnnotations ABSTRACT functionPrototype ";"
     ;
 
-typeOrVoid
-    : typeRef
-    | VOID
-    | IDENTIFIER     // may be a type variable
-    ;
+[INCLUDE=grammar.mdk:typeOrVoid]
 
-optTypeParameters
-    : /* empty */
-    | typeParameters
-    ;
+[INCLUDE=grammar.mdk:optTypeParameters]
 
-typeParameters
-    : '<' typeParameterList '>'
-    ;
+[INCLUDE=grammar.mdk:typeParameters]
 
-typeParameterList
-    : name
-    | typeParameterList ',' name
-    ;
+[INCLUDE=grammar.mdk:typeParameterList]
 ~ End P4Grammar
 
 For example, the P4 core library introduces two extern objects `packet_in`
@@ -2791,9 +2693,7 @@ specialization is not necessary. When a type is specialized all its
 type variables must be bound.
 
 ~ Begin P4Grammar
-specializedType
-    : prefixedType '<' typeArgumentList '>'
-    ;
+[INCLUDE=grammar.mdk:specializedType]
 ~ End P4Grammar
 
 For example, the following extern declaration describes a generic
@@ -2879,10 +2779,7 @@ parser should have at least one argument of type `packet_in`,
 representing the received packet that is processed.
 
 ~ Begin P4Grammar
-parserTypeDeclaration
-    : optAnnotations PARSER name optTypeParameters
-     '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:parserTypeDeclaration]
 ~ End P4Grammar
 
 For example, the following is a type declaration of a parser type
@@ -2904,10 +2801,7 @@ parser P<H>(packet_in b,
 A control type declaration describes the signature of a control block.
 
 ~ Begin P4Grammar
-controlTypeDeclaration
-    : optAnnotations CONTROL name optTypeParameters
-      '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:controlTypeDeclaration]
 ~ End P4Grammar
 
 Control type declarations are similar to parser type
@@ -2918,10 +2812,7 @@ declarations.
 A package type describes the signature of a package.
 
 ~ Begin P4Grammar
-packageTypeDeclaration
-    : optAnnotations PACKAGE name optTypeParameters
-      '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:packageTypeDeclaration]
 ~ End P4Grammar
 
 All parameters of a package are evaluated at compilation time, and in
@@ -3098,43 +2989,21 @@ expression
     | '(' typeRef ')' expression
     ;
 
-expressionList
-    : /* empty */
-    | expression
-    | expressionList ',' expression
-    ;
+[INCLUDE=grammar.mdk:expressionList]
 
-member
-    : name
-    ;
+[INCLUDE=grammar.mdk:member]
 
-argumentList
-    : /* empty */
-    | nonEmptyArgList
-    ;
+[INCLUDE=grammar.mdk:argumentList]
 
-nonEmptyArgList
-    : argument
-    | nonEmptyArgList ',' argument
-    ;
+[INCLUDE=grammar.mdk:nonEmptyArgList]
 
 argument
     : expression
     ;
 
-typeArg
-    : DONTCARE
-    | typeRef
-    | nonTypeName
-    | VOID
-    ;
+[INCLUDE=grammar.mdk:typeArg]
 
-typeArgumentList
-    : /* empty */
-    | typeArg
-    | typeArgumentList ',' typeArg
-    ;
-
+[INCLUDE=grammar.mdk:typeArgumentList]
 ~ End P4Grammar
 
 See Appendix [#sec-grammar] for the complete P4 grammar.
@@ -3936,11 +3805,7 @@ separated by a comma:
 expression ...
     | '{' expressionList '}'
 
-expressionList
-    : /* empty */
-    | expression
-    | expressionList ',' expression
-    ;
+[INCLUDE=grammar.mdk:expressionList]
 ~ End P4Grammar
 
 The type of a tuple expression is a tuple type (Section
@@ -4011,14 +3876,9 @@ expression ...
     | '(' typeRef ')' expression
     ;
 
-kvList
-    : kvPair
-    | kvList "," kvPair
-    ;
+[INCLUDE=grammar.mdk:kvList]
 
-kvPair
-    : name "=" expression
-    ;
+[INCLUDE=grammar.mdk:kvPair]
 ~ End P4Grammar
 
 For a structure-valued expression `typeRef` is the name of a `struct`
@@ -4097,35 +3957,15 @@ and the `select` expression tests whether `expression` belongs to
 the sets used as labels.
 
 ~ Begin P4Grammar
-keysetExpression
-    : tupleKeysetExpression
-    | simpleKeysetExpression
-    ;
+[INCLUDE=grammar.mdk:keysetExpression]
 
-tupleKeysetExpression
-    : "(" simpleKeysetExpression "," simpleExpressionList ")"
-    | "(" reducedSimpleKeysetExpression ")"
-    ;
+[INCLUDE=grammar.mdk:tupleKeysetExpression]
 
-simpleExpressionList
-    : simpleKeysetExpression
-    | simpleExpressionList ',' simpleKeysetExpression
-    ;
+[INCLUDE=grammar.mdk:simpleExpressionList]
 
-reducedSimpleKeysetExpression
-    : expression "&&&" expression
-    | expression ".." expression
-    | DEFAULT
-    | "_"
-    ;
+[INCLUDE=grammar.mdk:reducedSimpleKeysetExpression]
 
-simpleKeysetExpression
-    : expression
-    | DEFAULT
-    | DONTCARE
-    | expression MASK expression
-    | expression RANGE expression
-    ;
+[INCLUDE=grammar.mdk:simpleKeysetExpression]
 ~ End P4Grammar
 
 The mask (`&&&`) and range (`..`) operators have the same
@@ -4642,33 +4482,15 @@ expression
     | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
 
-argumentList
-    : /* empty */
-    | nonEmptyArgList
-    ;
+[INCLUDE=grammar.mdk:argumentList]
 
-nonEmptyArgList
-    : argument
-    | nonEmptyArgList ',' argument
-    ;
+[INCLUDE=grammar.mdk:nonEmptyArgList]
 
-argument
-    : expression  /* positional argument */
-    | name '=' expression  /* named argument */
-    | DONTCARE
-    | name '=' DONTCARE
-    ;
+[INCLUDE=grammar.mdk:argument]
 
-realTypeArgumentList
-    : realTypeArg
-    | realTypeArgumentList ',' typeArg
-    ;
+[INCLUDE=grammar.mdk:realTypeArgumentList]
 
-realTypeArg
-    : DONTCARE
-    | typeRef
-    | VOID
-    ;
+[INCLUDE=grammar.mdk:realTypeArg]
 ~ End P4Grammar
 
 A function call or method invocation can optionally specify for each
@@ -5034,13 +4856,9 @@ P4 functions are modeled after functions as found in most other programming lang
 but the language does not permit recursive functions.
 
 ~ Begin P4Grammar
-functionDeclaration
-    : functionPrototype blockStatement
-    ;
+[INCLUDE=grammar.mdk:functionDeclaration]
 
-functionPrototype
-    : typeOrVoid name optTypeParameters '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:functionPrototype]
 ~ End P4Grammar
 
 Here is an example of a function that returns the maximum of two 32-bit values:
@@ -5063,13 +4881,9 @@ of the suitable type on all possible execution paths.
 Constant values are defined with the syntax:
 
 ~ Begin P4Grammar
-constantDeclaration
-    : optAnnotations CONST typeRef name '=' initializer ';'
-    ;
+[INCLUDE=grammar.mdk:constantDeclaration]
 
-initializer
-    : expression
-    ;
+[INCLUDE=grammar.mdk:initializer]
 ~ End P4Grammar
 
 Such a declaration introduces a constant whose value has the specified type. The
@@ -5092,15 +4906,9 @@ Local variables are declared with a type, a name, and an optional
 initializer (as well as an optional annotation):
 
 ~ Begin P4Grammar
-variableDeclaration
-    : annotations typeRef name optInitializer ';'
-    | typeRef name optInitializer ';'
-    ;
+[INCLUDE=grammar.mdk:variableDeclaration]
 
-optInitializer
-    : /* empty */
-    | '=' initializer
-    ;
+[INCLUDE=grammar.mdk:optInitializer]
 ~ End P4Grammar
 
 Variable declarations without an initializer are uninitialized (except for
@@ -5269,11 +5077,7 @@ statement
     | switchStatement
     ;
 
-assignmentOrMethodCallStatement
-    : lvalue '(' argumentList ')' ';'
-    | lvalue '<' typeArgumentList '>' '(' argumentList ')' ';'
-    | lvalue '='  expression ';'
-    ;
+[INCLUDE=grammar.mdk:assignmentOrMethodCallStatement]
 ~ End P4Grammar
 
 In addition, parsers support a `transition` statement (Section
@@ -5293,9 +5097,7 @@ not defined for `extern` values.
 The empty statement, written `;` is a no-op.
 
 ~ Begin P4Grammar
-emptyStatement
-    : ';'
-    ;
+[INCLUDE=grammar.mdk:emptyStatement]
 ~ End P4Grammar
 
 ## Block statement { #sec-block-stmt }
@@ -5306,20 +5108,11 @@ sequentially. The variables and constants within a
 block statement are only visible within the block.
 
 ~ Begin P4Grammar
-blockStatement
-    : optAnnotations '{' statOrDeclList '}'
-    ;
+[INCLUDE=grammar.mdk:blockStatement]
 
-statOrDeclList
-    : /* empty */
-    | statOrDeclList statementOrDeclaration
-    ;
+[INCLUDE=grammar.mdk:statOrDeclList]
 
-statementOrDeclaration
-    : variableDeclaration
-    | constantDeclaration
-    | statement
-    ;
+[INCLUDE=grammar.mdk:statementOrDeclaration]
 ~ End P4Grammar
 
 ## Return statement { #sec-return-stmt }
@@ -5335,10 +5128,7 @@ still performed after the execution of the `return` statement.  See
 Section [#sec-calling-convention] for details on copy-out behavior.
 
 ~ Begin P4Grammar
-returnStatement
-    : RETURN ';'
-    | RETURN expression ';'
-    ;
+[INCLUDE=grammar.mdk:returnStatement]
 ~ End P4Grammar
 
 ## Exit statement { #sec-exit-stmt }
@@ -5355,9 +5145,7 @@ performed after the execution of the `exit` statement.  See Section
 [#sec-calling-convention] for details on copy-out behavior.
 
 ~ Begin P4Grammar
-exitStatement
-    : EXIT ';'
-    ;
+[INCLUDE=grammar.mdk:exitStatement]
 ~ End P4Grammar
 
 There are some expressions whose evaluation might cause an `exit`
@@ -5411,10 +5199,7 @@ However, the condition expression in P4 is required to be a Boolean
 (and not an integer).
 
 ~ Begin P4Grammar
-conditionalStatement
-    : IF '(' expression ')' statement
-    | IF '(' expression ')' statement ELSE statement
-    ;
+[INCLUDE=grammar.mdk:conditionalStatement]
 ~ End P4Grammar
 
 When several `if` statements are nested, the `else` applies to the
@@ -5425,69 +5210,15 @@ innermost `if` statement that does not have an `else` statement.
 The `switch` statement can only be used within `control` blocks.
 
 ~ Begin P4Grammar
-switchStatement
-    : SWITCH '(' expression ')' '{' switchCases '}'
-    ;
+[INCLUDE=grammar.mdk:switchStatement]
 
-switchCases
-    : /* empty */
-    | switchCases switchCase
-    ;
+[INCLUDE=grammar.mdk:switchCases]
 
-switchCase
-    : switchLabel ':' blockStatement
-    | switchLabel ':'  // fall-through
-    ;
+[INCLUDE=grammar.mdk:switchCase]
 
-switchLabel
-    : DEFAULT
-    | nonBraceExpression
-    ;
+[INCLUDE=grammar.mdk:switchLabel]
 
-nonBraceExpression
-    : INTEGER
-    | TRUE
-    | FALSE
-    | STRING_LITERAL
-    | nonTypeName
-    | dotPrefix nonTypeName
-    | nonBraceExpression '[' expression ']'
-    | nonBraceExpression '[' expression ':' expression ']'
-    | '(' expression ')'
-    | '!' expression %prec PREFIX
-    | '~' expression %prec PREFIX
-    | '-' expression %prec PREFIX
-    | '+' expression %prec PREFIX
-    | typeName '.' member
-    | ERROR '.' member
-    | nonBraceExpression '.' member
-    | nonBraceExpression '*' expression
-    | nonBraceExpression '/' expression
-    | nonBraceExpression '%' expression
-    | nonBraceExpression '+' expression
-    | nonBraceExpression '-' expression
-    | nonBraceExpression '|+|' expression
-    | nonBraceExpression '|-|' expression
-    | nonBraceExpression '<<' expression
-    | nonBraceExpression '>>' expression
-    | nonBraceExpression '<=' expression
-    | nonBraceExpression '>=' expression
-    | nonBraceExpression '<' expression
-    | nonBraceExpression '>' expression
-    | nonBraceExpression '!=' expression
-    | nonBraceExpression '==' expression
-    | nonBraceExpression '&' expression
-    | nonBraceExpression '^' expression
-    | nonBraceExpression '|' expression
-    | nonBraceExpression '++' expression
-    | nonBraceExpression '&&' expression
-    | nonBraceExpression '||' expression
-    | nonBraceExpression '?' expression ':' expression
-    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
-    | nonBraceExpression '(' argumentList ')'
-    | namedType '(' argumentList ')'
-    | '(' typeRef ')' expression
-    ;
+[INCLUDE=grammar.mdk:nonBraceExpression]
 ~ End P4Grammar
 
 The `nonBraceExpression` is the same as `expression` as defined in
@@ -5610,25 +5341,13 @@ optional list of constructor parameters, local elements, and parser
 states (as well as optional annotations).
 
 ~ Begin P4Grammar
-parserTypeDeclaration
-    : optAnnotations PARSER name optTypeParameters
-     '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:parserTypeDeclaration]
 
-parserDeclaration
-    : parserTypeDeclaration optConstructorParameters
-      '{' parserLocalElements parserStates '}'
-    ;
+[INCLUDE=grammar.mdk:parserDeclaration]
 
-parserLocalElements
-    : /* empty */
-    | parserLocalElements parserLocalElement
-    ;
+[INCLUDE=grammar.mdk:parserLocalElements]
 
-parserStates
-    : parserState
-    | parserStates parserState
-    ;
+[INCLUDE=grammar.mdk:parserStates]
 ~ End P4Grammar
 
 For a description of `optConstructorParameters`, which are useful for
@@ -5658,12 +5377,7 @@ other `parser`s that may be invoked as subroutines. However, it is illegal to
 instantiate a `control` block within a `parser`.
 
 ~ Begin P4Grammar
-parserLocalElement
-    : constantDeclaration
-    | variableDeclaration
-    | valueSetDeclaration
-    | instantiation
-    ;
+[INCLUDE=grammar.mdk:parserLocalElement]
 ~ End P4Grammar
 
 For an example containing a complete declaration of a parser see
@@ -5701,10 +5415,7 @@ the `reject` state, along with the error recorded.
 
 A parser state is declared with the following syntax:
 ~ Begin P4Grammar
-parserState
-    : optAnnotations STATE name
-     '{' parserStatements transitionStatement '}'
-    ;
+[INCLUDE=grammar.mdk:parserState]
 ~ End P4Grammar
 
 Each state has a name and a body. The body consists of a sequence of
@@ -5722,24 +5433,11 @@ transitions to that state, including:
 The syntax for parser statements is given by the following grammar rules:
 
 ~ Begin P4Grammar
-parserStatements
-    : /* empty */
-    | parserStatements parserStatement
-    ;
+[INCLUDE=grammar.mdk:parserStatements]
 
-parserStatement
-    : assignmentOrMethodCallStatement
-    | directApplication
-    | variableDeclaration
-    | constantDeclaration
-    | parserBlockStatement
-    | emptyStatement
-    | conditionalStatement
-    ;
+[INCLUDE=grammar.mdk:parserStatement]
 
-parserBlockStatement
-    : optAnnotations '{' parserStatements '}'
-    ;
+[INCLUDE=grammar.mdk:parserBlockStatement]
 ~ End P4Grammar
 
 Architectures may place restrictions on the expressions and statements
@@ -5758,15 +5456,9 @@ or `reject`. A `transition` statements is written using the
 following syntax:
 
 ~ Begin P4Grammar
-transitionStatement
-    : /* empty */
-    | TRANSITION stateExpression
-    ;
+[INCLUDE=grammar.mdk:transitionStatement]
 
-stateExpression
-    : name ';'
-    | selectExpression
-    ;
+[INCLUDE=grammar.mdk:stateExpression]
 ~ End P4Grammar
 
 The execution of the transition statement causes `stateExpression`
@@ -5801,18 +5493,11 @@ A `select` expression evaluates to a state. The syntax for a `select`
 expression is as follows:
 
 ~ Begin P4Grammar
-selectExpression
-    : SELECT '(' expressionList ')' '{' selectCaseList '}'
-    ;
+[INCLUDE=grammar.mdk:selectExpression]
 
-selectCaseList
-    : /* empty */
-    | selectCaseList selectCase
-    ;
+[INCLUDE=grammar.mdk:selectCaseList]
 
-selectCase
-    : keysetExpression ':' name ';'
-    ;
+[INCLUDE=grammar.mdk:selectCase]
 ~ End P4Grammar
 
 Each expression in the `expressionList` must have a type of `bit<W>`,
@@ -6350,14 +6035,7 @@ select expression.
 The syntax for declaring value sets is:
 
 ~ Begin P4Grammar
-valueSetDeclaration
-  : optAnnotations
-      VALUESET '<' baseType '>' '(' expression ')' name ';'
-  | optAnnotations
-      VALUESET '<' tupleType '>' '(' expression ')' name ';'
-  | optAnnotations
-      VALUESET '<' typeName '>' '(' expression ')' name ';'
-  ;
+[INCLUDE=grammar.mdk:valueSetDeclaration]
 ~ End P4Grammar
 
 Parser Value Sets support a `size` argument to provide hints to the compiler to
@@ -6396,28 +6074,13 @@ of constants, variables, `action`s, `table`s, and other
 instantiations:
 
 ~ Begin P4Grammar
-controlDeclaration
-    : controlTypeDeclaration optConstructorParameters
-      /* controlTypeDeclaration cannot contain type parameters */
-      '{' controlLocalDeclarations APPLY controlBody '}'
-    ;
+[INCLUDE=grammar.mdk:controlDeclaration]
 
-controlLocalDeclarations
-    : /* empty */
-    | controlLocalDeclarations controlLocalDeclaration
-    ;
+[INCLUDE=grammar.mdk:controlLocalDeclarations]
 
-controlLocalDeclaration
-    : constantDeclaration
-    | variableDeclaration
-    | actionDeclaration
-    | tableDeclaration
-    | instantiation
-    ;
+[INCLUDE=grammar.mdk:controlLocalDeclaration]
 
-controlBody
-    : blockStatement
-    ;
+[INCLUDE=grammar.mdk:controlBody]
 ~ End P4Grammar
 
 It is illegal to instantiate a `parser` within a `control`
@@ -6460,9 +6123,7 @@ behavior of the data plane. Figure [#fig-actions] shows the abstract
 model of an `action`.
 
 ~ Begin P4Grammar
-actionDeclaration
-    : optAnnotations ACTION name '(' parameterList ')' blockStatement
-    ;
+[INCLUDE=grammar.mdk:actionDeclaration]
 ~ End P4Grammar
 
 Syntactically actions resemble functions with no return
@@ -6541,14 +6202,9 @@ needed. Note duplicated properties are invalid and the compiler should
 reject them.
 
 ~ Begin P4Grammar
-tableDeclaration
-    : optAnnotations TABLE name '{' tablePropertyList '}'
-    ;
+[INCLUDE=grammar.mdk:tableDeclaration]
 
-tablePropertyList
-    : tableProperty
-    | tablePropertyList tableProperty
-    ;
+[INCLUDE=grammar.mdk:tablePropertyList]
 
 tableProperty
     : KEY '=' '{' keyElementList '}'
@@ -6558,13 +6214,7 @@ tableProperty
     | optAnnotations nonTableKwName '=' initializer ';'
     ;
 
-nonTableKwName
-   : IDENTIFIER
-   | TYPE_IDENTIFIER
-   | APPLY
-   | STATE
-   | TYPE
-   ;
+[INCLUDE=grammar.mdk:nonTableKwName]
 ~ End P4Grammar
 
 The standard table properties include:
@@ -6603,14 +6253,9 @@ the data to be matched in the table, and `m` is a `match_kind`
 constant that describes the algorithm used to perform the lookup (see Section [#sec-match-kind-type]).
 
 ~ Begin P4Grammar
-keyElementList
-    : /* empty */
-    | keyElementList keyElement
-    ;
+[INCLUDE=grammar.mdk:keyElementList]
 
-keyElement
-    : expression ':' name optAnnotations ';'
-    ;
+[INCLUDE=grammar.mdk:keyElement]
 ~ End P4Grammar
 
 For example, consider the following program fragment:
@@ -6670,15 +6315,9 @@ associated lookup table or in the default action. This is done with
 the `actions` property; the value of this property is always an `actionList`:
 
 ~ Begin P4Grammar
-actionList
-    : /* empty */
-    | actionList optAnnotations actionRef ';'
-    ;
+[INCLUDE=grammar.mdk:actionList]
 
-actionRef
-    : prefixedNonTypeName
-    | prefixedNonTypeName '(' argumentList ')'
-    ;
+[INCLUDE=grammar.mdk:actionRef]
 ~ End P4Grammar
 
 To illustrate, recall the example Very Simple Switch program in
@@ -6800,14 +6439,9 @@ Table entries are defined using the following syntax:
 tableProperty
  : const ENTRIES '=' '{' entriesLlist '}' /* immutable entries */
 
-entriesList
- : /* empty */
- | entriesList entry
- ;
+[INCLUDE=grammar.mdk:entriesList]
 
-entry
- : keysetExpression ':' actionRef optAnnotations ';'
- ;
+[INCLUDE=grammar.mdk:entry]
 ~ End P4Grammar
 
 Table entries defined using `const entries` are immutable---i.e., they
@@ -7169,15 +6803,9 @@ use of constructor parameters.
 Consider again the parser declaration syntax:
 
 ~ Begin P4Grammar
-parserDeclaration
-    : parserTypeDeclaration optConstructorParameters
-      '{' parserLocalElements parserStates '}'
-    ;
+[INCLUDE=grammar.mdk:parserDeclaration]
 
-optConstructorParameters
-    : /* empty */
-    | '(' parameterList ')'
-    ;
+[INCLUDE=grammar.mdk:optConstructorParameters]
 ~ End P4Grammar
 
 From this grammar fragment we infer that a `parser` declaration
@@ -7259,10 +6887,7 @@ control Caller(/* parameters omitted */)(/* parameters omitted */) {
 ~ End P4Example
 
 ~ Begin P4Grammar
-directApplication
-    : typeName "." APPLY "(" argumentList ")" ";"
-    | specializedType "." APPLY "(" argumentList ")" ";"
-    ;
+[INCLUDE=grammar.mdk:directApplication]
 ~ End P4Grammar
 
 This feature is intended to streamline the common case where a type is
@@ -8054,21 +7679,11 @@ have a mandatory body, containing at least a pair of square brackets
 `[]`.
 
 ~ Begin P4Grammar
-optAnnotations
-    : /* empty */
-    | annotations
-    ;
+[INCLUDE=grammar.mdk:optAnnotations]
 
-annotations
-    : annotation
-    | annotations annotation
-    ;
+[INCLUDE=grammar.mdk:annotations]
 
-annotation
-    : '@' name
-    | '@' name '(' annotationBody ')'
-    | '@' name '[' structuredAnnotationBody ']'
-    ;
+[INCLUDE=grammar.mdk:annotation]
 ~ End P4Grammar
 
 Structured annotations and unstructured annotations on any one element must not
@@ -8122,10 +7737,7 @@ produced by the lexer, including keywords, identifiers, string and integer
 literals, and symbols, but excluding parentheses.
 
 ~ Begin P4Grammar
-annotationBody
-    : /* empty */
-    | annotationBody '(' annotationBody ')'
-    | annotationBody annotationToken
+[INCLUDE=grammar.mdk:annotationBody]
 ~ End P4Grammar
 
 Unstructured annotations may impose additional structure on their bodies, and
@@ -8154,26 +7766,13 @@ It is illegal to duplicate a `key` within the `kvList` of a structured
 annotation.
 
 ~ Begin P4Grammar
-structuredAnnotationBody
-    : expressionList
-    | kvList
-    ;
+[INCLUDE=grammar.mdk:structuredAnnotationBody]
 ...
-expressionList
-    : /* empty */
-    | expression
-    | expressionList ',' expression
-    ;
+[INCLUDE=grammar.mdk:expressionList]
 ...
-kvList
-    : kvPair
-    | kvList ',' kvPair
-    ;
+[INCLUDE=grammar.mdk:kvList]
 
-kvPair
-    : name '=' expression
-    ;
-
+[INCLUDE=grammar.mdk:kvPair]
 ~ End P4Grammar
 
 ### Structured Annotation Examples
