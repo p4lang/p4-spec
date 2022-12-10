@@ -1111,11 +1111,7 @@ excerpts from the grammar:
 - `UPPERCASE` symbols denote terminals in the grammar.
 - Excerpts from the grammar are given in BNF notation as follows:
 ~ Begin P4Grammar
-p4program
-    : /* empty */
-    | p4program declaration
-    | p4program ';'
-    ;
+[INCLUDE=grammar.mdk:p4program]
 ~ End P4Grammar
 
 Pseudo-code (mostly used for describing the semantics of
@@ -1228,20 +1224,9 @@ type may vary depending on the context. Certain keywords (e.g., `apply`)
 can be used as identifiers if the context makes it unambiguous.
 
 ~ Begin P4Grammar
-nonTypeName
-    : IDENTIFIER
-    | APPLY
-    | KEY
-    | ACTIONS
-    | STATE
-    | ENTRIES
-    | TYPE
-    ;
+[INCLUDE=grammar.mdk:nonTypeName]
 
-name
-    : nonTypeName
-    | TYPE_IDENTIFIER
-    ;
+[INCLUDE=grammar.mdk:name]
 ~ End P4Grammar
 
 ### Comments { #sec-comments }
@@ -1354,24 +1339,9 @@ In this document we adopt the following conventions:
 A P4 program is a list of declarations:
 
 ~ Begin P4Grammar
-p4program
-    : /* empty */
-    | p4program declaration
-    | p4program ';'  /* empty declaration */
-    ;
+[INCLUDE=grammar.mdk:p4program]
 
-declaration
-    : constantDeclaration
-    | externDeclaration
-    | actionDeclaration
-    | parserDeclaration
-    | typeDeclaration
-    | controlDeclaration
-    | instantiation
-    | errorDeclaration
-    | matchKindDeclaration
-    | functionDeclaration
-    ;
+[INCLUDE=grammar.mdk:declaration]
 ~ End P4Grammar
 
 An empty declarations is indicated with a single semicolon. (Allowing empty
@@ -1447,17 +1417,9 @@ function parameters. An l-value represents a storage reference.  The
 following expressions are legal l-values:
 
 ~ Begin P4Grammar
-prefixedNonTypeName
-    : nonTypeName
-    | dotPrefix nonTypeName
-    ;
+[INCLUDE=grammar.mdk:prefixedNonTypeName]
 
-lvalue
-    : prefixedNonTypeName
-    | lvalue '.' member
-    | lvalue '[' expression ']'
-    | lvalue '[' expression ':' expression ']'
-    ;
+[INCLUDE=grammar.mdk:lvalue]
 ~ End P4Grammar
 
 - Identifiers of a base or derived type.
@@ -9099,13 +9061,6 @@ b - IDENTIFIER
 This grammar has been heavily influenced by limitations of the Bison
 parser generator tool.
 
-Several other constant terminals appear in these rules:
-~ Begin P4Example
-- MASK is &&&
-- RANGE is ..
-- DONTCARE is _
-~ End P4Example
-
 The `STRING_LITERAL` token corresponds to a string literal
 enclosed within double quotes, as described in Section
 [#sec-string-literals].
@@ -9114,4 +9069,6 @@ All other terminals are uppercase spellings of the corresponding
 keywords. For example, `RETURN` is the terminal returned by the
 lexer when parsing the keyword return.
 
-[INCLUDE="grammar.mdk"]
+~ Begin P4Grammar
+[INCLUDE="grammar.trimmed.mdk"]
+~ End P4Grammar

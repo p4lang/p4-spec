@@ -1,10 +1,12 @@
-~ Begin P4Grammar
+// BEGIN:p4program
 p4program
     : /* empty */
     | p4program declaration
     | p4program ";"  /* empty declaration */
     ;
+// END:p4program
 
+// BEGIN:declaration
 declaration
     : constantDeclaration
     | externDeclaration
@@ -17,7 +19,9 @@ declaration
     | matchKindDeclaration
     | functionDeclaration
     ;
+// END:declaration
 
+// BEGIN:nonTypeName
 nonTypeName
     : IDENTIFIER
     | APPLY
@@ -27,12 +31,15 @@ nonTypeName
     | ENTRIES
     | TYPE
     ;
+// END:nonTypeName
 
+// BEGIN:name
 name
     : nonTypeName
     | LIST
     | TYPE_IDENTIFIER
     ;
+// END:name
 
 nonTableKwName
    : IDENTIFIER
@@ -747,11 +754,14 @@ member
     : name
     ;
 
+// BEGIN:prefixedNonTypeName
 prefixedNonTypeName
     : nonTypeName
     | dotPrefix nonTypeName
     ;
+// END:prefixedNonTypeName
 
+// BEGIN:lvalue
 lvalue
     : prefixedNonTypeName
     | THIS
@@ -759,6 +769,7 @@ lvalue
     | lvalue "[" expression "]"
     | lvalue "[" expression ":" expression "]"
     ;
+// END:lvalue
 
 %left ","
 %nonassoc "?"
@@ -872,4 +883,3 @@ nonBraceExpression
     | namedType "(" argumentList ")"
     | "(" typeRef ")" expression
     ;
-~ End P4Grammar
