@@ -2762,6 +2762,26 @@ ingress ports of packets that have not been seen before.
 ~ End P4Example
 
 
+## Error checking extern functions `assert` and `assume` {#sec-assert-assume}
+
+The extern function `assert` is provided for similar reasons as it is
+present in languages like C: to enable developers to check whether
+conditions that they believe should be true, are actually true,
+signaling an error if they are false.
+
+```
+[INCLUDE=psa.p4:assert_extern_function]
+```
+
+The extern function `assume` is similar to `assert`, but some
+development tools may treat it slightly differently than `assert`,
+e.g. formal verification tools, or tools that automatically generate
+test cases.
+
+```
+[INCLUDE=psa.p4:assume_extern_function]
+```
+
 
 # Atomicity of control plane API operations {#sec-atomicity-of-control-plane-api-operations}
 
@@ -3730,7 +3750,8 @@ provided in sub-sections below.
   `psa.p4` (all changes in file `psa.p4`).
 + Replace `@noWarnUnused` with standard `@noWarn("unused")`
   annotations in `psa.p4` (all changes in file `psa.p4`).
-+ Add `assert` and `assume` extern functions (all changes in file `psa.p4`).
++ Add `assert` and `assume` extern functions (section
+  [#sec-assert-assume]).
 
 TODO: The list above is complete up to the following commit.  Any
 later commits should be considered for describing as additional
