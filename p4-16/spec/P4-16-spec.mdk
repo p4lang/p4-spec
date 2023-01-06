@@ -1319,6 +1319,41 @@ Here are 3 examples of string literals:
 line terminator"
 ~ End P4Example
 
+### Optional trailing commas { #sec-trailing-commas }
+
+The P4 grammar allows several kinds of comma-separated lists to end in
+an optional comma.
+
+~Begin P4Grammar
+[INCLUDE=grammar.mdk:optTrailingComma]
+~End P4Grammar
+
+For example, the following declarations are both legal, and
+have the same meaning:
+
+~Begin P4Example
+enum E {
+     a, b, c
+}
+
+enum E {
+     a, b, c,
+}
+~End P4Example
+
+This is particularly useful in combination with preprocessor
+directives:
+
+~Begin P4Example
+enum E {
+#if SUPPORT_A
+    a,
+#endif
+    b,
+    c,
+}
+~End P4Example
+
 ## Naming conventions { #sec-naming-conventions }
 
 P4 provides a rich assortment of types. Base types include bit-strings, numbers, and errors.
@@ -8052,6 +8087,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Added optional trailing commas (Section [# sec-trailing-commas])
 * Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
 * Clarified types of expressions that may appear in `select` (Section [#sec-select]).
 * Explicitly disallow overloading of parsers, controls, and packages (Section [#sec-extern-objects]).
