@@ -6311,7 +6311,7 @@ The expected meaning of these values is as follows:
   contiguous set of 0 bits.  Masks with more 1 bits have automatically
   higher priorities.  A mask with all bits 0 is legal.
 
-Some table entries, in particular the ones with at least one `exact`
+Some table entries, in particular the ones with at least one `ternary`
 field, also require a priority value.  A priority is a numeric value
 which is used to break ties when a particular key belongs to multiple
 sets.  When table entries are specified in the P4 program the
@@ -6322,7 +6322,7 @@ specification does not mandate whether "higher" priorities are
 represented by higher or lower numeric values; this choice is left to
 the target implementation.
 
-An example specifying entries for a table is given in Section [#sec-entries]
+An example specifying entries for a table is given in Section [#sec-entries].
 
 If a table has no `key` property, or if the value of its `key`
 property is the empty tuple, i.e. `key = {}`, then it contains no
@@ -6499,8 +6499,7 @@ define the significance of entry order (if any) for other kinds of
 tables.
 
 Depending on the `match_kind` of the keys, key set expressions may
-define one or multiple entries, as described in Section
-[#sec-table-keys]. The compiler will synthesize the correct number of
+define one or multiple entries. The compiler will synthesize the correct number of
 entries to be installed in the table. Target constraints may further
 restrict the ability of synthesizing entries. For example, if the
 number of synthesized entries exceeds the table size, the compiler
