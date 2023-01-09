@@ -7723,29 +7723,6 @@ expressions, their value can be determined only using information in
 the current scope. We call these _compile-time known values_ and
 _local compile-time known values_ respectively.
 
-The following are compile-time known values:
-
-- Integer literals, Boolean literals, and string literals.
-- Identifiers declared in an `error`, `enum`, or `match_kind` declaration.
-- The `default` identifier.
-- The `size` field of a value with type header stack.
-- The `_` identifier when used as a `select` expression label
-- The expression `{#}` representing an invalid header or header union
-  value.
-- Identifiers that represent declared types, actions, tables, parsers,
-  controls, or packages.
-- Tuple expression where all components are compile-time known values.
-- Structure-valued expressions, where all fields are compile-time
-  known values.
-- Expressions evaluating to a list type, where all elements are
-  compile-time known values.
-- Instances constructed by instance declarations (Section
-  [#sec-instantiations]) and constructor invocations.
-- A legal cast applied to a compile-time known value
-- The following expressions (`+`, `-`, `*`, `/ `, `%`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all compile-time known values.
-- Identifiers declared as constants using the `const` keyword.
-- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()`
-
 The following are local compile-time known values:
 
 - Integer literals, Boolean literals, and string literals.
@@ -7757,13 +7734,20 @@ The following are local compile-time known values:
 - Tuple expression where all components are local compile-time known values.
 - Structure-valued expressions, where all fields are local compile-time known values.
 - Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
-- The following expressions (`+`, `-`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known values.
+- The following expressions (`+`, `-`, `*`, `/ `, `%`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all local compile-time known values.
 - Identifiers declared as constants using the `const` keyword.
 - Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()`
-- Constructor parameters
+
+The following are compile-time known values:
+
+- All local compile-time known values.
+- Tuple expression where all components are compile-time known values.
+- Structure-valued expressions, where all fields are compile-time known values.
+- The following expressions (`+`, `-`, `*`, `/ `, `%`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all compile-time known values.
+- Constructor parameters.
 
 Intuitively, the main difference between _compile-time known values_
-and _local compile-time known values_ is that the latter also contains
+and _local compile-time known values_ is that the former also contains
 constructor parameters. The distinction is important when it comes to
 defining the meaning of features like types. For example, in the type
 `bit<e>`, the expression `e` must be a local compile-time known value
