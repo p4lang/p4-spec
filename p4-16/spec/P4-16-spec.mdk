@@ -5372,9 +5372,25 @@ instantiate a `control` block within a `parser`.
 [INCLUDE=grammar.mdk:parserLocalElement]
 ~ End P4Grammar
 
+The states and local elements are all in the same namespace, thus the
+following example will produce an error:
+
+~ Begin P4Example
+// erroneous example
+parser p() {
+    bit<4> t;
+    state start {
+       t = 1;
+       transition t;
+    }
+    state t {  // error: name t is duplicated
+       transition accept;
+    }
+}
+~ End P4Example
+
 For an example containing a complete declaration of a parser see
 Section [#sec-vss-all].
-
 
 ## The Parser abstract machine { #sec-parser-abstract-machine }
 
