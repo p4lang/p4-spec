@@ -2929,7 +2929,7 @@ package types.
 
 ## Numeric types { #sec-numeric-values }
 
-Many P4 operations are restrained to expressions that evaluate to numeric values. 
+Many P4 operations are restrained to expressions that evaluate to numeric values.
 Such expressions must have one of the following numeric types:
 
   - `int` - an arbitrary-precision integer (section
@@ -4032,7 +4032,7 @@ compile-time (Section [#sec-minsizeinbits]).
 
 ## Operations on sets { #sec-set-exprs }
 
-Some P4 expressions denote sets of values (`set<T>`, for some type `T`; 
+Some P4 expressions denote sets of values (`set<T>`, for some type `T`;
 see Section [#sec-set-types]). These expressions can
 appear only in a few contexts---parsers and table
 entries. For example, the `select` expression (Section
@@ -4093,7 +4093,7 @@ select (hdr.ipv4.version) {
 ### Masks { #sec-cubes }
 
 The infix operator `&&&` takes two arguments of the same numeric type (Section [#sec-numeric-values]),
-and creates a value of the same type. 
+and creates a value of the same type.
 The right value is used as a
 "mask", where each bit set to `0` in the mask indicates a "don't care"
 bit. More formally, the set denoted by `a &&& b` is defined as
@@ -4393,6 +4393,24 @@ Two header stacks can be compared for equality (`==`) or inequality (`!=`)
 only if they have the same element type and the same length.  Two
 stacks are equal if and only if all their corresponding elements are
 equal.  Note that the `nextIndex` value is not used in the equality comparison.
+
+### Header stack expressions { #sec-hs-init }
+
+An expression of the following form evaluates to a header stack: '('
+`typeRef` ')' "{" expressionList "}", where typeRef is a header stack
+type name.  Each expression in the list must evaluate to a header of
+the appropriate type.  The number of headers in the list must equal
+the stack size.
+
+Here is an example:
+
+~ Begin P4Example
+header H<T> {
+    bit<32> b;
+    T t;
+}
+H<bit<32>>[3] s = (H<bit<32>>[3]){ {0, 1}, {2, 3}, (H<bit<32>>){#} };
+~End P4Example
 
 ## Operations on header unions { #sec-expr-hu }
 
@@ -8307,6 +8325,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Added header stack expressions (Section [#sec-hs-init]).
 * Added an invalid header or header union expression `{#}` (Sections [#sec-ops-on-hdrs] and [#sec-expr-hu]).
 * Added a concept of numeric values (Section [#sec-numeric-values]).
 * Added a section on operations on extern objects (Section [#sec-extern-operations]).
