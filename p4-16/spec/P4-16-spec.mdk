@@ -4124,7 +4124,15 @@ are both invalid, or they are both valid and all their corresponding
 fields are equal.
 
 The expression `(H) {#}` represents an invalid header of type `H`,
-where `H` is a header type.  For example:
+where `H` is a header type.
+
+~ Begin P4Grammar
+expression
+    ...
+    | "{#}"
+~ End P4Grammar
+
+For example:
 
 ~ Begin P4Example
 header H { bit<32> x; bit<32> y; }
@@ -4135,9 +4143,8 @@ if (h == (H) {#}) {  // This is equivalent to the condition !h.isValid()
 }
 ~ End P4Example
 
-Note that the `#` character in this expression must not be the first
-non-white space character of a line, since in that situation the line
-will be interpreted by the preprocessor.
+Note that the `#` character cannot be misinterpreted as a preprocessor
+directive, since it cannot be the first character on a line.
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
 for a description of the behavior if header fields are read without
