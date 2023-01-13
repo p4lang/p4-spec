@@ -2416,6 +2416,8 @@ Mpls_h[10] mpls;
 introduce a header stack called `mpls` containing ten entries, each
 of type `Mpls_h`.
 
+Operations on header stacks are described in Section [#sec-expr-hs].
+
 ### Header unions {#sec-header-unions}
 
 A header union represents an alternative containing at most one of several different
@@ -2445,6 +2447,8 @@ header_union IP_h {
 ~ End P4Example
 
 A header union is not considered a type with fixed length.
+
+Operation on header unions are described in Section [#sec-expr-hu].
 
 ### Struct types { #sec-struct-types }
 
@@ -4581,7 +4585,17 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
 Similar to headers, the size of a header union can be determined at
 compile-time (Section [#sec-minsizeinbits]).
 
-Two header unions can be compared for equality (==) or inequality (!=)
+The expression `{#}` represents an invalid header union of some type,
+but it can be any header or header union type.  A P4 compiler may require an
+explicit cast on this expression in cases where it cannot determine
+the particular header or header union type from the context.
+
+~ Begin P4Example
+header_union HU { ... }
+HU h = (HU){#};  // invalid header union; same as an uninitialized header union.
+~ End P4Example
+
+Two header unions can be compared for equality (`==`) or inequality (`!=`)
 if they have the same type.  The unions are equal if and only if all
 their corresponding fields are equal (i.e., either all fields are
 invalid in both unions, or in both unions the same field is valid, and
@@ -7413,6 +7427,8 @@ The following are compile-time known values:
 - The `_` identifier when used as a `select` expression label
 - The expression `{#}` representing an invalid header or header union
   value.
+- The expression `(HU){#}` representing an invalid header union of type HU.
+- The expression `(H){#}` representing an header of type H.
 - Identifiers that represent declared types, actions, tables, parsers,
   controls, or packages.
 - Tuple expression where all components are compile-time known values.
@@ -8274,6 +8290,8 @@ The P4 compiler should provide:
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
 ## Summary of changes made in version 1.2.4
+
+* Added an invalid header or header union expression `{#}` (Sections [#sec-ops-on-hdrs] and [#sec-expr-hu]).
 * Added a concept of numeric values (Section [#sec-numeric-values]).
 * Added a section on operations on extern objects (Section [#sec-extern-operations]).
 * Added note in sections operations on types for types that support compile-time size determination.
