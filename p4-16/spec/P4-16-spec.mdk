@@ -4375,7 +4375,7 @@ void pop_front(int count) {
 Similar to structs and headers, the size of a header stack can be determined at
 compile-time (Section [#sec-minsizeinbits]).
 
-Two header stacks can be compared for equality (==) or inequality (!=)
+Two header stacks can be compared for equality (`==`) or inequality (`!=`)
 only if they have the same element type and the same length.  Two
 stacks are equal if and only if all their corresponding elements are
 equal.  Note that the `nextIndex` value is not used in the equality comparison.
@@ -4428,9 +4428,12 @@ H1 my_h1 = u.h1;     // my_h1 is now valid, but contains an undefined value
 Note that reading an uninitialized header produces an undefined value,
 even if the header is itself valid.
 
-More formally, if `u` is an expression whose type is a header union
-`U` with fields ranged over by `hi`, then the following
-operations can be used to manipulate `u`:
+If `u` is an expression whose type is a header union `U` with fields
+ranged over by `hi`, then the expression `u.hi` evaluates to a header,
+and thus it can be used wherever a header expression is allowed.  If
+`u` is a left-value, then `u.hi` is also a left-value.
+
+The following operations:
 
 - `u.hi.setValid():` sets the valid bit for header `hi` to `true` and
   sets the valid bit for all other headers to `false`, which implies that
@@ -4440,26 +4443,26 @@ operations can be used to manipulate `u`:
   is `true` then sets it to `false`, which implies that it is unspecified
   what value reading any member header of `u` will return.
 
-We can understand an assignment to a union field
+The assignment to a union field:
 
 ~Begin P4Example
-u.hi = e
+u.hi = e;
 ~End P4Example
 
-as equivalent to
+has the following meaning:
+
+- if `e` is valid, then it is equivalent to:
 
 ~Begin P4Example
   u.hi.setValid();
   u.hi = e;
 ~End P4Example
 
-if `e` is valid and
+- if `e` is invalid, then it is equivalent to:
 
 ~Begin P4Example
   u.hi.setInvalid();
 ~End P4Example
-
-otherwise.
 
 Assignments between variables of the same type of header union are
 permitted. The assignment `u1 = u2` copies the full state of header
