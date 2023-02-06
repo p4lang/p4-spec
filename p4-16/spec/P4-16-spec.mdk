@@ -5372,9 +5372,25 @@ instantiate a `control` block within a `parser`.
 [INCLUDE=grammar.mdk:parserLocalElement]
 ~ End P4Grammar
 
+The states and local elements are all in the same namespace, thus the
+following example will produce an error:
+
+~ Begin P4Example
+// erroneous example
+parser p() {
+    bit<4> t;
+    state start {
+       t = 1;
+       transition t;
+    }
+    state t {  // error: name t is duplicated
+       transition accept;
+    }
+}
+~ End P4Example
+
 For an example containing a complete declaration of a parser see
 Section [#sec-vss-all].
-
 
 ## The Parser abstract machine { #sec-parser-abstract-machine }
 
@@ -8084,6 +8100,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified the scope of parser namespaces (Section [#sec-parser-decl]).
 * Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
 * Clarified types of expressions that may appear in `select` (Section [#sec-select]).
 * Added description of semantics of the core.p4 match kinds (Section [#sec-table-keys]).
