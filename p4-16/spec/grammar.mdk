@@ -26,6 +26,7 @@ nonTypeName
     : IDENTIFIER
     | APPLY
     | KEY
+    | ACTION
     | ACTIONS
     | STATE
     | ENTRIES
@@ -877,19 +878,55 @@ actionRef
     ;
 // END:actionRef
 
+// BEGIN:optPriority
+optPriority
+    : /* empty */
+    | PRIORITY "="
+    ;
+// END:optPriority
+
 // BEGIN:optEntryPriority
 optEntryPriority
- : /* empty */
- | PRIORITY '=' INTEGER
- | PRIORITY '=' '(' expression ')'
- ;
+    : /* empty */
+    | optPriority INTEGER ":"
+    | optPriority "(" expression ")" ":"
+    ;
 // END:optEntryPriority
 
 // BEGIN:entry
 entry
-    : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
+    : keysetExpression ":" actionRef optAnnotations ";"
+    | optCONST optEntryPriority "{" entryElementList "}" optAnnotations ";"
     ;
 // END:entry
+
+// BEGIN:entryElementList
+entryElementList
+    : entryElement
+    | entryElementList "," entryElement
+    ;
+// END:entryElementList
+
+// BEGIN:optKey
+optKey
+    : /* empty */
+    | KEY "="
+    ;
+// END:optKey
+
+// BEGIN:optAction
+optAction
+    : /* empty */
+    | ACTION "="
+    ;
+// END:optAction
+
+// BEGIN:entryElement
+entryElement
+    : optKey keysetExpression
+    | optAction actionRef
+    ;
+// END:entryElement
 
 // BEGIN:entriesList
 entriesList
