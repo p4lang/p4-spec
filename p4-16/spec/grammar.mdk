@@ -605,6 +605,13 @@ typeArgumentList
     ;
 // END:typeArgumentList
 
+// BEGIN:optTrailingComma
+optTrailingComma
+    : /* empty */
+    | ","
+    ;
+// END:optTrailingComma
+
 // BEGIN:realTypeArg
 realTypeArg
     : typeRef
@@ -672,8 +679,9 @@ structField
 
 // BEGIN:enumDeclaration
 enumDeclaration
-    : optAnnotations ENUM name "{" identifierList "}"
-    | optAnnotations ENUM typeRef name "{" specifiedIdentifierList "}"
+    : optAnnotations ENUM name "{" identifierList optTrailingComma "}"
+    | optAnnotations ENUM typeRef name "{"
+      specifiedIdentifierList optTrailingComma "}"
     ;
 // END:enumDeclaration
 
@@ -698,7 +706,7 @@ errorDeclaration
 
 // BEGIN:matchKindDeclaration
 matchKindDeclaration
-    : MATCH_KIND "{" identifierList "}"
+    : MATCH_KIND "{" identifierList optTrailingComma "}"
     ;
 // END:matchKindDeclaration
 
@@ -957,8 +965,8 @@ expressionList
 
 // BEGIN:structuredAnnotationBody
 structuredAnnotationBody
-    : expressionList
-    | kvList
+    : expressionList optTrailingComma
+    | kvList optTrailingComma
     ;
 // END:structuredAnnotationBody
 
@@ -1014,8 +1022,8 @@ expression
     | dotPrefix nonTypeName
     | expression "[" expression "]"
     | expression "[" expression ":" expression "]"
-    | "{" expressionList "}"
-    | "{" kvList "}"
+    | "{" expressionList optTrailingComma "}"
+    | "{" kvList optTrailingComma "}"
     | "(" expression ")"
     | "!" expression %prec PREFIX
     | "~" expression %prec PREFIX
