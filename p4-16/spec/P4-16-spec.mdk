@@ -1696,6 +1696,22 @@ directions:
   See Section [#sec-invoke-actions] for further details.
 - Default parameter values are only allowed for 'in' or direction-less parameters;
   these values must evaluate to compile-time constants.
+- If parameters with default values do not appear at the
+  end of the list of parameters, invocations that use
+  the default values must use named arguments, as in the following
+  example:
+
+~ Begin P4Example
+extern void f(in bit a, in bit<3> b = 2, in bit<5> c);
+
+void g()
+{
+  f(a = 1, b = 2, c = 3);  // ok
+  f(a = 1, c = 3);  // ok, equivalent to the previous call, b uses default value
+  f(1, 2, 3);       // ok, equivalent to the previous call
+  // f(1, 3); // illegal, since the parameter b is not the last in the list
+}
+~ End P4Example
 
 ### Optional parameters { #sec-optional-parameters }
 
@@ -8135,6 +8151,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified restrictions for parameters with default values (Section [#sec-calling-convention-justification]).
 * Added optional trailing commas (Section [# sec-trailing-commas])
 * Clarified the scope of parser namespaces (Section [#sec-parser-decl]).
 * Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
