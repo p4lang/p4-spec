@@ -3922,7 +3922,10 @@ struct S {
 S s;
 
 // Compare s with a structure-valued expression
-bool b = s == (S) { a = 1, b = 2 };
+bool b = s == (S) { a = 1, b = 2 }; // implicit cast of int to bit<32>
+                                    // so that the type of a and b here
+                                    // matches the type of a and b in
+                                    // the declaration of S
 ~ End P4Example
 
 Structure-valued expressions can be used in the right-hand side of
@@ -4109,8 +4112,12 @@ struct S {
     bit<32> b;
 }
 const S x = { 10, 20 };             // tuple expression
+                                    // implicit cast of tuple to struct
+                                    // implicit cast of int to bit<32>
 const S x = { a = 10, b = 20 };     // structure-valued expression
+                                    // implicit cast of int to bit<32>
 const S x = (S) { a = 10, b = 20 }; // structure-valued expression
+                                    // implicit cast of int to bit<32>
 ~ End P4Example
 
 See Section [#sec-uninitialized-values-and-writing-invalid-headers]
