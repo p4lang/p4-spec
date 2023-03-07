@@ -2184,6 +2184,9 @@ enum bit<8> FailingExample {
 
 would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
+Note that in order to represent the values of the other fields of
+`FailingExample` as `bit<8>` values the compiler inserts a cast
+of `int` to `bit<8>`.
 
 The `initializer` expression must be a compile-time known value.
 
@@ -3688,24 +3691,44 @@ The following casts are legal in P4:
   sufficiently-large two's complement bit string to avoid information
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
+- `tuple` &rarr; `struct`: converts a tuple with `n` elements to a struct with `n` element. It associates the order of the elements in the list to the order of the elemenets in the struct.
+- `tuple` &rarr; `header`: converts a tuple with `n` elements to a header with `n` element. It associates the order of the elements in the list to the order of the elemenets in the header.
+- `tuple` &rarr; `anonymous header`: converts a tuple with `n` elements to a header with `n` element. It associates the order of the elements in the list to the order of the elemenets in the header. TODO.
 - casts between two types that are introduced by `typedef` and are equivalent to one of the above combinations.
 - casts from a typedef to the original type and vice versa.
 - casts from a type introduced by `type` to the original type and vice versa.
-- casts from an `enum` with an explicit type to its underlying type and vice versa.
+- casts from an `enum` with an underlying type to its underlying type and vice versa.
 - casts between two `enum` with the same underlying type.
+- recursively casting sub-parts of a type.
 
 
 ### Implicit casts { sec-implicit-casts }
 
-To keep the language simple and avoid introducing hidden costs, P4
-only implicitly casts from `int` to fixed-width types and from enums
+An implicit cast is the insertion of an explicit cast to an expression
+in a compiler's pass which raises when the complier tries to unify or infere types.
+Thus, there are no legal implicit casts that are illegal explicit casts. However,
+some legal explicit casts are illegal implicit casts. For example, two `enum`s with
+the same underlying type can be casted to each other explicitly but not implicitly.
+Implicitly casting types occurs
+
+- when unifying the types of expressions applied to an operator such as a binary operator
+- during assignment and initialization such as initializing the enum fields
+- during function call, method or constructor invocations.
+
+For example, P4
+implicitly casts from `int` to fixed-width types and from enums
 with an underlying type to the underlying type. In particular,
 applying a binary operation (except shifts and concatenation) to an expression of type `int` and an
 expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
-type, it can be implicitly cast to its underlying type whenever appropriate,
+type, they can be implicitly cast to their underlying type whenever appropriate,
 including but not limited to in shifts, concatenation, bit slicing indexes,
 header stack indexes as well as other unary and binary operations.
+As another example, when initializing a struct or header, P4 allows the use of a list (see [#sec-tuple-exprs], [#sec-ops-on-structs], [#sec-ops-on-hdrs]).
+
+Note that implicit cast occurs recursively, that is, if the top-level type
+does not require a cast insertion, still its sub-parts might require implicit casts
+(see example in [#sec-structure-expressions] or `FailingExample` in [#sec-enum-types]).
 
 For example, given the following declarations,
 
