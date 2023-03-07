@@ -3135,7 +3135,8 @@ implicit casting from an `enum` to its fixed-width (signed or unsigned) integer 
 bit<8> x = E.e2; // sets x to 1 (E.e2 is implicitly casted to bit<8>)
 
 E  a = E.e2
-bit<8> y = a << 3; // sets y to 8 (a is implicitly casted to bit<8> and then shifted)
+bit<8> y = a << 3; // sets y to 8
+                   //(a is implicitly casted to bit<8> and then shifted)
 ~ End P4Example
 
 Implicit casting from an underlying fixed-width type to an enum is *not* supported.
@@ -3920,7 +3921,7 @@ struct S {
 
 extern void f<T>(in T data);
 
-f((S){ 10, 20 }); // automatically converted to f((S){a = 10, b = 20});
+f((S){ 10, 20 }); // implicit cast of tuple to f((S){a = 10, b = 20});
 ~ End P4Example
 
 Tuple expressions can also be used to initialize variables whose type
