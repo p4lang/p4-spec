@@ -3731,10 +3731,9 @@ The following casts are legal in P4:
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
 - casts between two types that are introduced by `typedef` and are equivalent to one of the above combinations.
-- casts from a typedef to the original type and vice versa.
-- casts from a type introduced by `type` to the original type and vice versa.
-- casts from an `enum` with an explicit type to its underlying type and vice versa.
-- casts between two `enum` with the same underlying type.
+- casts between a typedef to the original type.
+- casts between a type introduced by `type` to the original type.
+- casts between an `enum` with an explicit type to its underlying type
 
 
 ### Implicit casts { sec-implicit-casts }
@@ -3797,7 +3796,6 @@ several ways that the expression could be manually rewritten into a
 legal expression. Note that for some expression there are several
 legal alternatives, which may produce different results! The compiler
 cannot guess the user intent, so P4 requires the user to disambiguate.
-Thus, it cannot insert implicit casts to make the expression legal.
 
 |-----|-----|-----|
 | Expression | Why it is illegal  | Alternatives |
