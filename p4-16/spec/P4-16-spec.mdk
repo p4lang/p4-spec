@@ -2327,14 +2327,14 @@ valid header field names.
 
 ### Header stacks { #sec-header-stacks }
 
-A header stack represents an array of headers. A header stack type is
+A header stack represents an array of headers or header unions. A header stack type is
 defined as:
 
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:headerStackType]
 ~ End P4Grammar
 
-where `typeName` is the name of a header type. For a header stack `hs[n]`,
+where `typeName` is the name of a header or header union type. For a header stack `hs[n]`,
 the term `n` is the maximum defined size, and must be
 a positive integer that is a compile-time known value. Nested header
 stacks are not supported. At runtime a stack contains `n` values
@@ -2450,28 +2450,28 @@ header unions, structs, tuples, and lists.  Note that `int` by itself
 (i.e. not as part of an `int<N>` type expression) means an
 arbitrary-precision integer, without a width specified.
 
-|--------------------|------------------------------------------------||||
-|                    | Container type                                 ||||
-|                    |-----------|--------------|-----------------|------|
-| Element type       | header    | header_union | struct or tuple | list |
-+:-------------------+:----------+:-------------+:----------------+:-----+
-| `bit<W>`       | allowed   | error   |  allowed | allowed |
-| `int<W>`       | allowed   | error   |  allowed | allowed |
-| `varbit<W>`    | allowed   | error   |  allowed | allowed |
-| `int`          | error     | error   |  error   | allowed |
-| `void`         | error     | error   |  error   | error   |
-| `string`       | error     | error   |  error   | allowed |
-| `error`        | error     | error   |  allowed | allowed |
-| `match_kind`   | error     | error   |  error   | allowed |
-| `bool`         | allowed   | error   |  allowed | allowed |
-| `enum`         | allowed[^enum_header]     | error   |  allowed | allowed |
-| `header`       | error     | allowed |  allowed | allowed |
-| header stack   | error     | error   |  allowed | allowed |
-| `header_union` | error     | error   |  allowed | allowed |
-| `struct`       | allowed[^struct_header]   | error   |  allowed | allowed |
-| `tuple`        | error     | error   |  allowed | allowed |
-| `list`         | error     | error   |  error   | allowed |
-|----------------|-----------|---------|----------|---------|
+|--------------------|------------------------------------------------|||||
+|                    | Container type                                 |||||
+|                    |-----------|--------------|-----------------|------|--------------|
+| Element type       | header    | header_union | struct or tuple | list | header stack |
++:-------------------+:----------+:-------------+:----------------+:-----+:-------------+
+| `bit<W>`       | allowed   | error   |  allowed | allowed | error |
+| `int<W>`       | allowed   | error   |  allowed | allowed | error |
+| `varbit<W>`    | allowed   | error   |  allowed | allowed | error |
+| `int`          | error     | error   |  error   | allowed | error |
+| `void`         | error     | error   |  error   | error   | error |
+| `string`       | error     | error   |  error   | allowed | error |
+| `error`        | error     | error   |  allowed | allowed | error |
+| `match_kind`   | error     | error   |  error   | allowed | error |
+| `bool`         | allowed   | error   |  allowed | allowed | error |
+| `enum`         | allowed[^enum_header]     | error   |  allowed | allowed | error |
+| `header`       | error     | allowed |  allowed | allowed | allowed |
+| header stack   | error     | error   |  allowed | allowed | error |
+| `header_union` | error     | error   |  allowed | allowed | allowed |
+| `struct`       | allowed[^struct_header]   | error   |  allowed | allowed | error |
+| `tuple`        | error     | error   |  allowed | allowed | error | 
+| `list`         | error     | error   |  error   | allowed | error |
+|----------------|-----------|---------|----------|---------|-------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
@@ -2497,7 +2497,7 @@ The table below lists all types that may appear as base types in a
 `typedef` or `type` declaration.
 
 
-|------------------|--------------------------------------|
+|------------------|--------------------|-----------------|
 | Base type B      | `typedef B <name>` | `type B <name>` |
 +:-----------------+:-------------------+:----------------+
 | `bit<W>`         | allowed            | allowed         |
@@ -8103,6 +8103,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Clarified that header stacks are arrays of headers and header unions.
 * Clarified the scope of parser namespaces (Section [#sec-parser-decl]).
 * Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
 * Clarified types of expressions that may appear in `select` (Section [#sec-select]).
