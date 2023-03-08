@@ -3661,9 +3661,24 @@ finding this information in a section dedicated to type `varbit`.
 
 ## Casts { #sec-casts }
 
-P4 provides a limited set of casts between types. A cast is written
-`(t) e`, where `t` is a type and `e` is an expression. Casts are only
-permitted on base types and derived types introduced by `typedef`, `type`, and `enum`.
+P4 provides a limited set of casts between types. The syntax of a cast is given by:
+
+~ Begin P4Grammar
+expression ...
+    | '(' typeRef ')' expression
+    ;
+
+~ End P4Grammar
+
+The `typeRef` is a type or a name associated to a type.
+More specifically, it can be
+
+- a base type or a `tuple` type
+- a name that represents an `enum`, `struct`, `header`
+- a name representing a derived type introduced by `typedef` or `type`
+
+P4 provides a limited set of legal casts between types which are
+enumerated in Section [#sec-explicit-cast].
 While this design is arguably more onerous for programmers, it has several benefits:
 
 - It makes user intent unambiguous.
@@ -3673,30 +3688,31 @@ While this design is arguably more onerous for programmers, it has several benef
 - It reduces the number of cases that have to be considered in the P4
   specification. Some targets may not support all casts.
 
-### Explicit casts
+### Explicit casts { #sec-explicit-cast }
 
 The following casts are legal in P4:
 
 - `bit<1>` &harr; `bool`: converts the value `0` to `false`, the value `1` to `true`, and vice versa.
-- `int` &rarr; `bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`)
+- `int` &rarr; `bool`: only if the `int` value is `0` (converted to `false`) or `1` (converted to `true`).
 - `int<W>` &rarr; `bit<W>`: preserves all bits unchanged and reinterprets negative
-  values as positive values
-- `bit<W>` &rarr; `int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values
-- `bit<W>` &rarr; `bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits.
-- `int<W>` &rarr; `int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit.
-- `bit<W>` &rarr; `int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is always non-negative
-- `int<W>` &rarr; `int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative
+  values as positive values. Note that `W` can be an integer or an expression that will evaluate to an integer.
+- `bit<W>` &rarr; `int<W>`: preserves all bits unchanged and reinterprets values whose most-significant bit is `1` as negative values. Note that `W` can be an integer or an expression that will evaluate to an integer.
+- `bit<W>` &rarr; `bit<X>`: truncates the value if `W > X`, and otherwise (i.e., if  `W <= X`) pads the value with zero bits. Note that `W` and `X` can be an integer or an expression that will evaluate to an integer.
+- `int<W>` &rarr; `int<X>`: truncates the value if `W > X`, and otherwise (i.e., if `W < X`) extends it with the sign bit. Note that `W` and `X` can be an integer or an expression that will evaluate to an integer.
+- `bit<W>` &rarr; `int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result is always non-negative. Note that `W` can be an integer or an expression that will evaluate to an integer.
+- `int<W>` &rarr; `int`: preserves the value unchanged but converts it to an unlimited-precision integer; the result may be negative. Note that `W` can be an integer or an expression that will evaluate to an integer.
 - `int` &rarr; `bit<W>`: converts the integer value into a sufficiently
   large two's complement bit string to avoid information loss,
   and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow or on conversion of negative value.
+  Note that `W` can be an integer or an expression that will evaluate to an integer.
 - `int` &rarr; `int<W>`: converts the integer value into a
   sufficiently-large two's complement bit string to avoid information
   loss, and then truncates the result to `W` bits. The compiler should
   emit a warning on overflow.
-- `tuple` &rarr; `struct`: converts a tuple with `n` elements to a struct with `n` element. It associates the order of the elements in the list to the order of the elemenets in the struct.
-- `tuple` &rarr; `header`: converts a tuple with `n` elements to a header with `n` element. It associates the order of the elements in the list to the order of the elemenets in the header.
-- `tuple` &rarr; `anonymous header`: converts a tuple with `n` elements to a header with `n` element. It associates the order of the elements in the list to the order of the elemenets in the header. TODO.
+  Note that `W` can be an integer or an expression that will evaluate to an integer.
+- `tuple` &rarr; `struct`: converts a list with `n` elements to a struct with `n` element. It associates the order of the elements in the list to the order of the elemenets in the struct.
+- `tuple` &rarr; `header`: converts a list with `n` elements to a header with `n` element. It associates the order of the elements in the list to the order of the elemenets in the header.
 - casts between two types that are introduced by `typedef` and are equivalent to one of the above combinations.
 - casts from a typedef to the original type and vice versa.
 - casts from a type introduced by `type` to the original type and vice versa.
@@ -3839,7 +3855,8 @@ expression ...
 
 The type of a tuple expression is a tuple type (Section
 [#sec-tuple-types]). Tuple expressions can be assigned to expressions
-of type `tuple`, `struct` or `header`, and can also be
+of type `tuple` in addition to `struct` or `header` since a tuple type
+can be casted to `struct` or `header`. They can also be
 passed as arguments to methods. Tuples may be nested. However, tuple
 expressions are not l-values.
 
@@ -3868,10 +3885,12 @@ struct S {
     bit<32> b;
 }
 const S x = { 10, 20 }; //a = 10, b = 20
+                        // implicit cast of tuple to struct
 ~ End P4Example
 
-A tuple expression can have an explicit structure or header type
-specified, and then it is converted automatically to a
+A tuple expression can be used to initialize a structure or header type,
+in which case it is implicitly casted to a struct or header and its value is
+converted to a
 structure-valued expression (see [#sec-structure-expressions]):
 
 ~ Begin P4Example
@@ -3882,7 +3901,7 @@ struct S {
 
 extern void f<T>(in T data);
 
-f((S){ 10, 20 }); // automatically converted to f((S){a = 10, b = 20});
+f((S){ 10, 20 }); // {10, 20} is converted to {a = 10, b = 20}
 ~ End P4Example
 
 Tuple expressions can also be used to initialize variables whose type
@@ -4151,7 +4170,10 @@ automatically becomes valid:
 header H { bit<32> x; bit<32> y; }
 H h;
 h = { 10, 12 };  // This also makes the header h valid
+                 // implicit cast of int to bit<32>
+                 // implicit cast of tuple to header
 h = { y = 12, x = 10 };  // Same effect as above
+                         // implicit cast of int to bit<32>
 ~ End P4Example
 
 Two headers can be compared for equality (==) or inequality (!=) only
@@ -5119,6 +5141,11 @@ to a value, and finally copies the value into the l-value. Derived
 types (e.g. `structs`) are copied recursively, and all components
 of `header`s are copied, including "validity" bits. Assignment is
 not defined for `extern` values.
+If the type of the right sub-expression
+does not match the type of the left sub-expression, the right
+sub-expression will be implicitly casted to the type of the left
+sub-expression. If such implicit cast is illegal, then the assignment
+is illegal.
 
 ## Empty statement { #sec-empty-stmt }
 
