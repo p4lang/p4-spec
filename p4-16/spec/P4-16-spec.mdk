@@ -1319,6 +1319,41 @@ Here are 3 examples of string literals:
 line terminator"
 ~ End P4Example
 
+### Optional trailing commas { #sec-trailing-commas }
+
+The P4 grammar allows several kinds of comma-separated lists to end in
+an optional comma.
+
+~Begin P4Grammar
+[INCLUDE=grammar.mdk:optTrailingComma]
+~End P4Grammar
+
+For example, the following declarations are both legal, and
+have the same meaning:
+
+~Begin P4Example
+enum E {
+     a, b, c
+}
+
+enum E {
+     a, b, c,
+}
+~End P4Example
+
+This is particularly useful in combination with preprocessor
+directives:
+
+~Begin P4Example
+enum E {
+#if SUPPORT_A
+    a,
+#endif
+    b,
+    c,
+}
+~End P4Example
+
 ## Naming conventions { #sec-naming-conventions }
 
 P4 provides a rich assortment of types. Base types include bit-strings, numbers, and errors.
@@ -1661,6 +1696,22 @@ directions:
   See Section [#sec-invoke-actions] for further details.
 - Default parameter values are only allowed for 'in' or direction-less parameters;
   these values must evaluate to compile-time constants.
+- If parameters with default values do not appear at the
+  end of the list of parameters, invocations that use
+  the default values must use named arguments, as in the following
+  example:
+
+~ Begin P4Example
+extern void f(in bit a, in bit<3> b = 2, in bit<5> c);
+
+void g()
+{
+  f(a = 1, b = 2, c = 3);  // ok
+  f(a = 1, c = 3);  // ok, equivalent to the previous call, b uses default value
+  f(1, 2, 3);       // ok, equivalent to the previous call
+  // f(1, 3); // illegal, since the parameter b is not the last in the list
+}
+~ End P4Example
 
 ### Optional parameters { #sec-optional-parameters }
 
@@ -8102,6 +8153,8 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.2.4
 
 * Clarified that header stacks are arrays of headers or header unions.
+* Clarified restrictions for parameters with default values (Section [#sec-calling-convention-justification]).
+* Added optional trailing commas (Section [# sec-trailing-commas]).
 * Clarified the scope of parser namespaces (Section [#sec-parser-decl]).
 * Specified that algorithm for generating control-plane names for keys is optional (Section [#sec-cp-keys]).
 * Clarified types of expressions that may appear in `select` (Section [#sec-select]).
@@ -8570,104 +8623,6 @@ In many cases, the restriction will be "from a parser state only" or
 restrictive, e.g. only from a particular kind of control block
 instantiated in a particular role in an architecture.
 
-
-# Appendix: Open Issues
-
-There are a number of open issues that are currently under discussion
-in the P4 design working group. A brief summary of these issues is
-highlighted in this section. We seek input on these issues from the
-community, and encourage experimenting with different implementations
-in the compiler before converging on the specification.
-
-## Generalized switch statement behavior
-
-P4~16~ includes both `switch` statements [#sec-switch-stmt] and `select`
-expressions [#sec-select]. There are real differences in the current
-version of the language -- expression vs. statement, and the latter
-must evaluate to a state value.
-
-We propose generalizing `switch` statements to match the design
-used in most programming language: a multi-way conditional that
-executes the first branch that matches from a list of cases.
-
-~ Begin P4Example
-switch(e1,/* parameters omitted */,en) {
-  pat_1 : stmt1;
-  /* body omitted */
-  pat_m : stmtm;
-}
-~ End P4Example
-
-Here, the value being scrutinized is given by a tuple `(e1,/* parameters omitted */,en)`,
-and the patterns are given by expressions that denote sets of
-values. The value matches a branch if it is an element of the set
-denoted by the pattern. Unlike C and C++, there is no break statement
-so control "falls through" to the next case only when there is no
-statement associated with the case label.
-
-This design is intended to capture the standard semantics of `switch`
-statements as well as a common idiom in P4 parsers where they are used
-to control transitions to different parser states depending on the
-values of one or more previously-parsed values. Using `switch`
-statements, we can also generalize the design for parsers, eliminating
-select and lifting most restrictions on which kinds of statements may
-appear in a state. In particular, we allow conditional statements and `select`
-statements, which may be nested arbitrarily. This language can be
-translated into more restricted versions, where the body of each state
-comprised a sequence of variable declarations, assignments, and method
-invocations followed by a single`transition` statement by
-introducing new states.
-
-We also generalize the design for processing of table hit/miss and
-actions in control blocks, by generating implicit types for actions
-and results.
-
-The counter-argument to this proposal is that the semantics of `select`
-in the parser is sufficiently distinct from the `switch`
-statement, and moreover these are constructs that network programmers
-are already familiar with, and they are typically mapped very
-efficiently onto a variety of targets.
-
-## Undefined behaviors
-
-The presence of undefined behavior has caused numerous problems in
-languages like C and HTML, including bugs and serious security
-vulnerabilities. There are a few places where evaluating a P4 program
-can result in undefined behaviors: out parameters, uninitialized
-variables, accessing header fields of invalid headers, and accessing
-header stacks with an out of bounds index. We think we should make
-every attempt to avoid undefined behaviors in P4~16~, and therefore we
-propose to strengthen the wording in the specification, such that by
-default, we rule out programs that exhibit the behaviors mentioned
-above. Given the concern for performance, we propose to define
-compiler flags and/or pragmas that can override the safe
-behavior. However, our expectation is that programmers should be
-guided toward writing safe programs, and encouraged to think harder
-when excepting from the safe behavior.
-
-## Structured Iteration {#sec-structured-iteration}
-
-Introducing a `foreach` style iterator for operating over header
-stacks will alleviate the need of using C preprocessor directives to
-specify the size of header stacks.
-
-For example:
-~ Begin P4Example
-foreach hdr in hdrs {
-  /// operations over HDR
-}
-~ End P4Example
-
-Since the stacks are always known statically (at compile-time), the
-compiler could transform the `foreach` statement into the
-replicated code with explicit index references at compile-time. This
-has the advantage of allowing the code to be written without regard to
-a parameterized header stack length.
-
-Since the compiler can statically determine the number of operations
-that would result from the `foreach` it can also reject a program
-if the result requires more action resources than are available, or
-can split the action code up to fit available resources as needed.
 
 # Appendix: P4 grammar  { #sec-grammar }
 
