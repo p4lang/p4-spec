@@ -6257,7 +6257,8 @@ reject them.
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | optAnnotations optCONST ENTRIES '=' '{' entriesList '}'
+    | optAnnotations CONST ENTRIES '=' '{' entriesList '}'
+    | optAnnotations INITIAL_ENTRIES '=' '{' initialEntriesList '}'
     | optAnnotations optCONST nonTableKwName '=' initializer ';'
     ;
 
@@ -6275,9 +6276,15 @@ In addition, the tables may optionally define the following properties,
 - `default_action`: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
 - `size`: an integer specifying the desired size of the table.
-- `entries`: entries that are initially added to a table when the P4
-  program is loaded, some or all of which may be unchangeable by the
-  control plane software.
+- `entries`: entries that are initially in a table when the P4 program
+  is loaded, none of which may be changed later by control plane
+  software, nor any added to the table.
+- `initial_entries`: entries that are initially in a table when the P4
+  program is loaded, some of which can be individually declared
+  `const` to be unchangeable by the control plane software, but others
+  are changeable or removable later by control plane software, and new
+  entries may be added.  At most one of `entries` and
+  `initial_entries` properties may be specified for a table.
 - `largest_priority_wins` - Only useful for some tables with the
   `entries` property.  See section [#sec-entries] for details.
 - `priority_delta` - Only useful for some tables with the `entries`
@@ -6519,10 +6526,8 @@ which allows the compiler to infer how the table is actually used and
 potentially make better allocation decisions for targets with limited
 resources.
 
-Declaring entries with `entries` (without the `const` qualifier)
-enables one to specify a mix of some immutable entries that are always
-in the table, and some mutable entries that the control plane is
-allowed to later change or remove.
+See also section [#sec-initial-entries] for the similar
+`initial_entries` table property.
 
 Entries declared in the P4 source are installed in the
 table when the program is loaded onto the target. Entries cannot be
@@ -6532,43 +6537,18 @@ Table entries are defined using the following syntax:
 
 ~ Begin P4Grammar
 tableProperty
- : optAnnotations optCONST ENTRIES '=' '{' entriesList '}'
- ;
+    : optAnnotations CONST ENTRIES '=' '{' entriesList '}'
+    ;
 
 [INCLUDE=grammar.mdk:entriesList]
 
-[INCLUDE=grammar.mdk:optCONST]
-
-[INCLUDE=grammar.mdk:optPriority]
-
-[INCLUDE=grammar.mdk:optEntryPriority]
-
 [INCLUDE=grammar.mdk:entry]
-
-[INCLUDE=grammar.mdk:entryElementList]
-
-[INCLUDE=grammar.mdk:entryElement]
-
-[INCLUDE=grammar.mdk:optKey]
-
-[INCLUDE=grammar.mdk:optAction]
 ~ End P4Grammar
 
 Table entries defined using `const entries` are immutable---i.e., they
 can only be read by the control plane.  The control plane is not
 allowed to remove or modify any entries defined within `const
 entries`, nor is it allowed to add entries to such a table.
-It is allowed for individual entries to have the `const` keyword
-before them, but this is redundant when the entries are declared using
-`const entries`.
-
-Table entries defined using `entries` (without a `const` qualifier
-before it) may have `const` before them, or not, independently for
-each entry.  Entries with `const` before them may not be modified or
-removed by the control plane.  Entries without `const` may be modified
-or removed by the control plane.  It is permitted for the control
-plane to add entries to such a table (subject to table capacity
-limitations), unlike tables declared with `const entries`.
 
 Whether the control plane is allowed to modify a table's default
 action at run time is determined by the table's `default_action` table
@@ -6581,14 +6561,6 @@ provide a field for each key in the table keys (see Sec.
 element of the set. The `actionRef` component must be an action which
 appears in the table actions list (and must not have the
 `@defaultonly` annotation), with all its arguments bound.
-
-If no entry priorities are specified in the source code, and
-if the runtime API requires a priority for the entries of a
-table---e.g. when using the P4 Runtime API, tables with at least one
-`ternary` search key field---then the entries are matched in program
-order, stopping at the first matching entry. Architectures should
-define the significance of entry order (if any) for other kinds of
-tables.
 
 Depending on the `match_kind` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
@@ -6653,6 +6625,60 @@ invokes action `a`. Once the program is loaded, these entries are
 installed in the table in the order they are enumerated in the
 program.
 
+#### Initial Entries { #sec-initial-entries }
+
+Declaring entries with `initial_entries` enables one to specify a mix
+of some immutable entries that are always in the table, and some
+mutable entries that the control plane is allowed to later change or
+remove.
+
+Entries declared in the P4 source are installed in the
+table when the program is loaded onto the target. Entries cannot be
+specified for a table with no key (see Sec. [#sec-table-keys]).
+
+Table entries are defined using the following syntax:
+
+~ Begin P4Grammar
+tableProperty
+    : optAnnotations INITIAL_ENTRIES '=' '{' initialEntriesList '}'
+    ;
+
+[INCLUDE=grammar.mdk:initialEntriesList]
+
+[INCLUDE=grammar.mdk:optCONST]
+
+[INCLUDE=grammar.mdk:optPriority]
+
+[INCLUDE=grammar.mdk:optEntryPriority]
+
+[INCLUDE=grammar.mdk:initialEntry]
+~ End P4Grammar
+
+Table entries defined using `initial_entries` may have `const` before
+them, or not, independently for each entry.  Entries with `const`
+before them may not be modified or removed by the control plane.
+Entries without `const` may be modified or removed by the control
+plane.  It is permitted for the control plane to add entries to such a
+table (subject to table capacity limitations), unlike tables declared
+with `const entries`.
+
+Whether the control plane is allowed to modify a table's default
+action at run time is determined by the table's `default_action` table
+property (see Section [#sec-default-action]), independently of whether
+the control plane is allowed to modify the entries of the table.
+
+The `keysetExpression` and `actionRef` components of an entry must
+follow the same rules that they do within `const entries`.  See
+section [#sec-entries] for details.
+
+If no entry priorities are specified in the source code, and
+if the runtime API requires a priority for the entries of a
+table---e.g. when using the P4 Runtime API, tables with at least one
+`ternary` search key field---then the entries are matched in program
+order, stopping at the first matching entry. Architectures should
+define the significance of entry order (if any) for other kinds of
+tables.
+
 ##### Entry priorities { #sec-entry-priorities }
 
 If a table has fields where their `match_kind`s are all `exact` or
@@ -6712,16 +6738,17 @@ specified for a table, to use as a default difference between the
 priorities of consecutive entries.
 
 There are two steps that occur at compile time for a table with the
-`entries` property involving entry priorities:
+`initial_entries` property involving entry priorities:
 
-- Determine the value of the priority of every entry in the `entries`
-  list.
+- Determine the value of the priority of every entry in the
+  `initial_entries` list.
 - Issue any errors or warnings that are appropriate for these priority
   values.  Warnings may be suppressed via an appropriate `@noWarn`
   annotation.
 
 These steps are performed independently for each table with the
-`entries` property, and each is described in more detail below.
+`initial_entries` property, and each is described in more detail
+below.
 
 In general, if the developer specifies a priority value for an entry,
 that is the value that will be used.
@@ -6730,7 +6757,7 @@ If the developer does not specify priority values for any entry, then
 the compiler calculates priority values for every entry as follows:
 
 ~ Begin P4Pseudo
-// For this pseudocode, table entries in the `entries` list are
+// For this pseudocode, table entries in the `initial_entries` list are
 // numbered 0 through n-1, 0 being the first to appear in order in the
 // source code.  Their priority values are named prio[0] through
 // prio[n-1].
@@ -6789,22 +6816,22 @@ If any priority values are negative, or larger than the maximum
 supported value, that is a compile time error.
 
 If the annotation `@noWarn("duplicate_priorities")` is _not_ used on
-the `entries` table property, then the compiler issues a warning if
-any two entries for the same table have equal priority values.  Both
-P4Runtime and TDI leave it unspecified which entry is the winner if a
-lookup key matches multiple keys that all have the same priority,
-hence a warning is useful to less experienced developers that are
-unfamiliar with this unspecified behavior.
+the `initial_entries` table property, then the compiler issues a
+warning if any two entries for the same table have equal priority
+values.  Both P4Runtime and TDI leave it unspecified which entry is
+the winner if a lookup key matches multiple keys that all have the
+same priority, hence a warning is useful to less experienced
+developers that are unfamiliar with this unspecified behavior.
 
 If the annotation `@noWarn("duplicate_priorities")` is used on the
-`entries` table property, then no warnings of this type are ever
-issued by the compiler.  Using equal priority values for multiple
+`initial_entries` table property, then no warnings of this type are
+ever issued by the compiler.  Using equal priority values for multiple
 entries in the same table is sometimes useful in reducing the number
 of hardware updates required when adding entries to such a table.
 
 If the annotation `@noWarn("entries_out_of_priority_order")` is _not_
-used on the `entries` table property, then the compiler issues a
-warning if:
+used on the `initial_entries` table property, then the compiler issues
+a warning if:
 
 - If `largest_priority_wins` is `true` for the table, and there is any
   pair of consecutive entries where `prio[j] < prio[j+1]`, then a
@@ -6818,10 +6845,10 @@ appear in the source code to match the relative priority of entries in
 the target device.
 
 If the annotation `@noWarn("entries_out_of_priority_order")` is used
-on the `entries` table property, then no warnings of this type are
-ever issued by the compiler for this table.  This option is provided
-for developers who explicitly choose to specify entries in an order
-that does not match their relative priority order.
+on the `initial_entries` table property, then no warnings of this type
+are ever issued by the compiler for this table.  This option is
+provided for developers who explicitly choose to specify entries in an
+order that does not match their relative priority order.
 
 The following example is the same as the first example in section
 [#sec-entries], except for the definition of table `t_exact_ternary`
@@ -6844,7 +6871,7 @@ table t_exact_ternary {
     largest_priority_wins = false;
     priority_delta = 10;
     @noWarn("duplicate_priorities")
-    entries = {
+    initial_entries = {
         const 10: { (0x01, 0x1111 &&& 0xF   ), a_params(1) };
                   { (0x02, 0x1181           ), a_params(2) }; // priority=20
                   { (0x03, 0x1000 &&& 0xF000), a_params(3) }; // priority=30

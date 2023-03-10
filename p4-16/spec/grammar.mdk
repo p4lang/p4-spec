@@ -847,7 +847,8 @@ tablePropertyList
 tableProperty
     : KEY "=" "{" keyElementList "}"
     | ACTIONS "=" "{" actionList "}"
-    | optAnnotations optCONST ENTRIES "=" "{" entriesList "}"
+    | optAnnotations CONST ENTRIES "=" "{" entriesList "}"
+    | optAnnotations INITIAL_ENTRIES "=" "{" initialEntriesList "}"
     | optAnnotations optCONST nonTableKwName "=" initializer ";"
     ;
 
@@ -878,25 +879,9 @@ actionRef
     ;
 // END:actionRef
 
-// BEGIN:optPriority
-optPriority
-    : /* empty */
-    | PRIORITY "="
-    ;
-// END:optPriority
-
-// BEGIN:optEntryPriority
-optEntryPriority
-    : /* empty */
-    | optPriority INTEGER ":"
-    | optPriority "(" expression ")" ":"
-    ;
-// END:optEntryPriority
-
 // BEGIN:entry
 entry
     : keysetExpression ":" actionRef optAnnotations ";"
-    | optCONST optEntryPriority "{" entryElementList "}" optAnnotations ";"
     ;
 // END:entry
 
@@ -934,6 +919,34 @@ entriesList
     | entriesList entry
     ;
 // END:entriesList
+
+// BEGIN:optPriority
+optPriority
+    : /* empty */
+    | PRIORITY "="
+    ;
+// END:optPriority
+
+// BEGIN:optEntryPriority
+optEntryPriority
+    : %empty
+    | optPriority INTEGER ":"
+    | optPriority "(" expression ")" ":"
+    ;
+// END:optEntryPriority
+
+// BEGIN:initialEntry
+initialEntry
+    : optCONST optEntryPriority "{" keysetExpression "," actionRef "}" optAnnotations ";"
+    ;
+// END:initialEntry
+
+// BEGIN:initialEntriesList
+initialEntriesList
+    : /* empty */
+    | initialEntriesList initialEntry
+    ;
+// END:initialEntriesList
 
 /************************* ACTION ********************************/
 
