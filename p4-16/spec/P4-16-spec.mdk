@@ -6257,7 +6257,7 @@ reject them.
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | optAnnotations CONST ENTRIES '=' '{' entriesList '}'
+    | optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     | optAnnotations INITIAL_ENTRIES '=' '{' initialEntriesList '}'
     | optAnnotations optCONST nonTableKwName '=' initializer ';'
     ;
@@ -6286,9 +6286,11 @@ In addition, the tables may optionally define the following properties,
   entries may be added.  At most one of `entries` and
   `initial_entries` properties may be specified for a table.
 - `largest_priority_wins` - Only useful for some tables with the
-  `entries` property.  See section [#sec-entries] for details.
-- `priority_delta` - Only useful for some tables with the `entries`
-  property.  See section [#sec-entries] for details.
+  `initial_entries` property.  See section [#sec-initial-entries] for
+  details.
+- `priority_delta` - Only useful for some tables with the
+  `initial-entries` property.  See section [#sec-initial-entries] for
+  details.
 
 The compiler must set the `default_action` to `NoAction` (and also
 insert it into the list of `actions`) for tables that do not define
@@ -6537,7 +6539,7 @@ Table entries are defined using the following syntax:
 
 ~ Begin P4Grammar
 tableProperty
-    : optAnnotations CONST ENTRIES '=' '{' entriesList '}'
+    : optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
     ;
 
 [INCLUDE=grammar.mdk:entriesList]
@@ -6561,6 +6563,13 @@ provide a field for each key in the table keys (see Sec.
 element of the set. The `actionRef` component must be an action which
 appears in the table actions list (and must not have the
 `@defaultonly` annotation), with all its arguments bound.
+
+If the runtime API requires a priority for the entries of a
+table---e.g. when using the P4Runtime API, tables with at least one
+`ternary` search key field---then the entries are matched in program
+order, stopping at the first matching entry. Architectures should
+define the significance of entry order (if any) for other kinds of
+tables.
 
 Depending on the `match_kind` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
@@ -6670,14 +6679,6 @@ the control plane is allowed to modify the entries of the table.
 The `keysetExpression` and `actionRef` components of an entry must
 follow the same rules that they do within `const entries`.  See
 section [#sec-entries] for details.
-
-If no entry priorities are specified in the source code, and
-if the runtime API requires a priority for the entries of a
-table---e.g. when using the P4 Runtime API, tables with at least one
-`ternary` search key field---then the entries are matched in program
-order, stopping at the first matching entry. Architectures should
-define the significance of entry order (if any) for other kinds of
-tables.
 
 ##### Entry priorities { #sec-entry-priorities }
 
