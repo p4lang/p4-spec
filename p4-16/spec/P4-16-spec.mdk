@@ -1848,7 +1848,7 @@ restricted places in P4 programs.
 
 ### The error type
 
-The error type contains opaque values that can be used to signal
+The error type contains opaque distinct values that can be used to signal
 errors. It is written as `error`. New constants of the error type
 are defined with the syntax:
 
@@ -1876,7 +1876,7 @@ The underlying representation of errors is target-dependent.
 ### The match kind type { #sec-match-kind-type }
 
 The `match_kind` type is very similar to the `error` type and
-is used to declare a set of names that may be
+is used to declare a set of distinct names that may be
 used in a table's key property (described in Section
 [#sec-table-props]).
 All identifiers are inserted into the
@@ -1990,9 +1990,12 @@ arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
 compile-time known value (see Section [#sec-ct-constants]) that is a
 non-negative integer.  When using an expression for
-the size, the expression must be parenthesized.  Bitstrings with width 0 are
+the size, the expression must be parenthesized and compile-time known.
+Bitstrings with width 0 are
 allowed; they have no actual bits, and can only have the value 0.  See
 [#sec-uninitialized-values-and-writing-invalid-headers] for additional details.
+Note that `bit<W>` type refers to both cases of `bit<W>`
+and `bit<(expression)>` where the width is compile-time known.
 
 ~ Begin P4Example
 const bit<32> x = 10;   // 32-bit constant with value 10.
@@ -2022,6 +2025,8 @@ described in Section [#sec-bit-ops].
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to
 a compile-time known value that is a positive integer.
+Note that `int<W>` type refers to both cases of `int<W>`
+and `int<(expression)>` where the width is compile-time known.
 
 Bits within an integer are numbered from `0` to `W-1`. Bit `0`
 is the least significant, and bit `W-1` is the sign bit.
@@ -2040,7 +2045,7 @@ in Section [#sec-int-ops].
 
 A signed integer with width 1 can only have two legal values: 0 and -1.
 
-#### Dynamically-sized bit-strings
+#### Dynamically-sized bit-strings { #sec-dynamically-sized-integers }
 
 Some network protocols use fields whose size is only known at runtime
 (e.g., IPv4 options). To support restricted manipulations of such
@@ -2053,6 +2058,8 @@ known value. For example, the type `varbit<120>` denotes the type
 of bit-string values that may have between 0 and 120 bits. Most
 operations that are applicable to fixed-size bit-strings (unsigned
 numbers) *cannot* be performed on dynamically sized bit-strings.
+Note that `varbit<W>` type refers to both cases of `varbit<W>`
+and `varbit<(expression)>` where the width is compile-time known.
 
 P4 architectures may impose additional constraints on varbit types:
 for example, they may limit the maximum size, or they may require `varbit`
@@ -2182,7 +2189,8 @@ enum Suits { Clubs, Diamonds, Hearths, Spades }
 introduces a new enumeration type, which contains four
 constants---e.g., `Suits.Clubs`. An `enum` declaration
 introduces a new identifier in the current scope for naming the
-created type.  The underlying representation of the `Suits` enum is not
+created type along with its distinct constants.
+The underlying representation of the `Suits` enum is not
 specified, so their "size" in bits is not specified (it is
 target-specific).
 
@@ -2192,8 +2200,8 @@ allowed to have fields with such `enum` types. This requires the programmer prov
 an associated integer value for each symbolic entry in the enumeration.
 The symbol `typeRef` in the grammar above must be one of the following types:
 
-- an unsigned integer, i.e. `bit<W>` for some constant `W`.
-- a signed integer, i.e. `int<W>` for some constant `W`.
+- an unsigned integer, i.e. `bit<W>` for some compile-time known `W`.
+- a signed integer, i.e. `int<W>` for some compile-time known `W`.
 - a type name declared via `typedef`, where the base type of that type is either
 one of the types listed above, or another `typedef` name that meets these conditions.
 For example, the declaration
@@ -2263,6 +2271,7 @@ itself contains other struct fields, nested arbitrarily, as long as all of the
 "leaf" types are `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`. If a
 `bool` is used inside a P4 header, all implementations encode the `bool` as a
 one bit long field, with the value `1` representing `true` and `0` representing `false`.
+Field names have to be distinct.
 
 A header declaration introduces a new identifier in the
 current scope; the type can be referred to using this identifier. A header is
@@ -2423,6 +2432,7 @@ A header union is defined as:
 This declaration introduces a new type with the specified name in the
 current scope. Each element of the list of fields used to declare a
 header union must be of header type. An empty list of fields is legal.
+Field names have to be distinct.
 
 As an example, the type `Ip_h` below represents the union of an IPv4
 and IPv6 headers:
@@ -2445,7 +2455,7 @@ P4 `struct` types are defined with the following syntax:
 ~ End P4Grammar
 
 This declaration introduces a new type with the specified name in the
-current scope. An empty struct (with no fields) is legal. For example, the structure `Parsed_headers`
+current scope. Field names have to be distinct. An empty struct (with no fields) is legal. For example, the structure `Parsed_headers`
 below contains the headers recognized by a simple parser:
 
 ~ Begin P4Example
@@ -4226,9 +4236,9 @@ expressions are legal:
   The `index` is an expression that must be one of the following types:
 
   - `int` - an arbitrary-precision integer (Section [#sec-arbitrary-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where W≥0 (Section [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where W≥1 (Section [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>` where W≥1 (Section [#sec-enum-types]).
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (Section [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1` (Section [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>` (Section [#sec-enum-types]).
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -8153,6 +8163,8 @@ The P4 compiler should provide:
 ## Summary of changes made in version 1.2.4
 
 * Clarified that header stacks are arrays of headers or header unions.
+* Added distinctness of fields for types that have fields including error, match kind, struct, header, and header union.
+* Clarified types `bit<W>`, `int<W>`, and `varbit<W>` encompass the case where the width is a compile-time known expression evaluating to an appropriate integer (Section [#sec-unsigned-integers], Section [#sec-signed-integers], Section [#sec-dynamically-sized-integers]).
 * Clarified restrictions for parameters with default values (Section [#sec-calling-convention-justification]).
 * Added optional trailing commas (Section [# sec-trailing-commas]).
 * Clarified the scope of parser namespaces (Section [#sec-parser-decl]).
