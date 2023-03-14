@@ -3306,6 +3306,10 @@ and representation.  For `enum` values with an underlying type and
 representations, the compiler should use the specified underlying type as the
 serialization data type and representation.
 
+Additionally, the size of a serializable enum can be determined at
+compile-time, however, this cannot be done for an enum without an
+underlying type [#sec-determin].
+
 ## Operations on `match_kind` types { #sec-match-kind-exprs }
 
 Values of type `match_kind` are similar to `enum` values.  They
@@ -3326,6 +3330,9 @@ The following operations are provided on Boolean expressions:
 
 The precedence of these operators is similar to C and uses short-circuited
 evaluation where relevant.
+
+Additionally, the size of a boolean can be determined at
+compile-time [#sec-determin].
 
 P4 does not implicitly cast from bit-strings to Booleans or
 vice versa. As a consequence, a program that is valid in a language like C such as,
@@ -3468,6 +3475,9 @@ Bit-strings also support the following operations:
   left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
 
+Additionally, the size of a bit-string can be determined at
+compile-time [#sec-determin].
+
 ## Operations on fixed-width signed integers { #sec-int-ops }
 
 This section discusses all operations that can be performed on expressions of type `int<W>`
@@ -3564,6 +3574,9 @@ The `int<W>` datatype also support the following operations:
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
   The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
+
+Additionally, the size of a fixed-width signed integer can be determined at
+compile-time [#sec-determin].
 
 ## Operations on arbitrary-precision integers { #sec-varint-ops }
 
@@ -3713,6 +3726,9 @@ finding this information in a section dedicated to type `varbit`.
   contain a field with type `varbit`. Such an `emit` method call
   inserts a variable-sized bit-string with a known dynamic width into
   the packet being constructed.
+
+Additionally, the size of a variable-length bit-string can be determined at
+compile-time [#sec-determin].
 
 ## Casts { #sec-casts }
 
@@ -3998,6 +4014,9 @@ control c() {
 }
 ~ End P4Example
 
+Additionally, the size of a list can be determined at
+compile-time [#sec-determin].
+
 ## Operations on sets { #sec-set-exprs }
 
 Some P4 expressions denote sets of values (`set<T>`, for some type `T`;
@@ -4129,7 +4148,8 @@ assignment have the same type. Finally, `struct`s can be initialized
 with a tuple expression, as discussed in Section [#sec-tuple-exprs], or
 with a structure-valued expression, as described in
 [#sec-structure-expressions].  Both of these cases must initialize all
-fields of the structure.
+fields of the structure. The size of a struct can be determined at
+compile-time [#sec-determin].
 
 Two structs can be compared for equality (==) or inequality (!=) only
 if they have the same type and all of their fields can be recursively
@@ -4179,6 +4199,9 @@ H h;
 h = { 10, 12 };  // This also makes the header h valid
 h = { y = 12, x = 10 };  // Same effect as above
 ~ End P4Example
+
+Furthermore, the size of a header can be determined at
+compile-time [#sec-determin].
 
 Two headers can be compared for equality (==) or inequality (!=) only
 if they have the same type.  Two headers are equal if and only if they
@@ -4319,6 +4342,9 @@ void pop_front(int count) {
     // Note: this.last, this.next, and this.lastIndex adjust with this.nextIndex
 }
 ~ End P4Pseudo
+
+Similar to structs and headers, the size of a header stack can be determined at
+compile-time [#sec-determin].
 
 Two header stacks can be compared for equality (==) or inequality (!=)
 only if they have the same element type and the same length.  Two
@@ -4526,6 +4552,9 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
     }
 }
 ~End P4Example
+
+Similar to headers, the size of a header union can be determined at
+compile-time [#sec-determin].
 
 Two header unions can be compared for equality (==) or inequality (!=)
 if they have the same type.  The unions are equal if and only if all
