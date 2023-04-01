@@ -53,8 +53,8 @@ luximr.ttf
 
 ### Linux
 
-Follow the instruction below by hand, or for an Ubuntu 16.04 or 18.04
-system, you may use the bash script
+Follow the instruction below by hand, or for an Ubuntu
+system with a supported version, you may use the bash script
 [`setup-for-ubuntu-linux.sh`](setup-for-ubuntu-linux.sh) to install
 the necessary packages and fonts for you.
 
