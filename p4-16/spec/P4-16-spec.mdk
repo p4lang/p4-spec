@@ -3961,14 +3961,19 @@ assignments, in comparisons, in field selection expressions, and as
 arguments to functions, method or actions.  Structure-valued
 expressions are not left values.
 
-Structure-valued expressions must provide a value for every member of
-the struct or header type to which it evaluates, either by doing so
-explicitly with a literal expression of the appropriate type, or by
-using the `...` syntax for initializing with default values (see
-Section [#sec-initializing-with-default-values]).  It is a
-compile-time error if not all members have a specified value, or if a
-field name appears more than once in the same structure-valued
-expression.
+Structure-valued expressions that do not have `...` as their last
+element must provide a value for every member of the struct or header
+type to which it evaluates, by mentioning each field name exactly
+once.
+
+Structure-valued expressions that have `...` as their last element are
+allowed to give values to only a subset of the fields of the struct or
+header type to which it evalutes.  Any field names not given a value
+explicitly will be given their default value (see Section
+[#sec-initializing-with-default-values]).
+
+It is a compile-time error if a field name appears more than once in
+the same structure-valued expression.
 
 ## Operations on sets { #sec-set-exprs }
 
