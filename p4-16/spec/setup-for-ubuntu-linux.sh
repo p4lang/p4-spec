@@ -3,7 +3,7 @@
 echo "------------------------------------------------------------"
 echo "Purpose of this script:"
 echo ""
-echo "On an Ubuntu 16.04 or 18.04 Linux system that has not had any"
+echo "On an Ubuntu Linux system that has not had any"
 echo "additional packages installed yet, install a set of packages"
 echo "that are needed to successfully create the HTML and PDF versions"
 echo "of these documents from their Madoko source files (files with"
@@ -23,8 +23,16 @@ echo "------------------------------------------------------------"
 FONT_INSTALL_DIR="${HOME}/.local/share/fonts"
 
 warning() {
-    1>&2 echo "This script has only been tested on Ubuntu 16.04,"
-    1>&2 echo "18.04, and 20.04 so far."
+    1>&2 echo "This software has only been tested on these systems:"
+    1>&2 echo "    Ubuntu 16.04"
+    1>&2 echo "    Ubuntu 18.04"
+    1>&2 echo "    Ubuntu 20.04"
+    1>&2 echo ""
+    1>&2 echo "While the script seems to succeed on an Ubuntu 22.04 system,"
+    1>&2 echo "it has been found that the resulting system gives errors when"
+    1>&2 echo "trying to produce PDF files from several of the P4_16"
+    1>&2 echo "specification documents:"
+    1>&2 echo "https://github.com/p4lang/p4-spec/issues/1115"
 }
 
 lsb_release >& /dev/null
