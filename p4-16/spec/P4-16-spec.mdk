@@ -2530,7 +2530,7 @@ arbitrary-precision integer, without a width specified.
 | header stack   | error     | error   |  allowed | allowed | error |
 | `header_union` | error     | error   |  allowed | allowed | allowed |
 | `struct`       | allowed[^struct_header]   | error   |  allowed | allowed | error |
-| `tuple`        | error     | error   |  allowed | allowed | error | 
+| `tuple`        | error     | error   |  allowed | allowed | error |
 | `list`         | error     | error   |  error   | allowed | error |
 |----------------|-----------|---------|----------|---------|-------|
 
@@ -3854,7 +3854,7 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 | `5 & -3`            | Bitwise operation on int |  `32w5 & -3 ` |
 |-----|-----|-----|
 
-## Operations on tuples expressions { #sec-tuple-exprs }
+## Operations on tuple expressions { #sec-tuple-exprs }
 
 Tuples can be assigned to other tuples with the same type, passed as
 arguments and returned from functions, and can be initialized with
@@ -4656,6 +4656,24 @@ table tbl {
     implementation = ActionProfile(1024);  // constructor invocation
 }
 ~ End P4Example
+
+## Operations on `extern` objects { #sec-extern-operations }
+
+The only operations that can be performed on `extern` objects are the
+following:
+
+- Instantiating an extern object using a constructor invocation, as described in
+  Section [#sec-constructor].
+- Invoking a method of an extern object instance using a method call expression, as
+  described in Section [#sec-invocations].
+
+Controls, parsers, packages, and extern constructors can have
+parameters of type `extern` only if they are directionless parameters.
+Extern object instances can thus be used as arguments in the
+construction of such objects.
+
+No other operations are available on extern objects, e.g., equality
+comparison is not defined.
 
 ## Operations on types introduced by `type` { #sec-newtype-operations }
 
@@ -8195,6 +8213,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Added a section on operations on extern objects (Section [#sec-extern-operations]).
 * Added note in sections operations on types for types that support compile-time size determination.
 * Clarified that header stacks are arrays of headers or header unions.
 * Added distinctness of fields for types that have fields including error, match kind, struct, header, and header union.
