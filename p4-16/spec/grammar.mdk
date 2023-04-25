@@ -1,10 +1,12 @@
-~ Begin P4Grammar
+// BEGIN:p4program
 p4program
     : /* empty */
     | p4program declaration
-    | p4program ';'  /* empty declaration */
+    | p4program ";"  /* empty declaration */
     ;
+// END:p4program
 
+// BEGIN:declaration
 declaration
     : constantDeclaration
     | externDeclaration
@@ -17,7 +19,9 @@ declaration
     | matchKindDeclaration
     | functionDeclaration
     ;
+// END:declaration
 
+// BEGIN:nonTypeName
 nonTypeName
     : IDENTIFIER
     | APPLY
@@ -27,12 +31,17 @@ nonTypeName
     | ENTRIES
     | TYPE
     ;
+// END:nonTypeName
 
+// BEGIN:name
 name
     : nonTypeName
+    | LIST
     | TYPE_IDENTIFIER
     ;
+// END:name
 
+// BEGIN:nonTableKwName
 nonTableKwName
    : IDENTIFIER
    | TYPE_IDENTIFIER
@@ -40,610 +49,46 @@ nonTableKwName
    | STATE
    | TYPE
    ;
+// END:nonTableKwName
 
+optCONST
+    : /* empty */
+    | CONST
+    ;
+
+// BEGIN:optAnnotations
 optAnnotations
     : /* empty */
     | annotations
     ;
+// END:optAnnotations
 
+// BEGIN:annotations
 annotations
     : annotation
     | annotations annotation
     ;
+// END:annotations
 
+// BEGIN:annotation
 annotation
-    : '@' name
-    | '@' name '(' annotationBody ')'
-    | '@' name '[' structuredAnnotationBody ']'
+    : "@" name
+    | "@" name "(" annotationBody ")"
+    | "@" name "[" structuredAnnotationBody "]"
     ;
+// END:annotation
 
-parameterList
-    : /* empty */
-    | nonEmptyParameterList
-    ;
-
-nonEmptyParameterList
-    : parameter
-    | nonEmptyParameterList ',' parameter
-    ;
-
-parameter
-    : optAnnotations direction typeRef name
-    | optAnnotations direction typeRef name '=' expression
-    ;
-
-direction
-    : IN
-    | OUT
-    | INOUT
-    | /* empty */
-    ;
-
-packageTypeDeclaration
-    : optAnnotations PACKAGE name optTypeParameters
-      '(' parameterList ')'
-    ;
-
-instantiation
-    : typeRef '(' argumentList ')' name ';'
-    | annotations typeRef '(' argumentList ')' name ';'
-    | annotations typeRef '(' argumentList ')' name '=' objInitializer ';'
-    | typeRef '(' argumentList ')' name '=' objInitializer ';'
-    ;
-
-objInitializer
-    : '{' objDeclarations '}'
-    ;
-
-objDeclarations
-    : /* empty */
-    | objDeclarations objDeclaration
-    ;
-
-objDeclaration
-    : functionDeclaration
-    | instantiation
-    ;
-
-optConstructorParameters
-    : /* empty */
-    | '(' parameterList ')'
-    ;
-
-dotPrefix
-    : '.'
-    ;
-
-/**************************** PARSER ******************************/
-
-parserDeclaration
-    : parserTypeDeclaration optConstructorParameters
-      /* no type parameters allowed in the parserTypeDeclaration */
-      '{' parserLocalElements parserStates '}'
-    ;
-
-parserLocalElements
-    : /* empty */
-    | parserLocalElements parserLocalElement
-    ;
-
-parserLocalElement
-    : constantDeclaration
-    | variableDeclaration
-    | instantiation
-    | valueSetDeclaration
-    ;
-
-parserTypeDeclaration
-    : optAnnotations PARSER name optTypeParameters '(' parameterList ')'
-    ;
-
-parserStates
-    : parserState
-    | parserStates parserState
-    ;
-
-parserState
-    : optAnnotations STATE name '{' parserStatements transitionStatement '}'
-    ;
-
-parserStatements
-    : /* empty */
-    | parserStatements parserStatement
-    ;
-
-parserStatement
-    : assignmentOrMethodCallStatement
-    | directApplication
-    | parserBlockStatement
-    | constantDeclaration
-    | variableDeclaration
-    | emptyStatement
-    | conditionalStatement
-    ;
-
-parserBlockStatement
-    : optAnnotations '{' parserStatements '}'
-    ;
-
-transitionStatement
-    : /* empty */
-    | TRANSITION stateExpression
-    ;
-
-stateExpression
-    : name ';'
-    | selectExpression
-    ;
-
-selectExpression
-    : SELECT '(' expressionList ')' '{' selectCaseList '}'
-    ;
-
-selectCaseList
-    : /* empty */
-    | selectCaseList selectCase
-    ;
-
-selectCase
-    : keysetExpression ':' name ';'
-    ;
-
-keysetExpression
-    : tupleKeysetExpression
-    | simpleKeysetExpression
-    ;
-
-tupleKeysetExpression
-    : "(" simpleKeysetExpression "," simpleExpressionList ")"
-    | "(" reducedSimpleKeysetExpression ")"
-    ;
-
-simpleExpressionList
-    : simpleKeysetExpression
-    | simpleExpressionList ',' simpleKeysetExpression
-    ;
-
-reducedSimpleKeysetExpression
-    : expression "&&&" expression
-    | expression ".." expression
-    | DEFAULT
-    | "_"
-    ;
-
-simpleKeysetExpression
-    : expression
-    | DEFAULT
-    | DONTCARE
-    | expression MASK expression
-    | expression RANGE expression
-    ;
-
-valueSetDeclaration
-  : optAnnotations
-      VALUESET '<' baseType '>' '(' expression ')' name ';'
-  | optAnnotations
-      VALUESET '<' tupleType '>' '(' expression ')' name ';'
-  | optAnnotations
-      VALUESET '<' typeName '>' '(' expression ')' name ';'
-  ;
-
-/*************************** CONTROL ************************/
-
-controlDeclaration
-    : controlTypeDeclaration optConstructorParameters
-      /* no type parameters allowed in controlTypeDeclaration */
-      '{' controlLocalDeclarations APPLY controlBody '}'
-    ;
-
-controlTypeDeclaration
-    : optAnnotations CONTROL name optTypeParameters
-      '(' parameterList ')'
-    ;
-
-controlLocalDeclarations
-    : /* empty */
-    | controlLocalDeclarations controlLocalDeclaration
-    ;
-
-controlLocalDeclaration
-    : constantDeclaration
-    | actionDeclaration
-    | tableDeclaration
-    | instantiation
-    | variableDeclaration
-    ;
-
-controlBody
-    : blockStatement
-    ;
-
-/*************************** EXTERN *************************/
-
-externDeclaration
-    : optAnnotations EXTERN nonTypeName optTypeParameters '{' methodPrototypes '}'
-    | optAnnotations EXTERN functionPrototype ';'
-    ;
-
-methodPrototypes
-    : /* empty */
-    | methodPrototypes methodPrototype
-    ;
-
-functionPrototype
-    : typeOrVoid name optTypeParameters '(' parameterList ')'
-    ;
-
-methodPrototype
-    : optAnnotations functionPrototype ';'
-    | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';'
-    ;
-
-/************************** TYPES ****************************/
-
-typeRef
-    : baseType
-    | typeName
-    | specializedType
-    | headerStackType
-    | tupleType
-    ;
-
-namedType
-    : typeName
-    | specializedType
-    ;
-
-prefixedType
-    : TYPE_IDENTIFIER
-    | dotPrefix TYPE_IDENTIFIER
-    ;
-
-typeName
-    : prefixedType
-    ;
-
-tupleType
-    : TUPLE '<' typeArgumentList '>'
-    ;
-
-headerStackType
-    : typeName '[' expression ']'
-    | specializedType '[' expression ']'
-    ;
-
-specializedType
-    : prefixedType '<' typeArgumentList '>'
-    ;
-
-baseType
-    : BOOL
-    | ERROR
-    | STRING
-    | INT
-    | BIT
-    | BIT '<' INTEGER '>'
-    | INT '<' INTEGER '>'
-    | VARBIT '<' INTEGER '>'
-    | BIT '<' '(' expression ')' '>'
-    | INT '<' '(' expression ')' '>'
-    | VARBIT '<' '(' expression ')' '>'
-    ;
-
-typeOrVoid
-    : typeRef
-    | VOID
-    | IDENTIFIER     // may be a type variable
-    ;
-
-optTypeParameters
-    : /* empty */
-    | typeParameters
-    ;
-
-typeParameters
-    : '<' typeParameterList '>'
-    ;
-
-typeParameterList
-    : name
-    | typeParameterList ',' name
-    ;
-
-realTypeArg
-    : DONTCARE
-    | typeRef
-    | VOID
-    ;
-
-typeArg
-    : DONTCARE
-    | typeRef
-    | nonTypeName
-    | VOID
-    ;
-
-realTypeArgumentList
-    : realTypeArg
-    | realTypeArgumentList COMMA typeArg
-    ;
-
-typeArgumentList
-    : /* empty */
-    | typeArg
-    | typeArgumentList ',' typeArg
-    ;
-
-typeDeclaration
-    : derivedTypeDeclaration
-    | typedefDeclaration
-    | parserTypeDeclaration ';'
-    | controlTypeDeclaration ';'
-    | packageTypeDeclaration ';'
-    ;
-
-derivedTypeDeclaration
-    : headerTypeDeclaration
-    | headerUnionDeclaration
-    | structTypeDeclaration
-    | enumDeclaration
-    ;
-
-headerTypeDeclaration
-    : optAnnotations HEADER name optTypeParameters '{' structFieldList '}'
-    ;
-
-headerUnionDeclaration
-    : optAnnotations HEADER_UNION name optTypeParameters '{' structFieldList '}'
-    ;
-
-structTypeDeclaration
-    : optAnnotations STRUCT name optTypeParameters '{' structFieldList '}'
-    ;
-
-structFieldList
-    : /* empty */
-    | structFieldList structField
-    ;
-
-structField
-    : optAnnotations typeRef name ';'
-    ;
-
-enumDeclaration
-    : optAnnotations ENUM name '{' identifierList '}'
-    | optAnnotations ENUM typeRef name '{' specifiedIdentifierList '}'
-    ;
-
-errorDeclaration
-    : ERROR '{' identifierList '}'
-    ;
-
-matchKindDeclaration
-    : MATCH_KIND '{' identifierList '}'
-    ;
-
-identifierList
-    : name
-    | identifierList ',' name
-    ;
-
-specifiedIdentifierList
-    : specifiedIdentifier
-    | specifiedIdentifierList ',' specifiedIdentifier
-    ;
-
-specifiedIdentifier
-    : name '=' initializer
-    ;
-
-typedefDeclaration
-    : optAnnotations TYPEDEF typeRef name ';'
-    | optAnnotations TYPEDEF derivedTypeDeclaration name ';'
-    | optAnnotations TYPE typeRef name ';'
-    | optAnnotations TYPE derivedTypeDeclaration name ';'
-    ;
-
-/*************************** STATEMENTS *************************/
-
-assignmentOrMethodCallStatement
-    : lvalue '(' argumentList ')' ';'
-    | lvalue '<' typeArgumentList '>' '(' argumentList ')' ';'
-    | lvalue '='  expression ';'
-    ;
-
-emptyStatement
-    : ';'
-    ;
-
-returnStatement
-    : RETURN ';'
-    | RETURN expression ';'
-    ;
-
-exitStatement
-    : EXIT ';'
-    ;
-
-conditionalStatement
-    : IF '(' expression ')' statement
-    | IF '(' expression ')' statement ELSE statement
-    ;
-
-// To support direct invocation of a control or parser without instantiation
-directApplication
-    : typeName '.' APPLY '(' argumentList ')' ';'
-    ;
-
-statement
-    : assignmentOrMethodCallStatement
-    | directApplication
-    | conditionalStatement
-    | emptyStatement
-    | blockStatement
-    | exitStatement
-    | returnStatement
-    | switchStatement
-    ;
-
-blockStatement
-    : optAnnotations '{' statOrDeclList '}'
-    ;
-
-statOrDeclList
-    : /* empty */
-    | statOrDeclList statementOrDeclaration
-    ;
-
-switchStatement
-    : SWITCH '(' expression ')' '{' switchCases '}'
-    ;
-
-switchCases
-    : /* empty */
-    | switchCases switchCase
-    ;
-
-switchCase
-    : switchLabel ':' blockStatement
-    | switchLabel ':'
-    ;
-
-switchLabel
-    : DEFAULT
-    | nonBraceExpression
-    ;
-
-statementOrDeclaration
-    : variableDeclaration
-    | constantDeclaration
-    | statement
-    | instantiation
-    ;
-
-/************ TABLES *************/
-tableDeclaration
-    : optAnnotations TABLE name '{' tablePropertyList '}'
-    ;
-
-tablePropertyList
-    : tableProperty
-    | tablePropertyList tableProperty
-    ;
-
-tableProperty
-    : KEY '=' '{' keyElementList '}'
-    | ACTIONS '=' '{' actionList '}'
-    | optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
-    | optAnnotations CONST nonTableKwName '=' initializer ';'
-    | optAnnotations nonTableKwName '=' initializer ';'
-    ;
-
-keyElementList
-    : /* empty */
-    | keyElementList keyElement
-    ;
-
-keyElement
-    : expression ':' name optAnnotations ';'
-    ;
-
-actionList
-    : /* empty */
-    | actionList optAnnotations actionRef ';'
-    ;
-
-actionRef
-    : prefixedNonTypeName
-    | prefixedNonTypeName '(' argumentList ')'
-    ;
-
-entriesList
-    : entry
-    | entriesList entry
-    ;
-
-entry
-    : keysetExpression ':' actionRef optAnnotations ';'
-    ;
-
-/************************* ACTION ********************************/
-
-actionDeclaration
-    : optAnnotations ACTION name '(' parameterList ')' blockStatement
-    ;
-
-/************************* VARIABLES *****************************/
-
-variableDeclaration
-    : annotations typeRef name optInitializer ';'
-    | typeRef name optInitializer ';'
-    ;
-
-constantDeclaration
-    : optAnnotations CONST typeRef name '=' initializer ';'
-    ;
-
-optInitializer
-    : /* empty */
-    | '=' initializer
-    ;
-
-initializer
-    : expression
-    ;
-
-/************************* Expressions ****************************/
-
-functionDeclaration
-    : functionPrototype blockStatement
-    ;
-
-argumentList
-    : /* empty */
-    | nonEmptyArgList
-    ;
-
-nonEmptyArgList
-    : argument
-    | nonEmptyArgList ',' argument
-    ;
-
-argument
-    : expression
-    | name '=' expression
-    | DONTCARE
-    ;
-
-kvList
-    : kvPair
-    | kvList ',' kvPair
-    ;
-
-kvPair
-    : name '=' expression
-    ;
-
-expressionList
-    : /* empty */
-    | expression
-    | expressionList ',' expression
-    ;
-
-
+// BEGIN:annotationBody
 annotationBody
     : /* empty */
-    | annotationBody '(' annotationBody ')'
+    | annotationBody "(" annotationBody ")"
     | annotationBody annotationToken
     ;
-
-structuredAnnotationBody
-    : expressionList
-    | kvList
-    ;
+// END:annotationBody
 
 annotationToken
-    : ABSTRACT
+    : UNEXPECTED_TOKEN
+    | ABSTRACT
     | ACTION
     | ACTIONS
     | APPLY
@@ -679,12 +124,14 @@ annotationToken
     | STRUCT
     | SWITCH
     | TABLE
+    | THIS
     | TRANSITION
     | TRUE
     | TUPLE
     | TYPEDEF
     | VARBIT
     | VALUESET
+    | LIST
     | VOID
     | "_"
     | IDENTIFIER
@@ -726,93 +173,894 @@ annotationToken
     | "="
     | ";"
     | "@"
-    | UNKNOWN_TOKEN
     ;
 
+// BEGIN:kvList
+kvList
+    : kvPair
+    | kvList "," kvPair
+    ;
+// END:kvList
+
+// BEGIN:kvPair
+kvPair
+    : name "=" expression
+    ;
+// END:kvPair
+
+// BEGIN:parameterList
+parameterList
+    : /* empty */
+    | nonEmptyParameterList
+    ;
+// END:parameterList
+
+// BEGIN:nonEmptyParameterList
+nonEmptyParameterList
+    : parameter
+    | nonEmptyParameterList "," parameter
+    ;
+// END:nonEmptyParameterList
+
+// BEGIN:parameter
+parameter
+    : optAnnotations direction typeRef name
+    | optAnnotations direction typeRef name "=" expression
+    ;
+// END:parameter
+
+// BEGIN:direction
+direction
+    : IN
+    | OUT
+    | INOUT
+    | /* empty */
+    ;
+// END:direction
+
+// BEGIN:packageTypeDeclaration
+packageTypeDeclaration
+    : optAnnotations PACKAGE name optTypeParameters
+      "(" parameterList ")"
+    ;
+// END:packageTypeDeclaration
+
+instantiation
+    : annotations typeRef "(" argumentList ")" name ";"
+    | typeRef "(" argumentList ")" name ";"
+    | annotations typeRef "(" argumentList ")" name "=" objInitializer ";"
+    | typeRef "(" argumentList ")" name "=" objInitializer ";"
+    ;
+
+// BEGIN:objInitializer
+objInitializer
+    : "{" objDeclarations "}"
+    ;
+// END:objInitializer
+
+// BEGIN:objDeclarations
+objDeclarations
+    : /* empty */
+    | objDeclarations objDeclaration
+    ;
+// END:objDeclarations
+
+// BEGIN:objDeclaration
+objDeclaration
+    : functionDeclaration
+    | instantiation
+    ;
+// END:objDeclaration
+
+// BEGIN:optConstructorParameters
+optConstructorParameters
+    : /* empty */
+    | "(" parameterList ")"
+    ;
+// END:optConstructorParameters
+
+dotPrefix
+    : "."
+    ;
+
+/**************************** PARSER ******************************/
+
+// BEGIN:parserDeclaration
+parserDeclaration
+    : parserTypeDeclaration optConstructorParameters
+      "{" parserLocalElements parserStates "}"
+    ;
+// END:parserDeclaration
+
+// BEGIN:parserLocalElements
+parserLocalElements
+    : /* empty */
+    | parserLocalElements parserLocalElement
+    ;
+// END:parserLocalElements
+
+// BEGIN:parserLocalElement
+parserLocalElement
+    : constantDeclaration
+    | instantiation
+    | variableDeclaration
+    | valueSetDeclaration
+    ;
+// END:parserLocalElement
+
+// BEGIN:parserTypeDeclaration
+parserTypeDeclaration
+    : optAnnotations PARSER name optTypeParameters
+      "(" parameterList ")"
+    ;
+// END:parserTypeDeclaration
+
+// BEGIN:parserStates
+parserStates
+    : parserState
+    | parserStates parserState
+    ;
+// END:parserStates
+
+// BEGIN:parserState
+parserState
+    : optAnnotations STATE name
+      "{" parserStatements transitionStatement "}"
+    ;
+// END:parserState
+
+// BEGIN:parserStatements
+parserStatements
+    : /* empty */
+    | parserStatements parserStatement
+    ;
+// END:parserStatements
+
+// BEGIN:parserStatement
+parserStatement
+    : assignmentOrMethodCallStatement
+    | directApplication
+    | emptyStatement
+    | variableDeclaration
+    | constantDeclaration
+    | parserBlockStatement
+    | conditionalStatement
+    ;
+// END:parserStatement
+
+// BEGIN:parserBlockStatement
+parserBlockStatement
+    : optAnnotations "{" parserStatements "}"
+    ;
+// END:parserBlockStatement
+
+// BEGIN:transitionStatement
+transitionStatement
+    : /* empty */
+    | TRANSITION stateExpression
+    ;
+// END:transitionStatement
+
+// BEGIN:stateExpression
+stateExpression
+    : name ";"
+    | selectExpression
+    ;
+// END:stateExpression
+
+// BEGIN:selectExpression
+selectExpression
+    : SELECT "(" expressionList ")" "{" selectCaseList "}"
+    ;
+// END:selectExpression
+
+// BEGIN:selectCaseList
+selectCaseList
+    : /* empty */
+    | selectCaseList selectCase
+    ;
+// END:selectCaseList
+
+// BEGIN:selectCase
+selectCase
+    : keysetExpression ":" name ";"
+    ;
+// END:selectCase
+
+// BEGIN:keysetExpression
+keysetExpression
+    : tupleKeysetExpression
+    | simpleKeysetExpression
+    ;
+// END:keysetExpression
+
+// BEGIN:tupleKeysetExpression
+tupleKeysetExpression
+    : "(" simpleKeysetExpression "," simpleExpressionList ")"
+    | "(" reducedSimpleKeysetExpression ")"
+    ;
+// END:tupleKeysetExpression
+
+// BEGIN:simpleExpressionList
+simpleExpressionList
+    : simpleKeysetExpression
+    | simpleExpressionList "," simpleKeysetExpression
+    ;
+// END:simpleExpressionList
+
+// BEGIN:reducedSimpleKeysetExpression
+reducedSimpleKeysetExpression
+    : expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
+    ;
+// END:reducedSimpleKeysetExpression
+
+// BEGIN:simpleKeysetExpression
+simpleKeysetExpression
+    : expression
+    | expression "&&&" expression
+    | expression ".." expression
+    | DEFAULT
+    | "_"
+    ;
+// END:simpleKeysetExpression
+
+// BEGIN:valueSetDeclaration
+valueSetDeclaration
+  : optAnnotations
+      VALUESET "<" baseType ">" "(" expression ")" name ";"
+  | optAnnotations
+      VALUESET "<" tupleType ">" "(" expression ")" name ";"
+  | optAnnotations
+      VALUESET "<" typeName ">" "(" expression ")" name ";"
+  ;
+// END:valueSetDeclaration
+
+/*************************** CONTROL ************************/
+
+// BEGIN:controlDeclaration
+controlDeclaration
+    : controlTypeDeclaration optConstructorParameters
+      /* controlTypeDeclaration cannot contain type parameters */
+      "{" controlLocalDeclarations APPLY controlBody "}"
+    ;
+// END:controlDeclaration
+
+// BEGIN:controlTypeDeclaration
+controlTypeDeclaration
+    : optAnnotations CONTROL name optTypeParameters
+      "(" parameterList ")"
+    ;
+// END:controlTypeDeclaration
+
+// BEGIN:controlLocalDeclarations
+controlLocalDeclarations
+    : /* empty */
+    | controlLocalDeclarations controlLocalDeclaration
+    ;
+// END:controlLocalDeclarations
+
+// BEGIN:controlLocalDeclaration
+controlLocalDeclaration
+    : constantDeclaration
+    | actionDeclaration
+    | tableDeclaration
+    | instantiation
+    | variableDeclaration
+    ;
+// END:controlLocalDeclaration
+
+// BEGIN:controlBody
+controlBody
+    : blockStatement
+    ;
+// END:controlBody
+
+/*************************** EXTERN *************************/
+
+// BEGIN:externDeclaration
+externDeclaration
+    : optAnnotations EXTERN nonTypeName optTypeParameters "{" methodPrototypes "}"
+    | optAnnotations EXTERN functionPrototype ";"
+    ;
+// END:externDeclaration
+
+// BEGIN:methodPrototypes
+methodPrototypes
+    : /* empty */
+    | methodPrototypes methodPrototype
+    ;
+// END:methodPrototypes
+
+// BEGIN:functionPrototype
+functionPrototype
+    : typeOrVoid name optTypeParameters "(" parameterList ")"
+    ;
+// END:functionPrototype
+
+methodPrototype
+    : optAnnotations functionPrototype ";"
+    | optAnnotations TYPE_IDENTIFIER "(" parameterList ")" ";"
+    ;
+
+/************************** TYPES ****************************/
+
+// BEGIN:typeRef
+typeRef
+    : baseType
+    | typeName
+    | specializedType
+    | headerStackType
+    | p4listType
+    | tupleType
+    ;
+// END:typeRef
+
+// BEGIN:namedType
+namedType
+    : typeName
+    | specializedType
+    ;
+// END:namedType
+
+// BEGIN:prefixedType
+prefixedType
+    : TYPE_IDENTIFIER
+    | dotPrefix TYPE_IDENTIFIER
+    ;
+// END:prefixedType
+
+// BEGIN:typeName
+typeName
+    : prefixedType
+    ;
+// END:typeName
+
+// BEGIN:p4listType
+p4listType
+    : LIST "<" typeArg ">"
+    ;
+// END:p4listType
+
+// BEGIN:tupleType
+tupleType
+    : TUPLE "<" typeArgumentList ">"
+    ;
+// END:tupleType
+
+// BEGIN:headerStackType
+headerStackType
+    : typeName "[" expression "]"
+    | specializedType "[" expression "]"
+    ;
+// END:headerStackType
+
+// BEGIN:specializedType
+specializedType
+    : prefixedType "<" typeArgumentList ">"
+    ;
+// END:specializedType
+
+// BEGIN:baseType
+baseType
+    : BOOL
+    | MATCH_KIND
+    | ERROR
+    | BIT
+    | STRING
+    | INT
+    | BIT "<" INTEGER ">"
+    | INT "<" INTEGER ">"
+    | VARBIT "<" INTEGER ">"
+    | BIT "<" "(" expression ")" ">"
+    | INT "<" "(" expression ")" ">"
+    | VARBIT "<" "(" expression ")" ">"
+    ;
+// END:baseType
+
+// BEGIN:typeOrVoid
+typeOrVoid
+    : typeRef
+    | VOID
+    | IDENTIFIER     // may be a type variable
+    ;
+// END:typeOrVoid
+
+// BEGIN:optTypeParameters
+optTypeParameters
+    : /* empty */
+    | typeParameters
+    ;
+// END:optTypeParameters
+
+// BEGIN:typeParameters
+typeParameters
+    : "<" typeParameterList ">"
+    ;
+// END:typeParameters
+
+// BEGIN:typeParameterList
+typeParameterList
+    : name
+    | typeParameterList "," name
+    ;
+// END:typeParameterList
+
+// BEGIN:typeArg
+typeArg
+    : typeRef
+    | nonTypeName
+    | VOID
+    | "_"
+    ;
+// END:typeArg
+
+// BEGIN:typeArgumentList
+typeArgumentList
+    : /* empty */
+    | typeArg
+    | typeArgumentList "," typeArg
+    ;
+// END:typeArgumentList
+
+// BEGIN:optTrailingComma
+optTrailingComma
+    : /* empty */
+    | ","
+    ;
+// END:optTrailingComma
+
+// BEGIN:realTypeArg
+realTypeArg
+    : typeRef
+    | VOID
+    | "_"
+    ;
+// END:realTypeArg
+
+// BEGIN:realTypeArgumentList
+realTypeArgumentList
+    : realTypeArg
+    | realTypeArgumentList "," typeArg
+    ;
+// END:realTypeArgumentList
+
+// BEGIN:typeDeclaration
+typeDeclaration
+    : derivedTypeDeclaration
+    | typedefDeclaration
+    | parserTypeDeclaration ";"
+    | controlTypeDeclaration ";"
+    | packageTypeDeclaration ";"
+    ;
+// END:typeDeclaration
+
+// BEGIN:derivedTypeDeclaration
+derivedTypeDeclaration
+    : headerTypeDeclaration
+    | headerUnionDeclaration
+    | structTypeDeclaration
+    | enumDeclaration
+    ;
+// END:derivedTypeDeclaration
+
+// BEGIN:headerTypeDeclaration
+headerTypeDeclaration
+    : optAnnotations HEADER name optTypeParameters "{" structFieldList "}"
+    ;
+// END:headerTypeDeclaration
+
+// BEGIN:structTypeDeclaration
+structTypeDeclaration
+    : optAnnotations STRUCT name optTypeParameters "{" structFieldList "}"
+    ;
+// END:structTypeDeclaration
+
+// BEGIN:headerUnionDeclaration
+headerUnionDeclaration
+    : optAnnotations HEADER_UNION name optTypeParameters "{" structFieldList "}"
+    ;
+// END:headerUnionDeclaration
+
+// BEGIN:structFieldList
+structFieldList
+    : /* empty */
+    | structFieldList structField
+    ;
+// END:structFieldList
+
+// BEGIN:structField
+structField
+    : optAnnotations typeRef name ";"
+    ;
+// END:structField
+
+// BEGIN:enumDeclaration
+enumDeclaration
+    : optAnnotations ENUM name "{" identifierList optTrailingComma "}"
+    | optAnnotations ENUM typeRef name "{"
+      specifiedIdentifierList optTrailingComma "}"
+    ;
+// END:enumDeclaration
+
+// BEGIN:specifiedIdentifierList
+specifiedIdentifierList
+    : specifiedIdentifier
+    | specifiedIdentifierList "," specifiedIdentifier
+    ;
+// END:specifiedIdentifierList
+
+// BEGIN:specifiedIdentifier
+specifiedIdentifier
+    : name "=" initializer
+    ;
+// END:specifiedIdentifier
+
+// BEGIN:errorDeclaration
+errorDeclaration
+    : ERROR "{" identifierList "}"
+    ;
+// END:errorDeclaration
+
+// BEGIN:matchKindDeclaration
+matchKindDeclaration
+    : MATCH_KIND "{" identifierList optTrailingComma "}"
+    ;
+// END:matchKindDeclaration
+
+// BEGIN:identifierList
+identifierList
+    : name
+    | identifierList "," name
+    ;
+// END:identifierList
+
+typedefDeclaration
+    : optAnnotations TYPEDEF typeRef name ";"
+    | optAnnotations TYPEDEF derivedTypeDeclaration name ";"
+    | optAnnotations TYPE typeRef name ";"
+    ;
+
+/*************************** STATEMENTS *************************/
+
+// BEGIN:assignmentOrMethodCallStatement
+assignmentOrMethodCallStatement
+    : lvalue "(" argumentList ")" ";"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")" ";"
+    | lvalue "="  expression ";"
+    ;
+// END:assignmentOrMethodCallStatement
+
+// BEGIN:emptyStatement
+emptyStatement
+    : ";"
+    ;
+// END:emptyStatement
+
+// BEGIN:exitStatement
+exitStatement
+    : EXIT ";"
+    ;
+// END:exitStatement
+
+// BEGIN:returnStatement
+returnStatement
+    : RETURN ";"
+    | RETURN expression ";"
+    ;
+// END:returnStatement
+
+// BEGIN:conditionalStatement
+conditionalStatement
+    : IF "(" expression ")" statement
+    | IF "(" expression ")" statement ELSE statement
+    ;
+// END:conditionalStatement
+
+// To support direct invocation of a control or parser without instantiation
+// BEGIN:directApplication
+directApplication
+    : typeName "." APPLY "(" argumentList ")" ";"
+    | specializedType "." APPLY "(" argumentList ")" ";"
+    ;
+// END:directApplication
+
+statement
+    : assignmentOrMethodCallStatement
+    | directApplication
+    | conditionalStatement
+    | emptyStatement
+    | blockStatement
+    | returnStatement
+    | exitStatement
+    | switchStatement
+    ;
+
+// BEGIN:blockStatement
+blockStatement
+    : optAnnotations "{" statOrDeclList "}"
+    ;
+// END:blockStatement
+
+// BEGIN:statOrDeclList
+statOrDeclList
+    : /* empty */
+    | statOrDeclList statementOrDeclaration
+    ;
+// END:statOrDeclList
+
+// BEGIN:switchStatement
+switchStatement
+    : SWITCH "(" expression ")" "{" switchCases "}"
+    ;
+// END:switchStatement
+
+// BEGIN:switchCases
+switchCases
+    : /* empty */
+    | switchCases switchCase
+    ;
+// END:switchCases
+
+// BEGIN:switchCase
+switchCase
+    : switchLabel ":" blockStatement
+    | switchLabel ":"  // fall-through
+    ;
+// END:switchCase
+
+// BEGIN:switchLabel
+switchLabel
+    : DEFAULT
+    | nonBraceExpression
+    ;
+// END:switchLabel
+
+// BEGIN:statementOrDeclaration
+statementOrDeclaration
+    : variableDeclaration
+    | constantDeclaration
+    | statement
+    ;
+// END:statementOrDeclaration
+
+/************************* TABLE *********************************/
+
+// BEGIN:tableDeclaration
+tableDeclaration
+    : optAnnotations TABLE name "{" tablePropertyList "}"
+    ;
+// END:tableDeclaration
+
+// BEGIN:tablePropertyList
+tablePropertyList
+    : tableProperty
+    | tablePropertyList tableProperty
+    ;
+// END:tablePropertyList
+
+tableProperty
+    : KEY "=" "{" keyElementList "}"
+    | ACTIONS "=" "{" actionList "}"
+    | optAnnotations optCONST ENTRIES "=" "{" entriesList "}"
+    | optAnnotations optCONST nonTableKwName "=" initializer ";"
+    ;
+
+// BEGIN:keyElementList
+keyElementList
+    : /* empty */
+    | keyElementList keyElement
+    ;
+// END:keyElementList
+
+// BEGIN:keyElement
+keyElement
+    : expression ":" name optAnnotations ";"
+    ;
+// END:keyElement
+
+// BEGIN:actionList
+actionList
+    : /* empty */
+    | actionList optAnnotations actionRef ";"
+    ;
+// END:actionList
+
+// BEGIN:actionRef
+actionRef
+    : prefixedNonTypeName
+    | prefixedNonTypeName "(" argumentList ")"
+    ;
+// END:actionRef
+
+// BEGIN:entry
+entry
+    : keysetExpression ":" actionRef optAnnotations ";"
+    ;
+// END:entry
+
+// BEGIN:entriesList
+entriesList
+    : /* empty */
+    | entriesList entry
+    ;
+// END:entriesList
+
+/************************* ACTION ********************************/
+
+// BEGIN:actionDeclaration
+actionDeclaration
+    : optAnnotations ACTION name "(" parameterList ")" blockStatement
+    ;
+// END:actionDeclaration
+
+/************************* VARIABLES *****************************/
+
+// BEGIN:variableDeclaration
+variableDeclaration
+    : annotations typeRef name optInitializer ";"
+    | typeRef name optInitializer ";"
+    ;
+// END:variableDeclaration
+
+// BEGIN:constantDeclaration
+constantDeclaration
+    : optAnnotations CONST typeRef name "=" initializer ";"
+    ;
+// END:constantDeclaration
+
+// BEGIN:optInitializer
+optInitializer
+    : /* empty */
+    | "=" initializer
+    ;
+// END:optInitializer
+
+// BEGIN:initializer
+initializer
+    : expression
+    ;
+// END:initializer
+
+/**************** Expressions ****************/
+
+// BEGIN:functionDeclaration
+functionDeclaration
+    : functionPrototype blockStatement
+    ;
+// END:functionDeclaration
+
+// BEGIN:argumentList
+argumentList
+    : /* empty */
+    | nonEmptyArgList
+    ;
+// END:argumentList
+
+// BEGIN:nonEmptyArgList
+nonEmptyArgList
+    : argument
+    | nonEmptyArgList "," argument
+    ;
+// END:nonEmptyArgList
+
+// BEGIN:argument
+argument
+    : expression  /* positional argument */
+    | name "=" expression  /* named argument */
+    | "_"
+    | name "=" "_"
+    ;
+// END:argument
+
+// BEGIN:expressionList
+expressionList
+    : /* empty */
+    | expression
+    | expressionList "," expression
+    ;
+// END:expressionList
+
+// BEGIN:structuredAnnotationBody
+structuredAnnotationBody
+    : expressionList optTrailingComma
+    | kvList optTrailingComma
+    ;
+// END:structuredAnnotationBody
+
+// BEGIN:member
 member
     : name
     ;
+// END:member
 
+// BEGIN:prefixedNonTypeName
 prefixedNonTypeName
     : nonTypeName
     | dotPrefix nonTypeName
     ;
+// END:prefixedNonTypeName
 
+// BEGIN:lvalue
 lvalue
     : prefixedNonTypeName
     | THIS
-    | lvalue '.' member
-    | lvalue '[' expression ']'
-    | lvalue '[' expression ':' expression ']'
+    | lvalue "." member
+    | lvalue "[" expression "]"
+    | lvalue "[" expression ":" expression "]"
     ;
+// END:lvalue
 
-%left ','
-%nonassoc '?'
-%nonassoc ':'
-%left '||'
-%left '&&'
-%left '==' '!='
-%left '<' '>' '<=' '>='
-%left '|'
-%left '^'
-%left '&'
-%left '<<' '>>'
-%left '++' '+' '-' '|+|' '|-|'
-%left '*' '/' '%'
+%left ","
+%nonassoc "?"
+%nonassoc ":"
+%left "||"
+%left "&&"
+%left "==" "!="
+%left "<" ">" "<=" ">="
+%left "|"
+%left "^"
+%left "&"
+%left "<<" ">>"
+%left "++" "+" "-" "|+|" "|-|"
+%left "*" "/" "%"
 %right PREFIX
-%nonassoc ']' '(' '['
-%left '.'
+%nonassoc "]" "(" "["
+%left "."
 
 // Additional precedences need to be specified
 
 expression
     : INTEGER
+    | STRING_LITERAL
     | TRUE
     | FALSE
     | THIS
-    | STRING_LITERAL
     | nonTypeName
     | dotPrefix nonTypeName
-    | expression '[' expression ']'
-    | expression '[' expression ':' expression ']'
-    | '{' expressionList '}'
-    | '{' kvList '}'
-    | '(' expression ')'
-    | '!' expression %prec PREFIX
-    | '~' expression %prec PREFIX
-    | '-' expression %prec PREFIX
-    | '+' expression %prec PREFIX
-    | typeName '.' member
-    | ERROR '.' member
-    | expression '.' member
-    | expression '*' expression
-    | expression '/' expression
-    | expression '%' expression
-    | expression '+' expression
-    | expression '-' expression
-    | expression '|+|' expression
-    | expression '|-|' expression
-    | expression '<<' expression
-    | expression '>>' expression
-    | expression '<=' expression
-    | expression '>=' expression
-    | expression '<' expression
-    | expression '>' expression
-    | expression '!=' expression
-    | expression '==' expression
-    | expression '&' expression
-    | expression '^' expression
-    | expression '|' expression
-    | expression '++' expression
-    | expression '&&' expression
-    | expression '||' expression
-    | expression '?' expression ':' expression
-    | expression '<' realTypeArgumentList '>' '(' argumentList ')'
-    | expression '(' argumentList ')'
-    | namedType '(' argumentList ')'
-    | '(' typeRef ')' expression
+    | expression "[" expression "]"
+    | expression "[" expression ":" expression "]"
+    | "{" expressionList optTrailingComma "}"
+    | "{" kvList optTrailingComma "}"
+    | "(" expression ")"
+    | "!" expression %prec PREFIX
+    | "~" expression %prec PREFIX
+    | "-" expression %prec PREFIX
+    | "+" expression %prec PREFIX
+    | typeName "." member
+    | ERROR "." member
+    | expression "." member
+    | expression "*" expression
+    | expression "/" expression
+    | expression "%" expression
+    | expression "+" expression
+    | expression "-" expression
+    | expression "|+|" expression
+    | expression "|-|" expression
+    | expression "<<" expression
+    | expression ">>" expression
+    | expression "<=" expression
+    | expression ">=" expression
+    | expression "<" expression
+    | expression ">" expression
+    | expression "!=" expression
+    | expression "==" expression
+    | expression "&" expression
+    | expression "^" expression
+    | expression "|" expression
+    | expression "++" expression
+    | expression "&&" expression
+    | expression "||" expression
+    | expression "?" expression ":" expression
+    | expression "<" realTypeArgumentList ">" "(" argumentList ")"
+    | expression "(" argumentList ")"
+    | namedType "(" argumentList ")"
+    | "(" typeRef ")" expression
     ;
 
+// BEGIN:nonBraceExpression
 nonBraceExpression
     : INTEGER
     | STRING_LITERAL
@@ -821,41 +1069,41 @@ nonBraceExpression
     | THIS
     | nonTypeName
     | dotPrefix nonTypeName
-    | nonBraceExpression '[' expression ']'
-    | nonBraceExpression '[' expression ':' expression ']'
-    | '(' expression ')'
-    | '!' expression %prec PREFIX
-    | '~' expression %prec PREFIX
-    | '-' expression %prec PREFIX
-    | '+' expression %prec PREFIX
-    | typeName '.' member
-    | ERROR '.' member
-    | nonBraceExpression '.' member
-    | nonBraceExpression '*' expression
-    | nonBraceExpression '/' expression
-    | nonBraceExpression '%' expression
-    | nonBraceExpression '+' expression
-    | nonBraceExpression '-' expression
-    | nonBraceExpression '|+|' expression
-    | nonBraceExpression '|-|' expression
-    | nonBraceExpression '<<' expression
-    | nonBraceExpression '>>' expression
-    | nonBraceExpression '<=' expression
-    | nonBraceExpression '>=' expression
-    | nonBraceExpression '<' expression
-    | nonBraceExpression '>' expression
-    | nonBraceExpression '!=' expression
-    | nonBraceExpression '==' expression
-    | nonBraceExpression '&' expression
-    | nonBraceExpression '^' expression
-    | nonBraceExpression '|' expression
-    | nonBraceExpression '++' expression
-    | nonBraceExpression '&&' expression
-    | nonBraceExpression '||' expression
-    | nonBraceExpression '?' expression ':' expression
-    | nonBraceExpression '<' realTypeArgumentList '>' '(' argumentList ')'
-    | nonBraceExpression '(' argumentList ')'
-    | namedType '(' argumentList ')'
-    | '(' typeRef ')' expression
+    | nonBraceExpression "[" expression "]"
+    | nonBraceExpression "[" expression ":" expression "]"
+    | "(" expression ")"
+    | "!" expression %prec PREFIX
+    | "~" expression %prec PREFIX
+    | "-" expression %prec PREFIX
+    | "+" expression %prec PREFIX
+    | typeName "." member
+    | ERROR "." member
+    | nonBraceExpression "." member
+    | nonBraceExpression "*" expression
+    | nonBraceExpression "/" expression
+    | nonBraceExpression "%" expression
+    | nonBraceExpression "+" expression
+    | nonBraceExpression "-" expression
+    | nonBraceExpression "|+|" expression
+    | nonBraceExpression "|-|" expression
+    | nonBraceExpression "<<" expression
+    | nonBraceExpression ">>" expression
+    | nonBraceExpression "<=" expression
+    | nonBraceExpression ">=" expression
+    | nonBraceExpression "<" expression
+    | nonBraceExpression ">" expression
+    | nonBraceExpression "!=" expression
+    | nonBraceExpression "==" expression
+    | nonBraceExpression "&" expression
+    | nonBraceExpression "^" expression
+    | nonBraceExpression "|" expression
+    | nonBraceExpression "++" expression
+    | nonBraceExpression "&&" expression
+    | nonBraceExpression "||" expression
+    | nonBraceExpression "?" expression ":" expression
+    | nonBraceExpression "<" realTypeArgumentList ">" "(" argumentList ")"
+    | nonBraceExpression "(" argumentList ")"
+    | namedType "(" argumentList ")"
+    | "(" typeRef ")" expression
     ;
-~ End P4Grammar
+// END:nonBraceExpression
