@@ -2530,7 +2530,7 @@ arbitrary-precision integer, without a width specified.
 | header stack   | error     | error   |  allowed | allowed | error |
 | `header_union` | error     | error   |  allowed | allowed | allowed |
 | `struct`       | allowed[^struct_header]   | error   |  allowed | allowed | error |
-| `tuple`        | error     | error   |  allowed | allowed | error | 
+| `tuple`        | error     | error   |  allowed | allowed | error |
 | `list`         | error     | error   |  error   | allowed | error |
 |----------------|-----------|---------|----------|---------|-------|
 
@@ -2592,7 +2592,7 @@ types.
 
 #### Set types { #sec-set-types }
 
-The type `set<T>` describes _sets_ of values of type `T`. Set
+The type `set<T>` describes _sets_ of values of some type `T`. Set
 types can only appear in restricted contexts in P4 programs. For
 example, the range expression `8w5 .. 8w8` describes a set
 containing the 8-bit numbers 5, 6, 7, and 8, so its type is `set<bit<8>>;`.
@@ -2922,6 +2922,20 @@ as follows:
 Note that some types do not have default values, e.g., `match_kind`,
 set types, function types, extern types, parser types, control types,
 package types.
+
+## Numeric types { #sec-numeric-values }
+
+Many P4 operations are restrained to expressions that evaluate to numeric values. 
+Such expressions must have one of the following numeric types:
+
+  - `int` - an infinite-precision integer (section
+    [#sec-infinite-precision-integers])
+  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (section
+    [#sec-unsigned-integers])
+  - `int<W>` - a `W`-bit signed integer where `W >= 1` (section
+    [#sec-signed-integers])
+  - a serializable `enum` with an underlying type that is `bit<W>` or
+    `int<W>` (section [#sec-enum-types]).
 
 ## typedef { #sec-typedef }
 
@@ -3306,6 +3320,10 @@ and representation.  For `enum` values with an underlying type and
 representations, the compiler should use the specified underlying type as the
 serialization data type and representation.
 
+Additionally, the size of a serializable enum can be determined at
+compile-time. However, the size of an enum without an
+underlying type cannot be determined at compile-time [#sec-determin].
+
 ## Operations on `match_kind` types { #sec-match-kind-exprs }
 
 Values of type `match_kind` are similar to `enum` values.  They
@@ -3326,6 +3344,9 @@ The following operations are provided on Boolean expressions:
 
 The precedence of these operators is similar to C and uses short-circuited
 evaluation where relevant.
+
+Additionally, the size of a boolean can be determined at
+compile-time [#sec-determin].
 
 P4 does not implicitly cast from bit-strings to Booleans or
 vice versa. As a consequence, a program that is valid in a language like C such as,
@@ -3439,17 +3460,7 @@ Bit-strings also support the following operations:
 - Extraction of a set of contiguous bits, also known as a slice,
   denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
   non-negative compile-time known values, and `H >= L`. The types of `H` and `L`
-  (which do not need to be identical) must be one of the following:
-
-  - `int` - an arbitrary-precision integer
-    (section [#sec-arbitrary-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
-    (section [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1`
-    (section [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is
-    `bit<W>` or `int<W>` (section [#sec-enum-types]).
-
+  (which do not need to be identical) must be numeric (Section [#sec-numeric-values]).
   The result is a bit-string of width `H - L + 1`, including the bits numbered
   from `L` (which becomes the least significant bit of the result) to `H` (the
   most significant bit of the result) from the source operand. The conditions
@@ -3467,6 +3478,9 @@ Bit-strings also support the following operations:
   different signedness and width.  The result has the same signedness as the
   left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
+
+Additionally, the size of a bit-string can be determined at
+compile-time [#sec-determin].
 
 ## Operations on fixed-width signed integers { #sec-int-ops }
 
@@ -3537,17 +3551,7 @@ The `int<W>` datatype also support the following operations:
   denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
   non-negative compile-time known values, and `H >= L` must be true.
   The types of `H` and `L` (which do not need to be identical)
-  must be one of the following:
-
-  - `int` - an arbitrary-precision integer
-    (section [#sec-arbitrary-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
-    (section [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1`
-    (section [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>`
-    (section [#sec-enum-types]).
-
+  must be numeric (Section [#sec-numeric-values]).
   The result is an unsigned bit-string of width `H - L + 1`, including the bits
   numbered from `L` (which becomes the least significant bit of the result)
   to `H` (the most significant bit of the result) from the source operand.
@@ -3564,6 +3568,9 @@ The `int<W>` datatype also support the following operations:
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
   The result has the same signedness as the left operand and the width equal to the sum of the two operands' width.
   In concatenation, the left operand is placed as the most significant bits.
+
+Additionally, the size of a fixed-width signed integer can be determined at
+compile-time [#sec-determin].
 
 ## Operations on arbitrary-precision integers { #sec-varint-ops }
 
@@ -3714,6 +3721,9 @@ finding this information in a section dedicated to type `varbit`.
   inserts a variable-sized bit-string with a known dynamic width into
   the packet being constructed.
 
+Additionally, the size of a variable-length bit-string can be determined at
+compile-time [#sec-determin].
+
 ## Casts { #sec-casts }
 
 P4 provides a limited set of casts between types. A cast is written
@@ -3785,6 +3795,7 @@ the compiler will add implicit casts as follows:
 - `z < 0` becomes `z < (int<8>)0`
 - `x | 0xFFF` becomes `x | (bit<8>)0xFFF`; overflow warning
 - `x + E.a` becomes `x + (bit<8>)E.a`
+- `x &&& 8` becomes `x &&& (bit<8>)8`
 - `x << 256` remains unchanged; `256` not implicitly cast to `8w0` in a shift; overflow warning
 - `16w11 << E.a` becomes `16w11 << (bit<8>)E.a`
 - `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
@@ -3838,7 +3849,7 @@ cannot guess the user intent, so P4 requires the user to disambiguate.
 | `5 & -3`            | Bitwise operation on int |  `32w5 & -3 ` |
 |-----|-----|-----|
 
-## Operations on tuples expressions { #sec-tuple-exprs }
+## Operations on tuple expressions { #sec-tuple-exprs }
 
 Tuples can be assigned to other tuples with the same type, passed as
 arguments and returned from functions, and can be initialized with
@@ -3998,9 +4009,12 @@ control c() {
 }
 ~ End P4Example
 
+Additionally, the size of a list can be determined at
+compile-time [#sec-determin].
+
 ## Operations on sets { #sec-set-exprs }
 
-Some P4 expressions denote sets of values (`set<T>`, for some type `T`;
+Some P4 expressions denote sets of values (`set<T>`, for some type `T`; 
 see Section [#sec-set-types]). These expressions can
 appear only in a few contexts---parsers and table
 entries. For example, the `select` expression (Section
@@ -4044,7 +4058,7 @@ select (hdr.ipv4.version) {
 }
 ~ End P4Example
 
-The label `4` is denotes the singleton set containing `4`.
+The label `4` denotes the singleton set containing the `int` value `4`.
 
 ### The universal set { #sec-universal-set }
 
@@ -4060,15 +4074,15 @@ select (hdr.ipv4.version) {
 
 ### Masks { #sec-cubes }
 
-The infix operator `&&&` takes two arguments of type `bit<W>` or
-serializable `enum`, and creates a value of type `set<ltype>`, where
-ltype is the type of the left argument.  The right value is used as a
+The infix operator `&&&` takes two arguments of the same numeric type (Section [#sec-numeric-values]),
+and creates a value of the same type. 
+The right value is used as a
 "mask", where each bit set to `0` in the mask indicates a "don't care"
 bit. More formally, the set denoted by `a &&& b` is defined as
 follows:
 
 ~ Begin P4Example
-a &&& b = { c of type bit<W> where a & b = c & b }
+a &&& b = { c where a & b = c & b }
 ~ End P4Example
 
 For example:
@@ -4077,11 +4091,15 @@ For example:
 8w0x0A &&& 8w0x0F
 ~ End P4Example
 
-denotes a set that contains 16 different 8-bit values, whose
+denotes a set that contains 16 different `bit<8>` values, whose
 bit-pattern is `XXXX1010`, where the value of an `X` can be
 any bit. Note that there may be multiple ways to express a keyset
 using a mask operator---e.g., `8w0xFA &&& 8w0x0F` denotes the same
 keyset as in the example above.
+
+Similar to other binary operations,
+the mask operator allows the compiler to automatically insert casts
+to unify the argument types in certain situations (section [#sec-implicit-casts]).
 
 P4 architectures may impose additional restrictions on the expressions
 on the left and right-hand side of a mask operator: for example, they
@@ -4090,17 +4108,20 @@ values.
 
 ### Ranges { #sec-ranges }
 
-The infix operator `..` takes two arguments of the same type `T`,
-where `T` is either `bit<W>`, `int<W>`, or a serializable enum value,
-and creates a value of type `set<T>`. The set contains all values
-numerically between the first and the second, inclusively. For
-example:
+The infix operator `..` takes two arguments of the same numeric type `T` (Section [#sec-numeric-values]),
+and creates a value of
+the type `set<T>`. The set contains all values numerically between the
+first and the second, inclusively. For example:
 
 ~ Begin P4Example
-4w5 .. 4w8
+4s5 .. 4s8
 ~ End P4Example
 
-denotes a set with values `4w5, 4w6, 4w7`, and `4w8`.
+denotes a set of 4 consecutive `int<4>` values `4s5, 4s6, 4s7`, and `4s8`.
+
+Similar to other binary operations,
+the range operator allows the compiler to automatically insert casts
+to unify the argument types in certain situations (section [#sec-implicit-casts]).
 
 A range where the second value is smaller than the first one
 represents an empty set.
@@ -4119,6 +4140,7 @@ select(hdr.ipv4.ihl, hdr.ipv4.protocol) {
 
 The type of a product of sets is a set of tuples.
 
+
 ## Operations on struct types { #sec-ops-on-structs }
 
 The only operation defined on expressions whose type is a `struct` is
@@ -4129,7 +4151,8 @@ assignment have the same type. Finally, `struct`s can be initialized
 with a tuple expression, as discussed in Section [#sec-tuple-exprs], or
 with a structure-valued expression, as described in
 [#sec-structure-expressions].  Both of these cases must initialize all
-fields of the structure.
+fields of the structure. The size of a struct can be determined at
+compile-time [#sec-determin].
 
 Two structs can be compared for equality (==) or inequality (!=) only
 if they have the same type and all of their fields can be recursively
@@ -4184,6 +4207,8 @@ Two headers can be compared for equality (`==`) or inequality (`!=`) only
 if they have the same type.  Two headers are equal if and only if they
 are both invalid, or they are both valid and all their corresponding
 fields are equal.
+Furthermore, the size of a header can be determined at
+compile-time [#sec-determin].
 
 The expression `{#}` represents an invalid header of some type, but it
 can be any header or header union type.  A P4 compiler may require an
@@ -4260,12 +4285,7 @@ expressions are legal:
   [#sec-uninitialized-values-and-writing-invalid-headers] for more
   details.
 
-  The `index` is an expression that must be one of the following types:
-
-  - `int` - an arbitrary-precision integer (Section [#sec-arbitrary-precision-integers])
-  - `bit<W>` - a `W`-bit unsigned integer where `W >= 0` (Section [#sec-unsigned-integers])
-  - `int<W>` - a `W`-bit signed integer where `W >= 1` (Section [#sec-signed-integers])
-  - a serializable `enum` with an underlying type that is `bit<W>` or `int<W>` (Section [#sec-enum-types]).
+  The `index` is an expression that must be of numeric types (Section [#sec-numeric-values]).
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
   size of the header stack (a compile-time constant).
@@ -4346,6 +4366,9 @@ void pop_front(int count) {
     // Note: this.last, this.next, and this.lastIndex adjust with this.nextIndex
 }
 ~ End P4Pseudo
+
+Similar to structs and headers, the size of a header stack can be determined at
+compile-time [#sec-determin].
 
 Two header stacks can be compared for equality (==) or inequality (!=)
 only if they have the same element type and the same length.  Two
@@ -4554,6 +4577,9 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
 }
 ~End P4Example
 
+Similar to headers, the size of a header union can be determined at
+compile-time [#sec-determin].
+
 Two header unions can be compared for equality (==) or inequality (!=)
 if they have the same type.  The unions are equal if and only if all
 their corresponding fields are equal (i.e., either all fields are
@@ -4654,6 +4680,24 @@ table tbl {
     implementation = ActionProfile(1024);  // constructor invocation
 }
 ~ End P4Example
+
+## Operations on `extern` objects { #sec-extern-operations }
+
+The only operations that can be performed on `extern` objects are the
+following:
+
+- Instantiating an extern object using a constructor invocation, as described in
+  Section [#sec-constructor].
+- Invoking a method of an extern object instance using a method call expression, as
+  described in Section [#sec-invocations].
+
+Controls, parsers, packages, and extern constructors can have
+parameters of type `extern` only if they are directionless parameters.
+Extern object instances can thus be used as arguments in the
+construction of such objects.
+
+No other operations are available on extern objects, e.g., equality
+comparison is not defined.
 
 ## Operations on types introduced by `type` { #sec-newtype-operations }
 
@@ -5817,7 +5861,7 @@ pseudo-code method, using data from the `packet` class defined
 above. We use the special `valid$` identifier to indicate the
 hidden valid bit of a header, `isNext$` to indicate that the
 l-value was obtained using `next`, and `nextIndex$` to
-indicate the corresponding header stack properties.
+indicate the corresponding header or header union stack properties.
 
 ~ Begin P4Pseudo
 void packet_in.extract<T>(out T headerLValue) {
@@ -6105,6 +6149,15 @@ Figure [#fig-subparser] shows a diagram of this process.
 
 Note that since P4 requires definitions to precede uses, it is impossible to
 create recursive (or mutually recursive) parsers.
+
+When a parser is instantiated, local instantiations of stateful
+objects are evaluated recursively. That is, each instantiation of a
+parser has a unique set of local parser value sets, extern objects,
+inner parser instances, etc. Thus, in general, invoking a parser
+instance twice is not the same as invoking two copies of the same
+parser instance. Note however that local variables do not persist
+across invocations of the parser. This semantics also applies to
+direct invocation (see Section [#sec-direct-invocation]).
 
 Architectures may impose (static or dynamic) constraints on the
 number of parser states that can be traversed for processing each
@@ -6436,6 +6489,10 @@ table is always the empty map.
 
 Each key element can have an optional `@name` annotation which is
 used to synthesize the control-plane-visible name for the key field.
+
+Note some implementations might only support a limited number of keys or
+a limited combinations of match_kind for the keys. The implementation
+should reject those cases with an error message in this case.
 
 #### Actions { #sec-table-action-list }
 
@@ -6923,6 +6980,30 @@ control Caller(inout Headers h) {
 }
 ~ End P4Example
 
+As with parsers, when a control is instantiated, local instantiations
+of stateful objects are evaluated recursively. That is, each
+instantiation of a control has a unique set of local tables, extern
+objects, inner control instances, etc. Thus, in general, invoking a
+control instance twice is not the same as invoking two copies of the
+same control instance. Note however, that local variables do not
+persist across invocations of the control. This semantics also applies
+to direct invocation (see Section [#sec-direct-invocation]).
+
+When a control is instantiated, all its local declarations of stateful
+instantiations are evaluated recursively.  Each instantiation of a
+control will have a unique set of local tables, extern objects, and
+inner control instances.  Thus, invoking a control instance twice is
+different from invoking two control instances each once, where the
+former accesses the same local stateful constructs while the latter
+access two different copies.
+
+The exactly-once evaluation only applies to local stateful instantiations. For local variable declarations,
+whether in the `apply` block or out, and whether with initializers or not, they are always evaluated
+when a control instance is invoked. That is, local variables in a control never persist across invocations. For variables
+declared outside the `apply` block, they are evaluated at the beginning of execution.
+
+All the behavior above also applies to direct invocation (see Section [#sec-direct-invocation]).
+
 # Parameterization { #sec-parameterization }
 
 In order to support libraries of useful P4 components, both `parser`s
@@ -6987,7 +7068,7 @@ the `udpSupport` parameter, as in the following example:
 GenericParser(false) topParser;
 ~ End P4Example
 
-## Direct type invocation { #sec-direct-type-invocation }
+## Direct type invocation { #sec-direct-invocation }
 
 Controls and parsers are often instantiated exactly once.  As a light
 syntactic sugar, control and parser declarations with no constructor
@@ -8192,7 +8273,9 @@ The P4 compiler should provide:
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
 ## Summary of changes made in version 1.2.4
-
+* Added a concept of numeric values (Section [#sec-numeric-values]).
+* Added a section on operations on extern objects (Section [#sec-extern-operations]).
+* Added note in sections operations on types for types that support compile-time size determination.
 * Clarified that header stacks are arrays of headers or header unions.
 * Added distinctness of fields for types that have fields including error, match kind, struct, header, and header union.
 * Clarified types `bit<W>`, `int<W>`, and `varbit<W>` encompass the case where the width is a compile-time known expression evaluating to an appropriate integer (Section [#sec-unsigned-integers], Section [#sec-signed-integers], Section [#sec-dynamically-sized-integers]).
@@ -8205,7 +8288,7 @@ The P4 compiler should provide:
 * Explicitly disallow overloading of parsers, controls, and packages (Section [#sec-extern-objects]).
 * Clarified implicit casts present in select expressions (Section [#sec-select]).
 * Clarified that slices can be applied to arbitary-precision integers (Section [#sec-varint-ops]).
-* Clarified that no direct invocation is possible for objects that have constructor arguments (Section [#sec-direct-type-invocation]).
+* Clarified that direct invocation is not possible for objects that have constructor arguments (Section [#sec-direct-invocation]).
 * Added comparison for tuples as a legal operation (Section [#sec-tuple-exprs]).
 * Clarified the behavior of `lookahead` on header-typed values (Section [#sec-packet-lookahead]).
 * Added `static_assert` function (Section [#sec-static-assert]).
