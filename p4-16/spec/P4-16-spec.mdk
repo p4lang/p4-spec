@@ -3763,7 +3763,9 @@ The following casts are legal in P4:
 - casts between a typedef and the original type.
 - casts between a type introduced by `type` and the original type.
 - casts between an `enum` with an explicit type and its underlying type
-
+- casts where the destination type is the same as the source type
+  if the destination type can be the target of a cast (this excludes 
+  e.g., parsers or externs).
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -8274,6 +8276,7 @@ The P4 compiler should provide:
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
 ## Summary of changes made in version 1.2.4
+* Allow casts from a type to itself (Section [#sec-casts]).
 * Added a concept of numeric values (Section [#sec-numeric-values]).
 * Added a section on operations on extern objects (Section [#sec-extern-operations]).
 * Added note in sections operations on types for types that support compile-time size determination.
