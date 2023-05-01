@@ -4400,7 +4400,9 @@ An expression of the following form evaluates to a header stack: '('
 `typeRef` ')' "{" expressionList "}", where typeRef is a header stack
 type.  Each expression in the list must evaluate to a header of the
 same type as the stack elements.  The number of headers in the list
-must be equal to the stack size.
+must be equal to the stack size.  The cast-like expression in front of
+the list can be omitted if the type of the stack can be inferred from
+the context.
 
 Here is an example:
 
@@ -4410,7 +4412,13 @@ header H<T> {
     T t;
 }
 H<bit<32>>[3] s = (H<bit<32>>[3]){ {0, 1}, {2, 3}, (H<bit<32>>){#} };
+// without an explicit cast
+H<bit<32>>[3] s1 = { {0, 1}, {2, 3}, (H<bit<32>>){#} };
+// using the default initializer
+H<bit<32>>[3] s2 = { {0, 1}, {2, 3}, ... };
 ~End P4Example
+
+The values of `s`, `s1`, and `s2` in the above example are identical.
 
 ## Operations on header unions { #sec-expr-hu }
 
