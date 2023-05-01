@@ -3767,7 +3767,9 @@ The following casts are legal in P4:
 - casts between a typedef and the original type.
 - casts between a type introduced by `type` and the original type.
 - casts between an `enum` with an explicit type and its underlying type
-
+- casts of a key-value list to a struct type or a header type (see Section [#sec-structure-expressions])
+- casts of a tuple expression to a header stack type
+- casts of an invalid expression `{#}` to a header or a header union type
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -4396,13 +4398,20 @@ equal.  Note that the `nextIndex` value is not used in the equality comparison.
 
 ### Header stack expressions { #sec-hs-init }
 
-An expression of the following form evaluates to a header stack: '('
-`typeRef` ')' "{" expressionList "}", where typeRef is a header stack
-type.  Each expression in the list must evaluate to a header of the
-same type as the stack elements.  The number of headers in the list
-must be equal to the stack size.  The cast-like expression in front of
-the list can be omitted if the type of the stack can be inferred from
-the context.
+One can write expressions that evaluate to a header stack.  The
+syntax of these expressions is given by:
+
+~ Begin P4Grammar
+expression ...
+    | '{' expressionList '}'
+    | '(' typeRef ')' expression
+    ;
+~ End P4Grammar
+
+The `typeRef` is a header stack type.  The `typeRef` can be omitted if
+it can be inferred from context, e.g., when initializing a variable
+with a header stack type.  Each expression in the list must evaluate
+to a header of the same type as the other stack elements.  
 
 Here is an example:
 
