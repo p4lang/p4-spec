@@ -51,10 +51,12 @@ nonTableKwName
    ;
 // END:nonTableKwName
 
+// BEGIN:optCONST
 optCONST
     : /* empty */
     | CONST
     ;
+// END:optCONST
 
 // BEGIN:optAnnotations
 optAnnotations
@@ -875,9 +877,17 @@ actionRef
     ;
 // END:actionRef
 
+// BEGIN:optEntryPriority
+optEntryPriority
+ : /* empty */
+ | PRIORITY '=' INTEGER ":"
+ | PRIORITY '=' '(' expression ')' ":"
+ ;
+// END:optEntryPriority
+
 // BEGIN:entry
 entry
-    : keysetExpression ":" actionRef optAnnotations ";"
+    : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
     ;
 // END:entry
 
