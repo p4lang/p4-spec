@@ -3770,6 +3770,9 @@ The following casts are legal in P4:
 - casts of a key-value list to a struct type or a header type (see Section [#sec-structure-expressions])
 - casts of a tuple expression to a header stack type
 - casts of an invalid expression `{#}` to a header or a header union type
+- casts where the destination type is the same as the source type
+  if the destination type appears in this list (this excludes 
+  e.g., parsers or externs).
 
 ### Implicit casts { sec-implicit-casts }
 
@@ -6273,7 +6276,12 @@ sets" [P4SizeProperty] for further discussion on the implementation of parser
 value set size.
 
 The value set is populated by the control plane by methods specified in the
-P4Runtime specification.
+P4Runtime specification[^P4RuntimeAPI].
+
+[^P4RuntimeAPI]: The P4Runtime API is defined as a Google Protocol
+    Buffer `.proto` file and an accompanying English specification document
+    here:
+    <https://github.com/p4lang/p4runtime>
 
 # Control blocks { #sec-control }
 
@@ -6426,9 +6434,8 @@ reject them.
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | optAnnotations CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
-    | optAnnotations CONST nonTableKwName '=' initializer ';'
-    | optAnnotations nonTableKwName '=' initializer ';'
+    | optAnnotations optCONST ENTRIES '=' '{' entriesList '}'
+    | optAnnotations optCONST nonTableKwName '=' initializer ';'
     ;
 
 [INCLUDE=grammar.mdk:nonTableKwName]
@@ -6445,6 +6452,13 @@ In addition, the tables may optionally define the following properties,
 - `default_action`: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
 - `size`: an integer specifying the desired size of the table.
+- `entries`: entries that are initially added to a table when the P4
+  program is loaded, some or all of which may be unchangeable by the
+  control plane software.
+- `largest_priority_wins` - Only useful for some tables with the
+  `entries` property.  See section [#sec-entries] for details.
+- `priority_delta` - Only useful for some tables with the `entries`
+  property.  See section [#sec-entries] for details.
 
 The compiler must set the `default_action` to `NoAction` (and also
 insert it into the list of `actions`) for tables that do not define
@@ -6677,12 +6691,21 @@ and illegal specifications of default actions for the `table t`:
 
 While table entries are typically installed by the control plane,
 tables may also be initialized at compile time with a set of entries.
-This is useful in situations where tables are
+
+Declaring these entries with `const entries`
+is useful in situations where tables are
 used to implement fixed algorithms---defining table entries statically
 enables expressing these algorithms directly in P4,
 which allows the compiler to infer how the table is actually used and
 potentially make better allocation decisions for targets with limited
-resources. Entries declared in the P4 source are installed in the
+resources.
+
+Declaring entries with `entries` (without the `const` qualifier)
+enables one to specify a mix of some immutable entries that are always
+in the table, and some mutable entries that the control plane is
+allowed to later change or remove.
+
+Entries declared in the P4 source are installed in the
 table when the program is loaded onto the target. Entries cannot be
 specified for a table with no key (see Sec. [#sec-table-keys]).
 
@@ -6690,9 +6713,14 @@ Table entries are defined using the following syntax:
 
 ~ Begin P4Grammar
 tableProperty
- : const ENTRIES '=' '{' entriesLlist '}' /* immutable entries */
+ : optAnnotations optCONST ENTRIES '=' '{' entriesList '}'
+ ;
 
 [INCLUDE=grammar.mdk:entriesList]
+
+[INCLUDE=grammar.mdk:optCONST]
+
+[INCLUDE=grammar.mdk:optEntryPriority]
 
 [INCLUDE=grammar.mdk:entry]
 ~ End P4Grammar
@@ -6701,26 +6729,32 @@ Table entries defined using `const entries` are immutable---i.e., they
 can only be read by the control plane.  The control plane is not
 allowed to remove or modify any entries defined within `const
 entries`, nor is it allowed to add entries to such a table.
+It is allowed for individual entries to have the `const` keyword
+before them, but this is redundant when the entries are declared using
+`const entries`.
+
+Table entries defined using `entries` (without a `const` qualifier
+before it) may have `const` before them, or not, independently for
+each entry.  Entries with `const` before them may not be modified or
+removed by the control plane.  Entries without `const` may be modified
+or removed by the control plane.  It is permitted for the control
+plane to add entries to such a table (subject to table capacity
+limitations), unlike tables declared with `const entries`.
 
 Whether the control plane is allowed to modify a table's default
 action at run time is determined by the table's `default_action` table
 property (see Section [#sec-default-action]), independently of whether
 the control plane is allowed to modify the entries of the table.
 
-This design
-choice has important ramifications for the P4 runtime since it does
-not have to keep track of different types of entries in one table
-(mutable and immutable).  Future versions of P4 may add the ability to
-mix mutable and immutable entries in the same table, by declaring
-additional `entries` properties without the `const` keyword.
-
 The `keysetExpression` component of an entry is a tuple that must
 provide a field for each key in the table keys (see Sec.
 [#sec-table-props]). The table key type must match the type of the
 element of the set. The `actionRef` component must be an action which
-appears in the table actions list, with all its arguments bound.
+appears in the table actions list (and must not have the
+`@defaultonly` annotation), with all its arguments bound.
 
-If the runtime API requires a priority for the entries of a
+If no entry priorities are specified in the source code, and
+if the runtime API requires a priority for the entries of a
 table---e.g. when using the P4 Runtime API, tables with at least one
 `ternary` search key field---then the entries are matched in program
 order, stopping at the first matching entry. Architectures should
@@ -6754,7 +6788,7 @@ control ingress(inout Header_t h, inout Meta_t m,
                 inout standard_metadata_t standard_meta) {
 
     action a() { standard_meta.egress_spec = 0; }
-    action a_with_control_params(bit<9> x) { standard_meta.egress_spec = x; }
+    action a_params(bit<9> x) { standard_meta.egress_spec = x; }
 
     table t_exact_ternary {
 
@@ -6765,18 +6799,18 @@ control ingress(inout Header_t h, inout Meta_t m,
 
 	actions = {
             a;
-            a_with_control_params;
+            a_params;
         }
 
 	default_action = a;
 
-    const entries = {
-            (0x01, 0x1111 &&& 0xF   ) : a_with_control_params(1);
-            (0x02, 0x1181           ) : a_with_control_params(2);
-            (0x03, 0x1111 &&& 0xF000) : a_with_control_params(3);
-            (0x04, 0x1211 &&& 0x02F0) : a_with_control_params(4);
-            (0x04, 0x1311 &&& 0x02F0) : a_with_control_params(5);
-            (0x06, _                ) : a_with_control_params(6);
+        const entries = {
+            (0x01, 0x1111 &&& 0xF   ) : a_params(1);
+            (0x02, 0x1181           ) : a_params(2);
+            (0x03, 0x1111 &&& 0xF000) : a_params(3);
+            (0x04, 0x1211 &&& 0x02F0) : a_params(4);
+            (0x04, 0x1311 &&& 0x02F0) : a_params(5);
+            (0x06, _                ) : a_params(6);
             _                         : a;
         }
     }
@@ -6785,10 +6819,221 @@ control ingress(inout Header_t h, inout Meta_t m,
 ~ End P4Example
 
 In this example we define a set of 7 entries, all of which invoke
-action `a_with_control_params` except for the final entry which
+action `a_params` except for the final entry which
 invokes action `a`. Once the program is loaded, these entries are
 installed in the table in the order they are enumerated in the
 program.
+
+##### Entry priorities { #sec-entry-priorities }
+
+If a table has fields where their `match_kind`s are all `exact` or
+`lpm`, there is no reason to assign numeric priorities to its entries.
+If they are all `exact`, duplicate keys are not allowed, and thus
+every lookup key can match at most one entry, so there is no need for
+a tiebreaker.  If there is an `lpm` field, the priority of the entry
+corresponds to the length of the prefix, i.e. if a lookup key matches
+multiple prefixes, the longest prefix is always the winner.
+
+For tables with other `match_kind` values, e.g. at least one `ternary`
+field, in general it is possible to install multiple entries such that
+the same lookup key can match the key of multiple entries installed
+into the table at the same time.  Control plane APIs such as P4Runtime
+API[^P4RuntimeAPI] and TDI[^TDI] require control plane software to
+provide a numeric priority with each entry added to such a table.
+This enables the data plane to determine which of several matching
+entries is the "winner", i.e. the one entry whose action is invoked.
+
+[^TDI]: TDI is the Table Driven Interface.  More information can be
+    found here: https://github.com/p4lang/tdi
+
+Unfortunately there are two commonly used, but different, ways of
+interpreting numeric priority values.
+
+The P4Runtime API requires numeric priorities to be positive integers,
+i.e. 1 or larger, and defines that entries with larger priorities must
+win over entries with smaller priorities.  We will call this
+convention `largest_priority_wins`.
+
+TDI requires numeric priorities to be non-negative integers, i.e. 0 or
+larger, and defines that entries with smaller priorities must win over
+entries with larger priorities.  We will call this convention
+`smallest_priority_wins`.
+
+We wish to support either of these conventions when developers specify
+priorities for initial table entries in the program.  Thus there is a
+table property `largest_priority_wins`.  If explicitly specified for a
+table, its value must be boolean.  If `true`, then the priority values
+use the `largest_priority_wins` convention.  If `false`, then the
+priority values use the `smallest_priority_wins` convention.  If the
+table property is not present at all, then the default convention is
+`true`, corresponding to `largest_priority_wins`.
+
+We also wish to support developers that want the convenience of
+predictable entry priority values automatically selected by the
+compiler, without having to write them in the program, plus the
+ability to specify entry priorities explicitly, if they wish.
+
+In some cases, developers may wish the initial priority values to have
+"gaps" between their values, to leave room for possible later
+insertion of new entries between two initial entries.  They can
+achieve this by explicitly specifying all priority values, of course,
+but as a convenience we define the table property `priority_delta` to
+be a positive integer value, with a default value of 1 if not
+specified for a table, to use as a default difference between the
+priorities of consecutive entries.
+
+There are two steps that occur at compile time for a table with the
+`entries` property involving entry priorities:
+
+- Determine the value of the priority of every entry in the `entries`
+  list.
+- Issue any errors or warnings that are appropriate for these priority
+  values.  Warnings may be suppressed via an appropriate `@noWarn`
+  annotation.
+
+These steps are performed independently for each table with the
+`entries` property, and each is described in more detail below.
+
+In general, if the developer specifies a priority value for an entry,
+that is the value that will be used.
+
+If the developer does not specify priority values for any entry, then
+the compiler calculates priority values for every entry as follows:
+
+~ Begin P4Pseudo
+// For this pseudocode, table entries in the `entries` list are
+// numbered 0 through n-1, 0 being the first to appear in order in the
+// source code.  Their priority values are named prio[0] through
+// prio[n-1].
+int p = 1;
+if (largest_priority_wins == true) {
+    for (int j = n-1; j >= 0; j -= 1) {
+        prio[j] = p;
+        p += priority_delta;
+    }
+} else {
+    for (int j = 0; j < n; j += 1) {
+        prio[j] = p;
+        p += priority_delta;
+    }
+}
+~ End P4Pseudo
+
+If the developer specifies priority values for at least one entry,
+then in order to simplify the rules for determining priorities of
+entries without one in the source code, the first entry _must_ have a
+priority value explicitly provided.  The priorities of entries that do
+not have one in the source code (if any) are determined as follows:
+
+~ Begin P4Pseudo
+// Same conventions here as in the previous block of pseudocode above.
+// If entry j has a priority value specified in the source code,
+// prio_specified[j] is true, otherwise it is false.
+assert(prio_specified[0]);  // compile time error if prio_specified[0] is false
+p = prio[0];
+for (int j = 1; j < n; j += 1) {
+    if (prio_specified[j]) {
+        p = prio[j];
+    } else {
+        if (largest_priority_wins == true) {
+            p -= priority_delta;
+        } else {
+            p += priority_delta;
+        }
+        prio[j] = p;
+    }
+}
+~ End P4Pseudo
+
+This is the end of the first step: determining entry priorities.
+
+The priorities determined in this way are the values used when the P4
+program is first loaded into a device.  Afterwards, the priorities may
+only change by means provided by the control plane API in use.
+
+In the second step, the compiler issues errors for out of range
+priority values, and/or warnings for certain combinations of entry
+priorities that might be unintended by the developer, unless the
+developer explicitly disables those warnings.
+
+If any priority values are negative, or larger than the maximum
+supported value, that is a compile time error.
+
+If the annotation `@noWarn("duplicate_priorities")` is _not_ used on
+the `entries` table property, then the compiler issues a warning if
+any two entries for the same table have equal priority values.  Both
+P4Runtime and TDI leave it unspecified which entry is the winner if a
+lookup key matches multiple keys that all have the same priority,
+hence a warning is useful to less experienced developers that are
+unfamiliar with this unspecified behavior.
+
+If the annotation `@noWarn("duplicate_priorities")` is used on the
+`entries` table property, then no warnings of this type are ever
+issued by the compiler.  Using equal priority values for multiple
+entries in the same table is sometimes useful in reducing the number
+of hardware updates required when adding entries to such a table.
+
+If the annotation `@noWarn("entries_out_of_priority_order")` is _not_
+used on the `entries` table property, then the compiler issues a
+warning if:
+
+- If `largest_priority_wins` is `true` for the table, and there is any
+  pair of consecutive entries where `prio[j] < prio[j+1]`, then a
+  warning is issued for that pair of entries.
+- If `largest_priority_wins` is `false` for the table, and there is any
+  pair of consecutive entries where `prio[j] > prio[j+1]`, then a
+  warning is issued for that pair of entries.
+
+This warning is useful to developers that want the order that entries
+appear in the source code to match the relative priority of entries in
+the target device.
+
+If the annotation `@noWarn("entries_out_of_priority_order")` is used
+on the `entries` table property, then no warnings of this type are
+ever issued by the compiler for this table.  This option is provided
+for developers who explicitly choose to specify entries in an order
+that does not match their relative priority order.
+
+The following example is the same as the first example in section
+[#sec-entries], except for the definition of table `t_exact_ternary`
+shown below.
+
+~ Begin P4Example
+table t_exact_ternary {
+    key = {
+        h.h.e : exact;
+        h.h.t : ternary;
+    }
+
+    actions = {
+        a;
+        a_params;
+    }
+
+    default_action = a;
+
+    largest_priority_wins = false;
+    priority_delta = 10;
+    @noWarn("duplicate_priorities")
+    entries = {
+        const priority=10: (0x01, 0x1111 &&& 0xF   ) : a_params(1);
+                           (0x02, 0x1181           ) : a_params(2); // priority=20
+                           (0x03, 0x1000 &&& 0xF000) : a_params(3); // priority=30
+        const              (0x04, 0x0210 &&& 0x02F0) : a_params(4); // priority=40
+              priority=40: (0x04, 0x0010 &&& 0x02F0) : a_params(5);
+                           (0x06, _                ) : a_params(6); // priority=50
+    }
+}
+~ End P4Example
+
+The entries that do not have an explicit priority specified will be
+assigned the priority values shown in the comments, because
+`priority_delta` is 10, and because of those entries that do have
+priority values specified.
+
+Normally this program would cause a warning about multiple entries
+with the same priority of 40, but those warnings will be suppressed
+because of the `@noWarn("duplicate_priorities")` annotation.
 
 #### Size {#sec-size-table-property}
 
@@ -8022,9 +8267,10 @@ literals, and symbols, but excluding parentheses.
 [INCLUDE=grammar.mdk:annotationBody]
 ~ End P4Grammar
 
-Unstructured annotations may impose additional structure on their bodies, and
-are not confined to the P4 language. For example, the P4Runtime specification
-defines a `@pkginfo` annotation that expects key-value pairs.
+Unstructured annotations may impose additional structure on their
+bodies, and are not confined to the P4 language. For example, the
+P4Runtime specification[^P4RuntimeAPI] defines a `@pkginfo` annotation
+that expects key-value pairs.
 
 ## Bodies of Structured Annotations
 
@@ -8341,8 +8587,8 @@ The P4 compiler should provide:
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
 ## Summary of changes made in version 1.2.4
-
 * Added header stack expressions (Section [#sec-hs-init]).
+* Allow casts from a type to itself (Section [#sec-casts]).
 * Added an invalid header or header union expression `{#}` (Sections [#sec-ops-on-hdrs] and [#sec-expr-hu]).
 * Added a concept of numeric values (Section [#sec-numeric-values]).
 * Added a section on operations on extern objects (Section [#sec-extern-operations]).
