@@ -3025,15 +3025,17 @@ The grammar production rule for general expressions is as follows:
 ~ Begin P4Grammar
 expression
     : INTEGER
+    | DOTS                           // DOTS is ...
+    | STRING_LITERAL
     | TRUE
     | FALSE
-    | STRING_LITERAL
-    | nonTypeName
-    | dotPrefix nonTypeName
+    | prefixedNonTypeName
     | expression '[' expression ']'
     | expression '[' expression ':' expression ']'
-    | '{' expressionList '}'
-    | '{' kvList '}'
+    | '{' expressionList optTrailingComma '}'
+    | "{#}"
+    | '{' kvList optTrailingComma '}'
+    | "{" kvList "," DOTS optTrailingComma "}"
     | '(' expression ')'
     | '!' expression
     | '~' expression
@@ -3047,10 +3049,12 @@ expression
     | expression '%' expression
     | expression '+' expression
     | expression '-' expression
+    | expression '|+|' expression
+    | expression '|-|' expression
     | expression SHL expression      // SHL is <<
     | expression '>''>' expression   // check that >> are contiguous
     | expression LE expression       // LE is <=
-    | expression GE expression
+    | expression GE expression       // GE is >=
     | expression '<' expression
     | expression '>' expression
     | expression NE expression       // NE is !=

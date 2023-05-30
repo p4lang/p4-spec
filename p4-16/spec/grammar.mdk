@@ -37,6 +37,7 @@ nonTypeName
 name
     : nonTypeName
     | LIST
+    | PRIORITY
     | TYPE_IDENTIFIER
     ;
 // END:name
@@ -48,6 +49,7 @@ nonTableKwName
    | APPLY
    | STATE
    | TYPE
+   | PRIORITY
    ;
 // END:nonTableKwName
 
@@ -383,6 +385,13 @@ tupleKeysetExpression
     ;
 // END:tupleKeysetExpression
 
+// BEGIN:optTrailingComma
+optTrailingComma
+    : /* empty */
+    | ","
+    ;
+// END:optTrailingComma
+
 // BEGIN:simpleExpressionList
 simpleExpressionList
     : simpleKeysetExpression
@@ -541,7 +550,7 @@ headerStackType
 
 // BEGIN:specializedType
 specializedType
-    : prefixedType "<" typeArgumentList ">"
+    : typeName "<" typeArgumentList ">"
     ;
 // END:specializedType
 
@@ -607,13 +616,6 @@ typeArgumentList
     ;
 // END:typeArgumentList
 
-// BEGIN:optTrailingComma
-optTrailingComma
-    : /* empty */
-    | ","
-    ;
-// END:optTrailingComma
-
 // BEGIN:realTypeArg
 realTypeArg
     : typeRef
@@ -632,7 +634,7 @@ realTypeArgumentList
 // BEGIN:typeDeclaration
 typeDeclaration
     : derivedTypeDeclaration
-    | typedefDeclaration
+    | typedefDeclaration ";"
     | parserTypeDeclaration ";"
     | controlTypeDeclaration ";"
     | packageTypeDeclaration ";"
@@ -720,9 +722,9 @@ identifierList
 // END:identifierList
 
 typedefDeclaration
-    : optAnnotations TYPEDEF typeRef name ";"
-    | optAnnotations TYPEDEF derivedTypeDeclaration name ";"
-    | optAnnotations TYPE typeRef name ";"
+    : optAnnotations TYPEDEF typeRef name
+    | optAnnotations TYPEDEF derivedTypeDeclaration name
+    | optAnnotations TYPE typeRef name
     ;
 
 /*************************** STATEMENTS *************************/
@@ -877,6 +879,12 @@ actionRef
     ;
 // END:actionRef
 
+// BEGIN:entry
+entry
+    : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
+    ;
+// END:entry
+
 // BEGIN:optEntryPriority
 optEntryPriority
  : /* empty */
@@ -884,12 +892,6 @@ optEntryPriority
  | PRIORITY '=' '(' expression ')' ":"
  ;
 // END:optEntryPriority
-
-// BEGIN:entry
-entry
-    : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
-    ;
-// END:entry
 
 // BEGIN:entriesList
 entriesList
@@ -1024,17 +1026,18 @@ lvalue
 
 expression
     : INTEGER
+    | DOTS
     | STRING_LITERAL
     | TRUE
     | FALSE
     | THIS
-    | nonTypeName
-    | dotPrefix nonTypeName
+    | prefixedNonTypeName
     | expression "[" expression "]"
     | expression "[" expression ":" expression "]"
     | "{" expressionList optTrailingComma "}"
-    | "{" kvList optTrailingComma "}"
     | "{#}"
+    | "{" kvList optTrailingComma "}"
+    | "{" kvList "," DOTS optTrailingComma "}"
     | "(" expression ")"
     | "!" expression %prec PREFIX
     | "~" expression %prec PREFIX
@@ -1078,8 +1081,7 @@ nonBraceExpression
     | TRUE
     | FALSE
     | THIS
-    | nonTypeName
-    | dotPrefix nonTypeName
+    | prefixedNonTypeName
     | nonBraceExpression "[" expression "]"
     | nonBraceExpression "[" expression ":" expression "]"
     | "(" expression ")"
