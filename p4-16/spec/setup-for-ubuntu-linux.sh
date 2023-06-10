@@ -21,8 +21,8 @@ echo "+ The Portable Switch Architecture (PSA) specification"
 echo ""
 echo "While it would be nice if I could assure you that this script"
 echo "will work on a system that already had many packages installed,"
-echo "I do not know which Ubuntu packages might have conflicts with"
-echo "each other."
+echo "I do not know which packages might have conflicts with each"
+echo "other."
 echo "------------------------------------------------------------"
 
 # This is where the application gnome-font-viewer copies font files
