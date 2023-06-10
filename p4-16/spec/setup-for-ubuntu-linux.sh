@@ -1,21 +1,28 @@
 #! /bin/bash
 
+print_supported_os_versions() {
+    1>&2 echo "    Ubuntu 16.04"
+    1>&2 echo "    Ubuntu 18.04"
+    1>&2 echo "    Ubuntu 20.04"
+    1>&2 echo "    Ubuntu 22.04"
+}
+
 echo "------------------------------------------------------------"
 echo "Purpose of this script:"
 echo ""
-echo "On an Ubuntu Linux system that has not had any"
-echo "additional packages installed yet, install a set of packages"
-echo "that are needed to successfully create the HTML and PDF versions"
-echo "of these documents from their Madoko source files (files with"
-echo "names that end with '.mdk'):"
+echo "On a supported operating system that has not had any additional"
+echo "packages installed yet, install a set of packages that are"
+echo "needed to successfully create the HTML and PDF versions of these"
+echo "documents from their Madoko source files (files with names that"
+echo "end with '.mdk'):"
 echo ""
 echo "+ The P4_16 language specification"
 echo "+ The Portable Switch Architecture (PSA) specification"
 echo ""
 echo "While it would be nice if I could assure you that this script"
-echo "will work on an Ubuntu system that already had many packages"
-echo "installed, I do not know which Ubuntu packages might have"
-echo "conflicts with each other."
+echo "will work on a system that already had many packages installed,"
+echo "I do not know which Ubuntu packages might have conflicts with"
+echo "each other."
 echo "------------------------------------------------------------"
 
 # This is where the application gnome-font-viewer copies font files
@@ -23,16 +30,8 @@ echo "------------------------------------------------------------"
 FONT_INSTALL_DIR="${HOME}/.local/share/fonts"
 
 warning() {
-    1>&2 echo "This software has only been tested on these systems:"
-    1>&2 echo "    Ubuntu 16.04"
-    1>&2 echo "    Ubuntu 18.04"
-    1>&2 echo "    Ubuntu 20.04"
-    1>&2 echo ""
-    1>&2 echo "While the script seems to succeed on an Ubuntu 22.04 system,"
-    1>&2 echo "it has been found that the resulting system gives errors when"
-    1>&2 echo "trying to produce PDF files from several of the P4_16"
-    1>&2 echo "specification documents:"
-    1>&2 echo "https://github.com/p4lang/p4-spec/issues/1115"
+    1>&2 echo "This script has only been tested on these OS versions:"
+    print_supported_os_versions
 }
 
 lsb_release >& /dev/null
@@ -46,7 +45,7 @@ fi
 DISTRIBUTOR_ID=`lsb_release -si`
 UBUNTU_RELEASE=`lsb_release -sr`
 
-if [ ${DISTRIBUTOR_ID} != "Ubuntu" -o \( ${UBUNTU_RELEASE} != "16.04" -a ${UBUNTU_RELEASE} != "18.04" -a ${UBUNTU_RELEASE} != "20.04" \) ]
+if [ ${DISTRIBUTOR_ID} != "Ubuntu" -o \( ${UBUNTU_RELEASE} != "16.04" -a ${UBUNTU_RELEASE} != "18.04" -a ${UBUNTU_RELEASE} != "20.04" -a ${UBUNTU_RELEASE} != "22.04" \) ]
 then
     warning
     1>&2 echo ""
@@ -107,3 +106,23 @@ echo "Time and disk space used when installation was complete:"
 set -x
 date
 df -BM .
+
+if [ ${DISTRIBUTOR_ID} == "Ubuntu" -a ${UBUNTU_RELEASE} == "22.04" ]
+then
+    set +x
+    1>&2 echo ""
+    1>&2 echo "------------------------------------------------------------"
+    1>&2 echo "WARNING!"
+    1>&2 echo "------------------------------------------------------------"
+    1>&2 echo ""
+    1>&2 echo "While this script can successfully install the required"
+    1>&2 echo "packages on an Ubuntu 22.04 system like this one, these"
+    1>&2 echo "installed packages are different versions than for"
+    1>&2 echo "other supported OS's, and in our testing they GIVE"
+    1>&2 echo "ERRORS and FAIL TO BUILD HTML and PDF files for the P4"
+    1>&2 echo "specifications.  See this issue:"
+    1>&2 echo ""
+    1>&2 echo "    https://github.com/p4lang/p4-spec/issues/1115"
+    1>&2 echo ""
+    1>&2 echo "If you know how to fix this, your help is much appreciated."
+fi
