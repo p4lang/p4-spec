@@ -30,6 +30,7 @@ nonTypeName
     | STATE
     | ENTRIES
     | TYPE
+    | PRIORITY
     ;
 // END:nonTypeName
 
@@ -37,7 +38,6 @@ nonTypeName
 name
     : nonTypeName
     | LIST
-    | PRIORITY
     | TYPE_IDENTIFIER
     ;
 // END:name
@@ -881,14 +881,14 @@ actionRef
 
 // BEGIN:entry
 entry
-    : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
+    : optCONST entryPriority keysetExpression ':' actionRef optAnnotations ';'
+    | optCONST keysetExpression ':' actionRef optAnnotations ';'
     ;
 // END:entry
 
 // BEGIN:optEntryPriority
-optEntryPriority
- : /* empty */
- | PRIORITY '=' INTEGER ":"
+entryPriority
+ : PRIORITY '=' INTEGER ":"
  | PRIORITY '=' '(' expression ')' ":"
  ;
 // END:optEntryPriority
