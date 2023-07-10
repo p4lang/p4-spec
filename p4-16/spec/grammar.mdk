@@ -37,6 +37,7 @@ nonTypeName
 name
     : nonTypeName
     | LIST
+    | PRIORITY
     | TYPE_IDENTIFIER
     ;
 // END:name
@@ -48,13 +49,16 @@ nonTableKwName
    | APPLY
    | STATE
    | TYPE
+   | PRIORITY
    ;
 // END:nonTableKwName
 
+// BEGIN:optCONST
 optCONST
     : /* empty */
     | CONST
     ;
+// END:optCONST
 
 // BEGIN:optAnnotations
 optAnnotations
@@ -381,6 +385,13 @@ tupleKeysetExpression
     ;
 // END:tupleKeysetExpression
 
+// BEGIN:optTrailingComma
+optTrailingComma
+    : /* empty */
+    | ","
+    ;
+// END:optTrailingComma
+
 // BEGIN:simpleExpressionList
 simpleExpressionList
     : simpleKeysetExpression
@@ -539,7 +550,7 @@ headerStackType
 
 // BEGIN:specializedType
 specializedType
-    : prefixedType "<" typeArgumentList ">"
+    : typeName "<" typeArgumentList ">"
     ;
 // END:specializedType
 
@@ -623,7 +634,7 @@ realTypeArgumentList
 // BEGIN:typeDeclaration
 typeDeclaration
     : derivedTypeDeclaration
-    | typedefDeclaration
+    | typedefDeclaration ";"
     | parserTypeDeclaration ";"
     | controlTypeDeclaration ";"
     | packageTypeDeclaration ";"
@@ -672,8 +683,9 @@ structField
 
 // BEGIN:enumDeclaration
 enumDeclaration
-    : optAnnotations ENUM name "{" identifierList "}"
-    | optAnnotations ENUM typeRef name "{" specifiedIdentifierList "}"
+    : optAnnotations ENUM name "{" identifierList optTrailingComma "}"
+    | optAnnotations ENUM typeRef name "{"
+      specifiedIdentifierList optTrailingComma "}"
     ;
 // END:enumDeclaration
 
@@ -698,7 +710,7 @@ errorDeclaration
 
 // BEGIN:matchKindDeclaration
 matchKindDeclaration
-    : MATCH_KIND "{" identifierList "}"
+    : MATCH_KIND "{" identifierList optTrailingComma "}"
     ;
 // END:matchKindDeclaration
 
@@ -710,9 +722,9 @@ identifierList
 // END:identifierList
 
 typedefDeclaration
-    : optAnnotations TYPEDEF typeRef name ";"
-    | optAnnotations TYPEDEF derivedTypeDeclaration name ";"
-    | optAnnotations TYPE typeRef name ";"
+    : optAnnotations TYPEDEF typeRef name
+    | optAnnotations TYPEDEF derivedTypeDeclaration name
+    | optAnnotations TYPE typeRef name
     ;
 
 /*************************** STATEMENTS *************************/
@@ -869,9 +881,17 @@ actionRef
 
 // BEGIN:entry
 entry
-    : keysetExpression ":" actionRef optAnnotations ";"
+    : optCONST optEntryPriority keysetExpression ':' actionRef optAnnotations ';'
     ;
 // END:entry
+
+// BEGIN:optEntryPriority
+optEntryPriority
+ : /* empty */
+ | PRIORITY '=' INTEGER ":"
+ | PRIORITY '=' '(' expression ')' ":"
+ ;
+// END:optEntryPriority
 
 // BEGIN:entriesList
 entriesList
@@ -957,8 +977,8 @@ expressionList
 
 // BEGIN:structuredAnnotationBody
 structuredAnnotationBody
-    : expressionList
-    | kvList
+    : expressionList optTrailingComma
+    | kvList optTrailingComma
     ;
 // END:structuredAnnotationBody
 
@@ -1006,16 +1026,18 @@ lvalue
 
 expression
     : INTEGER
+    | DOTS
     | STRING_LITERAL
     | TRUE
     | FALSE
     | THIS
-    | nonTypeName
-    | dotPrefix nonTypeName
+    | prefixedNonTypeName
     | expression "[" expression "]"
     | expression "[" expression ":" expression "]"
-    | "{" expressionList "}"
-    | "{" kvList "}"
+    | "{" expressionList optTrailingComma "}"
+    | "{#}"
+    | "{" kvList optTrailingComma "}"
+    | "{" kvList "," DOTS optTrailingComma "}"
     | "(" expression ")"
     | "!" expression %prec PREFIX
     | "~" expression %prec PREFIX
@@ -1059,8 +1081,7 @@ nonBraceExpression
     | TRUE
     | FALSE
     | THIS
-    | nonTypeName
-    | dotPrefix nonTypeName
+    | prefixedNonTypeName
     | nonBraceExpression "[" expression "]"
     | nonBraceExpression "[" expression ":" expression "]"
     | "(" expression ")"
