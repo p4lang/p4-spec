@@ -1,5 +1,15 @@
 # Introduction
 
+This article describes how to run `bison` on the P4_16 language
+grammar, as implemented in the open source `p4c` compiler available
+at:
+
++ https://github.com/p4lang/p4c
+
+These steps can be useful when trying out variations of the `bison`
+grammar, e.g. when working on making extensions to the P4_16 language
+syntax for enhancements.
+
 Prerequisites: You have a Linux system with the necessary software
 installed required to build `p4c` from source code.
 
