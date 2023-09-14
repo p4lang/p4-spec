@@ -570,6 +570,17 @@ extern InternetChecksum {
   /// 16 bits long.
   void subtract<T>(in T data);
 
+  /// Initialize the InternetChecksum extern object.
+  /// This method prepares the InternetChecksum object to compute an
+  /// incremental checksum (e.g. TCP checksum).
+  /// The primary use case for this method is to initialize the checksum
+  /// computation with the value extracted from the received packet header.
+  /// Calling ck.initizalize(chksum) is algorithmically equivalent to calling
+  /// ck.clear() followed by ck.substract(chksum)
+  /// @param chksum : The initial checksum value, typically extracted from
+  ///                 the packet header.
+  void initialize(in bit<16> chksum);
+
   /// Get checksum for data added (and not removed) since last clear
   @noSideEffects
   bit<16> get();
