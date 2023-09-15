@@ -306,7 +306,7 @@
 <div class="authors align-center" data-line="149" style="text-align:center;width:80%;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><table class="authorrow columns block" data-line="149" style="margin-top:2ex;width:100%;line-adjust:0">
 <tbody><tr><td class="author column" data-line="149" style="text-align:center;line-adjust:0">
 <div class="authorname" data-line="149" style="font-size:large;line-adjust:0"><span data-line="149"></span>The P4 Language Consortium</div></td></tr></tbody></table></div>
-<div class="titlefooter align-center" data-line="158" style="text-align:center;margin-top:0.5ex;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><span data-line="158"></span>2023-09-08</div></div>
+<div class="titlefooter align-center" data-line="158" style="text-align:center;margin-top:0.5ex;font-family:helvetica, sans-serif;font-weight:bold;line-adjust:0"><span data-line="158"></span>2023-09-15</div></div>
 <div class="abstract" data-line="143" style="margin-left:3em;margin-right:3em;font-size:small">
 <p class="p noindent" data-line="144"><span data-line="144"></span><strong class="strong-star2">Abstract.</strong><span data-line="144"></span> P4 is a language for programming the data plane of network
 devices. This document provides a precise definition of the P4<span data-line="145"></span><sub>16</sub><span data-line="145"></span>
@@ -1697,8 +1697,8 @@ type may vary depending on the context. Certain keywords (e.g., <span data-line=
 can be used as identifiers if the context makes it unambiguous.
 </p>
 <div class="p4grammar" data-line="1226" style="border:solid;margin-top:6pt;margin-bottom:6pt;padding:6pt;background-color:#e6ffff;border-width:0.5pt">
-<div class="p4grammarblock" data-line="1227;grammar.mdk:34">
-<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="1227;grammar.mdk:35" data-line-first="1227;grammar.mdk:36" style="display:block;font-family:monospace;font-size:10pt"><code data-line="1227;grammar.mdk:36">nonTypeName
+<div class="p4grammarblock" data-line="1227;grammar.mdk:35">
+<pre class="para-block pre-fenced pre-fenced4 language-p4 lang-p4 p4 colorized" data-line="1227;grammar.mdk:36" data-line-first="1227;grammar.mdk:37" style="display:block;font-family:monospace;font-size:10pt"><code data-line="1227;grammar.mdk:37">nonTypeName
     : IDENTIFIER
     | APPLY
     | KEY
@@ -1706,6 +1706,7 @@ can be used as identifiers if the context makes it unambiguous.
     | STATE
     | ENTRIES
     | TYPE
+    | PRIORITY
     ;
 
 name
@@ -7540,14 +7541,14 @@ optCONST
     | CONST
     ;
 
-optEntryPriority
- : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
- | PRIORITY <span style="color:maroon">&#39;=&#39;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
+entryPriority
+ : PRIORITY <span style="color:maroon">&#39;=&#39;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
  | PRIORITY <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
  ;
 
 entry
-    : optCONST optEntryPriority keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
+    : optCONST entryPriority keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
+    | optCONST keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
     ;</code></pre></div></div>
 <p class="p noindent" data-line="6732"><span data-line="6732"></span>Table entries defined using <span data-line="6732"></span><code class="code code1 language-p4 lang-p4 p4 colorized" style="font-family:monospace;font-size:10pt"><span style="color:teal;font-weight:bold">const</span> <span style="color:teal;font-weight:bold">entries</span></code><span data-line="6732"></span> are immutable<span data-line="6732"></span>&#8212;<span data-line="6732"></span>i.e., they
 can only be read by the control plane.  The control plane is not
@@ -10048,12 +10049,12 @@ nonTypeName
     | STATE
     | ENTRIES
     | TYPE
+    | PRIORITY
     ;
 
 name
     : nonTypeName
     | LIST
-    | PRIORITY
     | TYPE_IDENTIFIER
     ;
 
@@ -10705,12 +10706,12 @@ actionRef
     ;
 
 entry
-    : optCONST optEntryPriority keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
+    : optCONST entryPriority keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
+    | optCONST keysetExpression <span style="color:maroon">&#39;:&#39;</span> actionRef optAnnotations <span style="color:maroon">&#39;;&#39;</span>
     ;
 
-optEntryPriority
- : <span style="color:darkgreen">/*</span><span style="color:darkgreen"> empty </span><span style="color:darkgreen">*/</span>
- | PRIORITY <span style="color:maroon">&#39;=&#39;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
+entryPriority
+ : PRIORITY <span style="color:maroon">&#39;=&#39;</span> INTEGER <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
  | PRIORITY <span style="color:maroon">&#39;=&#39;</span> <span style="color:maroon">&#39;(&#39;</span> expression <span style="color:maroon">&#39;)&#39;</span> <span style="color:maroon">&quot;</span><span style="color:maroon">:</span><span style="color:maroon">&quot;</span>
  ;
 
