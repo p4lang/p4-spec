@@ -1694,8 +1694,8 @@ directions:
   including values for the directionless parameters. The directionless
   parameters in this case behave like `in` parameters.
   See Section [#sec-invoke-actions] for further details.
-- Default parameter values are only allowed for 'in' or direction-less parameters;
-  these values must evaluate to compile-time constants.
+- Default parameter values are only allowed for 'in' or direction-less 
+  parameters; these values must evaluate to compile-time known values.
 - If parameters with default values do not appear at the
   end of the list of parameters, invocations that use
   the default values must use named arguments, as in the following
@@ -1826,8 +1826,7 @@ P4 supports the following built-in base types:
   restricted circumstances.
 - The `error` type, which is used to convey errors in a
   target-independent, compiler-managed way.
-- The `string` type, which can be used only for compile-time
-  constant string values.
+- The `string` type, which can be used only for compile-time known constant string values.
 - The `match_kind` type, which is used for describing the implementation of
   table lookups,
 - `bool`, which represents Boolean values
@@ -1917,7 +1916,7 @@ string values; one cannot declare variables with a `string` type.
 Parameters with type `string` can be only directionless (see Section
 [#sec-calling-convention]).  P4 does not support string manipulation
 in the dataplane; the `string` type is only allowed for denoting
-compile-time constant string values.  These may be useful, for
+compile-time known constant string values.  These may be useful, for
 example, a specific target architecture may support an extern function
 for logging with the following signature:
 
@@ -1988,7 +1987,7 @@ behavior should match this specification.
 An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
-compile-time known value (see Section [#sec-ct-constants]) that is a
+local compile-time known value (see Section [#sec-ct-constants]) that is a
 non-negative integer.  When using an expression for
 the size, the expression must be parenthesized and compile-time known.
 Bitstrings with width 0 are
@@ -2024,9 +2023,9 @@ described in Section [#sec-bit-ops].
 
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to
-a compile-time known value that is a positive integer.
+a local compile-time known value that is a positive integer.
 Note that `int<W>` type refers to both cases of `int<W>`
-and `int<(expression)>` where the width is compile-time known.
+and `int<(expression)>` where the width is a local compile-time known value.
 
 Bits within an integer are numbered from `0` to `W-1`. Bit `0`
 is the least significant, and bit `W-1` is the sign bit.
@@ -2053,7 +2052,7 @@ values, P4 provides a special bit-string type whose size is set at
 runtime, called a `varbit`.
 
 The type `varbit<W>` denotes a bit-string with a width of at most `W`
-bits, where `W` must be a non-negative integer that is a compile-time
+bits, where `W` must be a non-negative integer that is a local compile-time
 known value. For example, the type `varbit<120>` denotes the type
 of bit-string values that may have between 0 and 120 bits. Most
 operations that are applicable to fixed-size bit-strings (unsigned
@@ -3475,7 +3474,7 @@ Bit-strings also support the following operations:
   `0 <= L <= H < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
-  known-at-compile-time values so that the result width can be computed
+  local, compile-time known values so that the result width can be computed
   at compile time. Slices are also l-values, which means that P4 supports
   assigning to a slice: ` e[H:L] = x `.
   The effect of this statement is to set bits `H` through `L` (inclusive of
@@ -3557,7 +3556,7 @@ The `int<W>` datatype also support the following operations:
   - all result bits are one when shifting a negative value right
 - Extraction of a set of contiguous bits, also known as a slice,
   denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
-  non-negative compile-time known values, and `H >= L` must be true.
+  non-negative, local compile-time known values, and `H >= L` must be true.
   The types of `H` and `L` (which do not need to be identical)
   must be numeric (Section [#sec-numeric-values]).
   The result is an unsigned bit-string of width `H - L + 1`, including the bits
@@ -3601,7 +3600,7 @@ expressions of type `int` must be compile-time known values.  The type
   The expression `a << b` is equal to $a \times 2^b$ while `a >> b`
   is equal to $\lfloor{a / 2^b}\rfloor$.
 - Bit slices, denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
-  non-negative compile-time known values, and `H >= L` must be true.
+  non-negative, local compile-time known values, and `H >= L` must be true.
   The types of `H` and `L` (which do not need to be identical)
   must be one of the following:
 
@@ -4990,7 +4989,7 @@ H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field
 
 The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`,
 and `maxSizeInBytes` can be applied to some expressions.  Each of
-these method calls evaluate to compile-time known values that return
+these method calls evaluate to local compile-time known values that return
 the minimum size in bits required to store the expression (thus the
 result type of these methods has type `int`).  None of these methods
 evaluates the expression itself.  In consequence, the expression may
@@ -7716,13 +7715,18 @@ The evaluation of a P4 program is done in two stages:
   executed to completion, in isolation, when it receives control from the
   architecture
 
-## Compile-time known values { #sec-ct-constants }
+## Compile-time known and local compile-time known values { #sec-ct-constants }
+
+Certain expressions in a P4 program have the property that their value
+can be determined at compile time. Moreover, for some of these
+expressions, their value can be determined only using information in
+the current scope. We call these _compile-time known values_ and
+_local compile-time known values_ respectively.
 
 The following are compile-time known values:
 
 - Integer literals, Boolean literals, and string literals.
-- Identifiers declared in an `error`, `enum`, or `match_kind`
-  declaration.
+- Identifiers declared in an `error`, `enum`, or `match_kind` declaration.
 - The `default` identifier.
 - The `size` field of a value with type header stack.
 - The `_` identifier when used as a `select` expression label
@@ -7738,11 +7742,33 @@ The following are compile-time known values:
 - Instances constructed by instance declarations (Section
   [#sec-instantiations]) and constructor invocations.
 - A legal cast applied to a compile-time known value
-- The following expressions (`+`, `-`, `*`, `/ `, `%`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`)
-  when their operands are all compile-time known values.
+- The following expressions (`+`, `-`, `*`, `/ `, `%`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all compile-time known values.
 - Identifiers declared as constants using the `const` keyword.
-- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`,
-  `e.maxSizeInBits()` and `e.maxSizeInBytes()`
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()`
+
+The following are local compile-time known values:
+
+- Integer literals, Boolean literals, and string literals.
+- Identifiers declared in an `error`, `enum`, or `match_kind` declaration.
+- The `default` identifier.
+- The `size` field of a value with type header stack.
+- The `_` identifier when used as a `select` expression label
+- Identifiers that represent declared types, actions, tables, parsers, controls, or packages.
+- Tuple expression where all components are local compile-time known values.
+- Structure-valued expressions, where all fields are local compile-time known values.
+- Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
+- The following expressions (`+`, `-`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `&&`, `||`, `<< `, `>> `, `~` `, `\ `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known values.
+- Identifiers declared as constants using the `const` keyword.
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()`
+- Constructor parameters
+
+Intuitively, the main difference between _compile-time known values_
+and _local compile-time known values_ is that the latter also contains
+constructor parameters. The distinction is important when it comes to
+defining the meaning of features like types. For example, in the type
+`bit<e>`, the expression `e` must be a local compile-time known value
+as the value of a constructor parameter, is only determined when the
+constructor is applied to a value.
 
 ## Compile-time Evaluation { #sec-ct-eval }
 
@@ -8184,7 +8210,7 @@ extern bool static_assert(bool check, string message);
 extern bool static_assert(bool check);
 
 These functions both return boolean values.  Since the parameters are
-directionless, these functions require compile-time constant values as
+directionless, these functions require compile-time known values as
 arguments, thus they can be used to enforce compile-time invariants.
 Since P4 does not allow statements at the program top-level (outside
 of apply blocks), these functions can be used at the top-level by
@@ -8592,6 +8618,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
+* Introduced distinction between local compile-time known and compile-time known values (Section[#sec-ct-constants]).
 * Added header stack expressions (Section [#sec-hs-init]).
 * Allow casts from a type to itself (Section [#sec-casts]).
 * Added an invalid header or header union expression `{#}` (Sections [#sec-ops-on-hdrs] and [#sec-expr-hu]).
