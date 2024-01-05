@@ -3466,7 +3466,7 @@ Bit-strings also support the following operations:
   produces a result where all bits are zero.
 - Extraction of a set of contiguous bits, also known as a slice,
   denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
-  non-negative compile-time known values, and `H >= L`. The types of `H` and `L`
+  non-negative, local compile-time known values, and `H >= L`. The types of `H` and `L`
   (which do not need to be identical) must be numeric (Section [#sec-numeric-values]).
   The result is a bit-string of width `H - L + 1`, including the bits numbered
   from `L` (which becomes the least significant bit of the result) to `H` (the
@@ -7730,10 +7730,13 @@ The following are local compile-time known values:
 - The `default` identifier.
 - The `size` field of a value with type header stack.
 - The `_` identifier when used as a `select` expression label
+- The expression `{#}` representing an invalid header or header union value.
 - Identifiers that represent declared types, actions, tables, parsers, controls, or packages.
 - Tuple expression where all components are local compile-time known values.
 - Structure-valued expressions, where all fields are local compile-time known values.
+- Expressions evaluating to a list type, where all elements are local compile-time known values.
 - Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
+- A legal cast applied to a local compile-time known value.
 - The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all local compile-time known values.
 - Identifiers declared as constants using the `const` keyword.
 - Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()`
@@ -7743,8 +7746,9 @@ The following are compile-time known values:
 - All local compile-time known values.
 - Constructor parameters.
 - Tuple expression where all components are compile-time known values.
+- Expressions evaluating to a list type, where all elements are compile-time known values.
 - Structure-valued expressions, where all fields are compile-time known values.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all compile-time known values.
+- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all compile-time known values.
 - Constructor parameters.
 
 Intuitively, the main difference between _compile-time known values_
