@@ -1296,13 +1296,13 @@ literal. Here are some examples of numeric literals:
 
 #### String literals { #sec-string-literals }
 
-String literals (string constants) are specified as an arbitrary
-sequence of 8-bit characters, enclosed within double quote characters `"`
-(ASCII code 34). Strings start with a double quote character
-and extend to the first double quote sign which is not immediately
-preceded by an odd number of backslash characters (ASCII code 92). P4
-does not make any validity checks on strings (i.e., it does not check
-that strings represent legal UTF-8 encodings).
+String literals are specified as an arbitrary sequence of 8-bit
+characters, enclosed within double quote characters `"` (ASCII code
+34). Strings start with a double quote character and extend to the
+first double quote sign which is not immediately preceded by an odd
+number of backslash characters (ASCII code 92). P4 does not make any
+validity checks on strings (i.e., it does not check that strings
+represent legal UTF-8 encodings).
 
 Since P4 does not provide any operations on strings,
 string literals are generally passed unchanged through the P4 compiler to
@@ -1681,8 +1681,8 @@ directions:
 - All constructor parameters are evaluated at compilation-time, and in
   consequence they must all be directionless (they cannot be `in`,
   `out`, or `inout`); this applies to `package`, `control`, `parser`,
-  and `extern` objects. Values for these parameters must be specified
-  at compile-time, and must evaluate to compile-time known values.
+  and `extern` objects. Expressions for these parameters must be supplied
+  at compile-time, and they must evaluate to compile-time known values.
   See Section [#sec-parameterization] for further details.
 - For actions all directionless parameters must be at the end of the
   parameter list.  When an action appears in a `table`'s `actions`
@@ -1826,11 +1826,11 @@ P4 supports the following built-in base types:
   restricted circumstances.
 - The `error` type, which is used to convey errors in a
   target-independent, compiler-managed way.
-- The `string` type, which can be used only for compile-time known constant string values.
+- The `string` type, which can be used only with compile-time known values.
 - The `match_kind` type, which is used for describing the implementation of
   table lookups,
 - `bool`, which represents Boolean values
-- `int`, which represents arbitrary-sized constant integer values
+- `int`, which represents arbitrary-sized integer values
 - Bit-strings of fixed width, denoted by `bit<>`
 - Fixed-width signed integers represented using two's complement `int<>`
 - Bit-strings of dynamically-computed width with a fixed maximum width `varbit<>`
@@ -1848,14 +1848,14 @@ restricted places in P4 programs.
 ### The error type
 
 The error type contains opaque distinct values that can be used to signal
-errors. It is written as `error`. New constants of the error type
+errors. It is written as `error`. New elements of the error type
 are defined with the syntax:
 
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:errorDeclaration]
 ~ End P4Grammar
 
-All `error` constants are inserted into the `error`
+All elements of the `error` type are inserted into the `error`
 namespace, irrespective of the place where an error is
 defined. `error` is similar to an enumeration (`enum`)
 type in other languages. A program can contain multiple `error` declarations, which
@@ -1863,7 +1863,7 @@ the compiler will merge together. It is an error to declare the same
 identifier multiple times. Expressions of type `error` are
 described in Section [#sec-error-exprs].
 
-For example, the following declaration creates two constants of `error`
+For example, the following declaration creates two elements of the `error`
 type (these errors are declared in the P4 core library):
 
 ~ Begin P4Example
@@ -1916,7 +1916,7 @@ string values; one cannot declare variables with a `string` type.
 Parameters with type `string` can be only directionless (see Section
 [#sec-calling-convention]).  P4 does not support string manipulation
 in the dataplane; the `string` type is only allowed for denoting
-compile-time known constant string values.  These may be useful, for
+compile-time known values.  These may be useful, for
 example, a specific target architecture may support an extern function
 for logging with the following signature:
 
@@ -1924,7 +1924,7 @@ for logging with the following signature:
 extern void log(string message);
 ~ End P4Example
 
-The only strings that can appear in a P4 program are constant string
+The only strings that can appear in a P4 program are string
 literals, described in Section [#sec-string-literals].  For example,
 the following annotation indicates that a specific name should be used
 for a table when generating the control-plane API:
@@ -1972,7 +1972,7 @@ restrictions may include:
 - Alignment and padding constraints (e.g., arithmetic may only be
   supported on widths which are an integral number of bytes).
 - Constraints on some operands (e.g., some architectures may only
-  support multiplications with small constants, or shifts with small
+  support multiplications by small values, or shifts with small
   values).
 
 The documentation supplied with a target should clearly specify restrictions, and
@@ -1989,12 +1989,12 @@ arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
 local compile-time known value (see Section [#sec-ct-constants]) that is a
 non-negative integer.  When using an expression for
-the size, the expression must be parenthesized and compile-time known.
+the size, the expression must be parenthesized and a compile-time known value.
 Bitstrings with width 0 are
 allowed; they have no actual bits, and can only have the value 0.  See
 [#sec-uninitialized-values-and-writing-invalid-headers] for additional details.
 Note that `bit<W>` type refers to both cases of `bit<W>`
-and `bit<(expression)>` where the width is compile-time known.
+and `bit<(expression)>` where the width is a compile-time known value.
 
 ~ Begin P4Example
 const bit<32> x = 10;   // 32-bit constant with value 10.
@@ -2058,7 +2058,7 @@ of bit-string values that may have between 0 and 120 bits. Most
 operations that are applicable to fixed-size bit-strings (unsigned
 numbers) *cannot* be performed on dynamically sized bit-strings.
 Note that `varbit<W>` type refers to both cases of `varbit<W>`
-and `varbit<(expression)>` where the width is compile-time known.
+and `varbit<(expression)>` where the width is a compile-time known value.
 
 P4 architectures may impose additional constraints on varbit types:
 for example, they may limit the maximum size, or they may require `varbit`
@@ -2099,9 +2099,9 @@ parameters.
 
 #### Integer literal types
 
-The types of integer literals (constants) are as follows:
+The types of integer literals are as follows:
 
-- A simple integer constant has type `int`.
+- An integer has type `int`.
 - A non-negative integer prefixed with an integer width `N` and the
   character `w` has type `bit<N>`.
 - An integer prefixed with an integer width `N` and the character `s`
@@ -2186,9 +2186,9 @@ enum Suits { Clubs, Diamonds, Hearths, Spades }
 ~ End P4Example
 
 introduces a new enumeration type, which contains four
-constants---e.g., `Suits.Clubs`. An `enum` declaration
+elements---e.g., `Suits.Clubs`. An `enum` declaration
 introduces a new identifier in the current scope for naming the
-created type along with its distinct constants.
+created type along with its distinct elements.
 The underlying representation of the `Suits` enum is not
 specified, so their "size" in bits is not specified (it is
 target-specific).
@@ -2199,8 +2199,8 @@ allowed to have fields with such `enum` types. This requires the programmer prov
 an associated integer value for each symbolic entry in the enumeration.
 The symbol `typeRef` in the grammar above must be one of the following types:
 
-- an unsigned integer, i.e. `bit<W>` for some compile-time known `W`.
-- a signed integer, i.e. `int<W>` for some compile-time known `W`.
+- an unsigned integer, i.e. `bit<W>` for some compile-time known value `W`.
+- a signed integer, i.e. `int<W>` for some compile-time known value `W`.
 - a type name declared via `typedef`, where the base type of that type is either
 one of the types listed above, or another `typedef` name that meets these conditions.
 For example, the declaration
@@ -2215,13 +2215,13 @@ enum bit<16> EtherType {
 }
 ~ End P4Example
 
-introduces a new enumeration type, which contains five constants---e.g.,
+introduces a new enumeration type, which contains five elements---e.g.,
 `EtherType.IPV4`.  This `enum` declaration specifies the fixed-width unsigned integer representation
 for each entry in the `enum` and provides an underlying type: `bit<16>`.
-This type of `enum` declaration can be thought of as declaring a new `bit<16>`
+This kind of `enum` declaration can be thought of as declaring a new `bit<16>`
 type, where variables or fields of this type are expected to be unsigned 16-bit
 integer values, and the mapping of symbolic to numeric values defined by the
-`enum` are effectively constants defined as a part of this type.  In this way,
+`enum` are also defined as a part of this declaration.  In this way,
 an `enum` with an underlying type can be thought of as being a type derived
 from the underlying type carrying equality, assignment, and casts to/from the
 underlying type.
@@ -2323,14 +2323,13 @@ header ipv6_t {
 }
 ~ End P4Example
 
-Headers that do not contain any `varbit` field are "fixed
-size." Headers containing `varbit` fields have "variable
-size." The size (in bits) of a fixed-size header is a constant, and it
-is simply the sum of the sizes of all component fields (without
-counting the validity bit). There is no padding or alignment of the
-header fields. Targets may impose additional constraints on
-header types---e.g., restricting headers to sizes that are an integer
-number of bytes.
+Headers that do not contain any `varbit` field are "fixed size."
+Headers containing `varbit` fields have "variable size." The size (in
+bits) of a fixed-size header is simply the sum of the sizes of all
+component fields (without counting the validity bit). There is no
+padding or alignment of the header fields. Targets may impose
+additional constraints on header types---e.g., restricting headers to
+sizes that are an integer number of bytes.
 
 For example, the following declaration describes a typical Ethernet
 header:
@@ -2393,12 +2392,13 @@ defined as:
 [INCLUDE=grammar.mdk:headerStackType]
 ~ End P4Grammar
 
-where `typeName` is the name of a header or header union type. For a header stack `hs[n]`,
-the term `n` is the maximum defined size, and must be
-a positive integer that is a compile-time known value. Nested header
-stacks are not supported. At runtime a stack contains `n` values
-with type `typeName`, only some of which may be valid. Expressions
-on header stacks are discussed in Section [#sec-expr-hs].
+where `typeName` is the name of a header or header union type. For a
+header stack `hs[n]`, the term `n` is the maximum defined size, and
+must be a compile-time known value that is a a positive
+integer. Nested header stacks are not supported. At runtime a stack
+contains `n` values with type `typeName`, only some of which may be
+valid. Expressions on header stacks are discussed in Section
+[#sec-expr-hs].
 
 For example, the following declarations,
 
@@ -3457,8 +3457,8 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
-- Logical shift left and right by a (not-necessarily-known-at-compile-time)
-  non-negative integer value, denoted by `<<` and `>>` respectively.
+- Logical shift left and right by a non-negative integer value (which need not be 
+  a compile-time known value), denoted by `<<` and `>>` respectively.
   In a shift, the left operand is unsigned, and right operand must be either an
   expression of type `bit<S>` or a non-negative integer value that is known at
   compile time.  The result has the same type as the left operand.
@@ -3474,7 +3474,7 @@ Bit-strings also support the following operations:
   `0 <= L <= H < W` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
-  local, compile-time known values so that the result width can be computed
+  local compile-time known values so that the width of the result can be computed
   at compile time. Slices are also l-values, which means that P4 supports
   assigning to a slice: ` e[H:L] = x `.
   The effect of this statement is to set bits `H` through `L` (inclusive of
@@ -3544,7 +3544,7 @@ The `int<W>` datatype also support the following operations:
 
 - Arithmetic shift left and right denoted by `<<` and `>>`.
   The left operand is signed and the right operand must be either an
-  unsigned number of type `bit<S>` or a non-negative integer compile-time known value.
+  unsigned number of type `bit<S>` or a compile-time known value that is a non-negative integer.
   The result has the same type as the left operand.
   Shifting left produces the exact same bit pattern as a shift left
   of an unsigned value.  Shift left can thus overflow,
@@ -3596,7 +3596,7 @@ expressions of type `int` must be compile-time known values.  The type
 - Truncating integer division between positive values, denoted by `/`.
 - Modulo between positive values, denoted by `%`.
 - Arithmetic shift left and right denoted by `<<` and `>>`. These operations produce an `int` result.
-  The right operand must be either an unsigned constant of type `bit<S>` or a non-negative integer compile-time known value.
+  The right operand must be either an unsigned value of type `bit<S>` or a compile-time known value that is a non-negative integer.
   The expression `a << b` is equal to $a \times 2^b$ while `a >> b`
   is equal to $\lfloor{a / 2^b}\rfloor$.
 - Bit slices, denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
@@ -3658,7 +3658,7 @@ result is taken from the left operand.
 
 The left operand of shifts can be any one out of unsigned bit-strings, signed bit-strings,
 and arbitrary-precision integers, and the right operand of shifts must be either
-an expression of type `bit<S>` or a non-negative integer compile-time known value.
+an expression of type `bit<S>` or a compile-time known value that is a non-negative integer.
 The result has the same type as the left operand.
 
 Shifts on signed and unsigned bit-strings deserve a special discussion
@@ -3728,7 +3728,7 @@ finding this information in a section dedicated to type `varbit`.
   inserts a variable-sized bit-string with a known dynamic width into
   the packet being constructed.
 
-Additionally, the size of a variable-length bit-string can be determined at
+Additionally, the maximum size of a variable-length bit-string can be determined at
 compile-time (Section [#sec-minsizeinbits]).
 
 ## Casts { #sec-casts }
@@ -3872,7 +3872,7 @@ tuple<bit<32>, bool> x = { 10, false };
 ~ End P4Example
 
 The fields of a tuple can be accessed using array index syntax `x[0]`,
-`x[1]`.  The array indexes *must* be compile-time constants, to enable
+`x[1]`.  The indexes *must* be local compile-time known values, to enable
 the type-checker to identify the field types statically.
 
 Tuples can be compared for equality using `==` and `!=`; two tuples are
@@ -4303,9 +4303,8 @@ expressions are legal:
 - `hs[index]`: produces a reference to the header at the
   specified position within the stack; if `hs` is an l-value,
   the result is also an l-value. The header may be invalid. Some implementations
-  may impose the constraint that the index expression evaluates to a
-  value that is known at compile time. A P4 compiler must give an error
-  if an index value that is a compile-time constant is out of range.
+  may impose the constraint that the index expression must be a compile-time known value. 
+  A P4 compiler must give an error if an index that is a compile-time known value is out of range.
 
   Accessing a header stack ``hs`` with an index less than `0` or
   greater than or equal to `hs.size` results in an undefined value.  See Section
@@ -4315,7 +4314,7 @@ expressions are legal:
   The `index` is an expression that must be of numeric types (Section [#sec-numeric-values]).
 
 - `hs.size`: produces a 32-bit unsigned integer that returns the
-  size of the header stack (a compile-time constant).
+  size of the header stack (a local compile-time known value).
 
 - assignment from a header stack `hs` into another stack requires
   the stacks to have the same types and sizes. All components of `hs`
@@ -4348,17 +4347,16 @@ Finally, P4 offers the following computations that can be used to
 manipulate the elements at the front and back of the stack:
 
 - `hs.push_front(int count)`: shifts `hs` "right" by `count`. The
-  first `count` elements become invalid. The last `count`
-  elements in the stack are discarded. The `hs.nextIndex` counter
-  is incremented by `count`. The `count` argument must be a
-  positive integer that is a compile-time known value. The return type
-  is `void`.
+  first `count` elements become invalid. The last `count` elements in
+  the stack are discarded. The `hs.nextIndex` counter is incremented
+  by `count`. The `count` argument must be a compile-time known value
+  that is a positive integer. The return type is `void`.
 
 - `hs.pop_front(int count)`: shifts `hs` "left" by `count`
   (i.e., element with index `count` is copied in stack at index `0`).
   The last `count` elements become invalid. The `hs.nextIndex`
   counter is decremented by `count`. The `count` argument must
-  be a positive integer that is a compile-time known value. The return
+  be a compile-time known value that is a positive integer. The return
   type is `void`.
 
 The following pseudocode defines the behavior of `push_front` and `pop_front`:
@@ -4394,8 +4392,8 @@ void pop_front(int count) {
 }
 ~ End P4Pseudo
 
-Similar to structs and headers, the size of a header stack can be determined at
-compile-time (Section [#sec-minsizeinbits]).
+Similar to structs and headers, the size of a header stack is a compile-time known value 
+(Section [#sec-minsizeinbits]).
 
 Two header stacks can be compared for equality (`==`) or inequality (`!=`)
 only if they have the same element type and the same length.  Two
@@ -4640,8 +4638,8 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
 }
 ~End P4Example
 
-Similar to headers, the size of a header union can be determined at
-compile-time (Section [#sec-minsizeinbits]).
+Similar to headers, the size of a header union is a compile-time known
+value (Section [#sec-minsizeinbits]).
 
 The expression `{#}` represents an invalid header union of some type,
 but it can be any header or header union type.  A P4 compiler may require an
@@ -4819,20 +4817,17 @@ limitation, such values are currently of limited utility.
 ## Reading uninitialized values and writing fields of invalid headers { #sec-uninitialized-values-and-writing-invalid-headers }
 
 As mentioned in Section [#sec-expr-hs], any reference to an element of
-a header stack `hs[index]` where `index` is a compile-time constant
-expression must give an error at compile time if the value of the
-index is out of range.  That section also defines the run time
-behavior of the expressions `hs.next` and `hs.last`, and the behaviors
-specified there take precedence over anything in this section for
-those expressions.
+a header stack `hs[index]` where `index` is a compile-time known value
+must give an error at compile time if the value of the index is out of
+range.  That section also defines the run time behavior of the
+expressions `hs.next` and `hs.last`, and the behaviors specified there
+take precedence over anything in this section for those expressions.
 
 All mentions of header stack elements in this section only apply
-for expressions `hs[index]` where `index` is a runtime variable
-expression, i.e. not a compile-time constant value.
+for expressions `hs[index]` where `index` is not a compile-time known value.
 A P4 implementation is allowed not to support `hs[index]` where
-`index` is a runtime variable expression, but if it does support
-these expressions, the implementation should conform to the
-behaviors specified in this section.
+`index` is not a compile-time known value, but if it does offer such support, 
+the implementation should conform to the behaviors specified in this section.
 
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
@@ -4988,14 +4983,16 @@ H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field
 # Compile-time size determination { #sec-minsizeinbits }
 
 The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`,
-and `maxSizeInBytes` can be applied to some expressions.  Each of
-these method calls evaluate to local compile-time known values that return
-the minimum size in bits required to store the expression (thus the
-result type of these methods has type `int`).  None of these methods
-evaluates the expression itself.  In consequence, the expression may
-be invalid (e.g., an out-of-bounds header stack access).
+and `maxSizeInBytes` can be applied to certain expressions. These
+method calls return the minimum size in bits required to store the
+expression (thus the result type of these methods has type
+`int`). Except in certain situations involving type variables,
+discussed below, these method calls produce local compile-time known values;
+otherwise they produce compile-time known values. None of these methods
+evaluates the expression that is the receiver of the method call, so
+it may be invalid (e.g., an out-of-bounds header stack access).
 
-The method `minSizeInBytes` always returns the result of
+The method `minSizeInBytes` returns the result of
 `minSizeInBits` rounded up to the next whole number of bytes.
 In other words, for any expression `e`,
 `e.minSizeInBytes()` is equal to `(e.minSizeInBits() + 7) >> 3`.
@@ -5300,10 +5297,10 @@ The empty statement, written `;` is a no-op.
 
 ## Block statement { #sec-block-stmt }
 
-A block statement is denoted by curly braces. It contains a
-sequence of statements and declarations, which are executed
-sequentially. The variables and constants within a
-block statement are only visible within the block.
+A block statement is denoted by curly braces. It contains a sequence
+of statements and declarations, which are executed sequentially. The
+declarations (e.g., variables and constants) within a block statement
+are only visible within the block.
 
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:blockStatement]
@@ -5760,9 +5757,9 @@ This constitutes an important difference between `select`
 expressions and the `switch` statements found in many programming languages since the keysets of
 a `select` expression may "overlap".
 
-The typical way to use a `select` expression is to compare
-the value of a recently-extracted header field against a set of
-constant values, as in the following example:
+The typical way to use a `select` expression is to compare the value
+of a recently-extracted header field against a set of values, as in
+the following example:
 
 ~ Begin P4Example
 header IPv4_h { bit<8> protocol; /* more fields omitted */ }
@@ -6473,18 +6470,19 @@ In addition, tables may contain architecture-specific properties (see
 Section [#sec-additional-table-properties]).
 
 A property marked as `const` cannot be changed dynamically by the
-control plane. The `key`, `actions`, and `size` properties are always
-constant, so the `const` keyword is not needed for these.
+control plane. The `key`, `actions`, and `size` properties cannot be
+modified so the `const` keyword is not needed for these.
 
 ### Table properties { #sec-table-props }
 
 #### Keys { #sec-table-keys }
 
-The `key` is a table property which specifies the data-plane
-values that should be used to look up an entry. A key is a list of
-pairs of the form `(e : m)`, where `e` is an expression that describes
-the data to be matched in the table, and `m` is a `match_kind`
-constant that describes the algorithm used to perform the lookup (see Section [#sec-match-kind-type]).
+The `key` is a table property which specifies the data-plane values
+that should be used to look up an entry. A key is a list of pairs of
+the form `(e : m)`, where `e` is an expression that describes the data
+to be matched in the table, and `m` is a `match_kind` that describes
+the algorithm used to perform the lookup (see Section
+[#sec-match-kind-type]).
 
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:keyElementList]
@@ -6505,7 +6503,7 @@ table Fwd {
 ~ End P4Example
 
 Here the key comprises two fields from the `ipv4header`
-header: `dstAddress` and `version`. The `match_kind` constants
+header: `dstAddress` and `version`. The `match_kind` elements
 serve three purposes:
 
 - They specify the algorithm used to match data-plane values against
@@ -7041,10 +7039,10 @@ because of the `@noWarn("duplicate_priorities")` annotation.
 #### Size {#sec-size-table-property}
 
 The `size` is an optional property of a table.  When present, its
-value must always be an integer compile-time known value.  It is specified
-in units of number of table entries.
+value must always be an compile-time known value that is an integer. The `size` property 
+is specified in units of number of table entries.
 
-If a table has a `size` value specified for it with value `N`, it is
+If a table is specified with a `size` property of value `N`, it is
 recommended that a compiler should choose a data plane implementation
 that is capable of storing `N` table entries.  This does not guarantee
 that an _arbitrary_ set of `N` entries can always be inserted in such
@@ -7731,25 +7729,27 @@ The following are local compile-time known values:
 - The `size` field of a value with type header stack.
 - The `_` identifier when used as a `select` expression label
 - The expression `{#}` representing an invalid header or header union value.
+- Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
 - Identifiers that represent declared types, actions, tables, parsers, controls, or packages.
 - Tuple expression where all components are local compile-time known values.
 - Structure-valued expressions, where all fields are local compile-time known values.
 - Expressions evaluating to a list type, where all elements are local compile-time known values.
-- Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
-- A legal cast applied to a local compile-time known value.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all local compile-time known values.
-- Identifiers declared as constants using the `const` keyword.
-- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()`
+- Legal casts applied to local compile-time known values.
+- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known values.
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the type of `e` is not generic.
 
 The following are compile-time known values:
 
 - All local compile-time known values.
 - Constructor parameters.
+- Identifiers declared as constants using the `const` keyword.
 - Tuple expression where all components are compile-time known values.
 - Expressions evaluating to a list type, where all elements are compile-time known values.
 - Structure-valued expressions, where all fields are compile-time known values.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`, and casts) when their operands are all compile-time known values.
-- Constructor parameters.
+- Expressions evaluating to a list type, where all elements are compile-time known values.
+- Legal casts applied to compile-time known values.
+- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all compile-time known values.
+- Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the the type of `e` is generic.
 
 Intuitively, the main difference between _compile-time known values_
 and _local compile-time known values_ is that the former also contains
@@ -8302,9 +8302,8 @@ a key and a value `expression`. Note the syntax for `expression` is rich, see
 Appendix [#sec-grammar] for details.
 
 All `expression`s within a `structuredAnnotationBody` must be compile-time known
-values, either literals or expressions requiring compile-time evaluation, with a
-result type that is one of: string literals, arbitrary-precision integer, or
-boolean. Structured `expression`s (e.g. an `expression` containing an
+values with a result type that is either: `string`, `int`, or `bool`. 
+In particular, structured `expression`s (e.g. an `expression` containing an
 `expressionList`, a `kvList`, etc.) are not allowed. Note that P4Runtime
 information (P4Info) may stipulate additional restrictions. For example, an
 integer expression might be limited to 64-bit values.
