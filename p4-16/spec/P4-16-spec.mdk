@@ -1511,7 +1511,7 @@ Each parameter may be labeled with a direction:
   - For anything other than an action, e.g. a control, parser, or
     function, a directionless parameter means that the value supplied
     as an argument in a call must be a compile-time known value
-    (see Section [#sec-ct-constants]).
+    (see Section [#sec-compile-time-known]).
   - For an action, a directionless parameter indicates that it is
     "action data".  See Section [#sec-actions] for the meaning of
     action data, but its meaning includes the following possibilities:
@@ -1694,8 +1694,9 @@ directions:
   including values for the directionless parameters. The directionless
   parameters in this case behave like `in` parameters.
   See Section [#sec-invoke-actions] for further details.
-- Default parameter values are only allowed for 'in' or direction-less 
-  parameters; these values must evaluate to compile-time known values.
+- Default expressions are only allowed for 'in' or direction-less
+  parameters, and the expressions supplied as defaults must be
+  compile-time known values.
 - If parameters with default values do not appear at the
   end of the list of parameters, invocations that use
   the default values must use named arguments, as in the following
@@ -1826,7 +1827,8 @@ P4 supports the following built-in base types:
   restricted circumstances.
 - The `error` type, which is used to convey errors in a
   target-independent, compiler-managed way.
-- The `string` type, which can be used only with compile-time known values.
+- The `string` type, which can be used with compile-time known
+  values of type string.
 - The `match_kind` type, which is used for describing the implementation of
   table lookups,
 - `bool`, which represents Boolean values
@@ -1915,19 +1917,18 @@ The type `string` represents strings.  There are no operations on
 string values; one cannot declare variables with a `string` type.
 Parameters with type `string` can be only directionless (see Section
 [#sec-calling-convention]).  P4 does not support string manipulation
-in the dataplane; the `string` type is only allowed for denoting
-compile-time known values.  These may be useful, for
-example, a specific target architecture may support an extern function
-for logging with the following signature:
+in the dataplane; the `string` type is only allowed for describing
+compile-time known values (i.e., string literals, as discussed in
+Section [#sec-string-literals]). Even so, the string type is useful,
+for example, in giving the type signature for extern functions such as
+the following:
 
 ~ Begin P4Example
 extern void log(string message);
 ~ End P4Example
 
-The only strings that can appear in a P4 program are string
-literals, described in Section [#sec-string-literals].  For example,
-the following annotation indicates that a specific name should be used
-for a table when generating the control-plane API:
+As another example, the following annotation indicates that the specified
+name should be used for a given table in the generated control-plane API:
 
 ~ Begin P4Example
 @name("acl") table t1 { /* body omitted */ }
@@ -1987,7 +1988,7 @@ behavior should match this specification.
 An unsigned integer (which we also call a "bit-string") has an
 arbitrary width, expressed in bits. A bit-string of width `W` is
 declared as: `bit<W>`. `W` must be an expression that evaluates to a
-local compile-time known value (see Section [#sec-ct-constants]) that is a
+local compile-time known value (see Section [#sec-compile-time-known]) that is a
 non-negative integer.  When using an expression for
 the size, the expression must be parenthesized and a compile-time known value.
 Bitstrings with width 0 are
@@ -4823,11 +4824,12 @@ range.  That section also defines the run time behavior of the
 expressions `hs.next` and `hs.last`, and the behaviors specified there
 take precedence over anything in this section for those expressions.
 
-All mentions of header stack elements in this section only apply
-for expressions `hs[index]` where `index` is not a compile-time known value.
-A P4 implementation is allowed not to support `hs[index]` where
-`index` is not a compile-time known value, but if it does offer such support, 
-the implementation should conform to the behaviors specified in this section.
+All mentions of header stack elements in this section only apply for
+expressions `hs[index]` where `index` is not a compile-time known
+value.  A P4 implementation may elect not to support expressions of
+the form `hs[index]` where `index` is not a compile-time known
+value. However, it does support such expressions, the implementation
+should conform to the behaviors specified in this section.
 
 The result of reading a value in any of the situations below is that
 some unspecified value will be used for that field.
@@ -4984,13 +4986,14 @@ H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field
 
 The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`,
 and `maxSizeInBytes` can be applied to certain expressions. These
-method calls return the minimum size in bits required to store the
-expression (thus the result type of these methods has type
-`int`). Except in certain situations involving type variables,
-discussed below, these method calls produce local compile-time known values;
-otherwise they produce compile-time known values. None of these methods
-evaluates the expression that is the receiver of the method call, so
-it may be invalid (e.g., an out-of-bounds header stack access).
+method calls return the minimum (or maximum) size in bits required to
+store the expression. Thus, the result type of these methods has type
+`int`. Except in certain situations involving type variables,
+discussed below, these method calls produce local compile-time known
+values; otherwise they produce compile-time known values. None of
+these methods evaluate the expression that is the receiver of the
+method call, so it may be invalid (e.g., an out-of-bounds header stack
+access).
 
 The method `minSizeInBytes` returns the result of
 `minSizeInBits` rounded up to the next whole number of bytes.
@@ -5157,7 +5160,7 @@ instantiation
 ~ End P4Grammar
 
 An instantiation is written as a constructor invocation followed by a name.
-Instantiations are always executed at compilation time (Section [#sec-ct-constants]).
+Instantiations are always executed at compilation time (Section [#sec-compile-time-known]).
 The effect is to allocate an object with the specified name,
 and to bind it to the result of the constructor invocation.
 Note that instantiation arguments can be specified by name.
@@ -7039,7 +7042,7 @@ because of the `@noWarn("duplicate_priorities")` annotation.
 #### Size {#sec-size-table-property}
 
 The `size` is an optional property of a table.  When present, its
-value must always be an compile-time known value that is an integer. The `size` property 
+value must always be a compile-time known value that is an integer. The `size` property 
 is specified in units of number of table entries.
 
 If a table is specified with a `size` property of value `N`, it is
@@ -7713,7 +7716,7 @@ The evaluation of a P4 program is done in two stages:
   executed to completion, in isolation, when it receives control from the
   architecture
 
-## Compile-time known and local compile-time known values { #sec-ct-constants }
+## Compile-time known and local compile-time known values { #sec-compile-time-known }
 
 Certain expressions in a P4 program have the property that their value
 can be determined at compile time. Moreover, for some of these
@@ -7755,9 +7758,12 @@ Intuitively, the main difference between _compile-time known values_
 and _local compile-time known values_ is that the former also contains
 constructor parameters. The distinction is important when it comes to
 defining the meaning of features like types. For example, in the type
-`bit<e>`, the expression `e` must be a local compile-time known value
-as the value of a constructor parameter, is only determined when the
-constructor is applied to a value.
+`bit<e>`, the expression `e` must be a local compile-time known
+value. Suppose instead that `e` were a constructor parameter---i.e.,
+merely a compile-time known value. In this situation, it would be
+impossible to resolve `bit<e>` to a concrete type using purely local
+information---we would have to wait until the constructor was
+instantiated and the value of `e` known.
 
 ## Compile-time Evaluation { #sec-ct-eval }
 
@@ -8606,7 +8612,7 @@ The P4 compiler should provide:
 
 ## Summary of changes made in version 1.2.4
 
-* Introduced distinction between local compile-time known and compile-time known values (Section[#sec-ct-constants]).
+* Introduced distinction between local compile-time known and compile-time known values (Section[#sec-compile-time-known]).
 * Added header stack expressions (Section [#sec-hs-init]).
 * Allow casts from a type to itself (Section [#sec-casts]).
 * Added an invalid header or header union expression `{#}` (Sections [#sec-ops-on-hdrs] and [#sec-expr-hu]).
@@ -8655,7 +8661,7 @@ The P4 compiler should provide:
 * Added `match_kind` as a base type (Section [#sec-match-kind-type]).
 * Removed structure initializers as they are subsumed by structure-valued expressions (Section [#sec-structure-expressions]).
 * Specified operations on values typed as type variables (Section [#sec-type-variable-operations]).
-* Clarified semantics of compile-time known values (Section [#sec-ct-constants]).
+* Clarified semantics of compile-time known values (Section [#sec-compile-time-known]).
 * Clarified semantics of directionless parameters (Section [#sec-calling-convention]).
 * Clarified semantics of arbitrary precision integers (Section [#sec-arbitrary-precision-integers]).
 * Clarified semantics of bit slices, shifts, and concatenation (Section [#sec-bit-ops]).
