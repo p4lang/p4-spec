@@ -38,10 +38,10 @@ for line in fileinput.input(files=(args.filename)):
 
 content = ''.join(lines)
 
-# Temporarily replace the contents of strings (within double quotes)
-# so that each character is replaced with a 2-digit hexadecimal
-# encoding of the character's ASCII value (there should be only ASCII
-# character in these files, no Unicode).
+# Temporarily replace the contents of strings (within double quotes,
+# and also within single quotes) so that each character is replaced
+# with a 2-digit hexadecimal encoding of the character's ASCII value
+# (there should be only ASCII character in these files, no Unicode).
 
 # Thus all characters that are "special" such as { } : | ; in the
 # syntax of Bison grammars with C++ code in { } will become "not
@@ -62,6 +62,7 @@ content = re.sub('l_angle', '"<"', content)
 content = re.sub('r_angle', '">"', content)
 
 content = re.sub('"[^"]+"', string2hex, content)
+content = re.sub("'[^']+'", string2hex, content)
 
 # Try replacing all balanced sets of curly braces, and whatever is
 # between them, with empty strings.
