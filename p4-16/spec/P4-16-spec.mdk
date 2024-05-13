@@ -2022,11 +2022,13 @@ described in Section [#sec-bit-ops].
 
 #### Signed Integers {#sec-signed-integers}
 
-Signed integers are represented using two's complement. An integer with `W`
-bits is declared as: `int<W>`. `W` must be an expression that evaluates to
-a local compile-time known value that is a positive integer.
-Note that `int<W>` type refers to both cases of `int<W>`
-and `int<(expression)>` where the width is a local compile-time known value.
+Signed integers are represented using two's complement. An integer
+with `W` bits is declared as: `int<W>`. `W` must be an expression that
+evaluates to a local compile-time known (see Section
+[#sec-compile-time-known]) value that is a non-negative integer.  Note
+that `int<W>` type refers to both cases of `int<W>` and
+`int<(expression)>` where the width is a local compile-time known
+value.
 
 Bits within an integer are numbered from `0` to `W-1`. Bit `0`
 is the least significant, and bit `W-1` is the sign bit.
@@ -2053,13 +2055,14 @@ values, P4 provides a special bit-string type whose size is set at
 runtime, called a `varbit`.
 
 The type `varbit<W>` denotes a bit-string with a width of at most `W`
-bits, where `W` must be a non-negative integer that is a local compile-time
-known value. For example, the type `varbit<120>` denotes the type
-of bit-string values that may have between 0 and 120 bits. Most
-operations that are applicable to fixed-size bit-strings (unsigned
-numbers) *cannot* be performed on dynamically sized bit-strings.
-Note that `varbit<W>` type refers to both cases of `varbit<W>`
-and `varbit<(expression)>` where the width is a compile-time known value.
+bits, where `W` is a local compile-time known value (see Section
+[#sec-compile-time-known]) that is a non-negative integer.  For
+example, the type `varbit<120>` denotes the type of bit-string values
+that may have between 0 and 120 bits. Most operations that are
+applicable to fixed-size bit-strings (unsigned numbers) *cannot* be
+performed on dynamically sized bit-strings.  Note that `varbit<W>`
+type refers to both cases of `varbit<W>` and `varbit<(expression)>`
+where the width is a compile-time known value.
 
 P4 architectures may impose additional constraints on varbit types:
 for example, they may limit the maximum size, or they may require `varbit`
@@ -4639,7 +4642,7 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
 }
 ~End P4Example
 
-Similar to headers, the size of a header union is a compile-time known
+Similar to headers, the size of a header union is a local compile-time known
 value (Section [#sec-minsizeinbits]).
 
 The expression `{#}` represents an invalid header union of some type,
@@ -5053,7 +5056,9 @@ These methods are defined for:
 * for a type that does contain `varbit` fields, `maxSizeInBits` is the worst-case size
   of the serialized representation of the data and `minSizeInBits` is the "best" case.
 
-Every other case is undefined and will produce a compile-time error.
+Every other case is undefined and will produce a compile-time
+error. In particular, cases involving type variables produce a
+compile-time error.
 
 # Function declarations { #sec-functions }
 
@@ -7733,7 +7738,7 @@ The following are local compile-time known values:
 - The `_` identifier when used as a `select` expression label
 - The expression `{#}` representing an invalid header or header union value.
 - Instances constructed by instance declarations (Section [#sec-instantiations]) and constructor invocations.
-- Identifiers that represent declared types, actions, tables, parsers, controls, or packages.
+- Identifiers that represent declared types, actions, functions, tables, parsers, controls, or packages.
 - Tuple expression where all components are local compile-time known values.
 - Structure-valued expressions, where all fields are local compile-time known values.
 - Expressions evaluating to a list type, where all elements are local compile-time known values.
@@ -7744,7 +7749,7 @@ The following are local compile-time known values:
 The following are compile-time known values:
 
 - All local compile-time known values.
-- Constructor parameters.
+- Constructor parameters (i.e., the declared parameters for a `parser`, `control`, etc.)
 - Identifiers declared as constants using the `const` keyword.
 - Tuple expression where all components are compile-time known values.
 - Expressions evaluating to a list type, where all elements are compile-time known values.
