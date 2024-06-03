@@ -1457,12 +1457,7 @@ following expressions are legal l-values:
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:prefixedNonTypeName]
 
-lvalue
-    : prefixedNonTypeName
-    | lvalue "." member
-    | lvalue "[" expression "]"
-    | lvalue "[" expression ":" expression "]"
-    ;
+[INCLUDE=grammar.mdk:lvalue]
 ~ End P4Grammar
 
 - Identifiers of a base or derived type.
@@ -1511,7 +1506,8 @@ Each parameter may be labeled with a direction:
   - For anything other than an action, e.g. a control, parser, or
     function, a directionless parameter means that the value supplied
     as an argument in a call must be a compile-time known value
-    (see Section [#sec-compile-time-known]).
+    (see Section [#sec-compile-time-known]). Note that a directionless 
+    parameter of extern object type is passed by reference.
   - For an action, a directionless parameter indicates that it is
     "action data".  See Section [#sec-actions] for the meaning of
     action data, but its meaning includes the following possibilities:
@@ -8201,6 +8197,7 @@ diagnostics.
 The P4 core library contains two overloaded declarations for a
 `static_assert` function, as follows:
 
+~ Begin P4Example
 /// Static assert evaluates a boolean expression
 /// at compilation time.  If the expression evaluates to
 /// false, compilation is stopped and the corresponding message is printed.
@@ -8208,6 +8205,7 @@ extern bool static_assert(bool check, string message);
 
 /// Like the above but using a default message.
 extern bool static_assert(bool check);
+~ End P4Example
 
 These functions both return boolean values.  Since the parameters are
 directionless, these functions require compile-time known values as
