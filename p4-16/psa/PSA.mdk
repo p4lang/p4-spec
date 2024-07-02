@@ -842,6 +842,19 @@ For packets from a port, including the CPU port, both of the `in`
 parameters `resubmit_meta` and `recirculate_meta` are undefined.
 
 
+## Behavior of packets after ingress parsing is complete {#sec-after-ingress-parser}
+
+Ingress parsing can end either by reaching a transition to `accept` or
+`reject`, as defined in the P4~16~ language specification.  Regardless
+of which way ingress parsing completes, the packet will always go on
+to be processed by the ingress control and then to the ingress
+deparser.  Packets that experience an error during ingress parsing are
+not automatically dropped.  It is up to the ingress P4 code to make
+that decision.  A P4 developer may wish to use the `parser_error`
+standard metadata field to decide to drop the packet, or do whatever
+you wish with it, e.g. send it to the CPU port.
+
+
 ## Behavior of packets after ingress processing is complete {#sec-after-ingress}
 
 The pseudocode below defines where copies of packets will be made
@@ -1241,6 +1254,15 @@ replicated packets in this section.
 All contents of a packet and its associated metadata, other than those
 mentioned above, will be the same for every copy of the same original
 replicated packet.
+
+
+## Behavior of packets after egress parsing is complete {#sec-after-egress-parser}
+
+The same notes mentioned in Section [#sec-after-ingress-parser] also
+apply for packets that experience an error during egress parsing.
+That is, they always go on to be processed by the egress control and
+then the egress deparser.  It is up to the P4 developer to cause them
+to be dropped, if that is the behavior you wish.
 
 
 ## Behavior of packets after egress processing is complete {#sec-after-egress}
