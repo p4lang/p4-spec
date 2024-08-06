@@ -2516,27 +2516,27 @@ header unions, structs, tuples, and lists.  Note that `int` by itself
 arbitrary-precision integer, without a width specified.
 
 |--------------------|------------------------------------------------|||||
-|                    | Container type                                 |||||
+|                    | Container kind                                 |||||
 |                    |-----------|--------------|-----------------|------|--------------|
 | Element type       | header    | header_union | struct or tuple | list | header stack |
 +:-------------------+:----------+:-------------+:----------------+:-----+:-------------+
-| `bit<W>`       | allowed   | error   |  allowed | allowed | error |
-| `int<W>`       | allowed   | error   |  allowed | allowed | error |
-| `varbit<W>`    | allowed   | error   |  allowed | allowed | error |
-| `int`          | error     | error   |  error   | allowed | error |
-| `void`         | error     | error   |  error   | error   | error |
-| `string`       | error     | error   |  error   | allowed | error |
-| `error`        | error     | error   |  allowed | allowed | error |
-| `match_kind`   | error     | error   |  error   | allowed | error |
-| `bool`         | allowed   | error   |  allowed | allowed | error |
-| `enum`         | allowed[^enum_header]     | error   |  allowed | allowed | error |
-| `header`       | error     | allowed |  allowed | allowed | allowed |
-| header stack   | error     | error   |  allowed | allowed | error |
-| `header_union` | error     | error   |  allowed | allowed | allowed |
-| `struct`       | allowed[^struct_header]   | error   |  allowed | allowed | error |
-| `tuple`        | error     | error   |  allowed | allowed | error |
-| `list`         | error     | error   |  error   | allowed | error |
-|----------------|-----------|---------|----------|---------|-------|
+| `bit<W>`           | allowed   | error   |  allowed | allowed | error |
+| `int<W>`           | allowed   | error   |  allowed | allowed | error |
+| `varbit<W>`        | allowed   | error   |  allowed | allowed | error |
+| `int`              | error     | error   |  error   | allowed | error |
+| `void`             | error     | error   |  error   | error   | error |
+| `string`           | error     | error   |  error   | allowed | error |
+| `error`            | error     | error   |  allowed | allowed | error |
+| `match_kind`       | error     | error   |  error   | allowed | error |
+| `bool`             | allowed   | error   |  allowed | allowed | error |
+| enumeration types  | allowed[^enum_header]     | error   |  allowed | allowed | error |
+| header types       | error     | allowed |  allowed | allowed | allowed |
+| header stacks      | error     | error   |  allowed | allowed | error |
+| header unions      | error     | error   |  allowed | allowed | allowed |
+| struct types       | allowed[^struct_header]   | error   |  allowed | allowed | error |
+| tuple types        | error     | error   |  allowed | allowed | error |
+| list types         | error     | error   |  error   | allowed | error |
+|--------------------|-----------|---------|----------|---------|-------|
 
 [^enum_header]: an `enum` type used as a field in a `header` must specify a
     underlying type and representation for `enum` elements.
@@ -2562,26 +2562,32 @@ The table below lists all types that may appear as base types in a
 `typedef` or `type` declaration.
 
 
-|------------------|--------------------|-----------------|
-| Base type B      | `typedef B <name>` | `type B <name>` |
-+:-----------------+:-------------------+:----------------+
-| `bit<W>`         | allowed            | allowed         |
-| `int<W>`         | allowed            | allowed         |
-| `varbit<W>`      | allowed            | error           |
-| `int`            | allowed            | error           |
-| `void`           | error              | error           |
-| `error`          | allowed            | error           |
-| `match_kind`     | error              | error           |
-| `bool`           | allowed            | allowed         |
-| `enum`           | allowed            | error           |
-| `header`         | allowed            | error           |
-| header stack     | allowed            | error           |
-| `header_union`   | allowed            | error           |
-| `struct`         | allowed            | error           |
-| `tuple`          | allowed            | error           |
-| a `typedef` name | allowed            | allowed[^type_allowed] |
-| a `type` name    | allowed            | allowed         |
-|------------------|--------------------|-----------------|
+|-------------------|--------------------|-----------------|
+| Base type B       | `typedef B <name>` | `type B <name>` |
++:------------------+:-------------------+:----------------+
+| `bit<W>`          | allowed            | allowed         |
+| `int<W>`          | allowed            | allowed         |
+| `varbit<W>`       | allowed            | error           |
+| `int`             | allowed            | error           |
+| `void`            | error              | error           |
+| `string`          | allowed            | error           |
+| `error`           | allowed            | error           |
+| `match_kind`      | error              | error           |
+| `bool`            | allowed            | allowed         |
+| enumeration types | allowed            | error           |
+| header types      | allowed            | error           |
+| header stacks     | allowed            | error           |
+| header unions     | allowed            | error           |
+| struct types      | allowed            | error           |
+| tuple types       | allowed            | error           |
+| list types        | allowed            | error           |
+| a `typedef` name  | allowed            | allowed[^type_allowed] |
+| a `type` name     | allowed            | allowed         |
+|-------------------|--------------------|-----------------|
+
+Rationale: So far, no clear motivation for allowing `typedef` for `void`
+and `match_kind` was presented. Therefore, to be on the safe side this
+is disallowed.
 
 [^type_allowed]: `type B <name>` is allowed for a type name `B`
     defined via `typedef X B` if `type X <name>` is allowed.
