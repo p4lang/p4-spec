@@ -1758,8 +1758,9 @@ control nothing(inout Empty h, inout Empty m) {
 parser parserProto<H, M>(packet_in p, out H h, inout M m);
 control controlProto<H, M>(inout H h, inout M m);
 
-package pack<HP, MP, HC, MC>(@optional parserProto<HP, MP> _parser,  // optional parameter
-                             controlProto<HC, MC> _control = nothing()); // default parameter value
+package pack<HP, MP, HC, MC>(
+    @optional parserProto<HP, MP> _parser,  // optional parameter
+    controlProto<HC, MC> _control = nothing()); // default parameter value
 
 pack() main;   // No value for _parser, _control is an instance of nothing()
 ~End P4Example
@@ -4978,7 +4979,8 @@ T t2 = { s = ... }; // error: no initializer specified for fields n0 and n1
 tuple<N0, N1> p = { ... }; // initialize p with default value { 0, N1.A }
 T t3 = { ..., n0 = 2}; // error: ... must be last
 H h1 = ...;   // initialize h1 with a header that is invalid
-H h2 = { f2=5, ... };   // initialize h2 with a header that is valid, field f1 0, field f2 5
+H h2 = { f2=5, ... };   // initialize h2 with a header that is valid, field f1 0,
+                        //  field f2 5
 H h3 = { ... };  // initialize h3 with a header that is valid, field f1 0, field f2 0
 ~ End P4Example
 
@@ -7429,7 +7431,8 @@ control Callee<T>(/* parameters omitted */) { /* body omitted */ }
 
 control Caller(/* parameters omitted */)(/* parameters omitted */) {
     apply {
-        Callee<bit<32>>.apply(/* arguments omitted */); // Callee<bit<32>> is treated as an instance
+        // Callee<bit<32>> is treated as an instance
+        Callee<bit<32>>.apply(/* arguments omitted */);
     }
 }
 ~ End P4Example
