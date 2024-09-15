@@ -1304,8 +1304,8 @@ number of backslash characters (ASCII code 92). P4 does not make any
 validity checks on strings (i.e., it does not check that strings
 represent legal UTF-8 encodings).
 
-Since P4 does not provide any operations on strings,
-string literals are generally passed unchanged through the P4 compiler to
+Since P4 does not allow strings to exist at runtime, string literals
+are generally passed unchanged through the P4 compiler to
 other third-party tools or compiler-backends, including the
 terminating quotes. These tools can define their own handling of
 escape sequences (e.g., how to specify Unicode characters, or handle
@@ -1906,13 +1906,18 @@ Operations on values of type `match_kind` are described in Section
 ### The Boolean type { #sec-bool-type }
 
 The Boolean type `bool` contains just two values, `false` and `true`.
-Boolean values are not integers or bit-strings.
+Boolean values are not integers or bit-strings. Operations that can
+be performed on booleans are described in Section [#sec-bool-exprs].
 
 ### Strings { #sec-string-type }
 
-The type `string` represents strings.  There are no operations on
-string values; one cannot declare variables with a `string` type.
-Parameters with type `string` can be only directionless (see Section
+The type `string` represents strings. The values are either string
+literals, or concatenations of multiple string literals. Operations
+that can be performed on strings are described in Section
+[#sec-string-ops].
+
+One cannot declare variables with a `string` type. Parameters with
+type `string` can be only directionless (see Section
 [#sec-calling-convention]).  P4 does not support string manipulation
 in the dataplane; the `string` type is only allowed for describing
 compile-time known values (i.e., string literals, as discussed in
@@ -3738,6 +3743,23 @@ finding this information in a section dedicated to type `varbit`.
 
 Additionally, the maximum size of a variable-length bit-string can be determined at
 compile-time (Section [#sec-minsizeinbits]).
+
+## Operations on Strings { #sec-string-ops }
+
+The only operation allowed on strings is concatenation, denoted by
+`++`. For string concatenation, both operands must be strings and
+the result is also a string. String concatenation can be only
+performed at compile time.
+
+~ Begin P4Example
+extern void log(string message);
+
+void foo(int<8> v) {
+  // ...
+  log("my log message " ++
+      "continuation of the log message");
+}
+~ End P4Example
 
 ## Casts { #sec-casts }
 
@@ -8486,9 +8508,10 @@ table t {
 
 The `@name` annotation directs the compiler to use a different
 local name when generating the external APIs used to manipulate a
-language element from the control plane. This annotation takes a string literal
-body.  In the
-following example, the fully-qualified name of the table is `c_inst.t1`.
+language element from the control plane. This annotation takes a local
+compile-time know value of type `string` (typically a string literal).
+In the followigng example, the fully-qualified name of the table is
+`c_inst.t1`.
 
 ~ Begin P4Example
 control c( /* parameters omitted */ )() {
@@ -8587,11 +8610,13 @@ absence), allowing architecture-independent analysis of P4 programs.
 
 The `deprecated` annotation has a required string argument that is a
 message that will be printed by a compiler when a program is using the
-deprecated construct.  This is mostly useful for annotating library
-constructs, such as externs.
+deprecated construct. This is mostly useful for annotating library
+constructs, such as externs. The parameter needs to be local
+compile-time known value of type `string`.
 
 ~ Begin P4Example
-@deprecated("Please use the 'check' function instead")
+#define DEPR_V1_2_2 "Deprecated in v1.2.2"
+@deprecated("Please use the 'check' function instead." ++ DEPR_V1_2_2)
 extern Checker {
    /* body omitted */
 }
@@ -8602,7 +8627,8 @@ extern Checker {
 The `noWarn` annotation has a required string argument that indicates
 a compiler warning that will be inhibited.  For example
 `@noWarn("unused")` on a declaration will prevent a compiler warning
-if that declaration is not used.
+if that declaration is not used. The parameter needs to be local
+compile-time known value of type `string`.
 
 ## Target-specific annotations
 
