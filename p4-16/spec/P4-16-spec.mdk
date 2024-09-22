@@ -1306,9 +1306,16 @@ represent legal UTF-8 encodings).
 
 Since P4 does not allow strings to exist at runtime, string literals
 are generally passed unchanged through the P4 compiler to
-other third-party tools or compiler-backends, including the
-terminating quotes. These tools can define their own handling of
-escape sequences (e.g., how to specify Unicode characters, or handle
+other third-party tools or compiler-backends. The compiler can, however,
+perform compile-time concatenation (constant-folding) of concatenation
+expressions into single literal. When such concatenation is performed,
+the binary representation of the string literals (excluding the quotes)
+is concatenated in the order they appears in the source code. There are
+no escape sequences that would be treated specially when strings are
+concatenated.
+
+The backends and other tools can define their own handling of escape
+sequences (e.g., how to specify Unicode characters, or handle
 unprintable ASCII characters).
 
 Here are 3 examples of string literals:
@@ -1318,6 +1325,16 @@ Here are 3 examples of string literals:
 "string with embedded
 line terminator"
 ~ End P4Example
+
+Here is an example of concatenation expression and an equivalent string
+literal:
+
+~ Begin P4Example
+"one string \" with a quote inside;" ++ (" " ++ "another string")
+// can be constant folded to
+"one string \" with a quote inside; another string")
+~ End P4Example
+
 
 ### Optional trailing commas { #sec-trailing-commas }
 
@@ -1911,10 +1928,10 @@ be performed on booleans are described in Section [#sec-bool-exprs].
 
 ### Strings { #sec-string-type }
 
-The type `string` represents strings. The values are either string
-literals, or concatenations of multiple string literals. Operations
-that can be performed on strings are described in Section
-[#sec-string-ops].
+The type `string` represents strings. The values of type `string` are
+either string literals, or concatenations of multiple `string`-typed
+expression. Operations that can be performed on strings are described in
+Section [#sec-string-ops].
 
 One cannot declare variables with a `string` type. Parameters with
 type `string` can be only directionless (see Section
@@ -3748,7 +3765,7 @@ compile-time (Section [#sec-minsizeinbits]).
 
 The only operation allowed on strings is concatenation, denoted by
 `++`. For string concatenation, both operands must be strings and
-the result is also a string. String concatenation can be only
+the result is also a string. String concatenation can only be
 performed at compile time.
 
 ~ Begin P4Example
@@ -8509,7 +8526,7 @@ table t {
 The `@name` annotation directs the compiler to use a different
 local name when generating the external APIs used to manipulate a
 language element from the control plane. This annotation takes a local
-compile-time know value of type `string` (typically a string literal).
+compile-time known value of type `string` (typically a string literal).
 In the following example, the fully-qualified name of the table is
 `c_inst.t1`.
 
@@ -8611,7 +8628,7 @@ absence), allowing architecture-independent analysis of P4 programs.
 The `deprecated` annotation has a required string argument that is a
 message that will be printed by a compiler when a program is using the
 deprecated construct. This is mostly useful for annotating library
-constructs, such as externs. The parameter needs to be local
+constructs, such as externs. The parameter must be a local
 compile-time known value of type `string`.
 
 ~ Begin P4Example
@@ -8627,7 +8644,7 @@ extern Checker {
 The `noWarn` annotation has a required string argument that indicates
 a compiler warning that will be inhibited.  For example
 `@noWarn("unused")` on a declaration will prevent a compiler warning
-if that declaration is not used. The parameter needs to be local
+if that declaration is not used. The parameter must be a local
 compile-time known value of type `string`.
 
 ## Target-specific annotations
