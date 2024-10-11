@@ -1,5 +1,5 @@
 Title : P4~16~ Language Specification
-Title Note: version 1.2.4
+Title Note: version 1.2.5
 Title Footer: &date;
 Author: The P4 Language Consortium
 Heading depth: 5
@@ -3466,7 +3466,7 @@ to bit-strings of the same width:
 
 Bit-strings also support the following operations:
 
-- Logical shift left and right by a non-negative integer value (which need not be 
+- Logical shift left and right by a non-negative integer value (which need not be
   a compile-time known value), denoted by `<<` and `>>` respectively.
   In a shift, the left operand is unsigned, and right operand must be either an
   expression of type `bit<S>` or a non-negative integer value that is known at
@@ -3783,7 +3783,7 @@ The following casts are legal in P4:
 - casts of a tuple expression to a header stack type
 - casts of an invalid expression `{#}` to a header or a header union type
 - casts where the destination type is the same as the source type
-  if the destination type appears in this list (this excludes 
+  if the destination type appears in this list (this excludes
   e.g., parsers or externs).
 
 ### Implicit casts { sec-implicit-casts }
@@ -4312,7 +4312,7 @@ expressions are legal:
 - `hs[index]`: produces a reference to the header at the
   specified position within the stack; if `hs` is an l-value,
   the result is also an l-value. The header may be invalid. Some implementations
-  may impose the constraint that the index expression must be a compile-time known value. 
+  may impose the constraint that the index expression must be a compile-time known value.
   A P4 compiler must give an error if an index that is a compile-time known value is out of range.
 
   Accessing a header stack ``hs`` with an index less than `0` or
@@ -4401,7 +4401,7 @@ void pop_front(int count) {
 }
 ~ End P4Pseudo
 
-Similar to structs and headers, the size of a header stack is a compile-time known value 
+Similar to structs and headers, the size of a header stack is a compile-time known value
 (Section [#sec-minsizeinbits]).
 
 Two header stacks can be compared for equality (`==`) or inequality (`!=`)
@@ -4424,7 +4424,7 @@ expression ...
 The `typeRef` is a header stack type.  The `typeRef` can be omitted if
 it can be inferred from context, e.g., when initializing a variable
 with a header stack type.  Each expression in the list must evaluate
-to a header of the same type as the other stack elements.  
+to a header of the same type as the other stack elements.
 
 Here is an example:
 
@@ -7053,7 +7053,7 @@ because of the `@noWarn("duplicate_priorities")` annotation.
 #### Size {#sec-size-table-property}
 
 The `size` is an optional property of a table.  When present, its
-value must always be a compile-time known value that is an integer. The `size` property 
+value must always be a compile-time known value that is an integer. The `size` property
 is specified in units of number of table entries.
 
 If a table is specified with a `size` property of value `N`, it is
@@ -8322,7 +8322,7 @@ a key and a value `expression`. Note the syntax for `expression` is rich, see
 Appendix [#sec-grammar] for details.
 
 All `expression`s within a `structuredAnnotationBody` must be compile-time known
-values with a result type that is either: `string`, `int`, or `bool`. 
+values with a result type that is either: `string`, `int`, or `bool`.
 In particular, structured `expression`s (e.g. an `expression` containing an
 `expressionList`, a `kvList`, etc.) are not allowed. Note that P4Runtime
 information (P4Info) may stipulate additional restrictions. For example, an
@@ -8619,14 +8619,21 @@ The P4 compiler should provide:
 
 - Errors when annotations are used incorrectly (e.g., an annotation
   expecting a parameter but used without arguments, or with arguments
-  of the wrong type
+  of the wrong type)
 - Warnings for unknown annotations.
 
 # Appendix: Revision History { #sec-revision-history; @h1:"A" }
 
-## Summary of changes made in version 1.2.4
+## Summary of changes made in unreleased version
 
+## Summary of changes made in version 1.2.5, released October 11, 2024
+
+* Improved type nesting rules (Section[#sec-type-nesting]).
+* Clarified that directionless extern parameters are passed by reference.
 * Introduced distinction between local compile-time known and compile-time known values (Section[#sec-compile-time-known]).
+
+## Summary of changes made in version 1.2.4,released May 15, 2023
+
 * Added header stack expressions (Section [#sec-hs-init]).
 * Allow casts from a type to itself (Section [#sec-casts]).
 * Added an invalid header or header union expression `{#}` (Sections [#sec-ops-on-hdrs] and [#sec-expr-hu]).
