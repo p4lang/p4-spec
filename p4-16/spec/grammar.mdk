@@ -98,7 +98,9 @@ annotationToken
     | APPLY
     | BOOL
     | BIT
+    | BREAK
     | CONST
+    | CONTINUE
     | CONTROL
     | DEFAULT
     | ELSE
@@ -108,6 +110,7 @@ annotationToken
     | EXIT
     | EXTERN
     | FALSE
+    | FOR
     | HEADER
     | HEADER_UNION
     | IF
@@ -737,6 +740,18 @@ assignmentOrMethodCallStatement
     ;
 // END:assignmentOrMethodCallStatement
 
+// BEGIN:breakStatement
+breakStatement
+    : BREAK ";"
+    ;
+// END:breakStatement
+
+// BEGIN:continueStatement
+continueStatement
+    : CONTINUE ";"
+    ;
+// END:continueStatement
+
 // BEGIN:emptyStatement
 emptyStatement
     : ";"
@@ -779,7 +794,10 @@ statement
     | blockStatement
     | returnStatement
     | exitStatement
+    | breakStatement
+    | continueStatement
     | switchStatement
+    | loopStatement
     ;
 
 // BEGIN:blockStatement
@@ -821,6 +839,59 @@ switchLabel
     | nonBraceExpression
     ;
 // END:switchLabel
+
+// BEGIN:loopStatement
+loopStatement
+    : optAnnotations FOR "(" optForInitStatements ";" expression ";"
+      optForUpdateStatements ")" statement
+    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    ;
+// END:loopStatement
+
+// BEGIN:optForInitStatements
+optForInitStatements
+    : /* empty */
+    | forInitStatements
+    ;
+// END:optForInitStatements
+
+// BEGIN:forInitStatements
+forInitStatements
+    : forInitStatement
+    | forInitStatements "," forInitStatement
+    ;
+// END:forInitStatements
+
+// BEGIN:forInitStatement
+forInitStatement
+    : optAnnotations typeRef name optInitializer
+    | lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "=" expression
+    ;
+// END:forInitStatement
+
+// BEGIN:optForUpdateStatements
+optForUpdateStatements
+    : /* empty */
+    | forUpdateStatements
+    ;
+// END:optForUpdateStatements
+
+// BEGIN:forUpdateStatements
+forUpdateStatements
+    : forUpdateStatement
+    | forUpdateStatements "," forUpdateStatement
+    ;
+// END:forUpdateStatements
+
+// BEGIN:forUpdateStatement
+forUpdateStatement
+    : lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "=" expression
+    ;
+// END:forUpdateStatement
 
 // BEGIN:statementOrDeclaration
 statementOrDeclaration
