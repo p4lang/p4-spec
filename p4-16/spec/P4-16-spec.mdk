@@ -3489,6 +3489,10 @@ Bit-strings also support the following operations:
   The effect of this statement is to set bits `H` through `L` (inclusive of
   both) of `e` to the bit-pattern represented by `x`, and leaves all other bits
   of `e` unchanged.  A slice of an unsigned integer is an unsigned integer.
+  A slice may also be specified as `[L+:W]` where L is the lowest bit of the slice
+  and W is the width of the slice.  In this case, only W must be a non-negative compile-time
+  known numeric value.  L must also be a numeric value and some architectures may require
+  it to likewise be compile-time know.  Some architectures may allow variable indexing.
 - Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of
   different signedness and width.  The result has the same signedness as the
