@@ -1,18 +1,19 @@
 
 SPEC=P4-16-spec
 
-all: build/${SPEC}.pdf
+ROUGE_STYLE=github
+ROUGE_CSS= style
 
-grammar.trimmed.mdk: grammar.mdk trim-madoko-comments.py
-	./trim-madoko-comments.py $< > $@
+all: ${SPEC}.pdf ${SPEC}.html
 
-build/${SPEC}.pdf: ${SPEC}.mdk grammar.mdk grammar.trimmed.mdk
-	madoko --pdf -vv --png --odir=build $<
+grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
+	./trim-asciidoc-tag-comments.py $< > $@
 
-build/${SPEC}.pdf: grammar.mdk p4.json
+${SPEC}.pdf: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
+	time asciidoctor-pdf -a pdf-fontsdir=resources/fonts -v -r asciidoctor-mathematical -a rouge-style=$(ROUGE_STYLE) $<
 
-html: ${SPEC}.mdk grammar.mdk grammar.trimmed.mdk p4.json
-	madoko -vv --png --odir=build $<
+${SPEC}.html: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
+	time asciidoctor -v -r asciidoctor-mathematical -a rouge-css=$(ROUGE_CSS) $<
 
 clean:
-	${RM} -rf build
+	/bin/rm -f ${SPEC}.pdf ${SPEC}.html grammar.trimmed.adoc resources/figs/stem-*.png
