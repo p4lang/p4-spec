@@ -36,5 +36,5 @@ quicker turnarounds and `make` for the final PDF output.
 ### Linux
 
 For an Ubuntu system with a supported version, you may use the bash
-script [`setup-for-ubuntu-linux.sh`](setup-for-ubuntu-linux.sh) to
-install the necessary packages and fonts for you.
+script [`install-asciidoctor-linux.sh`](install-asciidoctor-linux.sh)
+to install the necessary packages and fonts for you.

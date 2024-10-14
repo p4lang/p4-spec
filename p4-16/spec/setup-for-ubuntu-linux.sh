@@ -1,211 +1,128 @@
 #! /bin/bash
 
-# Copyright 2024 Andy Fingerhut
+print_supported_os_versions() {
+    1>&2 echo "    Ubuntu 16.04"
+    1>&2 echo "    Ubuntu 18.04"
+    1>&2 echo "    Ubuntu 20.04"
+    1>&2 echo "    Ubuntu 22.04"
+}
 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+echo "------------------------------------------------------------"
+echo "Purpose of this script:"
+echo ""
+echo "On a supported operating system that has not had any additional"
+echo "packages installed yet, install a set of packages that are"
+echo "needed to successfully create the HTML and PDF versions of these"
+echo "documents from their Madoko source files (files with names that"
+echo "end with '.mdk'):"
+echo ""
+echo "+ The P4_16 language specification"
+echo "+ The Portable Switch Architecture (PSA) specification"
+echo ""
+echo "While it would be nice if I could assure you that this script"
+echo "will work on a system that already had many packages installed,"
+echo "I do not know which packages might have conflicts with each"
+echo "other."
+echo "------------------------------------------------------------"
 
-linux_version_warning() {
-    1>&2 echo "Found ID ${ID} and VERSION_ID ${VERSION_ID} in /etc/os-release"
-    1>&2 echo "This script only supports these:"
-    1>&2 echo "    ID ubuntu, VERSION_ID in 20.04 22.04 24.04"
-    #1>&2 echo "    ID fedora, VERSION_ID in 36 37 38"
+# This is where the application gnome-font-viewer copies font files
+# when a user clicks the "Install" button.
+FONT_INSTALL_DIR="${HOME}/.local/share/fonts"
+
+warning() {
+    1>&2 echo "This script has only been tested on these OS versions:"
+    print_supported_os_versions
+}
+
+lsb_release >& /dev/null
+if [ $? != 0 ]
+then
+    1>&2 echo "No 'lsb_release' found in your command path."
+    warning
+    exit 1
+fi
+
+DISTRIBUTOR_ID=`lsb_release -si`
+UBUNTU_RELEASE=`lsb_release -sr`
+
+if [ ${DISTRIBUTOR_ID} != "Ubuntu" -o \( ${UBUNTU_RELEASE} != "16.04" -a ${UBUNTU_RELEASE} != "18.04" -a ${UBUNTU_RELEASE} != "20.04" -a ${UBUNTU_RELEASE} != "22.04" \) ]
+then
+    warning
     1>&2 echo ""
-    1>&2 echo "Proceed installing manually at your own risk of"
-    1>&2 echo "significant time spent figuring out how to make it all"
-    1>&2 echo "work, or consider getting VirtualBox and creating a"
-    1>&2 echo "virtual machine with one of the tested versions."
-}
-
-get_used_disk_space_in_mbytes() {
-    echo $(df --output=used --block-size=1M . | tail -n 1)
-}
-
-abort_script=0
-
-if [ ! -r /etc/os-release ]
-then
-    1>&2 echo "No file /etc/os-release.  Cannot determine what OS this is."
-    linux_version_warning
-    exit 1
-fi
-source /etc/os-release
-PROCESSOR=`uname --machine`
-
-supported_distribution=0
-tried_but_got_build_errors=0
-if [ "${ID}" = "ubuntu" ]
-then
-    case "${VERSION_ID}" in
-	20.04)
-	    supported_distribution=1
-	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf2.0-dev"
-	    ;;
-	22.04)
-	    supported_distribution=1
-	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf-2.0-dev"
-	    ;;
-	24.04)
-	    supported_distribution=1
-	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf-2.0-dev"
-	    ;;
-    esac
-elif [ "${ID}" = "fedora" ]
-then
-    case "${VERSION_ID}" in
-	38)
-	    supported_distribution=0
-	    ;;
-	39)
-	    supported_distribution=0
-	    ;;
-	40)
-	    supported_distribution=0
-	    ;;
-    esac
-fi
-
-if [ ${supported_distribution} -eq 1 ]
-then
-    echo "Found supported ID ${ID} and VERSION_ID ${VERSION_ID} in /etc/os-release"
-else
-    linux_version_warning
-    if [ ${tried_but_got_build_errors} -eq 1 ]
-    then
-	1>&2 echo ""
-	1>&2 echo "This OS has been tried at least onc before, but"
-	1>&2 echo "there were errors during a compilation or build"
-	1>&2 echo "step that have not yet been fixed.  If you have"
-	1>&2 echo "experience in fixing such matters, your help is"
-	1>&2 echo "appreciated."
-    fi
+    1>&2 echo "Here is what command 'lsb_release -a' shows this OS to be:"
+    lsb_release -a
     exit 1
 fi
 
-min_free_disk_MBytes=`expr 1 \* 1024`
-free_disk_MBytes=`df --output=avail --block-size=1M . | tail -n 1`
+set -ex
 
-if [ "${free_disk_MBytes}" -lt "${min_free_disk_MBytes}" ]
-then
-    free_disk_comment="too low"
-    abort_script=1
-else
-    free_disk_comment="enough"
-fi
-
-echo "Minimum free disk space to run this script:    ${min_free_disk_MBytes} MBytes"
-echo "Free disk space on this system from df output: ${free_disk_MBytes} MBytes -> $free_disk_comment"
-
-if [ "${abort_script}" == 1 ]
-then
-    echo ""
-    echo "Aborting script because system has too little free disk space"
-    exit 1
-fi
-
-echo "Passed all sanity checks"
-
-DISK_USED_START=`get_used_disk_space_in_mbytes`
-
-set -e
-set -x
-
+set +x
 echo "------------------------------------------------------------"
 echo "Time and disk space used before installation begins:"
 set -x
 date
-df -h .
 df -BM .
-TIME_START=$(date +%s)
 
-# On new systems if you have never checked repos you should do that first
+# Common packages to install on all tested Ubuntu versions
+sudo apt-get --yes install git curl make nodejs npm texlive-xetex dvipng
 
-# Install a few packages (vim is not strictly necessary -- installed for
-# my own convenience):
-if [ "${ID}" = "ubuntu" ]
+if [[ "${UBUNTU_RELEASE}" > "18" ]]
 then
-    sudo apt-get --yes install gnupg2 curl
-elif [ "${ID}" = "fedora" ]
-then
-    sudo dnf -y update
-    sudo dnf -y install git vim
+    # Only needed for Ubuntu 18.04 and later
+    sudo apt-get --yes install texlive-science
+else
+    # Only needed for Ubuntu 16.04
+    sudo apt-get --yes install nodejs-legacy texlive-generic-extra texlive-math-extra
 fi
 
-gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-curl -sSL https://get.rvm.io | bash
-source $HOME/.rvm/scripts/rvm
-rvm install ruby-3.3.1
-rvm use 3.3.1
-gem install asciidoctor
-gem install asciidoctor-pdf
-gem install asciidoctor-bibtex
-# Additional installations to enable installing
-# asciidoctor-mathematical
-sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev ${OS_SPECIFIC_PACKAGES}
-gem install asciidoctor-mathematical
+# Common packages to install on all tested Ubuntu versions
+sudo npm install madoko -g
 
-# As of 2024-Jul-04, the official rouge repo has support for P4
-# language syntax highlighting.
-git clone https://github.com/rouge-ruby/rouge
-cd rouge
-git log -n 1 | cat
-gem build rouge.gemspec
-gem install rouge-4.3.0.gem
-gem install asciidoctor-bibtex
-gem install asciidoctor-lists
+set +x
+echo "------------------------------------------------------------"
+echo "Time and disk space used just before 'apt clean':"
+set -x
+date
+df -BM .
 
-which ruby
-ruby --version
-which gem
-gem --version
-which asciidoctor
-asciidoctor --version
-which asciidoctor-pdf
-asciidoctor-pdf --version
+# After install of the packages above, this command often seems to
+# help reduce the disk space used by a gigabyte or so.
+sudo apt clean
 
-set +e
+# On a freshly installed Ubuntu 16.04 system, added about 1.3G to the
+# used disk space, although temporarily went about 1 GB more than that
+# before 'sudo apt clean'.
+
+# On a freshly installed Ubuntu 18.04 system, added about 0.8G.
+
+# Retrieve and install fonts
+mkdir -p "${FONT_INSTALL_DIR}"
+curl -fsSL --output "${FONT_INSTALL_DIR}/UtopiaStd-Regular.otf" https://raw.github.com/p4lang/p4-spec/gh-pages/fonts/UtopiaStd-Regular.otf
+curl -fsSL --output "${FONT_INSTALL_DIR}/luximr.ttf" https://raw.github.com/p4lang/p4-spec/gh-pages/fonts/luximr.ttf
 
 set +x
 echo "------------------------------------------------------------"
 echo "Time and disk space used when installation was complete:"
 set -x
 date
-df -h .
 df -BM .
-TIME_END=$(date +%s)
-set +x
-echo ""
-echo "Elapsed time for various install steps:"
-echo "Total time             : $(($TIME_END-$TIME_START)) sec"
-set -x
 
-DISK_USED_END=`get_used_disk_space_in_mbytes`
-
-set +x
-echo "All disk space utilizations below are in MBytes:"
-echo ""
-echo  "DISK_USED_START                ${DISK_USED_START}"
-echo  "DISK_USED_END                  ${DISK_USED_END}"
-echo  "DISK_USED_END - DISK_USED_START : $((${DISK_USED_END}-${DISK_USED_START})) MBytes"
-
-echo "----------------------------------------------------------------------"
-echo "CONSIDER READING WHAT IS BELOW"
-echo "----------------------------------------------------------------------"
-echo ""
-echo "You should add this command in a shell startup script, e.g."
-echo "$HOME/.bashrc if you use the Bash shell:"
-echo ""
-echo "    source \$HOME/.rvm/scripts/rvm"
-echo ""
-echo "----------------------------------------------------------------------"
-echo "CONSIDER READING WHAT IS ABOVE"
-echo "----------------------------------------------------------------------"
+if [ ${DISTRIBUTOR_ID} == "Ubuntu" -a ${UBUNTU_RELEASE} == "22.04" ]
+then
+    set +x
+    1>&2 echo ""
+    1>&2 echo "------------------------------------------------------------"
+    1>&2 echo "WARNING!"
+    1>&2 echo "------------------------------------------------------------"
+    1>&2 echo ""
+    1>&2 echo "While this script can successfully install the required"
+    1>&2 echo "packages on an Ubuntu 22.04 system like this one, these"
+    1>&2 echo "installed packages are different versions than for"
+    1>&2 echo "other supported OS's, and in our testing they GIVE"
+    1>&2 echo "ERRORS and FAIL TO BUILD HTML and PDF files for the P4"
+    1>&2 echo "specifications.  See this issue:"
+    1>&2 echo ""
+    1>&2 echo "    https://github.com/p4lang/p4-spec/issues/1115"
+    1>&2 echo ""
+    1>&2 echo "If you know how to fix this, your help is much appreciated."
+fi
