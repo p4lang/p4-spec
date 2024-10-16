@@ -1,0 +1,269 @@
+extends: ~
+font:
+  catalog:
+    UtopiaStd-Regular:
+      normal: Utopia/utopia-regular.ttf
+      bold: Utopia/utopia-bold.ttf
+      italic: Utopia/utopia-italic.ttf
+      bold_italic: Utopia/utopia-bolditalic.ttf
+    LuxiMono:
+      normal: LuxiMono/luximr.ttf
+      bold:  LuxiMono/luximb.ttf
+      italic: LuxiMono/luximri.ttf
+      bold_italic: LuxiMono/luximbi.ttf
+    OpenSans:
+      normal: OpenSans/OpenSans-Regular.ttf
+      bold: OpenSans/OpenSans-Bold.ttf
+      italic: OpenSans/OpenSans-Italic.ttf
+      bold_italic: OpenSans/OpenSans-BoldItalic.ttf
+page:
+  layout: portrait
+  initial_zoom: FitH
+  margin: [0.5in, 0.67in, 0.67in, 0.67in]
+  # margin_inner and margin_outer keys are used for recto/verso print margins when media=prepress
+  margin_inner: 0.75in
+  margin_outer: 0.59in
+  size: A4
+  numbering:
+    start-at: toc
+base:
+  text_align: justify
+  font_color: 333333
+  font_family: UtopiaStd-Regular
+  font_size: 10.5
+  # line_height_length is really just a vertical spacing variable; it's not actually the height of a line
+  line_height_length: 12
+  # The Noto font family has a built-in line height of 1.36
+  # With this line_height, a line of text will occupy a height of 15.78pt
+  line_height: $base_line_height_length / 10.5
+  font_size_large: round($base_font_size * 1.25)
+  font_size_small: round($base_font_size * 0.85)
+  font_size_min: $base_font_size * 0.75
+  font_style: normal
+  border_color: EEEEEE
+  border_radius: 4
+  border_width: 0.5
+role:
+  lead:
+    font_size: $base_font_size_large
+  line-through:
+    text_decoration: line-through
+  underline:
+    text_decoration: underline
+  big:
+    font_size: 1.2em
+  small:
+    font_size: 0.8em
+  subtitle:
+    font_color: 999999
+    font_size: 0.8em
+    font_style: normal_italic
+vertical_rhythm: $base_line_height_length
+horizontal_rhythm: $base_line_height_length
+link:
+  font_color: 428BCA
+# codespan is currently used for monospaced phrases and table cells
+codespan:
+  font_color: #B12146
+  font_family: OpenSans
+kbd:
+  background_color: F5F5F5
+  border_color: CCCCCC
+  border_offset: 2
+  border_radius: 2
+  border_width: 0.5
+  font_family: $codespan_font_family
+  separator_content: "\u202f+\u202f\u200b"
+mark:
+  background_color: FFFF00
+  border_offset: 1
+menu:
+  caret_content: "\u00a0<font size=\"1.15em\" color=\"#B12146\">\u203a</font> "
+  font_style: bold
+heading:
+  font-family: OpenSans
+  font-color: #262626
+  font-size: 17
+  font-style: bold
+  # h1 is used for part titles (book doctype) or the doctitle (article doctype)
+  h1_font_size: floor($base_font_size * 2.6)
+  # h2 is used for chapter titles (book doctype only)
+  h2_font_size: floor($base_font_size * 2.15)
+  h3_font_size: round($base_font_size * 1.7)
+  h4_font_size: $base_font_size_large
+  h5_font_size: $base_font_size
+  h6_font_size: $base_font_size_small
+  # rely on built-in line height in Noto
+  line_height: 1
+  margin_top: $vertical_rhythm * 0.4
+  margin_bottom: $vertical_rhythm * 0.9
+  min_height_after: auto
+  chapter:
+    break-before: auto
+title_page:
+  font-family: OpenSans
+  font-color: #080808
+  font-size:  25
+  font-style: bold
+  text-align: center
+  logo:
+    image: image:logo.png[pdfwidth=3.0in,align=center]
+  subtitle:
+    font-family: OpenSans
+    font-color: #080808
+    font-size:  15
+    text-align: center
+    line_height: 1
+  revision:
+    font-family: OpenSans
+    font-color: #080808
+    font-size:  10
+    text-align: center
+    margin_top: $base_font_size * 1.25
+block:
+  margin_bottom: $vertical_rhythm
+caption:
+  align: left
+  font_size: $base_font_size * 0.95
+  font_style: italic
+  # FIXME perhaps set line_height instead of / in addition to margins?
+  margin_inside: $vertical_rhythm / 3
+  margin_outside: 0
+abstract:
+  title:
+    font-family: UtopiaStd-Regular
+    font-color: #080808
+    font-size:  15
+    font-style: italic
+    text-align: center
+admonition:
+  column_rule_color: $base_border_color
+  column_rule_width: $base_border_width
+  padding: [$vertical_rhythm / 3.0, $horizontal_rhythm, $vertical_rhythm / 3.0, $horizontal_rhythm]
+  label:
+    text_transform: uppercase
+    font_style: bold
+quote:
+  font_size: $base_font_size_large
+  border_color: $base_border_color
+  border_width: 0
+  border_left_width: $horizontal_rhythm / 3
+  padding: [$vertical_rhythm / 4, $horizontal_rhythm, $vertical_rhythm / 4, $horizontal_rhythm + $quote_border_left_width / 2]
+  cite:
+    font_size: $base_font_size_small
+    font_color: $role_subtitle_font_color
+verse:
+  font_size: $quote_font_size
+  border_color: $quote_border_color
+  border_width: $quote_border_width
+  border_left_width: $quote_border_left_width
+  padding: $quote_padding
+  cite:
+    font_size: $quote_cite_font_size
+    font_color: $quote_cite_font_color
+# code is used for literal, listing, and source blocks and literal table cells
+code:
+  font_color: #fcf3d9
+  font_family: LuxiMono
+  font_size: 9
+  padding: $code_font_size
+  line_height: 1.25
+  # line_gap is an experimental property to control how a background color is applied to an inline block element
+  line_gap: 3.8
+  background_color: F5F5F5
+  border_color: CCCCCC
+  border_radius: $base_border_radius
+  border_width: 0.75
+conum:
+  font_family: $codespan_font_family
+  font_color: $codespan_font_color
+  font_size: $base_font_size
+  line_height: 4 / 3
+  glyphs: circled
+example:
+  border_color: $base_border_color
+  border_radius: $base_border_radius
+  border_width: 0.75
+  padding: [$vertical_rhythm, $horizontal_rhythm, $vertical_rhythm, $horizontal_rhythm]
+image:
+  caption:
+    font-family: UtopiaStd-Regular
+    font-color: #080808
+    font-size:  10
+    font-style: italic
+    text-align: center
+prose:
+  margin_bottom: $block_margin_bottom
+sidebar:
+  background_color: EEEEEE
+  border_color: E1E1E1
+  border_radius: $base_border_radius
+  border_width: $base_border_width
+  padding: [$vertical_rhythm, $vertical_rhythm * 1.25, $vertical_rhythm, $vertical_rhythm * 1.25]
+  title:
+    text_align: center
+    font_color: $heading_font_color
+    font_size: $heading_h4_font_size
+    font_style: $heading_font_style
+thematic_break:
+  border_color: $base_border_color
+  border_style: solid
+  border_width: $base_border_width
+  padding: [$vertical_rhythm * 0.5, 0]
+list:
+  indent: $horizontal_rhythm * 1.5
+  #marker_font_color: 404040
+  # NOTE list_item_spacing only applies to list items that do not have complex content
+  item_spacing: $vertical_rhythm / 2
+description_list:
+  term_font_style: bold
+  term_spacing: $vertical_rhythm / 4
+  description_indent: $horizontal_rhythm * 1.25
+callout_list:
+  margin_top_after_code: -$block_margin_bottom / 2
+table:
+  border_color: DDDDDD
+  border_width: $base_border_width
+  grid_width: $base_border_width
+  cell_padding: 3
+  head:
+    font_style: bold
+    border_bottom_width: $base_border_width * 2.5
+  body:
+    stripe_background_color: F9F9F9
+  foot:
+    background_color: F0F0F0
+toc:
+  indent: $horizontal_rhythm
+  font-family: OpenSans
+  font-color: #01226e
+  font-size:  10
+  indent: 20
+  title:
+    font-family: OpenSans
+    font-color: #080808
+    font-size:  15
+    font-style: bold
+  dot-leader:
+    content: ". "
+    levels: 2 3 4 5
+footnotes:
+  font_size: round($base_font_size * 0.75)
+  item_spacing: $list_item_spacing / 2
+index:
+  column_gap: $vertical_rhythm
+header:
+  font_size: $base_font_size_small
+  line_height: 1
+  vertical_align: middle
+footer:
+  font_size: 10
+  font-family: UtopiaStd-Regular
+  height: 1in
+  columns: =100%
+  recto:
+    center:
+      content: '{page-number}'
+  verso:
+    center:
+      content: '{page-number}'

@@ -5,11 +5,11 @@ THIS_SCRIPT_DIR_MAYBE_RELATIVE="${THIS_SCRIPT_FILE_MAYBE_RELATIVE%/*}"
 THIS_SCRIPT_DIR_ABSOLUTE=`readlink -f "${THIS_SCRIPT_DIR_MAYBE_RELATIVE}"`
 
 usage() {
-    1>&2 echo "usage: $0 <spec grammar.mdk file> <p4c p4parser.ypp file>"
+    1>&2 echo "usage: $0 <spec grammar.adoc file> <p4c p4parser.ypp file>"
     1>&2 echo ""
     1>&2 echo "Sample command line:"
     1>&2 echo ""
-    1>&2 echo "    $0 ../grammar.mdk \$HOME/p4c/frontends/parsers/p4/p4parser.ypp"
+    1>&2 echo "    $0 ../grammar.adoc \$HOME/p4c/frontends/parsers/p4/p4parser.ypp"
     1>&2 echo ""
     1>&2 echo "Program to trim C++ code and various other things from"
     1>&2 echo "a Bison grammar file like this one for the open source"
@@ -19,10 +19,10 @@ usage() {
     1>&2 echo ""
 
     1>&2 echo "to make the resulting output file easier to compare"
-    1>&2 echo "against a grammar.mdk file from the P4_16 language"
+    1>&2 echo "against a grammar.adoc file from the P4_16 language"
     1>&2 echo "specification repository here:"
     1>&2 echo ""
-    1>&2 echo "    https://github.com/p4lang/p4-spec/blob/main/p4-16/spec/grammar.mdk"
+    1>&2 echo "    https://github.com/p4lang/p4-spec/blob/main/p4-16/spec/grammar.adoc"
 }
 
 if [ $# -ne 2 ]
@@ -31,12 +31,12 @@ then
     exit 1
 fi
 
-GRAMMAR_MDK_FILE="$1"
+GRAMMAR_ADOC_FILE="$1"
 P4PARSER_YPP_FILE="$2"
 
-if [ ! -r "${GRAMMAR_MDK_FILE}" ]
+if [ ! -r "${GRAMMAR_ADOC_FILE}" ]
 then
-    1>&2 echo "Cannot open file for reading: ${GRAMMAR_MDK_FILE}"
+    1>&2 echo "Cannot open file for reading: ${GRAMMAR_ADOC_FILE}"
     exit 1
 fi
 
@@ -47,7 +47,7 @@ then
 fi
 
 TRIMMED_GRAMMAR_FILE="trimmed-grammar-file.txt"
-"${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${GRAMMAR_MDK_FILE}" > "${TRIMMED_GRAMMAR_FILE}"
+"${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${GRAMMAR_ADOC_FILE}" > "${TRIMMED_GRAMMAR_FILE}"
 TRIMMED_PARSER_FILE="trimmed-p4parser-file.txt"
 "${THIS_SCRIPT_DIR_ABSOLUTE}/trim-p4-grammar-file.py" ${OPTS} "${P4PARSER_YPP_FILE}" > "${TRIMMED_PARSER_FILE}"
 
