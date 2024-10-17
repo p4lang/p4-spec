@@ -14,13 +14,8 @@ jobs:
         # Fetch all history for all branches
         fetch-depth: 0
 
-    - name: Install madoko
-      run: sudo npm install -g madoko
-
-    - name: Install LaTeX packages and fonts
-      run: |
-        sudo apt-get update
-        sudo apt-get install -qq texlive-latex-recommended texlive-latex-extra texlive-fonts-extra ttf-xfree86-nonfree texlive-science texlive-xetex dvipng
+    - name: Install asciidoc
+      run: sudo ./p4-16/spec/install-asciidoctor-linux.sh
 
     - name: Configure git
       run: |
@@ -31,15 +26,6 @@ jobs:
       run: |
         git checkout gh-pages
         git rebase --quiet main
-
-    - name: Install local fonts
-      # This step should run after checkout to gh-pages
-      run: |
-        sudo mkdir -p /usr/share/fonts/truetype/UtopiaStd /usr/share/fonts/truetype/LuxiMono
-        sudo cp fonts/UtopiaStd-Regular.otf /usr/share/fonts/truetype/UtopiaStd/
-        sudo cp fonts/luximr.ttf /usr/share/fonts/truetype/LuxiMono/
-        sudo cp fonts/fix_helvetica.conf /etc/fonts/local.conf
-        fc-cache -fv
 
     - name: Build p4-16/spec
       run: |
