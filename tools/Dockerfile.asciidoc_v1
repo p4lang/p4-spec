@@ -3,25 +3,27 @@ LABEL maintainer="Language Design Working Group <p4-design@lists.p4.org>"
 LABEL description="Dockerfile used for building the asciidoc specification"
 
 RUN  apt-get update && \
-     apt-get install -y gnupg2 curl cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgdk-pixbuf-2.0-dev
+     apt-get install -y gnupg2 curl git rubygems ruby-dev cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgdk-pixbuf-2.0-dev
 
 RUN  gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB &&\
      curl -sSL https://get.rvm.io | bash 
 
 SHELL ["/bin/bash", "-c"]
 RUN   source /usr/local/rvm/scripts/rvm &&\ 
-      rvm install ruby-3.3.2 &&\
-      rvm use 3.3.2 &&\
-      gem install asciidoctor \
+      rvm install ruby-3.3.3 &&\
+      rvm use 3.3.3 
+
+SHELL ["/bin/sh", "-c"]
+RUN   gem install asciidoctor &&\
       gem install asciidoctor-pdf \
-      gem install asciidoctor-bibtex \
       gem install asciidoctor-mathematical \
+      gem install asciidoctor-bibtex\
+      gem install asciidoctor-lists\
       git clone https://github.com/rouge-ruby/rouge &&\
       cd rouge \
       git log -n 1 | cat \
       gem build rouge.gemspec \ 
-      gem install rouge-4.4.0.gem \
-      gem install asciidoctor-bibtex 
+      gem install rouge-4.4.0.gem 
 
 VOLUME ["/usr/src/p4-spec"]
 WORKDIR /usr/src/p4-spec
