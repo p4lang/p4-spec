@@ -1,0 +1,20 @@
+FROM  ruby:3.3.5
+LABEL maintainer="Language Design Working Group <p4-design@lists.p4.org>"
+LABEL description="Dockerfile used for building the asciidoc specification"
+
+RUN  apt-get update && \
+     apt-get install -y cmake flex bison libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgdk-pixbuf-2.0-dev
+
+RUN   gem install asciidoctor \
+      gem install asciidoctor-pdf \
+      gem install asciidoctor-mathematical \
+      gem install asciidoctor-bibtex\
+      gem install asciidoctor-lists\
+      git clone https://github.com/rouge-ruby/rouge &&\
+      cd rouge \
+      git log -n 1 | cat \
+      gem build rouge.gemspec \ 
+      gem install rouge-4.4.0.gem 
+
+VOLUME ["/usr/src/p4-spec"]
+WORKDIR /usr/src/p4-spec
