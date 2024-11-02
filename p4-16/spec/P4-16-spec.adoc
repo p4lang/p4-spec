@@ -2545,21 +2545,28 @@ arbitrary-precision integer, without a width specified.
 
 | `bool`         | allowed   | error   |  allowed | allowed | error
 
-| `enumeration types`         | allowed footnote:enum_header[an `enum` type used as a field in a `header` must specify a underlying type and representation for `enum` elements.]     | error   |  allowed | allowed | error
+| `enumeration types` | allowed [1] | error   |  allowed | allowed | error
 
-| `header types`       | error     | allowed |  allowed | allowed | allowed
+| `header types`    | error     | allowed |  allowed | allowed | allowed
 
 | `header stacks`   | error     | error   |  allowed | allowed | error
 
 | `header_unions` | error     | error   |  allowed | allowed | allowed
 
-| `struct types`       | allowed footnote:struct_header[a `struct` or nested `struct` type that has the same properties, used as a field in a `header` must contain only `bit<W>`, `int<W>`, a serializable `enum`, or a `bool`.]   | error   |  allowed | allowed | error
+| `struct types`       | allowed [2] | error   |  allowed | allowed | error
 
 | `tuple types`        | error     | error   |  allowed | allowed | error
 
 | `list types`         | error     | error   |  error   | allowed | error
 
 |===
+
+[1] An `enum` type used as a field in a `header` must specify a
+underlying type and representation for `enum` elements.
+
+[2] A `struct` or nested `struct` type that has the same properties,
+used as a field in a `header` must contain only `bit<W>`, `int<W>`, a
+serializable `enum`, or a `bool`.
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
@@ -2613,10 +2620,13 @@ The table below lists all types that may appear as base types in a
 
 | list types          | allowed            | error
 
-| a `typedef` name    | allowed            | allowed footnote:type_allowed[`type B <name>` is allowed for a type name `B` defined via `typedef X B` if `type X <name>` is allowed.]
+| a `typedef` name    | allowed            | allowed [3]
 
 | a `type` name       | allowed            | allowed
 |===
+
+[3] `type B <name>` is allowed for a type name `B` defined via
+`typedef X B` if `type X <name>` is allowed.
 
 Rationale: So far, no clear motivation for allowing `typedef` for `void`
 and `match_kind` was presented. Therefore, to be on the safe side this
