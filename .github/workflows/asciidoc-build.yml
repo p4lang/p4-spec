@@ -2,12 +2,11 @@ name: Build and push specification files
 
 on:
   push:
-    branches: [ main ]
-
+    branches:
+      - '**'
 jobs:
   build:
-    if: ${{ github.repository == 'p4lang/p4-spec' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
       with:
@@ -17,43 +16,26 @@ jobs:
     - name: Install asciidoc
       run: sudo ./p4-16/spec/install-asciidoctor-linux.sh
 
-    - name: Configure git
-      run: |
-        git config user.name "GitHub Actions"
-        git config user.email "p4lang@users.noreply.github.com"
-
-    - name: Rebase gh-pages branch
-      run: |
-        git checkout gh-pages
-        git rebase --quiet main
-
     - name: Build p4-16/spec
       run: |
         make -C p4-16/spec
-        cp p4-16/spec/build/P4-16-spec.html docs/P4-16-working-spec.html
-        cp p4-16/spec/build/P4-16-spec.pdf docs/P4-16-working-spec.pdf
 
     - name: Build p4-16/psa
       run: |
         make -C p4-16/psa
-        cp p4-16/psa/build/PSA.html docs/PSA.html
-        cp p4-16/psa/build/PSA.pdf docs/PSA.pdf
-        cp p4-16/psa/build/P4_Arch_Charter.html docs/P4_Arch_Charter.html
 
     - name: Build api/charter
       run: |
         make -C api/charter
-        cp api/charter/build/P4_API_WG_charter.html docs/P4_API_WG_charter.html
 
-    - name: Declare sha_short variable
-      id: vars
-      shell: bash
-      run: |
-        echo "::set-output name=sha_short::$(git rev-parse --short $GITHUB_SHA)"
-
-    - name: Commit changes
-      run: |
-        git commit -m "docs for ${{ steps.vars.outputs.sha_short }}" docs/P4-16-working-spec.{html,pdf} docs/PSA.{html,pdf} docs/P4_API_WG_charter.html docs/P4_Arch_Charter.html
-
-    - name: Push commit to gh-pages branch
-      run: git push -f origin gh-pages
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: spec-builds
+        path: |
+          p4-16/spec/build/P4-16-working-spec.html
+          p4-16/spec/build/P4-16-working-spec.pdf
+          p4-16/spec/build/P4_API_WG_charter.html
+          p4-16/psa/build/PSA.html
+          p4-16/psa/build/PSA.pdf
+          p4-16/psa/build/P4_Arch_Charter.html
