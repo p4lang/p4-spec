@@ -1,14 +1,18 @@
 .PHONY: charter
 
 SPEC=PSA
+ROUGE_STYLE=molokai
+ROUGE_CSS=style
 
-all: build/${SPEC}.pdf charter
+all: ${SPEC}.pdf ${SPEC}.html charter
 
-build/${SPEC}.pdf: ${SPEC}.mdk
-	madoko --pdf -vv --png --odir=build $<
+${SPEC}.pdf: ${SPEC}.adoc
+	asciidoctor-pdf -v \
+		-a pdf-fontsdir=resources/fonts \
+		-a rouge-style=$(ROUGE_STYLE) $<
 
-build/${SPEC}.pdf: p4.json
-build/${SPEC}.pdf: psa.p4
+${SPEC}.html: ${SPEC}.adoc
+	asciidoctor -v -a rouge-css=$(ROUGE_CSS) $<
 
 charter:
 	$(MAKE) -C charter
