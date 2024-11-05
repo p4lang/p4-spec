@@ -1,7 +1,7 @@
 .PHONY: charter
 
 SPEC=PSA
-ROUGE_STYLE=molokai
+ROUGE_STYLE=github
 ROUGE_CSS=style
 
 all: ${SPEC}.pdf ${SPEC}.html charter

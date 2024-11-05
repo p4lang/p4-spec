@@ -1,7 +1,5 @@
-
 SPEC=P4-16-spec
-
-ROUGE_STYLE=molokai
+ROUGE_STYLE=github
 ROUGE_CSS=style
 
 all: ${SPEC}.pdf ${SPEC}.html
