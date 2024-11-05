@@ -59,7 +59,7 @@ jobs:
 
   deploy:
     needs: build
-    #if: github.repository == 'p4lang/p4-spec' && github.ref_name == 'main'
+    if: github.repository == 'p4lang/p4-spec' && github.ref_name == 'main'
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
@@ -67,43 +67,49 @@ jobs:
         # Fetch all history for all branches
         fetch-depth: 0
 
+    - name: Rebase gh-pages branch
+      run: |
+        git checkout gh-pages
+        git rebase --quiet main
+
     - name: Download spec artifact
       uses: actions/download-artifact@v4
       with:
         name: spec
+        path: spec
 
     - name: Download PSA spec artifact
       uses: actions/download-artifact@v4
       with:
         name: psa-spec
+        path: psa-spec
 
     - name: Download API charter artifact
       uses: actions/download-artifact@v4
       with:
         name: api-charter
+        path: api-charter
 
     - name: Configure git
       run: |
         git config user.name "GitHub Actions"
         git config user.email "p4lang@users.noreply.github.com"
 
-    - name: Rebase gh-pages branch
-      run: |
-        git checkout gh-pages
-        #git rebase --quiet main
-
     - name: Copy files
       run: |
-        cp spec/p4-16-spec.html docs/P4-16-working-spec.html
-        cp spec/p4-16-spec.pdf docs/P4-16-working-spec.pdf
+        pwd
+        ls -l *
+        cp spec/P4-16-spec.html docs/P4-16-working-spec.html
+        cp spec/P4-16-spec.pdf docs/P4-16-working-spec.pdf
         cp psa-spec/PSA.html docs/PSA.html
         cp psa-spec/PSA.pdf docs/PSA.pdf
-        cp psa-spec/charter/P4_Arch_charter.html docs/
-        cp P4_API_WG_charter.pdf docs/
+        cp psa-spec/charter/P4_Arch_Charter.html docs/
+        cp api-charter/P4_API_WG_charter.pdf docs/
 
     - name: Commit changes
       run: |
-        git commit -m "docs for ${{ steps.vars.outputs.sha_short }}" docs/P4-16-working-spec.{html,pdf} docs/PSA.{html,pdf} docs/P4_API_WG_charter.pdf docs/P4_Arch_Charter.html
+        git add docs/P4-16-working-spec.{html,pdf} docs/PSA.{html,pdf} docs/P4_API_WG_charter.pdf docs/P4_Arch_Charter.html
+        git commit -am "docs for ${{ steps.vars.outputs.sha_short }}"
 
     - name: Push commit to gh-pages branch
       run: git push -f origin gh-pages
