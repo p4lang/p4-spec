@@ -116,7 +116,7 @@ parser IngressParserImpl(packet_in buffer,
     }
 }
 
-// BEGIN:Incremental_Checksum_Table    
+// tag::Incremental_Checksum_Table[]
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 in    psa_ingress_input_metadata_t  istd,
@@ -142,7 +142,7 @@ control ingress(inout headers hdr,
         }
     }
 }
-// END:Incremental_Checksum_Table        
+// end::Incremental_Checksum_Table[]
 
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
@@ -180,7 +180,7 @@ control IngressDeparserImpl(packet_out packet,
     }
 }
 
-// BEGIN:Incremental_Checksum_Example
+// tag::Incremental_Checksum_Example[]
 control EgressDeparserImpl(packet_out packet,
                            out empty_metadata_t clone_e2e_meta,
                            out empty_metadata_t recirculate_meta,
@@ -228,7 +228,7 @@ control EgressDeparserImpl(packet_out packet,
         packet.emit(hdr.tcp);
     }
 }
-// END:Incremental_Checksum_Example
+// end::Incremental_Checksum_Example[]
 
 IngressPipeline(IngressParserImpl(),
                 ingress(),

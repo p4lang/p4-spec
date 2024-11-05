@@ -51,12 +51,12 @@ struct fwd_metadata_t {
     bit<32> outport;
 }
 
-// BEGIN:Clone_Example_Part1
+// tag::Clone_Example_Part1[]
 header clone_i2e_metadata_t {
     bit<8> custom_tag;
     EthernetAddress srcAddr;
 }
-// END:Clone_Example_Part1
+// end::Clone_Example_Part1[]
 
 struct empty_metadata_t {
 }
@@ -108,7 +108,7 @@ parser IngressParserImpl(
     }
 }
 
-// BEGIN:Clone_Example_Part2
+// tag::Clone_Example_Part2[]
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 in  psa_ingress_input_metadata_t  istd,
@@ -130,7 +130,7 @@ control ingress(inout headers hdr,
         t.apply();
     }
 }
-// END:Clone_Example_Part2
+// end::Clone_Example_Part2[]
 
 parser EgressParserImpl(
     packet_in buffer,
@@ -176,7 +176,7 @@ control DeparserImpl(packet_out packet, inout headers hdr) {
     }
 }
 
-// BEGIN:Clone_Example_Part3
+// tag::Clone_Example_Part3[]
 control IngressDeparserImpl(
     packet_out packet,
     out clone_i2e_metadata_t clone_i2e_meta,
@@ -199,7 +199,7 @@ control IngressDeparserImpl(
         common_deparser.apply(packet, hdr);
     }
 }
-// END:Clone_Example_Part3
+// end::Clone_Example_Part3[]
 
 control EgressDeparserImpl(
     packet_out packet,

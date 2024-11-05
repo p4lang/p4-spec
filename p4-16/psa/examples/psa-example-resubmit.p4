@@ -56,13 +56,13 @@ header header_b_t {
     bit<16> field_c;
 }
 
-// BEGIN:Resubmit_Example_Part1
+// tag::Resubmit_Example_Part1[]
 struct resubmit_metadata_t {
     bit<8> selector;
     header_a_t header_a;
     header_b_t header_b;
 }
-// END:Resubmit_Example_Part1
+// end::Resubmit_Example_Part1[]
 
 struct empty_metadata_t {}
 
@@ -128,7 +128,7 @@ parser IngressParserImpl(
     }
 }
 
-// BEGIN:Resubmit_Example_Part2
+// tag::Resubmit_Example_Part2[]
 control ingress(inout headers hdr,
     inout metadata user_meta,
     in  psa_ingress_input_metadata_t  istd,
@@ -156,7 +156,7 @@ control ingress(inout headers hdr,
         // meta.resubmit_meta.header_b
     }
 }
-// END:Resubmit_Example_Part2
+// end::Resubmit_Example_Part2[]
 
 parser EgressParserImpl(
     packet_in buffer,
@@ -189,7 +189,7 @@ control CommonDeparserImpl(packet_out packet, inout headers hdr) {
     }
 }
 
-// BEGIN:Resubmit_Example_Part3
+// tag::Resubmit_Example_Part3[]
 control IngressDeparserImpl(
     packet_out packet,
     out empty_metadata_t clone_i2e_meta,
@@ -210,7 +210,7 @@ control IngressDeparserImpl(
         common_deparser.apply(packet, hdr);
     }
 }
-// END:Resubmit_Example_Part3
+// end::Resubmit_Example_Part3[]
 
 control EgressDeparserImpl(
     packet_out packet,

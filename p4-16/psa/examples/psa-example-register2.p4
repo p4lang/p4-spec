@@ -63,7 +63,7 @@ struct headers {
     ipv4_t           ipv4;
 }
 
-// BEGIN:Register_Example2_Part1
+// tag::Register_Example2_Part1[]
 const bit<32> NUM_PORTS = 512;
 
 // It would be more convenient to use a struct type to represent the
@@ -92,7 +92,7 @@ action update_pkt_ip_byte_count (inout PacketByteCountState_t s,
     s[BYTE_COUNT_RANGE] = (s[BYTE_COUNT_RANGE] +
                            (bit<BYTE_COUNT_WIDTH>) ip_length_bytes);
 }
-// END:Register_Example2_Part1
+// end::Register_Example2_Part1[]
 
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
@@ -117,7 +117,7 @@ parser IngressParserImpl(packet_in buffer,
     }
 }
 
-// BEGIN:Register_Example2_Part2
+// tag::Register_Example2_Part2[]
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 in    psa_ingress_input_metadata_t  istd,
@@ -138,7 +138,7 @@ control ingress(inout headers hdr,
         }
     }
 }
-// END:Register_Example2_Part2
+// end::Register_Example2_Part2[]
 
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
