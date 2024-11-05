@@ -142,16 +142,21 @@ fi
 
 gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 curl -sSL https://get.rvm.io | bash
-source $HOME/.rvm/scripts/rvm
+if [[ $UID == 0 ]]; then
+    source /usr/local/rvm/scripts/rvm
+else
+    source $HOME/.rvm/scripts/rvm
+fi
 rvm install ruby-3.3.1
 rvm use 3.3.1
 gem install asciidoctor
 gem install asciidoctor-pdf
 gem install asciidoctor-bibtex
 # Additional installations to enable installing
-# asciidoctor-mathematical
-sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev ${OS_SPECIFIC_PACKAGES}
+# asciidoctor-mathematical and prawn-gmagick
+sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgraphicsmagick1-dev libmagickwand-dev ${OS_SPECIFIC_PACKAGES}
 gem install asciidoctor-mathematical
+gem install prawn-gmagick
 
 # As of 2024-Jul-04, the official rouge repo has support for P4
 # language syntax highlighting.
@@ -162,6 +167,7 @@ gem build rouge.gemspec
 gem install rouge-4.4.0.gem
 gem install asciidoctor-bibtex
 gem install asciidoctor-lists
+gem install prawn-gmagick
 
 which ruby
 ruby --version
