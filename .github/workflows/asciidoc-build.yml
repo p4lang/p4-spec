@@ -21,25 +21,38 @@ jobs:
         source /usr/local/rvm/scripts/rvm
         make -C p4-16/spec
 
-#   - name: Build p4-16/psa
-#     run: |
-#       source /usr/local/rvm/scripts/rvm
-#       make -C p4-16/psa
+    - name: Build p4-16/psa
+      run: |
+        source /usr/local/rvm/scripts/rvm
+        make -C p4-16/psa
 
-#   - name: Build api/charter
-#     run: |
-#       source /usr/local/rvm/scripts/rvm
-#       make -C api/charter
+    - name: Build api/charter
+      run: |
+        source /usr/local/rvm/scripts/rvm
+        make -C api/charter
 
-    - name: Upload artifacts
+    - name: Upload spec artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: spec-builds
+        name: spec
         path: |
           p4-16/spec/P4-16-spec.html
           p4-16/spec/P4-16-spec.pdf
+          p4-16/spec/resources/figs
 
-#         p4-16/spec/build/P4_API_WG_charter.html
-#         p4-16/psa/build/PSA.html
-#         p4-16/psa/build/PSA.pdf
-#         p4-16/psa/build/P4_Arch_Charter.html
+    - name: Upload PSA spec artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: psa-spec
+        path: |
+          p4-16/psa/PSA.html
+          p4-16/psa/PSA.pdf
+          p4-16/psa/charter/P4_Arch_Charter.html
+          p4-16/psa/figs
+
+    - name: Upload API charter artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-charter
+        path: |
+          api/charter/P4_API_WG_charter.pdf
