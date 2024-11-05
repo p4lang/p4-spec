@@ -58,7 +58,7 @@ struct metadata {
     fwd_metadata_t fwd_metadata;
 }
 
-// BEGIN:Counter_Example_Part1
+// tag::Counter_Example_Part1[]
 typedef bit<48> ByteCounter_t;
 typedef bit<32> PacketCounter_t;
 typedef bit<80> PacketByteCounter_t;
@@ -69,7 +69,7 @@ struct headers {
     ethernet_t       ethernet;
     ipv4_t           ipv4;
 }
-// END:Counter_Example_Part1
+// end::Counter_Example_Part1[]
 
 parser CommonParser(packet_in buffer,
                     out headers parsed_hdr,
@@ -124,7 +124,7 @@ parser EgressParserImpl(
     }
 }
 
-// BEGIN:Counter_Example_Part2
+// tag::Counter_Example_Part2[]
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 in    psa_ingress_input_metadata_t  istd,
@@ -176,7 +176,7 @@ control egress(inout headers hdr,
         port_bytes_out.count(istd.egress_port);
     }
 }
-// END:Counter_Example_Part2
+// end::Counter_Example_Part2[]
 
 control CommonDeparserImpl(packet_out packet,
                            inout headers hdr)
@@ -217,7 +217,7 @@ control EgressDeparserImpl(
     }
 }
 
-// BEGIN:Package_Instantiation_Example
+// tag::Package_Instantiation_Example[]
 IngressPipeline(IngressParserImpl(),
                 ingress(),
                 IngressDeparserImpl()) ip;
@@ -227,4 +227,4 @@ EgressPipeline(EgressParserImpl(),
                EgressDeparserImpl()) ep;
 
 PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
-// END:Package_Instantiation_Example
+// end::Package_Instantiation_Example[]

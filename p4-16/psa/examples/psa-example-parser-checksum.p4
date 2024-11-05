@@ -79,7 +79,7 @@ struct headers {
 }
 
 
-// BEGIN:Parse_Error_Example
+// tag::Parse_Error_Example[]
 // Define additional error values, one of them for packets with
 // incorrect IPv4 header checksums.
 error {
@@ -194,7 +194,7 @@ control ingress(inout headers hdr,
         // Do normal packet processing here.
     }
 }
-// END:Parse_Error_Example
+// end::Parse_Error_Example[]
 
 parser EgressParserImpl(packet_in buffer,
                         out headers hdr,
@@ -232,7 +232,7 @@ control IngressDeparserImpl(packet_out packet,
     }
 }
 
-// BEGIN:Compute_New_IPv4_Checksum_Example
+// tag::Compute_New_IPv4_Checksum_Example[]
 control EgressDeparserImpl(packet_out packet,
                            out empty_metadata_t clone_e2e_meta,
                            out empty_metadata_t recirculate_meta,
@@ -260,7 +260,7 @@ control EgressDeparserImpl(packet_out packet,
         packet.emit(hdr.tcp);
     }
 }
-// END:Compute_New_IPv4_Checksum_Example
+// end::Compute_New_IPv4_Checksum_Example[]
 
 IngressPipeline(IngressParserImpl(),
                 ingress(),

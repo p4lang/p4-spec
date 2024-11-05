@@ -155,7 +155,7 @@ allowed to support paths for packets that are not described here.
 [#fig-packet-paths]
 image::figs/psa-packet-paths-figure.png[]
 
-Table <<packet-path-abbreviations>> defines the meanings of the
+<<packet-path-abbreviations>> defines the meanings of the
 abbreviations in <<fig-packet-paths>>.  There can be one or more
 hardware, software, or PSA architecture components between the "packet
 source" and "packet destination" given in that table, e.g. a normal
@@ -226,7 +226,7 @@ destinations of these packet paths.
 Table {results-of-one-pkt-thru-ingress-or-egress} shows what can
 happen to a packet as a result of a single time being processed in
 ingress, or a single time being processed in egress.  The cases are
-the same as shown in Table <<packet-path-abbreviations>>, but have been
+the same as shown in <<packet-path-abbreviations>>, but have been
 grouped together by similar values of "Processed next by".
 
 
@@ -288,7 +288,7 @@ most common place in a P4 program where the output port(s) are chosen.
 The only exception to ingress choosing the output port is for
 egress-to-egress clone packets, whose destination port is chosen when
 the clone is created in the immediately preceding egress processing
-step.  See section
+step.  See
 <<appendix-rationale-egress-cannot-change-output-port>> for why this
 restriction exists.
 
@@ -359,168 +359,15 @@ plane sizes for these types no wider than the corresponding
 
 [source,p4]
 ----
-/* These are defined using `typedef`, not `type`, so they are truly
- * just different names for the type bit<W> for the particular width W
- * shown.  Unlike the `type` definitions below, values declared with
- * the `typedef` type names can be freely mingled in expressions, just
- * as any value declared with type bit<W> can.  Values declared with
- * one of the `type` names below _cannot_ be so freely mingled, unless
- * you first cast them to the corresponding `typedef` type.  While
- * that may be inconvenient when you need to do arithmetic on such
- * values, it is the price to pay for having all occurrences of values
- * of the `type` types marked as such in the automatically generated
- * control plane API.
- *
- * Note that the width of typedef <name>Uint_t will always be the same
- * as the width of type <name>_t. */
-typedef bit<unspecified> PortIdUint_t;
-typedef bit<unspecified> MulticastGroupUint_t;
-typedef bit<unspecified> CloneSessionIdUint_t;
-typedef bit<unspecified> ClassOfServiceUint_t;
-typedef bit<unspecified> PacketLengthUint_t;
-typedef bit<unspecified> EgressInstanceUint_t;
-typedef bit<unspecified> TimestampUint_t;
-
-@p4runtime_translation("p4.org/psa/v1/PortId_t", 32)
-type PortIdUint_t         PortId_t;
-@p4runtime_translation("p4.org/psa/v1/MulticastGroup_t", 32)
-type MulticastGroupUint_t MulticastGroup_t;
-@p4runtime_translation("p4.org/psa/v1/CloneSessionId_t", 16)
-type CloneSessionIdUint_t CloneSessionId_t;
-@p4runtime_translation("p4.org/psa/v1/ClassOfService_t", 8)
-type ClassOfServiceUint_t ClassOfService_t;
-@p4runtime_translation("p4.org/psa/v1/PacketLength_t", 16)
-type PacketLengthUint_t   PacketLength_t;
-@p4runtime_translation("p4.org/psa/v1/EgressInstance_t", 16)
-type EgressInstanceUint_t EgressInstance_t;
-@p4runtime_translation("p4.org/psa/v1/Timestamp_t", 64)
-type TimestampUint_t      Timestamp_t;
-typedef error   ParserError_t;
-
-const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
-const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
-
-const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessiontId_t) unspecified;
-
-/* Note: All of the types with `InHeader` in their name are intended
- * only to carry values of the corresponding types in packet headers
- * between a PSA device and the P4Runtime Server software that manages
- * it.
- *
- * The bit widths here are _independent_ of any particular PSA target
- * device, and should _not_ be customized for each target.
- *
- * The bit widths are intended to be at least as large as any PSA
- * device will ever have for that type.  Thus these types may also be
- * useful to define packet headers that are sent directly between a
- * PSA device and other devices, without going through P4Runtime
- * Server software (e.g. this could be useful for sending packets to a
- * controller or data collection system using higher packet rates than
- * the P4Runtime Server can handle).  If used for this purpose, there
- * is no requirement that the PSA data plane _automatically_ perform
- * the numerical translation of these types that would occur if the
- * header went through the P4Runtime Server.  Any such desired
- * translation is up to the author of the P4 program to perform with
- * explicit code.
- *
- * All widths must be a multiple of 8, so that any subset of these
- * fields may be used in a single P4 header definition, even on P4
- * implementations that restrict headers to contain fields with a
- * total length that is a multiple of 8 bits. */
-
-/* See the comments near the definition of PortIdUint_t for why these
- * typedef definitions exist. */
-typedef bit<32> PortIdInHeaderUint_t;
-typedef bit<32> MulticastGroupInHeaderUint_t;
-typedef bit<16> CloneSessionIdInHeaderUint_t;
-typedef bit<8>  ClassOfServiceInHeaderUint_t;
-typedef bit<16> PacketLengthInHeaderUint_t;
-typedef bit<16> EgressInstanceInHeaderUint_t;
-typedef bit<64> TimestampInHeaderUint_t;
-
-@p4runtime_translation("p4.org/psa/v1/PortIdInHeader_t", 32)
-type  PortIdInHeaderUint_t         PortIdInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/MulticastGroupInHeader_t", 32)
-type  MulticastGroupInHeaderUint_t MulticastGroupInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/CloneSessionIdInHeader_t", 16)
-type  CloneSessionIdInHeaderUint_t CloneSessionIdInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/ClassOfServiceInHeader_t", 8)
-type  ClassOfServiceInHeaderUint_t ClassOfServiceInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/PacketLengthInHeader_t", 16)
-type  PacketLengthInHeaderUint_t   PacketLengthInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/EgressInstanceInHeader_t", 16)
-type  EgressInstanceInHeaderUint_t EgressInstanceInHeader_t;
-@p4runtime_translation("p4.org/psa/v1/TimestampInHeader_t", 64)
-type  TimestampInHeaderUint_t      TimestampInHeader_t;
+include::psa.p4[tag=Type_defns]
+include::psa.p4[tag=Type_defns2]
 ----
 
 === PSA supported metadata types
 
 [source,p4]
 ----
-enum PSA_PacketPath_t {
-    NORMAL,     /// Packet received by ingress that is none of the cases below.
-    NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
-    NORMAL_MULTICAST, /// Normal packet received by egress which is multicast
-    CLONE_I2E,  /// Packet created via a clone operation in ingress,
-                /// destined for egress
-    CLONE_E2E,  /// Packet created via a clone operation in egress,
-                /// destined for egress
-    RESUBMIT,   /// Packet arrival is the result of a resubmit operation
-    RECIRCULATE /// Packet arrival is the result of a recirculate operation
-}
-
-struct psa_ingress_parser_input_metadata_t {
-  PortId_t                 ingress_port;
-  PSA_PacketPath_t         packet_path;
-}
-
-struct psa_egress_parser_input_metadata_t {
-  PortId_t                 egress_port;
-  PSA_PacketPath_t         packet_path;
-}
-
-struct psa_ingress_input_metadata_t {
-  // All of these values are initialized by the architecture before
-  // the Ingress control block begins executing.
-  PortId_t                 ingress_port;
-  PSA_PacketPath_t         packet_path;
-  Timestamp_t              ingress_timestamp;
-  ParserError_t            parser_error;
-}
-struct psa_ingress_output_metadata_t {
-  // The comment after each field specifies its initial value when the
-  // Ingress control block begins executing.
-  ClassOfService_t         class_of_service; // 0
-  bool                     clone;            // false
-  CloneSessionId_t         clone_session_id; // initial value is undefined
-  bool                     drop;             // true
-  bool                     resubmit;         // false
-  MulticastGroup_t         multicast_group;  // 0
-  PortId_t                 egress_port;      // initial value is undefined
-}
-struct psa_egress_input_metadata_t {
-  ClassOfService_t         class_of_service;
-  PortId_t                 egress_port;
-  PSA_PacketPath_t         packet_path;
-  EgressInstance_t         instance;       /// instance comes from the PacketReplicationEngine
-  Timestamp_t              egress_timestamp;
-  ParserError_t            parser_error;
-}
-
-/// This struct is an 'in' parameter to the egress deparser.  It
-/// includes enough data for the egress deparser to distinguish
-/// whether the packet should be recirculated or not.
-struct psa_egress_deparser_input_metadata_t {
-  PortId_t                 egress_port;
-}
-struct psa_egress_output_metadata_t {
-  // The comment after each field specifies its initial value when the
-  // Egress control block begins executing.
-  bool                     clone;         // false
-  CloneSessionId_t         clone_session_id; // initial value is undefined
-  bool                     drop;          // false
-}
+include::psa.p4[tag=Metadata_types]
 ----
 
 [#sec-match-kinds]
@@ -531,11 +378,7 @@ above the three defined in the P4~16~ language specification:
 
 [source,p4]
 ----
-match_kind {
-    range,    /// Used to represent min..max intervals
-    selector, /// Used for dynamic action selection via the ActionSelector extern
-    optional  /// Either an exact match, or a wildcard matching any value for the entire field
-}
+include::psa.p4[tag=Match_kinds]
 ----
 
 `selector` is only supported for tables with an action selector implementation.
@@ -814,66 +657,7 @@ types, as the P4 program author wishes.
 
 [source,p4]
 ----
-parser IngressParser<H, M, RESUBM, RECIRCM>(
-    packet_in buffer,
-    out H parsed_hdr,
-    inout M user_meta,
-    in psa_ingress_parser_input_metadata_t istd,
-    in RESUBM resubmit_meta,
-    in RECIRCM recirculate_meta);
-
-control Ingress<H, M>(
-    inout H hdr, inout M user_meta,
-    in    psa_ingress_input_metadata_t  istd,
-    inout psa_ingress_output_metadata_t ostd);
-
-control IngressDeparser<H, M, CI2EM, RESUBM, NM>(
-    packet_out buffer,
-    out CI2EM clone_i2e_meta,
-    out RESUBM resubmit_meta,
-    out NM normal_meta,
-    inout H hdr,
-    in M meta,
-    in psa_ingress_output_metadata_t istd);
-
-parser EgressParser<H, M, NM, CI2EM, CE2EM>(
-    packet_in buffer,
-    out H parsed_hdr,
-    inout M user_meta,
-    in psa_egress_parser_input_metadata_t istd,
-    in NM normal_meta,
-    in CI2EM clone_i2e_meta,
-    in CE2EM clone_e2e_meta);
-
-control Egress<H, M>(
-    inout H hdr, inout M user_meta,
-    in    psa_egress_input_metadata_t  istd,
-    inout psa_egress_output_metadata_t ostd);
-
-control EgressDeparser<H, M, CE2EM, RECIRCM>(
-    packet_out buffer,
-    out CE2EM clone_e2e_meta,
-    out RECIRCM recirculate_meta,
-    inout H hdr,
-    in M meta,
-    in psa_egress_output_metadata_t istd,
-    in psa_egress_deparser_input_metadata_t edstd);
-
-package IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM>(
-    IngressParser<IH, IM, RESUBM, RECIRCM> ip,
-    Ingress<IH, IM> ig,
-    IngressDeparser<IH, IM, CI2EM, RESUBM, NM> id);
-
-package EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM>(
-    EgressParser<EH, EM, NM, CI2EM, CE2EM> ep,
-    Egress<EH, EM> eg,
-    EgressDeparser<EH, EM, CE2EM, RECIRCM> ed);
-
-package PSA_Switch<IH, IM, EH, EM, NM, CI2EM, CE2EM, RESUBM, RECIRCM> (
-    IngressPipeline<IH, IM, NM, CI2EM, RESUBM, RECIRCM> ingress,
-    PacketReplicationEngine pre,
-    EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM> egress,
-    BufferingQueueingEngine bqe);
+include::psa.p4[tag=Programmable_blocks]
 ----
 
 
@@ -1144,7 +928,7 @@ of service of packets.  PSA does not mandate a scheduling policy among
 queues that may exist in the packet buffer.  Something at least as
 flexible as weighted fair queuing, with an optional strict high
 priority queue, is recommended for PSA implementations with separate
-queues for each class of service.  See appendix
+queues for each class of service.  See
 <<appendix-packet-ordering>> for more on packet ordering
 recommendations in PSA devices.
 
@@ -1179,7 +963,7 @@ made.  Copy number `i` that is sent to egress processing will have its
 field `egress_port` equal to `egress_port[i]`, and the field
 `instance` filled in with `instance[i]`.  Note: A multicast group is a
 set of pairs, and it is not required that an implementation create
-copies in an order that the control plane can enforce.  See appendix
+copies in an order that the control plane can enforce.  See
 <<appendix-packet-ordering>> for more on packet ordering
 recommendations in PSA devices.
 
@@ -1230,21 +1014,7 @@ egress processing.
 
 [source,p4]
 ----
-/// Modify ingress output metadata to cause one packet to be sent to
-/// egress processing, and then to the output port egress_port.
-/// (Egress processing may choose to drop the packet instead.)
-
-/// This action does not change whether a clone or resubmit operation
-/// will occur.
-
-@noWarn("unused")
-action send_to_port(inout psa_ingress_output_metadata_t meta,
-                    in PortId_t egress_port)
-{
-    meta.drop = false;
-    meta.multicast_group = (MulticastGroup_t) 0;
-    meta.egress_port = egress_port;
-}
+include::psa.p4[tag=Action_send_to_port]
 ----
 
 ==== Multicast operation
@@ -1260,19 +1030,7 @@ mechanism such as the P4Runtime API.
 
 [source,p4]
 ----
-/// Modify ingress output metadata to cause 0 or more copies of the
-/// packet to be sent to egress processing.
-
-/// This action does not change whether a clone or resubmit operation
-/// will occur.
-
-@noWarn("unused")
-action multicast(inout psa_ingress_output_metadata_t meta,
-                 in MulticastGroup_t multicast_group)
-{
-    meta.drop = false;
-    meta.multicast_group = multicast_group;
-}
+include::psa.p4[tag=Action_multicast]
 ----
 
 ==== Drop operation
@@ -1281,17 +1039,7 @@ Do not send a copy of the packet for normal egress processing.
 
 [source,p4]
 ----
-/// Modify ingress output metadata to cause no packet to be sent for
-/// normal egress processing.
-
-/// This action does not change whether a clone will occur.  It will
-/// prevent a packet from being resubmitted.
-
-@noWarn("unused")
-action ingress_drop(inout psa_ingress_output_metadata_t meta)
-{
-    meta.drop = true;
-}
+include::psa.p4[tag=Action_ingress_drop]
 ----
 
 [#sec-initial-values-egress]
@@ -1465,13 +1213,7 @@ the contents of several metadata fields in the struct
 
 [source,p4]
 ----
-struct psa_egress_output_metadata_t {
-  // The comment after each field specifies its initial value when the
-  // Egress control block begins executing.
-  bool                     clone;         // false
-  CloneSessionId_t         clone_session_id; // initial value is undefined
-  bool                     drop;          // false
-}
+include::psa.p4[tag=Metadata_egress_output]
 
 psa_egress_input_metadata_t  istd;
 psa_egress_output_metadata_t ostd;
@@ -1546,16 +1288,7 @@ complete.
 
 [source,p4]
 ----
-/// Modify egress output metadata to cause no packet to be sent out of
-/// the device.
-
-/// This action does not change whether a clone will occur.
-
-@noWarn("unused")
-action egress_drop(inout psa_egress_output_metadata_t meta)
-{
-    meta.drop = true;
-}
+include::psa.p4[tag=Action_egress_drop]
 ----
 
 === Contents of packets sent out to ports
@@ -1691,53 +1424,9 @@ The partial program below demonstrates how to clone a packet.
 
 [source,p4]
 ----
-header clone_i2e_metadata_t {
-    bit<8> custom_tag;
-    EthernetAddress srcAddr;
-}
-control ingress(inout headers hdr,
-                inout metadata user_meta,
-                in  psa_ingress_input_metadata_t  istd,
-                inout psa_ingress_output_metadata_t ostd)
-{
-    action do_clone (CloneSessionId_t session_id) {
-        ostd.clone = true;
-        ostd.clone_session_id = session_id;
-        user_meta.custom_clone_id = 1;
-    }
-    table t {
-        key = {
-            user_meta.fwd_metadata.outport : exact;
-        }
-        actions = { do_clone; }
-    }
-
-    apply {
-        t.apply();
-    }
-}
-control IngressDeparserImpl(
-    packet_out packet,
-    out clone_i2e_metadata_t clone_i2e_meta,
-    out empty_metadata_t resubmit_meta,
-    out metadata normal_meta,
-    inout headers hdr,
-    in metadata meta,
-    in psa_ingress_output_metadata_t istd)
-{
-    DeparserImpl() common_deparser;
-    apply {
-        // Assignments to the out parameter clone_i2e_meta must be
-        // guarded by this if condition:
-        if (psa_clone_i2e(istd)) {
-            clone_i2e_meta.custom_tag = (bit<8>) meta.custom_clone_id;
-            if (meta.custom_clone_id == 1) {
-                clone_i2e_meta.srcAddr = hdr.ethernet.srcAddr;
-            }
-        }
-        common_deparser.apply(packet, hdr);
-    }
-}
+include::examples/psa-example-clone-to-port.p4[tag=Clone_Example_Part1]
+include::examples/psa-example-clone-to-port.p4[tag=Clone_Example_Part2]
+include::examples/psa-example-clone-to-port.p4[tag=Clone_Example_Part3]
 ----
 
 [#sec-resubmit]
@@ -1928,7 +1617,7 @@ Rationale:
   (e.g. table, counter, etc.) to be accessed at a packet rate higher
   than that of a single pipeline.  Thus each stateful object should be
   accessed from only a single pipeline on such a device.
-  See appendix <<appendix-multi-pipeline-psa-devices>>.
+  See <<appendix-multi-pipeline-psa-devices>>.
 
 
 === PSA Table Properties
@@ -1989,11 +1678,7 @@ The value assigned to `psa_idle_timeout` must be a value of type
 
 [source,p4]
 ----
-/// Supported values for the psa_idle_timeout table property
-enum PSA_IdleTimeout_t {
-    NO_TIMEOUT,
-    NOTIFY_CONTROL
-};
+include::psa.p4[tag=enum_PSA_IdleTimeout_t]
 ----
 
 If the property `psa_idle_timeout` is not specified for a table, its
@@ -2093,15 +1778,7 @@ instance of `PacketReplicationEngine` and one of
 
 [source,p4]
 ----
-IngressPipeline(IngressParserImpl(),
-                ingress(),
-                IngressDeparserImpl()) ip;
-
-EgressPipeline(EgressParserImpl(),
-               egress(),
-               EgressDeparserImpl()) ep;
-
-PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
+include::examples/psa-example-counters.p4[tag=Package_Instantiation_Example]
 ----
 
 
@@ -2127,16 +1804,7 @@ Supported hash algorithms:
 
 [source,p4]
 ----
-enum PSA_HashAlgorithm_t {
-  IDENTITY,
-  CRC32,
-  CRC32_CUSTOM,
-  CRC16,
-  CRC16_CUSTOM,
-  ONES_COMPLEMENT16,  /// One's complement 16-bit sum used for IPv4 headers,
-                      /// TCP, and UDP.
-  TARGET_DEFAULT      /// target implementation defined
-}
+include::psa.p4[tag=Hash_algorithms]
 ----
 
 ==== Hash function
@@ -2158,29 +1826,7 @@ Parameters:
 
 [source,p4]
 ----
-extern Hash<O> {
-  /// Constructor
-  Hash(PSA_HashAlgorithm_t algo);
-
-  /// Compute the hash for data.
-  /// @param data The data over which to calculate the hash.
-  /// @return The hash value.
-  @pure
-  O get_hash<D>(in D data);
-
-  /// Compute the hash for data, with modulo by max, then add base.
-  /// @param base Minimum return value.
-  /// @param data The data over which to calculate the hash.
-  /// @param max The hash value is divided by max to get modulo.
-  ///        An implementation may limit the largest value supported,
-  ///        e.g. to a value like 32, or 256, and may also only
-  ///        support powers of 2 for this value.  P4 developers should
-  ///        limit their choice to such values if they wish to
-  ///        maximize portability.
-  /// @return (base + (h % max)) where h is the hash value.
-  @pure
-  O get_hash<T, D>(in T base, in D data, in T max);
-}
+include::psa.p4[tag=Hash_extern]
 ----
 
 [#sec-checksums]
@@ -2202,25 +1848,7 @@ Parameters:
 
 [source,p4]
 ----
-extern Checksum<W> {
-  /// Constructor
-  Checksum(PSA_HashAlgorithm_t hash);
-
-  /// Reset internal state and prepare unit for computation.
-  /// Every instance of a Checksum object is automatically initialized as
-  /// if clear() had been called on it. This initialization happens every
-  /// time the object is instantiated, that is, whenever the parser or control
-  /// containing the Checksum object are applied.
-  /// All state maintained by the Checksum object is independent per packet.
-  void clear();
-
-  /// Add data to checksum
-  void update<T>(in T data);
-
-  /// Get checksum for data added (and not removed) since last clear
-  @noSideEffects
-  W    get();
-}
+include::psa.p4[tag=Checksum_extern]
 ----
 
 [#sec-incremental-checksum]
@@ -2231,47 +1859,11 @@ additional `subtract` method that can be used to remove data previously
 added. The checksum is computed using the `ONES_COMPLEMENT16` hash
 algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
 RFC 1624](https://tools.ietf.org/html/rfc1624)
-and section <<appendix-internetchecksum-implementation>> for details.
+and <<appendix-internetchecksum-implementation>> for details.
 
 [source,p4]
 ----
-// Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
-// Supports incremental updating via `subtract` method.
-// See IETF RFC 1624.
-extern InternetChecksum {
-  /// Constructor
-  InternetChecksum();
-
-  /// Reset internal state and prepare unit for computation.  Every
-  /// instance of an InternetChecksum object is automatically
-  /// initialized as if clear() had been called on it, once for each
-  /// time the parser or control it is instantiated within is
-  /// executed.  All state maintained by it is independent per packet.
-  void clear();
-
-  /// Add data to checksum.  data must be a multiple of 16 bits long.
-  void add<T>(in T data);
-
-  /// Subtract data from existing checksum.  data must be a multiple of
-  /// 16 bits long.
-  void subtract<T>(in T data);
-
-  /// Get checksum for data added (and not removed) since last clear
-  @noSideEffects
-  bit<16> get();
-
-  /// Get current state of checksum computation.  The return value is
-  /// only intended to be used for a future call to the set_state
-  /// method.
-  @noSideEffects
-  bit<16> get_state();
-
-  /// Restore the state of the InternetChecksum instance to one
-  /// returned from an earlier call to the get_state method.  This
-  /// state could have been returned from the same instance of the
-  /// InternetChecksum extern, or a different one.
-  void set_state(in bit<16> checksum_state);
-}
+include::psa.p4[tag=InternetChecksum_extern]
 ----
 
 [#sec-checksum-examples]
@@ -2296,120 +1888,7 @@ assign values to those fields within the parser state code.
 
 [source,p4]
 ----
-// Define additional error values, one of them for packets with
-// incorrect IPv4 header checksums.
-error {
-    UnhandledIPv4Options,
-    BadIPv4HeaderChecksum
-}
-
-typedef bit<32> PacketCounter_t;
-typedef bit<8>  ErrorIndex_t;
-
-const bit<9> NUM_ERRORS = 256;
-
-parser IngressParserImpl(packet_in buffer,
-                         out headers hdr,
-                         inout metadata user_meta,
-                         in psa_ingress_parser_input_metadata_t istd,
-                         in empty_metadata_t resubmit_meta,
-                         in empty_metadata_t recirculate_meta)
-{
-    InternetChecksum() ck;
-    state start {
-        buffer.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
-            0x0800: parse_ipv4;
-            default: accept;
-        }
-    }
-    state parse_ipv4 {
-        buffer.extract(hdr.ipv4);
-        // TBD: It would be good to enhance this example to
-        // demonstrate checking of IPv4 header checksums for IPv4
-        // headers with options, but this example does not handle such
-        // packets.
-        verify(hdr.ipv4.ihl == 5, error.UnhandledIPv4Options);
-        ck.clear();
-        ck.add({
-            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
-            /* 16-bit word  1   */ hdr.ipv4.totalLen,
-            /* 16-bit word  2   */ hdr.ipv4.identification,
-            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
-            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
-            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
-            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
-            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
-            });
-        // The verify statement below will cause the parser to enter
-        // the reject state, and thus terminate parsing immediately,
-        // if the IPv4 header checksum is wrong.  It will also record
-        // the error error.BadIPv4HeaderChecksum, which will be
-        // available in a metadata field in the ingress control block.
-        verify(ck.get() == hdr.ipv4.hdrChecksum,
-               error.BadIPv4HeaderChecksum);
-        transition select(hdr.ipv4.protocol) {
-            6: parse_tcp;
-            default: accept;
-        }
-    }
-    state parse_tcp {
-        buffer.extract(hdr.tcp);
-        transition accept;
-    }
-}
-
-control ingress(inout headers hdr,
-                inout metadata user_meta,
-                in    psa_ingress_input_metadata_t  istd,
-                inout psa_ingress_output_metadata_t ostd)
-{
-    // Table parser_error_count_and_convert below shows one way to
-    // count the number of times each parser error was encountered.
-    // Although it is not used in this example program, it also shows
-    // how to convert the error value into a unique bit vector value
-    // 'error_idx', which can be useful if you wish to put a bit
-    // vector encoding of an error into a packet header, e.g. for a
-    // packet sent to the control CPU.
-
-    DirectCounter<PacketCounter_t>(PSA_CounterType_t.PACKETS) parser_error_counts;
-    ErrorIndex_t error_idx;
-
-    action set_error_idx (ErrorIndex_t idx) {
-        error_idx = idx;
-        parser_error_counts.count();
-    }
-    table parser_error_count_and_convert {
-        key = {
-            istd.parser_error : exact;
-        }
-        actions = {
-            set_error_idx;
-        }
-        default_action = set_error_idx(0);
-        const entries = {
-            error.NoError               : set_error_idx(1);
-            error.PacketTooShort        : set_error_idx(2);
-            error.NoMatch               : set_error_idx(3);
-            error.StackOutOfBounds      : set_error_idx(4);
-            error.HeaderTooShort        : set_error_idx(5);
-            error.ParserTimeout         : set_error_idx(6);
-            error.BadIPv4HeaderChecksum : set_error_idx(7);
-            error.UnhandledIPv4Options  : set_error_idx(8);
-        }
-        psa_direct_counter = parser_error_counts;
-    }
-    apply {
-        if (istd.parser_error != error.NoError) {
-            // Example code showing how to count number of times each
-            // kind of parser error was seen.
-            parser_error_count_and_convert.apply();
-            ingress_drop(ostd);
-            exit;
-        }
-        // Do normal packet processing here.
-    }
-}
+include::examples/psa-example-parser-checksum.p4[tag=Parse_Error_Example]
 ----
 
 The partial program below demonstrates one way to use the `InternetChecksum`
@@ -2421,33 +1900,7 @@ changes might have been made to the IPv4 header fields in the Ingress
 
 [source,p4]
 ----
-control EgressDeparserImpl(packet_out packet,
-                           out empty_metadata_t clone_e2e_meta,
-                           out empty_metadata_t recirculate_meta,
-                           inout headers hdr,
-                           in metadata meta,
-                           in psa_egress_output_metadata_t istd,
-                           in psa_egress_deparser_input_metadata_t edstd)
-{
-    InternetChecksum() ck;
-    apply {
-        ck.clear();
-        ck.add({
-            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
-            /* 16-bit word  1   */ hdr.ipv4.totalLen,
-            /* 16-bit word  2   */ hdr.ipv4.identification,
-            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
-            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
-            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
-            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
-            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
-            });
-        hdr.ipv4.hdrChecksum = ck.get();
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv4);
-        packet.emit(hdr.tcp);
-    }
-}
+include::examples/psa-example-parser-checksum.p4[tag=Compute_New_IPv4_Checksum_Example]
 ----
 
 As a final example, we can use the `InternetChecksum` to compute an
@@ -2463,31 +1916,7 @@ in a metadata field:
 
 [source,p4]
 ----
-control ingress(inout headers hdr,
-                inout metadata user_meta,
-                in    psa_ingress_input_metadata_t  istd,
-                inout psa_ingress_output_metadata_t ostd) {
-    action drop() {
-      ingress_drop(ostd);
-    }
-    action forward(PortId_t port, bit<32> srcAddr) {
-      user_meta.fwd_metadata.old_srcAddr = hdr.ipv4.srcAddr;
-      hdr.ipv4.srcAddr = srcAddr;
-      send_to_port(ostd, port);      
-    }
-    table route {
-        key = { hdr.ipv4.dstAddr : lpm; }
-        actions = {
-          forward;
-          drop;
-        }
-    }
-    apply {
-        if(hdr.ipv4.isValid()) {
-          route.apply();
-        }
-    }
-}
+include::examples/psa-example-incremental-checksum.p4[tag=Incremental_Checksum_Table]
 ----
 
 The deparser first updates the IPv4 checksum as above, and then
@@ -2495,53 +1924,7 @@ incrementally computes the TCP checksum.
 
 [source,p4]
 ----
-control EgressDeparserImpl(packet_out packet,
-                           out empty_metadata_t clone_e2e_meta,
-                           out empty_metadata_t recirculate_meta,
-                           inout headers hdr,
-                           in metadata user_meta,
-                           in psa_egress_output_metadata_t istd,
-                           in psa_egress_deparser_input_metadata_t edstd)
-{
-    InternetChecksum() ck;
-    apply {
-        // Update IPv4 checksum
-        // This clear() call can be removed without affecting
-        // behavior, as an InternetCheckum instance is automatically
-        // cleared for each packet.
-        ck.clear();
-        ck.add({
-            /* 16-bit word  0   */ hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv,
-            /* 16-bit word  1   */ hdr.ipv4.totalLen,
-            /* 16-bit word  2   */ hdr.ipv4.identification,
-            /* 16-bit word  3   */ hdr.ipv4.flags, hdr.ipv4.fragOffset,
-            /* 16-bit word  4   */ hdr.ipv4.ttl, hdr.ipv4.protocol,
-            /* 16-bit word  5 skip hdr.ipv4.hdrChecksum, */
-            /* 16-bit words 6-7 */ hdr.ipv4.srcAddr,
-            /* 16-bit words 8-9 */ hdr.ipv4.dstAddr
-            });
-        hdr.ipv4.hdrChecksum = ck.get();
-        // Update TCP checksum
-        // This clear() call is necessary for correct behavior, since
-        // the same instance 'ck' is reused from above for the same
-        // packet.  If a second InternetChecksum instance other than
-        // 'ck' were used below instead, this clear() call would be
-        // unnecessary.
-        ck.clear();
-        // Subtract the original TCP checksum
-        ck.subtract(hdr.tcp.checksum);
-        // Subtract the effect of the original IPv4 source address,
-        // which is part of the TCP 'pseudo-header' for the purposes
-        // of TCP checksum calculation (see RFC 793), then add the
-        // effect of the new IPv4 source address.
-        ck.subtract(user_meta.fwd_metadata.old_srcAddr);
-        ck.add(hdr.ipv4.srcAddr);
-        hdr.tcp.checksum = ck.get();
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv4);
-        packet.emit(hdr.tcp);
-    }
-}
+include::examples/psa-example-incremental-checksum.p4[tag=Incremental_Checksum_Example]
 ----
 
 === Counters
@@ -2595,28 +1978,17 @@ use Registers to achieve that (<<sec-registers>>).
 
 [source,p4]
 ----
-enum PSA_CounterType_t {
-    PACKETS,
-    BYTES,
-    PACKETS_AND_BYTES
-}
+include::psa.p4[tag=CounterType_defn]
 ----
 
 ==== Counter
 
 [source,p4]
 ----
-/// Indirect counter with n_counters independent counter values, where
-/// every counter value has a data plane size specified by type W.
-
-@noWarn("unused")
-extern Counter<W, S> {
-  Counter(bit<32> n_counters, PSA_CounterType_t type);
-  void count(in S index);
-}
+include::psa.p4[tag=Counter_extern]
 ----
 
-See section <<appendix-counter-implementation>> for pseudocode of an
+See <<appendix-counter-implementation>> for pseudocode of an
 example implementation of the Counter extern.
 
 PSA implementations must not update any counter values if an indexed
@@ -2630,11 +2002,7 @@ information that can help an P4 programmer debug such errors.
 
 [source,p4]
 ----
-@noWarn("unused")
-extern DirectCounter<W> {
-  DirectCounter(PSA_CounterType_t type);
-  void count();
-}
+include::psa.p4[tag=DirectCounter_extern]
 ----
 
 A `DirectCounter` instance must appear as the value of the
@@ -2684,68 +2052,9 @@ updating of `Counter` and `DirectCounter` externs.
 
 [source,p4]
 ----
-typedef bit<48> ByteCounter_t;
-typedef bit<32> PacketCounter_t;
-typedef bit<80> PacketByteCounter_t;
+include::examples/psa-example-counters.p4[tag=Counter_Example_Part1]
 
-const bit<32> NUM_PORTS = 512;
-
-struct headers {
-    ethernet_t       ethernet;
-    ipv4_t           ipv4;
-}
-
-control ingress(inout headers hdr,
-                inout metadata user_meta,
-                in    psa_ingress_input_metadata_t  istd,
-                inout psa_ingress_output_metadata_t ostd)
-{
-    Counter<ByteCounter_t, PortId_t>(NUM_PORTS, PSA_CounterType_t.BYTES)
-        port_bytes_in;
-    DirectCounter<PacketByteCounter_t>(PSA_CounterType_t.PACKETS_AND_BYTES)
-        per_prefix_pkt_byte_count;
-
-    action next_hop(PortId_t oport) {
-        per_prefix_pkt_byte_count.count();
-        send_to_port(ostd, oport);
-    }
-    action default_route_drop() {
-        per_prefix_pkt_byte_count.count();
-        ingress_drop(ostd);
-    }
-    table ipv4_da_lpm {
-        key = { hdr.ipv4.dstAddr: lpm; }
-        actions = {
-            next_hop;
-            default_route_drop;
-        }
-        default_action = default_route_drop;
-        // table ipv4_da_lpm owns this DirectCounter instance
-        psa_direct_counter = per_prefix_pkt_byte_count;
-    }
-    apply {
-        port_bytes_in.count(istd.ingress_port);
-        if (hdr.ipv4.isValid()) {
-            ipv4_da_lpm.apply();
-        }
-    }
-}
-
-control egress(inout headers hdr,
-               inout metadata user_meta,
-               in    psa_egress_input_metadata_t  istd,
-               inout psa_egress_output_metadata_t ostd)
-{
-    Counter<ByteCounter_t, PortId_t>(NUM_PORTS, PSA_CounterType_t.BYTES)
-        port_bytes_out;
-    apply {
-        // By doing these stats updates on egress, then because
-        // multicast replication happens before egress processing,
-        // this update will occur once for each copy made, which in
-        // this example is intentional.
-        port_bytes_out.count(istd.egress_port);
-    }
-}
+include::examples/psa-example-counters.p4[tag=Counter_Example_Part2]
 ----
 
 [#sec-meters]
@@ -2859,50 +2168,28 @@ rate should always be within plus or minus 0.1% of the requested rate.
 
 [source,p4]
 ----
-enum PSA_MeterType_t {
-    PACKETS,
-    BYTES
-}
+include::psa.p4[tag=MeterType_defn]
 ----
 
 ==== Meter colors
 
 [source,p4]
 ----
-enum PSA_MeterColor_t { RED, GREEN, YELLOW }
+include::psa.p4[tag=MeterColor_defn]
 ----
 
 ==== Meter
 
 [source,p4]
 ----
-// Indexed meter with n_meters independent meter states.
-
-extern Meter<S> {
-  Meter(bit<32> n_meters, PSA_MeterType_t type);
-
-  // Use this method call to perform a color aware meter update (see
-  // RFC 2698). The color of the packet before the method call was
-  // made is specified by the color parameter.
-  PSA_MeterColor_t execute(in S index, in PSA_MeterColor_t color);
-
-  // Use this method call to perform a color blind meter update (see
-  // RFC 2698).  It may be implemented via a call to execute(index,
-  // MeterColor_t.GREEN), which has the same behavior.
-  PSA_MeterColor_t execute(in S index);
-}
+include::psa.p4[tag=Meter_extern]
 ----
 
 ==== Direct Meter
 
 [source,p4]
 ----
-extern DirectMeter {
-  DirectMeter(PSA_MeterType_t type);
-  // See the corresponding methods for extern Meter.
-  PSA_MeterColor_t execute(in PSA_MeterColor_t color);
-  PSA_MeterColor_t execute();
-}
+include::psa.p4[tag=DirectMeter_extern]
 ----
 
 [#sec-registers]
@@ -2936,18 +2223,7 @@ check that the flow was marked as active.
 
 [source,p4]
 ----
-extern Register<T, S> {
-  /// Instantiate an array of <size> registers. The initial value is
-  /// undefined.
-  Register(bit<32> size);
-  /// Initialize an array of <size> registers and set their value to
-  /// initial_value.
-  Register(bit<32> size, T initial_value);
-
-  @noSideEffects
-  T    read  (in S index);
-  void write (in S index, in T value);
-}
+include::psa.p4[tag=Register_extern]
 ----
 
 Another example using registers is given below.  It implements a
@@ -2957,55 +2233,9 @@ the PSA implementation.
 
 [source,p4]
 ----
-const bit<32> NUM_PORTS = 512;
+include::examples/psa-example-register2.p4[tag=Register_Example2_Part1]
 
-// It would be more convenient to use a struct type to represent the
-// state of a combined packet and byte count, and many other compound
-// values one might wish to store in a Register instance.  However,
-// the latest p4test as of 2018-Feb-10 does not allow a struct type to
-// be returned from a method call like Register.read().
-
-// Refer to this Github issue for status of generalizing this:
-// https://github.com/p4lang/p4-spec/issues/383
-
-#define PACKET_COUNT_WIDTH 32
-#define BYTE_COUNT_WIDTH 48
-//#define PACKET_BYTE_COUNT_WIDTH (PACKET_COUNT_WIDTH + BYTE_COUNT_WIDTH)
-#define PACKET_BYTE_COUNT_WIDTH 80
-
-#define PACKET_COUNT_RANGE (PACKET_BYTE_COUNT_WIDTH-1):BYTE_COUNT_WIDTH
-#define BYTE_COUNT_RANGE (BYTE_COUNT_WIDTH-1):0
-
-typedef bit<PACKET_BYTE_COUNT_WIDTH> PacketByteCountState_t;
-
-action update_pkt_ip_byte_count (inout PacketByteCountState_t s,
-                                 in bit<16> ip_length_bytes)
-{
-    s[PACKET_COUNT_RANGE] = s[PACKET_COUNT_RANGE] + 1;
-    s[BYTE_COUNT_RANGE] = (s[BYTE_COUNT_RANGE] +
-                           (bit<BYTE_COUNT_WIDTH>) ip_length_bytes);
-}
-
-control ingress(inout headers hdr,
-                inout metadata user_meta,
-                in    psa_ingress_input_metadata_t  istd,
-                inout psa_ingress_output_metadata_t ostd)
-{
-    Register<PacketByteCountState_t, PortId_t>(NUM_PORTS)
-        port_pkt_ip_bytes_in;
-
-    apply {
-        ostd.egress_port = (PortId_t) 0;
-        if (hdr.ipv4.isValid()) {
-            @atomic {
-                PacketByteCountState_t tmp;
-                tmp = port_pkt_ip_bytes_in.read(istd.ingress_port);
-                update_pkt_ip_byte_count(tmp, hdr.ipv4.totalLen);
-                port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);
-            }
-        }
-    }
-}
+include::examples/psa-example-register2.p4[tag=Register_Example2_Part2]
 ----
 
 Note the use of the `@atomic` annotation in the block enclosing the
@@ -3078,16 +2308,7 @@ to generate values.
 
 [source,p4]
 ----
-extern Random<T> {
-
-  /// Return a random value in the range [min, max], inclusive.
-  /// Implementations are allowed to support only ranges where (max -
-  /// min + 1) is a power of 2.  P4 developers should limit their
-  /// arguments to such values if they wish to maximize portability.
-
-  Random(T min, T max);
-  T read();
-}
+include::psa.p4[tag=Random_extern]
 ----
 
 [#sec-action-profile]
@@ -3141,10 +2362,7 @@ action profile implementation.
 
 [source,p4]
 ----
-extern ActionProfile {
-  /// Construct an action profile of 'size' entries
-  ActionProfile(bit<32> size);
-}
+include::psa.p4[tag=ActionProfile_extern]
 ----
 
 ==== Action Profile Example
@@ -3253,7 +2471,7 @@ predictable data plane behavior may be required in a future version of
 PSA.  In some cases, it may be possible for the combination of a PSA
 data plane plus its P4Runtime server software to achieve this desired
 behavior, as far as the P4Runtime client controller software can
-observe.  See Appendix <<appendix-empty-action-selector-groups>>.
+observe.  See <<appendix-empty-action-selector-groups>>.
 
 An action selector instance may be shared across multiple tables only if all such
 tables define the same set of actions in their `actions` attribute. Furthermore,
@@ -3280,13 +2498,7 @@ allowed for tables with an action selector implementation.
 
 [source,p4]
 ----
-extern ActionSelector {
-  /// Construct an action selector of 'size' entries
-  /// @param algo hash algorithm to select a member in a group
-  /// @param size number of entries in the action selector
-  /// @param outputWidth size of the key
-  ActionSelector(PSA_HashAlgorithm_t algo, bit<32> size, bit<32> outputWidth);
-}
+include::psa.p4[tag=ActionSelector_extern]
 ----
 
 ==== Action Selector Example
@@ -3547,10 +2759,7 @@ each digest instance.
 
 [source,p4]
 ----
-extern Digest<T> {
-  Digest();                       /// define a digest stream to the control plane
-  void pack(in T data);           /// emit data into the stream
-}
+include::psa.p4[tag=Digest_extern]
 ----
 
 Below is a part of an example program that demonstrates using a digest
@@ -3559,85 +2768,11 @@ ingress ports of packets that have not been seen before.
 
 [source,p4]
 ----
-struct mac_learn_digest_t {
-    EthernetAddress srcAddr;
-    PortId_t        ingress_port;
-}
+include::examples/psa-example-digest.p4[tag=Digest_Example_Part1]
 
-struct metadata {
-    bool               send_mac_learn_msg;
-    mac_learn_digest_t mac_learn_msg;
-}
+include::examples/psa-example-digest.p4[tag=Digest_Example_Part2]
 
-// This is part of the functionality of a typical Ethernet learning bridge.
-
-// The control plane will typically enter the _same_ keys into the
-// learned_sources and l2_tbl tables.  The entries in l2_tbl are searched for
-// the packet's dest MAC address, and on a hit the resulting action tells
-// where to send the packet.
-
-// The entries in learned_sources are the same, and the action of every table
-// entry added is NoAction.  If there is a _miss_ in learned_sources, we want
-// to send a message to the control plane software containing the packet's
-// source MAC address, and the port it arrived on.  The control plane will
-// make a decision about creating an entry with that packet's source MAC
-// address into both tables, with the l2_tbl sending future packets out this
-// packet's ingress_port.
-
-// This is only a simple example, e.g. there is no implementation of
-// "flooding" shown here, typical when a learning bridge gets a miss when
-// looking up the dest MAC address of a packet.
-
-control ingress(inout headers hdr,
-                inout metadata meta,
-                in    psa_ingress_input_metadata_t  istd,
-                inout psa_ingress_output_metadata_t ostd)
-{
-    action unknown_source () {
-        meta.send_mac_learn_msg = true;
-        meta.mac_learn_msg.srcAddr = hdr.ethernet.srcAddr;
-        meta.mac_learn_msg.ingress_port = istd.ingress_port;
-        // meta.mac_learn_msg will be sent to control plane in
-        // IngressDeparser control block
-    }
-    table learned_sources {
-        key = { hdr.ethernet.srcAddr : exact; }
-        actions = { NoAction; unknown_source; }
-        default_action = unknown_source();
-    }
-
-    action do_L2_forward (PortId_t egress_port) {
-        send_to_port(ostd, egress_port);
-    }
-    table l2_tbl {
-        key = { hdr.ethernet.dstAddr : exact; }
-        actions = { do_L2_forward; NoAction; }
-        default_action = NoAction();
-    }
-    apply {
-        meta.send_mac_learn_msg = false;
-        learned_sources.apply();
-        l2_tbl.apply();
-    }
-}
-
-control IngressDeparserImpl(packet_out packet,
-                            out empty_metadata_t clone_i2e_meta,
-                            out empty_metadata_t resubmit_meta,
-                            out empty_metadata_t normal_meta,
-                            inout headers hdr,
-                            in metadata meta,
-                            in psa_ingress_output_metadata_t istd)
-{
-    CommonDeparserImpl() common_deparser;
-    Digest<mac_learn_digest_t>() mac_learn_digest;
-    apply {
-        if (meta.send_mac_learn_msg) {
-            mac_learn_digest.pack(meta.mac_learn_msg);
-        }
-        common_deparser.apply(packet, hdr);
-    }
-}
+include::examples/psa-example-digest.p4[tag=Digest_Example_Part3]
 ----
 
 [#sec-atomicity-of-control-plane-api-operations]
@@ -3714,8 +2849,9 @@ forwarding.  Recent research analyzes these techniques in a more
 general setting{Cernyetal2016}.
 
 
+[appendix]
 [#appendix-open-issues]
-== Appendix: Open Issues
+== Open Issues
 
 As with any work in progress, we have a number of open issues that are under discussion in the
 working group. In addition to the TBDs in the document, there a number of larger issues that are
@@ -3772,8 +2908,9 @@ occupancy{PSA-INT-Issue}.
 
 We are considering whether to specify different limits that a certain PSA implementation has to have in order for the implementation to be considered compliant. The main point of PSA is to enable a variety of devices, and thus limits may be artificial. On the other hand, for most interesting applications, it is necessary to support a minimum of functionality.
 
+[appendix]
 [#appendix-internetchecksum-implementation]
-== Appendix: Implementation of the InternetChecksum extern
+== Implementation of the InternetChecksum extern
 
 Besides RFC 1461, RFC 1071 and RFC 1141 also contain useful tips on
 efficiently computing the Internet checksum, especially in software
@@ -3841,8 +2978,9 @@ void set_state(bit<16> checksum_state) {
 }
 ----
 
+[appendix]
 [#appendix-counter-implementation]
-== Appendix: Example implementation of Counter extern
+== Example implementation of Counter extern
 
 The example implementation below, in particular the function
 `next_counter_value`, is not intended to restrict PSA implementations.
@@ -3928,8 +3066,9 @@ out of range includes:
   program had the out-of-range `index` value is also recommended.
 
 
+[appendix]
 [#appendix-rationale]
-== Appendix: Rationale for design
+== Rationale for design
 
 [#appendix-rationale-egress]
 === Why egress processing?
@@ -4107,8 +3246,9 @@ important if the I/O bandwidth of the packet buffer becomes a
 bottleneck.
 
 
+[appendix]
 [#appendix-multi-pipeline-psa-devices]
-== Appendix: Multi-pipeline PSA devices
+== Multi-pipeline PSA devices
 
 The highest packet rate network devices today are ASICs running at a
 clock rate on the order of 1 to 2 GHz.  This discussion will assume 1
@@ -4239,8 +3379,9 @@ vendor and of target dependent tools to specify how PSA programs are
 mapped to multiple pipelines.  An implementation may use a copy of the
 PSA program on each pipeline, thus keeping pipelines fully isolated.
 
+[appendix]
 [#appendix-packet-ordering]
-== Appendix: Packet ordering
+== Packet ordering
 
 This section describes _recommendations_ for PSA implementations on
 the order that packets are processed.  These are not requirements,
@@ -4374,8 +3515,9 @@ multiple variants have been developed, some with more or less
 robustness in the face of network reordering.
 
 
+[appendix]
 [#appendix-empty-action-selector-groups]
-== Appendix: Supporting empty action selector groups
+== Supporting empty action selector groups
 
 As mentioned in <<sec-action-selector>>, a PSA data plane implementation
 need not implement any specific defined behavior if one attempts to add
@@ -4576,8 +3718,9 @@ statement inside of the action `set_output_port`, but this is not
 required by PSA.
 
 
+[appendix]
 [#appendix-revision-history]
-== Appendix: Revision History
+== Revision History
 
 === Changes made in version 1.2
 

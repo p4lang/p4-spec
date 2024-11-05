@@ -36,7 +36,7 @@ limitations under the License.
  * https://github.com/p4lang/p4c repository. */
 #error "This file is for documentation purposes only and is not intended to be compiled"
 
-// BEGIN:Type_defns
+// tag::Type_defns[]
 /* These are defined using `typedef`, not `type`, so they are truly
  * just different names for the type bit<W> for the particular width W
  * shown.  Unlike the `type` definitions below, values declared with
@@ -79,14 +79,14 @@ const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) unspecified;
 const PortId_t PSA_PORT_CPU = (PortId_t) unspecified;
 
 const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessiontId_t) unspecified;
-// END:Type_defns
+// end::Type_defns[]
 
 /**********************************************************************
  * End of the part of this target-customized psa.p4 include file that
  * declares data plane widths for one particular target device.
  **********************************************************************/
 
-// BEGIN:Type_defns2
+// tag::Type_defns2[]
 
 /* Note: All of the types with `InHeader` in their name are intended
  * only to carry values of the corresponding types in packet headers
@@ -138,7 +138,7 @@ type  PacketLengthInHeaderUint_t   PacketLengthInHeader_t;
 type  EgressInstanceInHeaderUint_t EgressInstanceInHeader_t;
 @p4runtime_translation("p4.org/psa/v1/TimestampInHeader_t", 64)
 type  TimestampInHeaderUint_t      TimestampInHeader_t;
-// END:Type_defns2
+// end::Type_defns2[]
 
 /* The _int_to_header functions were written to convert a value of
  * type <name>_t (a value INTernal to the data path) to a value of
@@ -204,15 +204,15 @@ TimestampInHeader_t psa_Timestamp_int_to_header (in Timestamp_t x) {
     return (TimestampInHeader_t) (TimestampInHeaderUint_t) (TimestampUint_t) x;
 }
 
-// BEGIN:enum_PSA_IdleTimeout_t
+// tag::enum_PSA_IdleTimeout_t[]
 /// Supported values for the psa_idle_timeout table property
 enum PSA_IdleTimeout_t {
     NO_TIMEOUT,
     NOTIFY_CONTROL
 };
-// END:enum_PSA_IdleTimeout_t
+// end::enum_PSA_IdleTimeout_t[]
 
-// BEGIN:Metadata_types
+// tag::Metadata_types[]
 enum PSA_PacketPath_t {
     NORMAL,     /// Packet received by ingress that is none of the cases below.
     NORMAL_UNICAST,   /// Normal packet received by egress which is unicast
@@ -243,7 +243,7 @@ struct psa_ingress_input_metadata_t {
   Timestamp_t              ingress_timestamp;
   ParserError_t            parser_error;
 }
-// BEGIN:Metadata_ingress_output
+// tag::Metadata_ingress_output[]
 struct psa_ingress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Ingress control block begins executing.
@@ -255,7 +255,7 @@ struct psa_ingress_output_metadata_t {
   MulticastGroup_t         multicast_group;  // 0
   PortId_t                 egress_port;      // initial value is undefined
 }
-// END:Metadata_ingress_output
+// end::Metadata_ingress_output[]
 struct psa_egress_input_metadata_t {
   ClassOfService_t         class_of_service;
   PortId_t                 egress_port;
@@ -271,7 +271,7 @@ struct psa_egress_input_metadata_t {
 struct psa_egress_deparser_input_metadata_t {
   PortId_t                 egress_port;
 }
-// BEGIN:Metadata_egress_output
+// tag::Metadata_egress_output[]
 struct psa_egress_output_metadata_t {
   // The comment after each field specifies its initial value when the
   // Egress control block begins executing.
@@ -279,8 +279,8 @@ struct psa_egress_output_metadata_t {
   CloneSessionId_t         clone_session_id; // initial value is undefined
   bool                     drop;          // false
 }
-// END:Metadata_egress_output
-// END:Metadata_types
+// end::Metadata_egress_output[]
+// end::Metadata_types[]
 
 /// During the IngressDeparser execution, psa_clone_i2e returns true
 /// if and only if a clone of the ingress packet is being made to
@@ -404,15 +404,15 @@ extern void assert(in bool check);
  */
 extern void assume(in bool check);
 
-// BEGIN:Match_kinds
+// tag::Match_kinds[]
 match_kind {
     range,    /// Used to represent min..max intervals
     selector, /// Used for dynamic action selection via the ActionSelector extern
     optional  /// Either an exact match, or a wildcard matching any value for the entire field
 }
-// END:Match_kinds
+// end::Match_kinds[]
 
-// BEGIN:Action_send_to_port
+// tag::Action_send_to_port[]
 /// Modify ingress output metadata to cause one packet to be sent to
 /// egress processing, and then to the output port egress_port.
 /// (Egress processing may choose to drop the packet instead.)
@@ -428,9 +428,9 @@ action send_to_port(inout psa_ingress_output_metadata_t meta,
     meta.multicast_group = (MulticastGroup_t) 0;
     meta.egress_port = egress_port;
 }
-// END:Action_send_to_port
+// end::Action_send_to_port[]
 
-// BEGIN:Action_multicast
+// tag::Action_multicast[]
 /// Modify ingress output metadata to cause 0 or more copies of the
 /// packet to be sent to egress processing.
 
@@ -444,9 +444,9 @@ action multicast(inout psa_ingress_output_metadata_t meta,
     meta.drop = false;
     meta.multicast_group = multicast_group;
 }
-// END:Action_multicast
+// end::Action_multicast[]
 
-// BEGIN:Action_ingress_drop
+// tag::Action_ingress_drop[]
 /// Modify ingress output metadata to cause no packet to be sent for
 /// normal egress processing.
 
@@ -458,9 +458,9 @@ action ingress_drop(inout psa_ingress_output_metadata_t meta)
 {
     meta.drop = true;
 }
-// END:Action_ingress_drop
+// end::Action_ingress_drop[]
 
-// BEGIN:Action_egress_drop
+// tag::Action_egress_drop[]
 /// Modify egress output metadata to cause no packet to be sent out of
 /// the device.
 
@@ -471,7 +471,7 @@ action egress_drop(inout psa_egress_output_metadata_t meta)
 {
     meta.drop = true;
 }
-// END:Action_egress_drop
+// end::Action_egress_drop[]
 
 extern PacketReplicationEngine {
     PacketReplicationEngine();
@@ -487,7 +487,7 @@ extern BufferingQueueingEngine {
     // program.  See comments for PacketReplicationEngine.
 }
 
-// BEGIN:Hash_algorithms
+// tag::Hash_algorithms[]
 enum PSA_HashAlgorithm_t {
   IDENTITY,
   CRC32,
@@ -498,9 +498,9 @@ enum PSA_HashAlgorithm_t {
                       /// TCP, and UDP.
   TARGET_DEFAULT      /// target implementation defined
 }
-// END:Hash_algorithms
+// end::Hash_algorithms[]
 
-// BEGIN:Hash_extern
+// tag::Hash_extern[]
 extern Hash<O> {
   /// Constructor
   Hash(PSA_HashAlgorithm_t algo);
@@ -524,9 +524,9 @@ extern Hash<O> {
   @pure
   O get_hash<T, D>(in T base, in D data, in T max);
 }
-// END:Hash_extern
+// end::Hash_extern[]
 
-// BEGIN:Checksum_extern
+// tag::Checksum_extern[]
 extern Checksum<W> {
   /// Constructor
   Checksum(PSA_HashAlgorithm_t hash);
@@ -546,9 +546,9 @@ extern Checksum<W> {
   @noSideEffects
   W    get();
 }
-// END:Checksum_extern
+// end::Checksum_extern[]
 
-// BEGIN:InternetChecksum_extern
+// tag::InternetChecksum_extern[]
 // Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
 // Supports incremental updating via `subtract` method.
 // See IETF RFC 1624.
@@ -586,17 +586,17 @@ extern InternetChecksum {
   /// InternetChecksum extern, or a different one.
   void set_state(in bit<16> checksum_state);
 }
-// END:InternetChecksum_extern
+// end::InternetChecksum_extern[]
 
-// BEGIN:CounterType_defn
+// tag::CounterType_defn[]
 enum PSA_CounterType_t {
     PACKETS,
     BYTES,
     PACKETS_AND_BYTES
 }
-// END:CounterType_defn
+// end::CounterType_defn[]
 
-// BEGIN:Counter_extern
+// tag::Counter_extern[]
 /// Indirect counter with n_counters independent counter values, where
 /// every counter value has a data plane size specified by type W.
 
@@ -605,28 +605,28 @@ extern Counter<W, S> {
   Counter(bit<32> n_counters, PSA_CounterType_t type);
   void count(in S index);
 }
-// END:Counter_extern
+// end::Counter_extern[]
 
-// BEGIN:DirectCounter_extern
+// tag::DirectCounter_extern[]
 @noWarn("unused")
 extern DirectCounter<W> {
   DirectCounter(PSA_CounterType_t type);
   void count();
 }
-// END:DirectCounter_extern
+// end::DirectCounter_extern[]
 
-// BEGIN:MeterType_defn
+// tag::MeterType_defn[]
 enum PSA_MeterType_t {
     PACKETS,
     BYTES
 }
-// END:MeterType_defn
+// end::MeterType_defn[]
 
-// BEGIN:MeterColor_defn
+// tag::MeterColor_defn[]
 enum PSA_MeterColor_t { RED, GREEN, YELLOW }
-// END:MeterColor_defn
+// end::MeterColor_defn[]
 
-// BEGIN:Meter_extern
+// tag::Meter_extern[]
 // Indexed meter with n_meters independent meter states.
 
 extern Meter<S> {
@@ -642,18 +642,18 @@ extern Meter<S> {
   // MeterColor_t.GREEN), which has the same behavior.
   PSA_MeterColor_t execute(in S index);
 }
-// END:Meter_extern
+// end::Meter_extern[]
 
-// BEGIN:DirectMeter_extern
+// tag::DirectMeter_extern[]
 extern DirectMeter {
   DirectMeter(PSA_MeterType_t type);
   // See the corresponding methods for extern Meter.
   PSA_MeterColor_t execute(in PSA_MeterColor_t color);
   PSA_MeterColor_t execute();
 }
-// END:DirectMeter_extern
+// end::DirectMeter_extern[]
 
-// BEGIN:Register_extern
+// tag::Register_extern[]
 extern Register<T, S> {
   /// Instantiate an array of <size> registers. The initial value is
   /// undefined.
@@ -666,9 +666,9 @@ extern Register<T, S> {
   T    read  (in S index);
   void write (in S index, in T value);
 }
-// END:Register_extern
+// end::Register_extern[]
 
-// BEGIN:Random_extern
+// tag::Random_extern[]
 extern Random<T> {
 
   /// Return a random value in the range [min, max], inclusive.
@@ -679,16 +679,16 @@ extern Random<T> {
   Random(T min, T max);
   T read();
 }
-// END:Random_extern
+// end::Random_extern[]
 
-// BEGIN:ActionProfile_extern
+// tag::ActionProfile_extern[]
 extern ActionProfile {
   /// Construct an action profile of 'size' entries
   ActionProfile(bit<32> size);
 }
-// END:ActionProfile_extern
+// end::ActionProfile_extern[]
 
-// BEGIN:ActionSelector_extern
+// tag::ActionSelector_extern[]
 extern ActionSelector {
   /// Construct an action selector of 'size' entries
   /// @param algo hash algorithm to select a member in a group
@@ -696,16 +696,16 @@ extern ActionSelector {
   /// @param outputWidth size of the key
   ActionSelector(PSA_HashAlgorithm_t algo, bit<32> size, bit<32> outputWidth);
 }
-// END:ActionSelector_extern
+// end::ActionSelector_extern[]
 
-// BEGIN:Digest_extern
+// tag::Digest_extern[]
 extern Digest<T> {
   Digest();                       /// define a digest stream to the control plane
   void pack(in T data);           /// emit data into the stream
 }
-// END:Digest_extern
+// end::Digest_extern[]
 
-// BEGIN:Programmable_blocks
+// tag::Programmable_blocks[]
 parser IngressParser<H, M, RESUBM, RECIRCM>(
     packet_in buffer,
     out H parsed_hdr,
@@ -767,6 +767,6 @@ package PSA_Switch<IH, IM, EH, EM, NM, CI2EM, CE2EM, RESUBM, RECIRCM> (
     EgressPipeline<EH, EM, NM, CI2EM, CE2EM, RECIRCM> egress,
     BufferingQueueingEngine bqe);
 
-// END:Programmable_blocks
+// end::Programmable_blocks[]
 
 #endif   // __PSA_P4__
