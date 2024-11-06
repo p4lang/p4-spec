@@ -98,7 +98,9 @@ annotationToken
     | APPLY
     | BOOL
     | BIT
+    | BREAK
     | CONST
+    | CONTINUE
     | CONTROL
     | DEFAULT
     | ELSE
@@ -108,6 +110,7 @@ annotationToken
     | EXIT
     | EXTERN
     | FALSE
+    | FOR
     | HEADER
     | HEADER_UNION
     | IF
@@ -737,6 +740,18 @@ assignmentOrMethodCallStatement
     ;
 // end::assignmentOrMethodCallStatement[]
 
+// tag::breakStatement[]
+breakStatement
+    : BREAK ";"
+    ;
+// end::breakStatement[]
+
+// tag::continueStatement[]
+continueStatement
+    : CONTINUE ";"
+    ;
+// end::continueStatement[]
+
 // tag::emptyStatement[]
 emptyStatement
     : ";"
@@ -779,7 +794,10 @@ statement
     | blockStatement
     | returnStatement
     | exitStatement
+    | breakStatement
+    | continueStatement
     | switchStatement
+    | loopStatement
     ;
 
 // tag::blockStatement[]
@@ -821,6 +839,66 @@ switchLabel
     | nonBraceExpression
     ;
 // end::switchLabel[]
+
+// tag::loopStatement[]
+loopStatement
+    : optAnnotations FOR "(" optForInitStatements ";" expression ";"
+      optForUpdateStatements ")" statement
+    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    ;
+// end::loopStatement[]
+
+// tag::optForInitStatements[]
+optForInitStatements
+    : /* empty */
+    | forInitStatements
+    ;
+// end::optForInitStatements[]
+
+// tag::forInitStatements[]
+forInitStatements
+    : forInitStatement
+    | forInitStatements "," forInitStatement
+    ;
+// end::forInitStatements[]
+
+// tag::forInitStatement[]
+forInitStatement
+    : optAnnotations typeRef name optInitializer
+    | lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "=" expression
+    ;
+// end::forInitStatement[]
+
+// tag::optForUpdateStatements[]
+optForUpdateStatements
+    : /* empty */
+    | forUpdateStatements
+    ;
+// end::optForUpdateStatements[]
+
+// tag::forUpdateStatements[]
+forUpdateStatements
+    : forUpdateStatement
+    | forUpdateStatements "," forUpdateStatement
+    ;
+// end::forUpdateStatements[]
+
+// tag::forUpdateStatement[]
+forUpdateStatement
+    : lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "=" expression
+    ;
+// end::forUpdateStatement[]
+
+// tag::forCollectionExpr[]
+forCollectionExpr
+    : expression
+    | expression ".." erxpression
+    ;
+// end::forCollectionExpr[]
 
 // tag::statementOrDeclaration[]
 statementOrDeclaration
