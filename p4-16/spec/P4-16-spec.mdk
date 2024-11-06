@@ -5284,6 +5284,7 @@ statement
     | exitStatement
     | returnStatement
     | switchStatement
+    | loopStatement
     ;
 
 [INCLUDE=grammar.mdk:assignmentOrMethodCallStatement]
@@ -5522,6 +5523,42 @@ See "Implementing generalized P4_16 switch statements"
 use to implement generalized switch statements.
 
 [GeneralizedSwitchStatements]: <https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md>
+
+## Loop statement { #sec-loop-stmt }
+
+A `loop` statement executes a statement zero or more times, based on a condition
+or a range or collection.
+
+~ Begin P4Grammar
+
+[INCLUDE=grammar.mdk:loopStatement]
+
+[INCLUDE=grammar.mdk:forInitStatement]
+
+[INCLUDE=grammar.mdk:forUpdateStatement]
+
+~ End P4Grammar
+
+The basic 3-clause `for` statement is similar to a C for statement.  The init statements
+will be executed prior to executing the loop.  The condition will be evaluated before
+each iteration, to determine if the loop should exit.  If the condition is false, the loop
+will exit without executing any statements from the loop body or update.
+The update statements will be executed after the loop body and before evaluating the
+condition again for the next iteration.
+
+The `for`-`in` statement executes the body once for each value in a range or each
+element in a list expression or header stack.  The list or range expression itself
+will only be evaluated once, before the first iteration of the loop.  All side effects
+in the list or range expression will occur before the first iteration of the loop body.
+
+A `break;` statement may be executed in a loop body to immediately exit the loop,
+without executing the rest of the body or the update statements.
+
+A `continue;` statement may be executed in a loop body to skip the rest of the current
+loop body, executing the update statements and then evaluating the condition to
+either execute the loop body again, or terminate the loop.
+
+The scope of any declaration in a for statement is limited to the for statement and its body.
 
 # Packet parsing { #sec-packet-parsing }
 
