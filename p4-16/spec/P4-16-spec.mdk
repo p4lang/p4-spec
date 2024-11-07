@@ -6389,14 +6389,15 @@ starting with actions.
 ~ Figure { #fig-actions; caption: "Actions contain code and data. The code is in the P4 program, while the data is provided in the table entries, typically populated by the control plane. Other parameters are bound by the data plane." }
 ![actions]
 ~
-[actions]: figs/actions.png { width: 8cm; page-align: here }
+[actions]: figs/P4-actions.png { width: 10cm; page-align: here }
 
 Actions are code fragments that can read and write the data being
 processed. Actions may contain data values that can be written by the
-control plane and read by the data plane. Actions are the main
-construct by which the control plane can dynamically influence the
-behavior of the data plane. Figure [#fig-actions] shows the abstract
-model of an `action`.
+control plane and read by the data plane. Actions may also contain
+data values that are initialized by the control plane, and read and
+written by the data plane. Actions are the main construct by which the
+control plane can dynamically influence the behavior of the data
+plane. Figure [#fig-actions] shows the abstract model of an `action`.
 
 ~ Begin P4Grammar
 [INCLUDE=grammar.mdk:actionDeclaration]
@@ -6405,22 +6406,70 @@ model of an `action`.
 Syntactically actions resemble functions with no return
 value. Actions may be declared within a control block; in this case
 they can only be used within instances of that control block.
+Actions may also be declared at the top level of a P4 program.
 
-The following example shows an action declaration:
+The following examples show action declarations:
 ~ Begin P4Example
 action Forward_a(out bit<9> outputPort, bit<9> port) {
     outputPort = port;
 }
+
+action Forward_with_count(out bit<9> outputPort, bit<9> port, rmw bit<32> count) {
+    outputPort = port;
+    count = count + 1;
+}
 ~ End P4Example
 
-Action parameters may not have `extern` types. Action parameters that
-have no direction (e.g., `port` in the previous example) indicate
-"action data." All such parameters must appear at the end of the
-parameter list. When used in a match-action table (see Section
-[#sec-table-action-list]), these parameters will be provided by the
-table entries (e.g., as specified by the control plane, the
-`default_action` table property, or the `entries` table
+Action parameters may not have `extern` types.
+
+Action parameters that have no direction (e.g., `port` in the previous
+examples) indicate "action data" that is read-only in the data plane.
+When used in a match-action table (see Section
+[#sec-table-action-list]), the values of these parameters will be
+provided by the table entries (e.g., as specified by the control
+plane, the `default_action` table property, or the `entries` table
 property).
+
+Consider action `a1` with parameter `p1` that is declared
+directionless. Then:
+
++ There is an independent value of `p1` for each table entry that has
+  `a1` as its action.
++ `p1` may not be assigned a value in the body of `a1`.
++ If `p1` is passed as an argument to another action `a2`
+  corresponding to parameter `p2` of action `a2`, then `p2` must have
+  direction `in`, or be directionless.
++ Similarly if `p1` is passed as an argument to an extern function or
+  extern method `f1` as parameter `p2`: `p2` must have direction `in`,
+  or be directionless.
+
+Action parameters declared with `rmw` before them (e.g., `count` in
+the action `Forward_with_count`) indicate action data that can be
+modified in the P4 code.  The initial value of these parameters will
+be provided by the table entries (e.g. as specified by the control
+plane, the `default_action` table property, or the `entries` table
+property), but after that its value may be modified by the action when
+the action is invoked.
+
+Consider action `a1` with parameter `p1` that is declared `rmw`.
+Then:
+
++ There is separate storage for holding a value of `p1` for each table
+  entry that has `a1` as its action.
++ `p1` may be assigned a value in the body of `a1`, perhaps multiple
+  times.
++ If `p1` is passed as an argument to another action `a2`
+  corresponding to parameter `p2` of action `a2`, then `p2` may be
+  directionless, or have any direction, but it is an error if `p2` is
+  declared `rmw`.
++ If `p1` is passed as an argument to an extern function or extern
+  method `f1` as parameter `p2`, then `p2` may be directionless, or
+  have any direction.
+
+All parameters that are either directionless or declared `rmw` must
+appear after any parameters with a direction.  Directionless
+parameters and those declared `rmw` can appear in any order relative
+to each other.
 
 The body of an action consists of a sequence of statements and
 declarations.  No `table`, `control`, or `parser` applications can
@@ -6440,6 +6489,9 @@ Actions can be executed in two ways:
   must be supplied explicitly, including values for the directionless
   parameters. In this case, the directionless parameters behave like `in`
   parameters.
+
+Actions with parameters declared as `rmw` may not be executed
+explicitly, only implicitly.
 
 ## Tables { #sec-tables }
 
