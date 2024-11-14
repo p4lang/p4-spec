@@ -59,7 +59,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.repository == 'p4lang/p4-spec' && github.ref_name == 'main'
+    #if: github.repository == 'p4lang/p4-spec' && github.ref_name == 'main'
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
@@ -67,8 +67,16 @@ jobs:
         # Fetch all history for all branches
         fetch-depth: 0
 
+    - name: Configure git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "p4lang@users.noreply.github.com"
+
     - name: Rebase gh-pages branch
       run: |
+        git fetch --all
+        git checkout main
+        git pull
         git checkout gh-pages
         git rebase --quiet main
 
@@ -90,10 +98,6 @@ jobs:
         name: api-charter
         path: api-charter
 
-    - name: Configure git
-      run: |
-        git config user.name "GitHub Actions"
-        git config user.email "p4lang@users.noreply.github.com"
 
     - name: Copy files
       run: |
