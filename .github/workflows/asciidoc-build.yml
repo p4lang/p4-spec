@@ -1,0 +1,116 @@
+name: Build and push specification files
+
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Fetch all history for all branches
+        fetch-depth: 0
+
+    - name: Install asciidoc
+      run: sudo ./p4-16/spec/install-asciidoctor-linux.sh
+
+    - name: Build p4-16/spec
+      run: |
+        source /usr/local/rvm/scripts/rvm
+        make -C p4-16/spec
+
+    - name: Build p4-16/psa
+      run: |
+        source /usr/local/rvm/scripts/rvm
+        make -C p4-16/psa
+
+    - name: Build api/charter
+      run: |
+        source /usr/local/rvm/scripts/rvm
+        make -C api/charter
+
+    - name: Upload spec artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: spec
+        path: |
+          p4-16/spec/P4-16-spec.html
+          p4-16/spec/P4-16-spec.pdf
+          p4-16/spec/resources/figs
+
+    - name: Upload PSA spec artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: psa-spec
+        path: |
+          p4-16/psa/PSA.html
+          p4-16/psa/PSA.pdf
+          p4-16/psa/charter/P4_Arch_Charter.html
+          p4-16/psa/figs
+
+    - name: Upload API charter artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-charter
+        path: |
+          api/charter/P4_API_WG_charter.pdf
+
+  deploy:
+    needs: build
+    if: github.repository == 'p4lang/p4-spec' && github.ref_name == 'main'
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Fetch all history for all branches
+        fetch-depth: 0
+
+    - name: Rebase gh-pages branch
+      run: |
+        git checkout gh-pages
+        git rebase --quiet main
+
+    - name: Download spec artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: spec
+        path: spec
+
+    - name: Download PSA spec artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: psa-spec
+        path: psa-spec
+
+    - name: Download API charter artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: api-charter
+        path: api-charter
+
+    - name: Configure git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "p4lang@users.noreply.github.com"
+
+    - name: Copy files
+      run: |
+        pwd
+        ls -l *
+        cp spec/P4-16-spec.html docs/P4-16-working-spec.html
+        cp spec/P4-16-spec.pdf docs/P4-16-working-spec.pdf
+        cp psa-spec/PSA.html docs/PSA.html
+        cp psa-spec/PSA.pdf docs/PSA.pdf
+        cp psa-spec/charter/P4_Arch_Charter.html docs/
+        cp api-charter/P4_API_WG_charter.pdf docs/
+
+    - name: Commit changes
+      run: |
+        git add docs/P4-16-working-spec.{html,pdf} docs/PSA.{html,pdf} docs/P4_API_WG_charter.pdf docs/P4_Arch_Charter.html
+        git commit -am "docs for ${{ steps.vars.outputs.sha_short }}"
+
+    - name: Push commit to gh-pages branch
+      run: git push -f origin gh-pages
+

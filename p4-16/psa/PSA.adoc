@@ -1,134 +1,25 @@
-Title : P4~16~ Portable Switch Architecture (PSA)
-Title Note: version 1.2
-Title Footer: &date;
-Author : The P4.org Architecture Working Group
-Heading depth: 4
+= P4~16~ Portable Switch Architecture (PSA)
+:doctype: book
+:revdate: {docdate}
+:revnumber: v1.2
+:font-size: 10
+:sectnums: 5
+:sectnumlevels: 5
+:toc: macro
+:toc-title: Contents
+:toclevels: 5
+:toc: left
+:!chapter-signifier:
+:xrefstyle: short
+:stem: latexmath
+:pdf-themesdir: resources/theme/
+:pdf-theme: p4-theme.yml
+:stylesdir: resources/theme/
+:stylesheet: p4-stylesheet.css
+:source-highlighter: rouge
 
-pre, code {
-  language: p4;
-}
-Colorizer: p4
-.token.keyword    {
-    font-weight: bold;
-    font-family: monospace;
-   font-size: 10pt;
-}
-
-@if html {
-p4example {
-  replace: "~ Begin P4ExampleBlock&nl;\
-                 ````&nl;&source;&nl;````&nl;\
-                 ~ End P4ExampleBlock";
-  padding:6pt;
-  margin-top: 6pt;
-  margin-bottom: 6pt;
-  border: solid;
-  background-color: #ffffdd;
-  border-width: 0.5pt;
-}
-}
-
-@if tex {
-p4example {
-  replace: "~ Begin P4ExampleBlock&nl;\
-                 ````&nl;&source;&nl;````&nl;\
-                 ~ End P4ExampleBlock";
-  breakable: true;
-  padding: 6pt;
-  margin-top: 6pt;
-  margin-bottom: 6pt;
-  border: solid;
-  background-color: #ffffdd;
-  border-width: 0.5pt;
-}
-}
-
-
-@if html {
-p4pseudo {
-  replace: "~ Begin P4PseudoBlock&nl;\
-                 ````&nl;&source;&nl;````&nl;\
-                 ~ End P4PseudoBlock";
-  padding: 6pt;
-  margin-top: 6pt;
-  margin-bottom: 6pt;
-  border: solid;
-  background-color: #e9fce9;
-  border-width: 0.5pt;
-}
-}
-
-@if tex {
-p4pseudo {
-  replace: "~ Begin P4PseudoBlock&nl;\
-                 ````&nl;&source;&nl;````&nl;\
-                 ~ End P4PseudoBlock";
-  breakable : true;
-  padding: 6pt;
-  margin-top: 6pt;
-  margin-bottom: 6pt;
-  background-color: #e9fce9;
-  border: solid;
-  border-width: 0.5pt;
-}
-}
-
-@if html {
-p4grammar {
-  replace: "~ Begin P4GrammarBlock&nl;\
-                 ````&nl;&source;&nl;````&nl;\
-                 ~ End P4GrammarBlock";
-  border: solid;
-  margin-top: 6pt;
-  margin-bottom: 6pt;
-  padding: 6pt;
-  background-color: #e6ffff;
-  border-width: 0.5pt;
-}
-}
-
-@if tex {
-p4grammar {
-  replace: "~ Begin P4GrammarBlock&nl;\
-                 ````&nl;&source;&nl;````&nl;\
-                 ~ End P4GrammarBlock";
-  breakable: true;
-  margin-top: 6pt;
-  margin-bottom: 6pt;
-  padding: 6pt;
-  background-color: #e6ffff;
-  border: solid;
-  border-width: 0.5pt;
-}
-}
-
-tbd {
-    replace: "~ Begin TbdBlock&nl;\
-                   TBD: &source;&nl;\
-                   ~ End TbdBlock&nl;";
-    color: red;
-}
-
-Pdf Latex: pdflatex
-Document Class: [10pt]article
-Package: [top=1in, bottom=1.25in, left=1.25in, right=1.25in]geometry
-Package: fancyhdr
-
-
-Tex Header:
-  \setlength{\headheight}{30pt}
-  \renewcommand{\footrulewidth}{0.5pt}
-
-
-[TITLE]
-[]{tex-cmd: "\newpage"}
-[]{tex-cmd: "\fancyfoot[L]{&date; &time;}"}
-[]{tex-cmd: "\fancyfoot[C]{P$4_{16}$ Portable Switch Architecture}"}
-[]{tex-cmd: "\fancyfoot[R]{\thepage}"}
-[]{tex-cmd: "\pagestyle{fancy}"}
-[]{tex-cmd: "\sloppy"}
-
-~ Begin Abstract
+[abstract]
+.Abstract
 
 P4 is a language for expressing how packets are processed by the data
 plane of a programmable network forwarding element. P4 programs
@@ -138,12 +29,9 @@ is a target architecture that describes common capabilities of network
 switch devices that process and forward packets across multiple
 interface ports.
 
-~ End Abstract
+toc::[]
 
-[TOC]
-
-
-# Target Architecture Model
+== Target Architecture Model
 
 As an analogy, the PSA is to the P4~16~ language as the C standard
 library is to the C programming language.  PSA defines a library of
@@ -161,16 +49,15 @@ expect the externs defined here will be of general use across multiple
 P4~16~ architectures.
 
 The Portable Switch Architecture (PSA) Model has six programmable P4
-blocks and two fixed-function blocks, as shown in Figure
-[#fig-switch]. The behavior of the programmable blocks is specified
-using P4.  The Packet buffer and Replication Engine (PRE) and the
-Buffer Queuing Engine (BQE) are target dependent functional blocks
-that may be configured for a fixed set of operations.
+blocks and two fixed-function blocks, as shown in <<fig-switch>>. The
+behavior of the programmable blocks is specified using P4.  The Packet
+buffer and Replication Engine (PRE) and the Buffer Queuing Engine (BQE)
+are target dependent functional blocks that may be configured for a
+fixed set of operations.
 
-~ Figure {#fig-switch; caption: "Portable Switch Pipeline"; page-align: here;}
-![switch]
-~
-[switch]: figs/psa_pipeline.png { width: 100%;}
+.Portable Switch Pipeline
+[#fig-switch]
+image::figs/psa_pipeline.png[]
 
 Incoming packets are parsed and validated, and then passed to an
 ingress match action pipeline, which makes decisions on where the
@@ -186,11 +73,11 @@ the pipeline.
 
 A programmer targeting the PSA is required to define objects in P4 for
 the programmable blocks that conform to APIs defined later (see
-section [#sec-programmable-blocks]).  The programmable block inputs
-and outputs are templatized on user defined headers and metadata.
-Once these six blocks are defined, a P4 program for PSA instantiates
-the `main` `package` object, with the programmable blocks passed as
-arguments (see Section [#sec-pre] for an example).
+<<sec-programmable-blocks>>).  The programmable block inputs and outputs
+are templatized on user defined headers and metadata.  Once these six
+blocks are defined, a P4 program for PSA instantiates the `main`
+`package` object, with the programmable blocks passed as arguments (see
+<<sec-pre>> for an example).
 
 A P4 programmer wishing to maximize the portability of their program
 should follow several general guidelines:
@@ -204,12 +91,42 @@ should follow several general guidelines:
 This document contains excerpts of several P4~16~ programs that use
 the `psa.p4` include file and demonstrate features of PSA.  Source
 code for the complete programs can be found in the official repository
-containing the PSA specification[^PSAExamplePrograms].
+containing the PSA specification{PSAExamplePrograms}.
 
-[^PSAExamplePrograms]: <https://github.com/p4lang/p4-spec> in directory `p4-16/psa/examples`.  Direct link: <https://github.com/p4lang/p4-spec/tree/master/p4-16/psa/examples>
+:PSAExamplePrograms: footnote:psaex[<https://github.com/p4lang/p4-spec> in directory `p4-16/psa/examples`. Direct link: <https://github.com/p4lang/p4-spec/tree/master/p4-16/psa/examples>]
 
+:P4RuntimeAPI: footnote:p4rt[The P4Runtime API is defined as a Google Protocol Buffer `.proto` file and an accompanying English specification document here: <https://github.com/p4lang/p4runtime>]
 
-# Naming conventions
+:CacheCost: footnote:cachecost[While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache. <https://en.wikipedia.org/wiki/List_of_Intel_microprocessors>]
+
+:P4CNumericTranslationOptions: footnote:pcnumtrans[The open source `p4c` P4 compiler is planned to support an option to enable numerical translation for additional types, without modifying your P4 program, nor the `psa.p4` include file.  These additional types would be specified by their name.]
+
+:CutThroughSwitching: footnote:cutthru[https://en.wikipedia.org/wiki/Cut-through_switching]
+
+:INT: footnote:telem[<http://p4.org/p4/inband-network-telemetry>]
+
+:DynamicFrequencyScaling: footnote:dynfreq[<https://en.wikipedia.org/wiki/Dynamic_frequency_scaling>]
+
+:PTP: footnote:ptp[<https://en.wikipedia.org/wiki/Precision_Time_Protocol>]
+:NTP: footnote:ntp[<https://en.wikipedia.org/wiki/Network_Time_Protocol>]
+
+:Cernyetal2016: footnote:cernyeta[Pavol Cerny, Nate Foster, Nilesh Jagnik, and Jedidiah McClurg, "Consistent Network Updates in Polynomial Time". International Symposium on Distributed Computing (DISC), Paris, France, September 2016.]
+
+:ECN: footnote:ecn[<https://en.wikipedia.org/wiki/Explicit_Congestion_Notification>]
+
+:PSA-INT-Issue: footnoote:psaint[<https://github.com/p4lang/p4-spec/issues/510>]
+
+:EmbarrassinglyParallel: footnote:embarrassing[<https://en.wikipedia.org/wiki/Embarrassingly_parallel>]
+
+:PipelineNote: footnote:[Here and elsewhere in P4 specification documents, the term "pipeline" refers to a portion of a P4 implementation that implements, for example, the behavior of IngressParser, Ingress, then IngressDeparser in PSA.  This is by now traditional in P4 specifications, and although we will not try to change that here, note that there are other reasonable hardware designs that can accomplish this goal that few would call a pipeline, e.g. a collection of CPU cores running in parallel, each processing different packets.]
+
+:Kandula2007: footnote:[S. Kandula, D. Katabi, S. Sinha, and A. Berger, "Dynamic load balancing without packet reordering", ACM SIGCOMM Computer Communication Review, Vol. 37, No. 2, April 2007]
+
+:LG2002: footnote:[M. Laor and L. Gendel, "The effect of packet reordering in a backbone link on application throughput", IEEE Network, 2002.]
+
+:PSAP4TargetSpecific: footnote:[It is expected that `psa.p4` include files for different targets will typically be nearly identical to each other. Besides the possibility of differing bit widths for these PSA types, the only expected differences between `psa.p4` files for different targets would be annotations on externs, etc. that the P4 compiler for that target needs to do its job.]
+
+== Naming conventions
 
 In this document we use the following naming conventions:
 
@@ -227,20 +144,19 @@ In this document we use the following naming conventions:
 Architecture specific metadata (e.g. structs) are prefixed by `psa_`.
 
 
-# Packet paths {#packet-paths}
+[#packet-paths]
+== Packet paths
 
-Figure [#fig-packet-paths] shows all possible paths for packets that
+<<fig-packet-paths>> shows all possible paths for packets that
 must be supported by a PSA implementation.  An implementation is
 allowed to support paths for packets that are not described here.
 
-~ Figure {#fig-packet-paths; caption: "Packet Paths in PSA"; page-align: here;}
-![packet-paths]
-~
-[packet-paths]: figs/psa-packet-paths-figure.pdf { width: 100%;}
+.Packet Paths in PSA
+[#fig-packet-paths]
+image::figs/psa-packet-paths-figure.png[]
 
-
-Table [#packet-path-abbreviations] defines the meanings of the
-abbreviations in Figure [#fig-packet-paths].  There can be one or more
+<<packet-path-abbreviations>> defines the meanings of the
+abbreviations in <<fig-packet-paths>>.  There can be one or more
 hardware, software, or PSA architecture components between the "packet
 source" and "packet destination" given in that table, e.g. a normal
 multicast packet passes through the packet replication engine and
@@ -250,77 +166,117 @@ P4-programmable portions of the architecture as sources and
 destinations of these packet paths.
 
 
-~ TableFigure {#packet-path-abbreviations; \
-  caption: Packet path abbreviation meanings.}
-|--------------|-------------|---------------|--------------------|
-| Abbreviation | Description | Packet Source | Packet Destination |
-+:-------------+:------------+:--------------+:-------------------+
-| NFP          | normal packet from port | port     | ingress parser |
-|--------------|-------------|---------------|--------------------|
-| NFCPU        | packet from CPU port    | CPU port | ingress parser |
-|--------------|-------------|---------------|--------------------|
-| NU           | normal unicast packet  | ingress deparser | egress parser |
-|              | from ingress to egress |                  |               |
-|--------------|-------------|---------------|--------------------|
-| NM           | normal multicast-replicated | ingress deparser,    | egress parser (more than |
-|              | packet from ingress to egress | with help from PRE | one copy is possible) |
-|--------------|-------------|---------------|--------------------|
-| NTP          | normal packet to port   | egress deparser    | port |
-|--------------|-------------|---------------|--------------------|
-| NTCPU        | normal packet to CPU port | egress deparser  | CPU port |
-|--------------|-------------|---------------|--------------------|
-| RESUB        | resubmitted packet        | ingress deparser | ingress parser |
-|--------------|-------------|---------------|--------------------|
-| CI2E         | clone from ingress to egress | ingress deparser | egress parser |
-|--------------|-------------|---------------|--------------------|
-| RECIRC       | recirculated packet       | egress deparser  | ingress parser |
-|--------------|-------------|---------------|--------------------|
-| CE2E         | clone from egress to egress | egress deparser | egress parser |
-|--------------|-------------|---------------|--------------------|
-~
+[#packet-path-abbreviations]
+.Packet path abbreviation meanings
+|===
+| Abbreviation | Description | Packet Source | Packet Destination
+
+| NFP
+| normal packet from port
+| port
+| ingress parser
+
+| NFCPU
+| packet from CPU port
+| CPU port
+| ingress parser
+
+| NU
+| normal unicast packet from ingress to egress
+| ingress deparser
+| egress parser
+
+| NM
+| normal multicast-replicated packet from ingress to egress
+| ingress deparser, with help from PRE
+| egress parser (more than one copy is possible)
+
+| NTP
+| normal packet to port
+| egress deparser
+| port
+
+| NTCPU
+| normal packet to CPU port
+| egress deparser
+| CPU port
+
+| RESUB
+| resubmitted packet
+| ingress deparser
+| ingress parser
+
+| CI2E
+| clone from ingress to egress
+| ingress deparser
+| egress parser
+
+| RECIRC
+| recirculated packet
+| egress deparser
+| ingress parser
+
+| CE2E
+| clone from egress to egress
+| egress deparser
+| egress parser
+|===
 
 
-Table [#results-of-one-pkt-thru-ingress-or-egress] shows what can
+Table {results-of-one-pkt-thru-ingress-or-egress} shows what can
 happen to a packet as a result of a single time being processed in
 ingress, or a single time being processed in egress.  The cases are
-the same as shown in Table [#packet-path-abbreviations], but have been
+the same as shown in <<packet-path-abbreviations>>, but have been
 grouped together by similar values of "Processed next by".
 
 
-~ TableFigure {#results-of-one-pkt-thru-ingress-or-egress; \
-  caption: Result of packet processed one time by ingress or egress.}
-|--------------|-------------|---------------|--------------------|
-|              |             | Processed     | Resulting          |
-| Abbreviation | Description | next by       | packet(s)          |
-+:-------------+:------------+:--------------+:-------------------+
-| NFP          | normal packet from port |         | At most one CI2E packet, |
-|--------------|-------------|           |                    |
-| NFCPU        | packet from CPU port    | ingress | plus at most one of a |
-|--------------|-------------|           |                    |
-| RESUB        | resubmitted packet      |         | RESUB, NU, or NM packet. |
-|--------------|-------------|           |                    |
-| RECIRC       | recirculated packet     |         | See section [#sec-after-ingress] for details. |
-|--------------|-------------|-----------|--------------------|
-| NU           | normal unicast packet       |         | At most one CE2E packet, |
-|              | from ingress to egress      |         | plus at most one of a |
-|--------------|-------------|               |                    |
-| NM           | normal multicast-replicated | egress  | RECIRC, NTP, or NTCPU |
-|              | packet from ingress to egress |       | packet. |
-|--------------|-------------|               |                    |
-| CI2E         | clone from ingress to egress |        | See section [#sec-after-egress] for details. |
-|--------------|-------------|               |                    |
-| CE2E         | clone from egress to egress |         |          |
-|--------------|-------------|---------------|--------------------|
-| NTP          | normal packet to port   | device at other | determined by the |
-|              |                         | end of port     | other device      |
-|--------------|-------------|---------------|--------------------|
-| NTCPU        | normal packet to CPU port | CPU | determined by CPU |
-|--------------|-------------|---------------|--------------------|
-~
+.Result of packet processed one time by ingress or egress
+[#results-of-one-pkt-thru-ingress-or-egress]
+|===
+| Abbreviation | Descriptiona| Processed next by | Resulting packet(s) 
+
+| NFP
+| normal packet from port
+.4+| ingress
+.4+| At most one CI2E packet, plus at most one of a RESUB, NU, or NM packet. See <<sec-after-ingress>> for details.
+
+| NFCPU
+| packet from CPU port
+
+| RESUB
+| resubmitted packet
+
+| RECIRC
+| recirculated packet
+
+| NU
+| normal unicast packet from ingress to egress
+.4+| egress
+.4+| At most one CE2E packet, plus at most one of a RECIRC, NTP, or NTCPU packet. See <<sec-after-egress>> for details.
+
+| NM
+| normal multicast-replicated packet from ingress to egress
+
+| CI2E
+| clone from ingress to egress
+
+| CE2E
+| clone from egress to egress
+
+| NTP
+| normal packet to port
+| device at other end of port
+| determined by the other device
+
+| NTCPU
+| normal packet to CPU port
+| CPU
+| determined by CPU
+|===
 
 There are metadata fields defined by PSA that enable your P4 program
 to identify which path each packet arrived on, and to control where it
-will go next.  See section [#packet-path-details].
+will go next.  See <<sec-packet-path-details>>.
 
 For egress packets, the choice between one of multiple egress ports,
 the port to the CPU, or the "recirculation port", is made by the
@@ -332,8 +288,8 @@ most common place in a P4 program where the output port(s) are chosen.
 The only exception to ingress choosing the output port is for
 egress-to-egress clone packets, whose destination port is chosen when
 the clone is created in the immediately preceding egress processing
-step.  See section
-[#appendix-rationale-egress-cannot-change-output-port] for why this
+step.  See
+<<appendix-rationale-egress-cannot-change-output-port>> for why this
 restriction exists.
 
 A single packet received by a PSA system from a port can result in 0,
@@ -341,22 +297,22 @@ A single packet received by a PSA system from a port can result in 0,
 For example, a single packet received from a port could cause all of
 the following to occur, if the P4 program so directed it:
 
-+ The original packet received as NFP from port 2.  Ingress processing
+* The original packet received as NFP from port 2.  Ingress processing
   creates a CI2E clone destined for the CPU port (copy 1), and a
   multicast NM packet to multicast group 18, which is configured in
   the PacketReplicationEngine to have copies made to ports 5 (copy 2)
   and the recirculate port `PSA_PORT_RECIRCULATE` (copy 3).
-+ Copy 1 performs egress processing, which sends the packet on path
+* Copy 1 performs egress processing, which sends the packet on path
   NTCPU to the CPU port.
-+ Copy 2 performs egress processing, which creates a CE2E clone
+* Copy 2 performs egress processing, which creates a CE2E clone
   destined for port 8 (copy 4), and sends a NTP packet to port 5.
-+ Copy 3 performs egress processing, which does a RECIRC back to
+* Copy 3 performs egress processing, which does a RECIRC back to
   ingress (copy 5).
-+ Copy 4 performs egress processing, which sends a NTP packet to port
+* Copy 4 performs egress processing, which sends a NTP packet to port
   8.
-+ Copy 5 performs ingress processing, which sends a NU packet destined
+* Copy 5 performs ingress processing, which sends a NU packet destined
   for port 1 (copy 6).
-+ Copy 6 performs egress processing, which drops the packet instead of
+* Copy 6 performs egress processing, which drops the packet instead of
   sending it to port 1.
 
 This is simply an example of what is possible given an appropriately
@@ -382,23 +338,18 @@ reasons, and preferably record some debug information about the first
 few packets dropped for these reasons (perhaps only one).
 
 
-# PSA Data types
+== PSA Data types
 
-## PSA type definitions {#sec-psa-type-definitions}
+[#sec-psa-type-definitions]
+=== PSA type definitions
 
 Each PSA implementation will have specific bit widths for the
 following types in the data plane.  These widths are defined in the
 target specific `psa.p4` include file.  They are expected to differ
-from one PSA implementation to another[^PSAP4TargetSpecific].
+from one PSA implementation to another{PSAP4TargetSpecific}.
 
-[^PSAP4TargetSpecific]: It is expected that `psa.p4` include files for
-    different targets will typically be nearly identical to each
-    other.  Besides the possibility of differing bit widths for these
-    PSA types, the only expected differences between `psa.p4` files
-    for different targets would be annotations on externs, etc. that
-    the P4 compiler for that target needs to do its job.
 
-For each of these types, the P4Runtime API[^P4RuntimeAPI] may use bit
+For each of these types, the P4Runtime API{P4RuntimeAPI} may use bit
 widths independent of the targets.  These widths are defined by the
 P4Runtime API specification, and they are expected to be at least as
 large as the corresponding `InHeader_t` type below, such that they
@@ -406,31 +357,35 @@ hold a value for any target.  All PSA implementations must use data
 plane sizes for these types no wider than the corresponding
 `InHeader_t`-defined types.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Type_defns]
-[INCLUDE=psa.p4:Type_defns2]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Type_defns]
+include::psa.p4[tag=Type_defns2]
+----
 
-## PSA supported metadata types
+=== PSA supported metadata types
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Metadata_types]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Metadata_types]
+----
 
-## Match kinds {#sec-match-kinds}
+[#sec-match-kinds]
+=== Match kinds
 
 PSA supports the following additional `match_kind` types, over and
 above the three defined in the P4~16~ language specification:
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Match_kinds]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Match_kinds]
+----
 
 `selector` is only supported for tables with an action selector implementation.
-See Section [#sec-action-selector] for details.
+See <<sec-action-selector>> for details.
 
 
-### Range tables
+==== Range tables
 
 If a table has at least one `range` field, then a single search key could match
 multiple table entries. Every entry must be assigned a numeric priority by the
@@ -458,7 +413,7 @@ the relative priority of the entries are highest priority first, to lowest
 priority last, based upon the order they appear in the P4 program.
 
 
-### Ternary tables
+==== Ternary tables
 
 If a table has no `range` field, but at least one `ternary` or `optional` field,
 then as for tables with `range` fields, a single search key can be matched by
@@ -468,7 +423,7 @@ previous section applies here, as well as the note about entries specified via
 `const entries`.
 
 
-### Longest prefix match tables
+==== Longest prefix match tables
 
 If a table has no `range`, `ternary`, nor `optional` fields, but at least one
 `lpm` field, there must be exactly one `lpm` field. There may be 0 or more
@@ -485,7 +440,7 @@ property, then the relative priority of the entries are determined by the prefix
 lengths, not by the order they appear in the P4 program.
 
 
-### Exact match tables
+==== Exact match tables
 
 If a table has only `exact` fields, then for any search key, there can be at
 most one matching table entry, because duplicate search keys are not allowed to
@@ -498,23 +453,24 @@ relative order that entries appear in the P4 program is unimportant in
 determining which entry will win.
 
 
-## Data plane vs. control plane data representations {#sec-data-plane-vs-control-plane-values}
+[#sec-data-plane-vs-control-plane-values]
+== Data plane vs. control plane data representations
 
 A PSA data plane may support multiple control plane APIs. Some of the
 notes in this section apply specifically to the case of the P4Runtime
-API[^P4RuntimeAPI] when used to control a PSA device. If you are using
+API{P4RuntimeAPI} when used to control a PSA device. If you are using
 a different control plane API to control a PSA device, you should
 consult the documentation for that control plane API to learn exactly
 what API it provides to configure your PSA device.
 
 A PSA data plane implementation that supports the P4Runtime
-API[^P4RuntimeAPI] includes software called a "P4Runtime Server" that
+API{P4RuntimeAPI} includes software called a "P4Runtime Server" that
 enables runtime programming of the PSA device from one or more
 "P4Runtime Clients".  For brevity, here we will call a P4Runtime Server
 an "agent", and a P4Runtime Client a "controller".  A controller may
 control multiple devices with different PSA implementations.
 
-As mentioned in section [#sec-psa-type-definitions], different PSA
+As mentioned in <<sec-psa-type-definitions>>, different PSA
 implementations are expected to customize the size of the data types
 that refer directly to those objects in the data plane, i.e. ports,
 multicast group ids, etc.
@@ -525,13 +481,12 @@ plane stores only the fewest number of bits required for values of
 these types, for that implementation.  For example, an implementation
 that defines `PortId_t` as `bit<6>` instead of `bit<16>`, and can take
 advantage of this difference, could save 10 Mbits of storage in a
-table with a million entries[^CacheCost].
+table with a million entries{CacheCost}.
 
-[^CacheCost]: While 10 Mbits sounds tiny to one accustomed to computers with hundreds of gigabytes of DRAM, the highest speed PSA implementations are ASICs that must keep tables in on-chip memories, similar to caches in general purpose CPUs.  The Intel i9-7980XE released in 2017 has 198 Mbits of on-chip L3 cache shared by its CPU cores.  Among Intel processors in Intel's 7th generation Core released in 2017 with at least 100 Mbits of L3 cache, they all cost close to $9 per Mbit of L3 cache.  <https://en.wikipedia.org/wiki/List_of_Intel_microprocessors>
 
 The P4Runtime API uses quantities with bit widths independent
 of the target device to hold values of the types
-listed in section [#sec-psa-type-definitions], to simplify the
+listed in <<sec-psa-type-definitions>>, to simplify the
 manipulation of these values in the controller and agent software.
 For control plane
 operations on tables, any trimming or padding of values will be
@@ -543,19 +498,19 @@ There are multiple channels of communication over which such values
 might be carried between the controller and the data plane.  These
 channels of communication include:
 
-+ Control plane operations on tables, where values of these types may
+* Control plane operations on tables, where values of these types may
   be included as part of the key, or as an action parameter.
-+ Control plane operations on parser value sets, where values of these
+* Control plane operations on parser value sets, where values of these
   types may be included as part of the key.
-+ Packets sent to the CPU ("packet in" from the controller's
+* Packets sent to the CPU ("packet in" from the controller's
   perspective), or received from the CPU ("packet out" from the
   controller's perspective).
-+ Fields in a `Digest` extern notification message (section
-  [#sec-packet-digest]).
-+ Fields in the data contents of a `Register` array (section
-  [#sec-registers]).
+* Fields in a `Digest` extern notification message
+  (<<sec-packet-digest>>).
+* Fields in the data contents of a `Register` array 
+  (<<sec-registers>>).
 
-Note: There may be other channels not listed above.
+NOTE: There may be other channels not listed above.
 
 For packets between the control plane and the PSA device, there is the
 issue that many PSA implementations are expected to restrict P4
@@ -622,9 +577,9 @@ the following things on a value with type `PortId_t` or
 `PortIdInHeader_t`, the numerical translation performed may lead to
 functional errors in your program:
 
-+ Do a table key match on a subset of the bits, or a range match.
-+ Compare port values with relational operators like `<` or `>`.
-+ Compare port values to specific numeric literal values like 0 or
+* Do a table key match on a subset of the bits, or a range match.
+* Compare port values with relational operators like `<` or `>`.
+* Compare port values to specific numeric literal values like 0 or
   0xff.  It is recommended instead to compare their values by using
   them as table key fields, or parser value set key fields, against
   values installed by the control plane (which have been translated to
@@ -633,7 +588,7 @@ functional errors in your program:
   values for equality against the symbolic constant values
   `PSA_PORT_CPU` or `PSA_PORT_RECIRCULATE`, which have target-specific
   numeric values.
-+ Perform arithmetic on the value, and expect to get a value that
+* Perform arithmetic on the value, and expect to get a value that
   corresponds to another port of the device.  Some numerical values
   may not correspond to any port of the device, and the values
   corresponding to ports need not be consecutive.
@@ -645,37 +600,27 @@ translation occurs between the controller and the data plane.  Below
 is a complete list of numeric types planned for numerical translation
 by default in PSA:
 
-+ `PortId_t` or `PortIdInHeader_t`
-+ `ClassOfService_t` or `ClassOfServiceInHeader_t`
+* `PortId_t` or `PortIdInHeader_t`
+* `ClassOfService_t` or `ClassOfServiceInHeader_t`
 
 For the types listed below, no numerical translation occurs by
-default[^P4CNumericTranslationOptions].  A PSA
+default{P4CNumericTranslationOptions}.  A PSA
 data plane must support all numerical values from 0 up to the maximum
 value that it supports.  Except for `Timestamp_t` values, the number
 of values supported by the data plane need not be a power of 2.
 Controllers must have a way to discover each PSA device's maximum
 supported value for each of these types.
 
-[^P4CNumericTranslationOptions]: The open source `p4c` P4 compiler is
-    planned to support an option to enable numerical translation for
-    additional types, without modifying your P4 program, nor the
-    `psa.p4` include file.  These additional types would be specified
-    by their name.
-
-+ `MulticastGroup_t` - 0 is a special value that indicates no
+* `MulticastGroup_t` - 0 is a special value that indicates no
   multicast replication is to be performed for a packet, so this type
   is an exception to the rule above that 0 must be supported in the
   data plane.
-+ `CloneSessionId_t`
-+ `PacketLength_t`
-+ `EgressInstance_t`
-+ `Timestamp_t`
+* `CloneSessionId_t`
+* `PacketLength_t`
+* `EgressInstance_t`
+* `Timestamp_t`
 
-~ TBD
-Values of type `Timestamp_t` are being considered for numerical
-translation in the agent software, between target-specific values, and
-a value with a common unit and 0 value reference across all targets.
-~
+NOTE: TBD: Values of type `Timestamp_t` are being considered for numerical translation in the agent software, between target-specific values, and a value with a common unit and 0 value reference across all targets.
 
 Note that all of these types have a `p4runtime_translation` annotation
 in the `psa.p4` include file.  This is to ensure that when the
@@ -697,7 +642,8 @@ the P4Runtime system will expect the URI (first parameter to the
 `p4runtime_translation`) and the desired mapping.
 
 
-# Programmable blocks {#sec-programmable-blocks}
+[#sec-programmable-blocks]
+== Programmable blocks
 
 The following declarations provide a template for the programmable
 blocks in the PSA. The P4 programmer is responsible for
@@ -709,55 +655,49 @@ for all ingress parsers and control blocks.  The egress parser and
 control blocks can use the same types for those things, or different
 types, as the P4 program author wishes.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Programmable_blocks]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Programmable_blocks]
+----
 
 
-# Packet Path Details {#packet-path-details}
+[#sec-packet-path-details]
+== Packet Path Details
 
-Refer to section [#packet-paths] for the packet paths provided by PSA,
+Refer to section {packet-paths} for the packet paths provided by PSA,
 and their abbreviated names, used often in this section.
 
 
-## Initial values of packets processed by ingress
+=== Initial values of packets processed by ingress
 
 Table [#ingress-initial-values] describes the initial values of the
 packet contents and metadata when a packet begins ingress processing.
 
-~ TableFigure {#ingress-initial-values; \
-  caption: Initial values for packets processed by ingress.}
+[#ingress-initial-values] 
+.Initial values for packets processed by ingress
+|===
+|| NFP | NFCPU | RESUB | RECIRC
 
-|--------------|-------------|---------------|--------------|-----|
-|              | NFP         | NFCPU         | RESUB        | RECIRC   |
-+--------------+-------------+---------------+--------------+-----+
-| `packet_in`         | see text ||||
-+--------------+-------------+---------------+--------------+-----+
-| `user_meta`         | see text ||||
-+--------------+-------------+---------------+--------------+-----+
-+--------------+-------------+---------------+--------------+-----+
-| IngressParser `istd` fields (type `psa_ingress_parser_input_metadata_t`) |||||
-+--------------+-------------+---------------+--------------+-----+
-| `ingress_port`      | `PortId_t` value of | `PSA_PORT_` | copied from    | `PSA_PORT_`   |
-|                     | packet's input port | `CPU`       | resub'd packet | `RECIRCULATE` |
-+--------------+-------------+---------------+--------------+-----+
-| `packet_path`     | `NORMAL`            | `NORMAL` | `RESUBMIT`    | `RECIRCULATE`  |
-+--------------+-------------+---------------+--------------+-----+
-+--------------+-------------+---------------+--------------+-----+
-| Ingress `istd` fields (type `psa_ingress_input_metadata_t`)         |||||
-+--------------+-------------+---------------+--------------+-----+
-| `ingress_port`      | Same value as received by IngressParser above. ||||
-+--------------+-------------+---------------+--------------+-----+
-| `packet_path`     | Same value as received by IngressParser above. ||||
-+--------------+-------------+---------------+--------------+-----+
-| `ingress_timestamp` | Time that packet began processing in IngressParser. ||||
-|                     | For RESUB or RECIRC packets, the time the 'copy'    ||||
-|                     | began IngressParser, not the original.              ||||
-+--------------+-------------+---------------+--------------+-----+
-| `parser_error`      | From IngressParser.  Always `error.NoError` if there ||||
-|                     | was no parser error.                                 ||||
-|--------------|-------------|---------------|--------------|-----|
-~
+| `packet_in` 4+| see text
+
+| `user_meta` 4+| see text
+
+5+| IngressParser `istd` fields (type `psa_ingress_parser_input_metadata_t`)
+
+| `ingress_port` | `PortId_t` value of packets' input port | `PSA_PORT_CPU` | copied from resub'd packet | `PSA_PORT_RECIRCULATE` 
+
+| `packet_path` | `NORMAL` | `NORMAL` | `RESUBMIT` | `RECIRCULATE`
+
+5+| Ingress `istd` fields (type `psa_ingress_input_metadata_t`)
+
+| `ingress_port` 4+| Same value as received by IngressParser above.
+
+| `packet_path` 4+| Same value as received by IngressParser above.
+
+| `ingress_timestamp` 4+| Time that packet began processing in IngressParser. For RESUB or RECIRC packets, the time the 'copy' began IngressParser, not the original.
+
+| `parser_error` 4+| From IngressParser.  Always `error.NoError` if there was no parser error.
+|===
 
 Note that the `ingress_port` value for a resubmitted packet could be
 `PSA_PORT_RECIRCULATE` if a packet was recirculated, and then that
@@ -769,12 +709,7 @@ For Ethernet ports, `packet_in` for FP and NFCPU path packets contains
 the Ethernet frame starting with the Ethernet header.  It does not
 include the Ethernet frame CRC.
 
-~ TBD
-Whether the payload is always the
-minimum of 46 bytes (64 byte minimum Ethernet frame size, minus 14
-bytes of header, minus 4 bytes of CRC), or whether an implementation
-is allowed to leave some of those bytes out.}
-~
+NOTE: TBD Whether the payload is always the minimum of 46 bytes (64 byte minimum Ethernet frame size, minus 14 bytes of header, minus 4 bytes of CRC), or whether an implementation is allowed to leave some of those bytes out.
 
 The PSA does not put further restrictions on `packet_in.length()`
 as defined in the P4~16~ spec. Targets that do not support it, should provide mechanisms
@@ -785,24 +720,25 @@ controller to a PSA device.  Such packets are sent into the PSA device
 as NFCPU path packets.  There is no metadata associated with such
 packets, only the contents of the packet that are parsed normally by
 the P4 program's IngressParser code.  There may be some translation of
-header field values, as described in Section
-[#sec-data-plane-vs-control-plane-values].
+header field values, as described in
+<<sec-data-plane-vs-control-plane-values>>.
 
 
-### Initial packet contents for resubmitted packets
+==== Initial packet contents for resubmitted packets
 
 For RESUB packets, `packet_in` is the same as the pre-IngressParser
 contents of `packet_in`, for the packet that caused this resubmitted
 packet to occur (i.e. with NO modifications from any ingress processing).
 
-### Initial packet contents for recirculated packets
+==== Initial packet contents for recirculated packets
 
 For RECIRC packets, `packet_in` is created by starting with the
 headers emitted by the egress deparser of the egress packet that was
 recirculated, followed by the payload of that packet, i.e. the part
 that was not parsed by the egress parser.
 
-### User-defined metadata for all ingress packets {#sec-ingress_initial-metadata}
+[#sec-ingress_initial-metadata]
+==== User-defined metadata for all ingress packets
 
 The PSA architecture does not mandate initialization of user-defined
 metadata to known values as given as input to the ingress parser.  If
@@ -819,8 +755,8 @@ packets.
 
 Consider a packet that arrives at the ingress pipeline, and during
 ingress processing the P4 program assigns values to fields of the PSA
-standard metadata such that the packet is resubmitted (see Section
-[#sec-after-ingress] for details on how to do so).  In the ingress
+standard metadata such that the packet is resubmitted (see
+<<sec-after-ingress>> for details on how to do so).  In the ingress
 deparser, the P4 program assigns a value to the `out` parameter named
 `resubmit_meta`.  This value (which can be a collection of many
 individual values in fields, sub-structs, headers, etc.) becomes
@@ -842,7 +778,8 @@ For packets from a port, including the CPU port, both of the `in`
 parameters `resubmit_meta` and `recirculate_meta` are undefined.
 
 
-## Behavior of packets after ingress processing is complete {#sec-after-ingress}
+[#sec-after-ingress]
+=== Behavior of packets after ingress processing is complete
 
 The pseudocode below defines where copies of packets will be made
 after the `Ingress` control block has completed executing, based upon
@@ -871,15 +808,27 @@ tail dropping if it fills up.  Control plane or driver software would
 be able to read these counters, and read and drain the FIFO queues to
 assist P4 developers in debugging their code.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Metadata_ingress_output]
-~ End P4Example
+[source,p4]
+----
+struct psa_ingress_output_metadata_t {
+  // The comment after each field specifies its initial value when the
+  // Ingress control block begins executing.
+  ClassOfService_t         class_of_service; // 0
+  bool                     clone;            // false
+  CloneSessionId_t         clone_session_id; // initial value is undefined
+  bool                     drop;             // true
+  bool                     resubmit;         // false
+  MulticastGroup_t         multicast_group;  // 0
+  PortId_t                 egress_port;      // initial value is undefined
+}
+----
 
 First we give an outline of behavior, for quick reference of the
 relative priority of the possible actions.  This outline is only for
 reader convenience -- it is not the specification for the behavior.
 
-~ Begin P4Example
+[source,p4]
+----
     psa_ingress_output_metadata_t ostd;
 
     if (ostd.clone) {
@@ -891,12 +840,13 @@ reader convenience -- it is not the specification for the behavior.
     else if (ostd.resubmit) { resubmit packet; }
     else if (ostd.multicast_group != 0) { PRE multicast replicates packet; }
     else { PRE sends one copy of packet to ostd.egress_port; }
-~ End P4Example
+----
 
 The pseudocode below defines the behavior a PSA implementation must
 follow.
 
-~ Begin P4Example
+[source,p4]
+----
     psa_ingress_output_metadata_t ostd;
 
     if (ostd.clone) {
@@ -954,7 +904,7 @@ follow.
         drop the packet
         // Recommended to log error about unsupported ostd.egress_port value.
     }
-~ End P4Example
+----
 
 Whenever the pseudocode above indicates that a packet should be sent
 on a particular packet path, a PSA implementation may under some
@@ -978,8 +928,8 @@ of service of packets.  PSA does not mandate a scheduling policy among
 queues that may exist in the packet buffer.  Something at least as
 flexible as weighted fair queuing, with an optional strict high
 priority queue, is recommended for PSA implementations with separate
-queues for each class of service.  See appendix
-[#appendix-packet-ordering] for more on packet ordering
+queues for each class of service.  See
+<<appendix-packet-ordering>> for more on packet ordering
 recommendations in PSA devices.
 
 The P4Runtime API specification defines how a controller may discover
@@ -987,7 +937,8 @@ the number of distinct class of service values that a PSA device
 supports.
 
 
-### Multicast replication {#sec-multicast}
+[#sec-multicast]
+==== Multicast replication
 
 The control plane may configure each `multicast_group` in the PRE to
 create the desired copies of packets sent to that group.  Each group
@@ -998,12 +949,13 @@ pairs from a group that were added earlier.
 
 Suppose a multicast group contains the following set of pairs:
 
-~ Begin P4Example
+[source,p4]
+----
     (egress_port[0], instance[0]),
     (egress_port[1], instance[1]),
     ...,
     (egress_port[N-1], instance[N-1])
-~ End P4Example
+----
 
 When a packet is sent to that group, `N` copies of the packet are
 made.  Copy number `i` that is sent to egress processing will have its
@@ -1011,8 +963,8 @@ made.  Copy number `i` that is sent to egress processing will have its
 field `egress_port` equal to `egress_port[i]`, and the field
 `instance` filled in with `instance[i]`.  Note: A multicast group is a
 set of pairs, and it is not required that an implementation create
-copies in an order that the control plane can enforce.  See appendix
-[#appendix-packet-ordering] for more on packet ordering
+copies in an order that the control plane can enforce.  See
+<<appendix-packet-ordering>> for more on packet ordering
 recommendations in PSA devices.
 
 Within a single multicast group, the pairs `(egress_port, instance)`
@@ -1036,15 +988,16 @@ those copies will go the the CPU port, or be recirculated back to
 ingress.
 
 
-## Actions for directing packets during ingress {#sec-ingress-actions}
+[#sec-ingress-actions]
+=== Actions for directing packets during ingress
 
 All of these actions modify one or more metadata fields in the struct
 with type `psa_ingress_output_metadata_t` that is an `inout` parameter
 of the `Ingress` control block.  None of these actions have any other
 immediate effect.  What happens to the packet is determined by the
 value of all fields in that struct when ingress processing is
-complete, not at the time one of these actions is called.  See Section
-[#sec-after-ingress].
+complete, not at the time one of these actions is called. See
+<<sec-after-ingress>>.
 
 These actions are provided for convenience in making changes to these
 metadata fields.  Their effects are expected to be common kinds of
@@ -1053,17 +1006,18 @@ your use cases, you may modify the metadata fields directly in your P4
 programs however you prefer, e.g. within actions you define.
 
 
-### Unicast operation
+==== Unicast operation
 
 Sends packet to a port.  See Table [#egress-initial-values], column
 NU, for how metadata fields are filled in when such a packet begins
 egress processing.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Action_send_to_port]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Action_send_to_port]
+----
 
-### Multicast operation
+==== Multicast operation
 
 Sends packet to a multicast group or a port.  See Table
 [#egress-initial-values], column NM, for how metadata fields are
@@ -1074,70 +1028,77 @@ The `multicast_group` parameter is the multicast group id.  The
 control plane must configure the multicast groups through a separate
 mechanism such as the P4Runtime API.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Action_multicast]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Action_multicast]
+----
 
-### Drop operation
+==== Drop operation
 
 Do not send a copy of the packet for normal egress processing.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Action_ingress_drop]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Action_ingress_drop]
+----
 
+[#sec-initial-values-egress]
+=== Initial values of packets processed by egress
 
-## Initial values of packets processed by egress {#sec-initial-values-egress}
-
-Table [#egress-initial-values] describes the initial values of the
+Table {egress-initial-values} describes the initial values of the
 packet contents and metadata when a packet begins egress processing.
 
-~ TableFigure {#egress-initial-values; \
-  caption: Initial values for packets processed by egress.}
+[#egress-initial-values]
+.Initial values for packets processed by egress
 
-|--------------|-------------|---------------|--------------|-----|
-|              | NU          | NM            | CI2E         | CE2E |
-+--------------+-------------+---------------+--------------+-----+
-| `packet_in`       | see text ||||
-+--------------+-------------+---------------+--------------+-----+
-| `user_meta`       | see text ||||
-+--------------+-------------+---------------+--------------+-----+
-+--------------+-------------+---------------+--------------+-----+
-| EgressParser `istd` fields (type `psa_egress_parser_input_metadata_t`) |||||
-+--------------+-------------+---------------+--------------+-----+
-| `egress_port`     | `ostd.egress_port` | from PRE           | from PRE configuration ||
-|                   | of ingress packet  | configuration      | of clone session       ||
-|                   |                    | of multicast group |                        ||
-+--------------+-------------+---------------+--------------+-----+
-| `packet_path`   | NORMAL_ | NORMAL_   | CLONE_I2E | CLONE_E2E |
-|                 | UNICAST | MULTICAST |           |           |
-+--------------+-------------+---------------+--------------+-----+
-+--------------+-------------+---------------+--------------+-----+
-| Egress `istd` fields (type `psa_egress_input_metadata_t`)   |||||
-+--------------+-------------+---------------+--------------+-----+
-| `class_of_service` | `ostd.class_of_service` || from PRE configuration ||
-|                    | of ingress packet       || of clone session       ||
-+--------------+-------------+---------------+--------------+-----+
-| `egress_port`      | Same value as received by EgressParser above. ||||
-+--------------+-------------+---------------+--------------+-----+
-| `packet_path`    | Same value as received by EgressParser above. ||||
-+--------------+-------------+---------------+--------------+-----+
-| `instance`         | 0 | from PRE           | from PRE configuration  ||
-|                    |   | configuration      | of clone session        ||
-|                    |   | of multicast group |                         ||
-+--------------+-------------+---------------+--------------+-----+
-| `egress_timestamp` | Time that packet began processing in EgressParser.  Filled in ||||
-|                     | independently for each copy of a multicast-replicated packet. ||||
-+--------------+-------------+---------------+--------------+-----+
-| `parser_error`    | From EgressParser.  Always `error.NoError` if there   ||||
-|                   | was no parser error.  See "Multicast copies" section. ||||
-|--------------|-------------|---------------|--------------|-----|
-~
+|===
+|| NU | NM | CI2E | CE2E
+
+| `packet_in` 4+| see text
+
+| `user_meta` 4+| see text
+
+5+| EgressParser `istd` fields (type `psa_egress_parser_input_metadata_t`)
+
+| `egress_port`     
+| `ostd.egress_port` of ingress packet
+| from PRE configuration of multicast group
+2+| from PRE configuration of clone session
+
+| `packet_path`
+| NORMAL_UNICAST
+| NORMAL_MULTICAST
+| CLONE_I2E
+| CLONE_E2E
+
+5+| Egress `istd` fields (type `psa_egress_input_metadata_t`)
+
+| `class_of_service`
+2+| `ostd.class_of_service` of ingress packet
+2+| from PRE configuration of clone session
+
+| `egress_port`
+4+| Same value as received by EgressParser above.
+
+| `packet_path`
+4+| Same value as received by EgressParser above.
+
+| `instance`
+| 0
+| from PRE configuration of multicast group
+2+| from PRE configuration of clone session 
+
+| `egress_timestamp` 
+4+| Time that packet began processing in EgressParser.  Filled in independently for each copy of a multicast-replicated packet.
+
+| `parser_error`
+4+| From EgressParser.  Always `error.NoError` if there was no parser error.  See "Multicast copies" section.
+|===
 
 Note that while some P4 architectures have a standard metadata field
 that gives the length of the packet in bytes, there is no such field
 in PSA.  If a target device supports cut-through
-switching[^CutThroughSwitching] and this feature is enabled, it is
+switching{CutThroughSwitching} and this feature is enabled, it is
 possible for egress processing to begin before the last byte of the
 packet has arrived on the input port.  Thus it is not possible for the
 target device to determine the packet length yet.  It is recommended
@@ -1145,10 +1106,8 @@ that a P4 developer use fields available in some packet headers to
 determine the length of a packet, such as the Total Length field in
 the IPv4 header, or the Payload length field in the IPv6 header.
 
-[^CutThroughSwitching]: https://en.wikipedia.org/wiki/Cut-through_switching
 
-
-### Initial packet contents for normal packets
+==== Initial packet contents for normal packets
 
 For NU and NM packets, `packet_in` comes from the ingress packet that
 caused this packet to be sent to egress.  It starts with the packet
@@ -1161,7 +1120,7 @@ category.  They are not treated differently by a PSA implementation
 from normal unicast or multicast packets until they reach the egress
 deparser.
 
-### Initial packet contents for packets cloned from ingress to egress
+==== Initial packet contents for packets cloned from ingress to egress
 
 For CI2E packets, `packet_in` is from the ingress packet that caused
 this clone to be created.  It is the same as the pre-IngressParser
@@ -1172,7 +1131,7 @@ Packets cloned in ingress using a clone session configured with
 `egress_port` equal to `PSA_PORT_RECIRCULATE` fit into this category.
 
 
-### Initial packet contents for packets cloned from egress to egress
+==== Initial packet contents for packets cloned from egress to egress
 
 For CE2E packets, `packet_in` is from the egress packet that caused this
 clone to be created.  It starts with the headers emitted by the egress
@@ -1184,10 +1143,10 @@ Packets cloned in egress using a clone session configured with
 `egress_port` equal to `PSA_PORT_RECIRCULATE` fit into this category.
 
 
-### User-defined metadata for all egress packets
+==== User-defined metadata for all egress packets
 
 This is very similar to how metadata is initialized for ingress
-packets.  See Section [#sec-ingress_initial-metadata].
+packets.  See <<sec-ingress_initial-metadata>>.
 
 The primary differences for egress packets are the different packet
 paths involved.  There are three parameters with direction `in` for
@@ -1212,26 +1171,26 @@ with defined contents.  Its value is the one that was assigned to the
 clone was created.
 
 
-### Multicast and clone copies
+==== Multicast and clone copies
 
 The following fields may differ among copies of a multicast-replicated
 packet that are processed in egress.  Similarly for copies of a cloned
 packet when they are processed in egress.  Both are referred to as
 replicated packets in this section.
 
-+ `egress_port` - This field will typically differ among copies of a
+* `egress_port` - This field will typically differ among copies of a
   replicated packet, but it may also be the same for
   arbitrary copies, as determined by the control plane configuration
   of the PacketReplicationEngine.  It is expected that the control
   plane will configure the PacketReplicationEngine so that each copy
   of the same original packet is assigned a unique value of the pair
   `(egress_port, instance)`.
-+ `instance` - See `egress_port`
-+ `egress_timestamp` - This value is filled in independently for each
+* `instance` - See `egress_port`
+* `egress_timestamp` - This value is filled in independently for each
   copy of a replicated packet.  Depending upon the quantity
   of traffic destined to each output port, the timestamp could vary
   significantly between copies of the same original packet.
-+ `parser_error` - In the common case, this will typically be the same
+* `parser_error` - In the common case, this will typically be the same
   for every copy of the same original replicated packet.
   However, it is determined by the EgressParser P4 code for each copy
   independently, so if that parsing behavior depends upon a field that
@@ -1243,7 +1202,8 @@ mentioned above, will be the same for every copy of the same original
 replicated packet.
 
 
-## Behavior of packets after egress processing is complete {#sec-after-egress}
+[#sec-after-egress]
+=== Behavior of packets after egress processing is complete
 
 
 The pseudocode below defines where copies of packets will be made
@@ -1251,59 +1211,60 @@ after the `Egress` control block has completed executing, based upon
 the contents of several metadata fields in the struct
 `psa_egress_output_metadata_t`.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Metadata_egress_output]
+[source,p4]
+----
+include::psa.p4[tag=Metadata_egress_output]
 
-    psa_egress_input_metadata_t  istd;
-    psa_egress_output_metadata_t ostd;
+psa_egress_input_metadata_t  istd;
+psa_egress_output_metadata_t ostd;
 
-    if (ostd.clone) {
-        if (ostd.clone_session_id value is supported) {
-            from the values configured for ostd.clone_session_id in PRE {
-                cos = class_of_service
-                set((egress_port[0], instance[0]), ..., (egress_port[n], instance[n])) =
-                    set of egress_port and instance pairs
-                trunc = truncate
-                plen = packet_length_bytes
-            }
-            if (cos value is not supported) {
-                cos = 0;
-                // Recommended to log error about unsupported cos
-                // value.
-            }
-            for each pair (egress_port, instance) in the set {
-                Create a clone of the packet and send it to the packet
-                buffer with the egress_port, instance, and
-                class_of_service cos, after which it will start egress
-                processing.  It will contain at most the first plen
-                bytes of the packet as sent out from the egress
-                deparser if trunc is true, otherwise the entire
-                packet.
-            }
-        } else {
-            // Do not create a clone.  Recommended to log error about
-            // unsupported ostd.clone_session_id value.
+if (ostd.clone) {
+    if (ostd.clone_session_id value is supported) {
+        from the values configured for ostd.clone_session_id in PRE {
+            cos = class_of_service
+            set((egress_port[0], instance[0]), ..., (egress_port[n], instance[n])) =
+                set of egress_port and instance pairs
+            trunc = truncate
+            plen = packet_length_bytes
         }
+        if (cos value is not supported) {
+            cos = 0;
+            // Recommended to log error about unsupported cos
+            // value.
+        }
+        for each pair (egress_port, instance) in the set {
+            Create a clone of the packet and send it to the packet
+            buffer with the egress_port, instance, and
+            class_of_service cos, after which it will start egress
+            processing.  It will contain at most the first plen
+            bytes of the packet as sent out from the egress
+            deparser if trunc is true, otherwise the entire
+            packet.
+        }
+    } else {
+        // Do not create a clone.  Recommended to log error about
+        // unsupported ostd.clone_session_id value.
     }
-    // Continue below, regardless of whether a clone was created.
-    // Any clone created above is unaffected by the code below.
-    if (ostd.drop) {
-        drop the packet
-        return;   // Do not continue below.
-    }
-    // The value istd.egress_port below is the same one that the
-    // packet began its egress processing with, as decided during
-    // ingress processing for this packet (or as determined by the PRE
-    // configuration of a clone session, for cloned packets,
-    // regardless of whether the clone operation was done in ingress
-    // or egress).  The egress code is not allowed to change it.
-    if (istd.egress_port == PSA_PORT_RECIRCULATE) {
-        recirculate the packet, i.e. it will go back to starting with the
-            ingress parser;
-        return;   // Do not continue below.
-    }
-    enqueue one packet for output port istd.egress_port
-~ End P4Example
+}
+// Continue below, regardless of whether a clone was created.
+// Any clone created above is unaffected by the code below.
+if (ostd.drop) {
+    drop the packet
+    return;   // Do not continue below.
+}
+// The value istd.egress_port below is the same one that the
+// packet began its egress processing with, as decided during
+// ingress processing for this packet (or as determined by the PRE
+// configuration of a clone session, for cloned packets,
+// regardless of whether the clone operation was done in ingress
+// or egress).  The egress code is not allowed to change it.
+if (istd.egress_port == PSA_PORT_RECIRCULATE) {
+    recirculate the packet, i.e. it will go back to starting with the
+        ingress parser;
+    return;   // Do not continue below.
+}
+enqueue one packet for output port istd.egress_port
+----
 
 As for the handling of a packet after ingress processing, a PSA
 implementation may drop a packet after egress processing, even if the
@@ -1316,19 +1277,21 @@ separate counters for as many different reasons as the implementation
 has for dropping packets outside the control of the P4 program.
 
 
-## Actions for directing packets during egress {#sec-egress-actions}
+[#sec-egress-actions]
+=== Actions for directing packets during egress
 
-### Drop operation {#sec-bqe-drop}
+[#sec-bqe-drop]
+==== Drop operation
 
 Do not send the packet out of the device after egress processing is
 complete.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Action_egress_drop]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Action_egress_drop]
+----
 
-
-## Contents of packets sent out to ports
+=== Contents of packets sent out to ports
 
 There is no metadata associated with NTP and NTCPU packets.
 
@@ -1350,11 +1313,12 @@ The P4Runtime has a "Packet In" capability to receive packets sent by
 a PSA device to the port `PSA_PORT_CPU`.  There is no metadata
 associated with such packets, only the contents of the packet that are
 emitted normally by the P4 program's EgressDeparser code.  There may
-be some translation of header field values, as described in Section
-[#sec-psa-type-definitions].
+be some translation of header field values, as described in
+<<sec-psa-type-definitions>>.
 
 
-## Packet Cloning  {#sec-clone}
+[#sec-clone]
+=== Packet Cloning 
 
 Packet cloning is a mechanism to send a copy of a packet to a
 specified port, in addition to the 'regular' packet.  Multiple clones
@@ -1381,10 +1345,11 @@ metadata fields that control cloning are those whose names begin with
 `clone` in types `psa_ingress_output_metadata_t` and
 `psa_egress_output_metadata_t`.
 
-~ Begin P4Example
+[source,p4]
+----
 bool                     clone;
 CloneSessionId_t         clone_session_id;
-~ End P4Example
+----
 
 The `clone` flag specifies whether a packet should be cloned.  If
 true, then a cloned packet, or packets, should be generated at the end of the
@@ -1394,7 +1359,8 @@ each clone session, the control plane may configure the following
 values that should be associated with packets cloned using that
 session.
 
-~ Begin P4Example
+[source,p4]
+----
 /// Each clone session may configure zero or more pairs of (egress_port, instance).
 PortId_t         egress_port;  /// egress_port in a pair of (egress_port, instance)
 EgressInstance_t instance;  /// instance in a pair of (egress_port, instance)
@@ -1404,12 +1370,12 @@ EgressInstance_t instance;  /// instance in a pair of (egress_port, instance)
 ClassOfService_t class_of_service;
 bool             truncate;
 PacketLength_t   packet_length_bytes;  /// only used if truncate is true
-~ End P4Example
+----
 
 The configuration of the set of `(egress_port, instance)` values for a
 clone session is similar to, and has the same requirements and
 restrictions as, the configuration of a set of pairs for a multicast
-group, as described in Section [#sec-multicast].
+group, as described in <<sec-multicast>>.
 
 The `egress_port` values may be any ports that can be used for normal
 unicast packets, i.e. any normal port, `PSA_PORT_CPU`, or
@@ -1451,17 +1417,20 @@ is also initialized with the configuration values
 `class_of_service = 0`, and `truncate = false`.
 
 
-### Clone Examples {#sec-clone-examples}
+[#sec-clone-examples]
+==== Clone Examples
 
 The partial program below demonstrates how to clone a packet.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part1]
-[INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part2]
-[INCLUDE=examples/psa-example-clone-to-port.p4:Clone_Example_Part3]
-~ End P4Example
+[source,p4]
+----
+include::examples/psa-example-clone-to-port.p4[tag=Clone_Example_Part1]
+include::examples/psa-example-clone-to-port.p4[tag=Clone_Example_Part2]
+include::examples/psa-example-clone-to-port.p4[tag=Clone_Example_Part3]
+----
 
-## Packet Resubmission  {#sec-resubmit}
+[#sec-resubmit]
+=== Packet Resubmission
 
 Packet resubmission is a mechanism to repeat ingress processing on a
 packet.
@@ -1485,7 +1454,7 @@ multiple times, the user program can distinguish the packet
 resubmitted the first time, or second time, by the extra metadata
 associated with the packet.  Note the maximum number of packet
 resubmission for a single packet is target-dependent.  See section
-[#packet-paths].
+{packet-paths}.
 
 PSA specifies that the resubmit operation can only be used in the
 ingress pipeline. The egress pipeline cannot resubmit packets. As
@@ -1520,8 +1489,8 @@ is resubmitted with the optional resubmit metadata. If false, the
 resubmission mechanism is disabled and no assignments to
 `resubmit_meta` should be performed.
 
-
-## Packet Recirculation {#sec-recirculate}
+[#sec-recirculate]
+=== Packet Recirculation
 
 Packet recirculation is a mechanism to repeat ingress processing on a
 packet, after it has completed egress processing.  Unlike a resubmit,
@@ -1548,25 +1517,25 @@ egress deparser.  The metadata is available to the ingress parser
 after the packet is recirculated.
 
 
-# PSA Externs
+== PSA Externs
 
-## Restrictions on where externs may be used {#sec-extern-restrictions}
+[#sec-extern-restrictions]
+=== Restrictions on where externs may be used
 
 All instantiations in a P4~16~ program occur at compile time, and can
 be arranged in a tree structure we will call the instantiation tree.
 The root of the tree `T` represents the top level of the program.  Its
 children are the node for the package `PSA_Switch` described in
-Section [#sec-programmable-blocks], and any externs instantiated at
+<<sec-programmable-blocks>>, and any externs instantiated at
 the top level of the program.  The children of the `PSA_Switch` node
 are the packages and externs passed as parameters to the `PSA_Switch`
-instantiation.  See Figure [#fig-instantiation-tree] for a drawing of
+instantiation.  See <<fig-instantiation-tree>> for a drawing of
 the smallest instantiation tree possible for a P4 program written for
 PSA.
 
-~ Figure {#fig-instantiation-tree; caption: "Minimal PSA instantiation tree"; page-align: here;}
-![instantiation-tree]
-~
-[instantiation-tree]: figs/psa-instantiation-tree-figure.png { width: 100%;}
+[#fig-instantiation-tree]
+.Minimal PSA instantiation tree
+image::figs/psa-instantiation-tree-figure.png[]
 
 
 If any of those parsers or controls instantiate other parsers,
@@ -1580,38 +1549,37 @@ level instances.
 
 A PSA implementation is allowed to reject programs that instantiate
 externs, or attempt to call their methods, from anywhere other than
-the places mentioned in Table [#table-extern-usage].
+the places mentioned in Table {table-extern-usage}.
 
-~ TableFigure {#table-extern-usage; \
-  caption: Summary of controls that can instantiate and invoke externs.}
-|-------------------|----------------------------------------------|
-| Extern type       | Where it may be instantiated and called from |
-+:------------------+:---------------------------------------------+
-| `ActionProfile`   | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `ActionSelector`  | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `Checksum`        | IngressParser, EgressParser, IngressDeparser, EgressDeparser |
-|-------------------|----------------------------------------------|
-| `Counter`         | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `Digest`          | IngressDeparser |
-|-------------------|----------------------------------------------|
-| `DirectCounter`   | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `DirectMeter`     | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `Hash`            | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `InternetChecksum` | IngressParser, EgressParser, IngressDeparser, EgressDeparser |
-|-------------------|----------------------------------------------|
-| `Meter`           | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `Random`          | Ingress, Egress |
-|-------------------|----------------------------------------------|
-| `Register`        | Ingress, Egress |
-|-------------------|----------------------------------------------|
-~
+[#table-extern-usage]
+.Summary of controls that can instantiate and invoke externs.
+|===
+| Extern type | Where it may be instantiated and called from
+
+| `ActionProfile` | Ingress, Egress
+
+| `ActionSelector` | Ingress, Egress
+
+| `Checksum` | IngressParser, EgressParser, IngressDeparser, EgressDeparser
+
+| `Counter` | Ingress, Egress
+
+| `Digest` | IngressDeparser
+
+| `DirectCounter` | Ingress, Egress
+
+| `DirectMeter` | Ingress, Egress
+
+| `Hash` | Ingress, Egress
+
+| `InternetChecksum` | IngressParser, EgressParser, IngressDeparser, EgressDeparser
+
+| `Meter` | Ingress, Egress
+
+| `Random` | Ingress, Egress
+
+| `Register` | Ingress, Egress
+|===
 
 For example, `Counter` being restricted to "Ingress, Egress" means
 that every `Counter` instance must be instantiated within either the
@@ -1638,43 +1606,51 @@ regardless of whether they are for the PSA.
 
 Rationale:
 
-- It is expected that the highest performance PSA implementations will
+* It is expected that the highest performance PSA implementations will
   not be able to update the same extern instance from both `Ingress` and
   Egress, nor from more than one of the parsers or controls defined in
   the PSA architecture.
-- In a multi-pipeline device, there are effectively multiple
+* In a multi-pipeline device, there are effectively multiple
   instantiations of the ingress pipeline and of the egress pipeline.
   The primary motivation to create a multi-pipeline device is the
   practical difficulty in allowing the same stateful object
   (e.g. table, counter, etc.) to be accessed at a packet rate higher
   than that of a single pipeline.  Thus each stateful object should be
   accessed from only a single pipeline on such a device.
-  See appendix [#appendix-multi-pipeline-psa-devices].
+  See <<appendix-multi-pipeline-psa-devices>>.
 
 
-## PSA Table Properties
+=== PSA Table Properties
 
-Table [#table-table-properties] lists all P4 table properties defined
+Table {table-table-properties} lists all P4 table properties defined
 by PSA that are not included in the base P4~16~ language
 specification.
 
-~ TableFigure {#table-table-properties; \
-  caption: Summary of PSA table properties.}
-|-----------------------|------|---------------------------------------|
-| Property name         | Type | See also |
-+:----------------------+:-----+:--------------------------------------+
-| `psa_direct_counter` | one `DirectCounter` instance name | Section [#sec-direct-counter] |
-|-----------------------|------|---------------------------------------|
-| `psa_direct_meter` | one `DirectMeter` instance name | Section [#sec-meters] |
-|-----------------------|------|---------------------------------------|
-| `psa_implementation`  | instance name of one `ActionProfile` | Sections [#sec-action-profile], [#sec-action-selector] |
-|                       | or `ActionSelector` |  |
-|-----------------------|------|---------------------------------------|
-| `psa_empty_group_action` | action | Section [#sec-action-selector] |
-|-----------------------|------|---------------------------------------|
-| `psa_idle_timeout` | `PSA_IdleTimeout_t` | Section [#sec-idle-timeout] |
-|-----------------------|------|---------------------------------------|
-~
+[#table-table-properties]
+.Summary of PSA table properties
+|===
+| Property name | Type | See also
+
+| `psa_direct_counter`
+| one `DirectCounter` instance name
+| <<sec-direct-counter>>
+
+| `psa_direct_meter`
+| one `DirectMeter` instance name
+| <<sec-meters>>
+
+| `psa_implementation`
+| instance name of one `ActionProfile` or `ActionSelector`
+| <<sec-action-profile>>, <<sec-action-selector>>
+
+| `psa_empty_group_action`
+| action
+| <<sec-action-selector>>
+
+| `psa_idle_timeout`
+| `PSA_IdleTimeout_t`
+| <<sec-idle-timeout>>
+|===
 
 A PSA implementation need not support both of a `psa_implementation`
 and `psa_direct_counter` property on the same table.
@@ -1689,7 +1665,8 @@ A PSA implementation must implement tables that have both a
 A PSA implementation need not support both `psa_implementation` and
 `psa_idle_timeout` properties on the same table.
 
-### Table entry timeout notification {#sec-idle-timeout}
+[#sec-idle-timeout]
+==== Table entry timeout notification
 
 PSA defines the table property `psa_idle_timeout` to enable specifying
 whether a table should maintain an idle time for each of its entries,
@@ -1699,9 +1676,10 @@ been matched for a length of time at least its configured idle time.
 The value assigned to `psa_idle_timeout` must be a value of type
 `PSA_IdleTimeout_t`:
 
-~ Begin P4Example
-[INCLUDE=psa.p4:enum_PSA_IdleTimeout_t]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=enum_PSA_IdleTimeout_t]
+----
 
 If the property `psa_idle_timeout` is not specified for a table, its
 default value is `NO_TIMEOUT`.  Such tables need not maintain an idle
@@ -1713,7 +1691,7 @@ If the property `psa_idle_timeout` is assigned a value of
 notifications for the table.  There is an API for the control plane to
 set idle timeout values for entries of table `t`.
 
-If a table entry `e` has not been "hit" (&ie; not matched by an
+If a table entry `e` has not been "hit" (ie; not matched by an
 invocation of `t.apply()`) for a time interval at least as long as its
 idle timeout value, the device should generate a notification to the
 control plane for entry `e`.  The rate and mode of how the
@@ -1722,7 +1700,9 @@ subject to configuration parameters specified by the control plane
 API.
 
 Example:
-~ Begin P4Example
+
+[source,p4]
+----
 table t {
   action a1 () { ... }
   action a2 () { ... }
@@ -1731,11 +1711,11 @@ table t {
   default_action = a2;
   psa_idle_timeout = PSA_IdleTimeout_t.NOTIFY_CONTROL;
 }
-~ End P4Example
+----
 
 Restrictions on the idle timeout values and notifications:
 
-- It is likely that any hardware implementation will have a limited number of
+* It is likely that any hardware implementation will have a limited number of
   bits to represent the values, and, since the values are programmed at
   runtime, it is the responsibility of the runtime (P4Runtime or other
   controller software) to guarantee that the idle timeout values can be represented in
@@ -1745,17 +1725,17 @@ Restrictions on the idle timeout values and notifications:
   the programming of such tables, and return an error if the device does not
   support the idle timeout at all.
 
-- If no value is programmed for a table entry, even though the table has
+* If no value is programmed for a table entry, even though the table has
   enabled the idle timeout property, the entry will not generate a
   notification.
 
-- PSA does not require a timeout value for a default action entry. The reason
+* PSA does not require a timeout value for a default action entry. The reason
   for not making this mandatory in the specification is that the default
   action may not have an explicit table entry to represent it, and also there
   are no known compelling use cases for a controller knowing when no misses
   have occurred for a particular table for a long time. The default action entry will not be aged out.
 
-- Currently, tables implemented using ActionSelectors and ActionProfiles do not support the `psa_idle_timeout` property. Future versions of the specification may remove this restriction.
+* Currently, tables implemented using ActionSelectors and ActionProfiles do not support the `psa_idle_timeout` property. Future versions of the specification may remove this restriction.
 
 Devices are allowed to send idle timeout notifications on a best
 effort basis.  For example, if a table has one million entries, and
@@ -1764,15 +1744,16 @@ time, an implementation cannot send all of these notifications
 instantaneously, but only at some finite rate.  Possible behaviors
 include:
 
-- If the control plane deletes entry `e`, the deletion might occur
+* If the control plane deletes entry `e`, the deletion might occur
   even though the device never notified the control plane that `e`'s
   idle timeout was reached before it was deleted.
-- If entry `e` is matched some time after its idle timeout has
+* If entry `e` is matched some time after its idle timeout has
   elapsed, and the device has not yet generated an idle timeout
   notification for `e`, it is possible that the device will never
   generate a notification to the control plane for that entry.
 
-## Packet Replication Engine {#sec-pre}
+[#sec-pre]
+=== Packet Replication Engine
 
 The `PacketReplicationEngine` extern (abbreviated PRE) represents
 a part of the PSA pipeline that is not programmable via writing P4
@@ -1785,23 +1766,24 @@ assign values to intrinsic metadata in structs such as those of type
 `psa_ingress_output_metadata_t` and `psa_egress_output_metadata_t`,
 which direct the operation of the PRE on that packet.  The file
 `psa.p4` defines some actions to help set these metadata fields for
-some common use cases, described in sections [#sec-ingress-actions]
-and [#sec-egress-actions].
+some common use cases, described in <<sec-ingress-actions>>
+and <<sec-egress-actions>>.
 
 The PRE extern must be instantiated exactly once, in the `PSA_Switch`
-package instantiation.  See near the end of Section
-[#sec-programmable-blocks] for the package definitions from `psa.p4`.
-See below for an example of instantiating these packages, including
-the instantiation of one instance of `PacketReplicationEngine` and one
-of `BufferingQueueingEngine` in the `PSA_Switch` package
-instantiation.
+package instantiation.  See near the end of <<sec-programmable-blocks>>
+for the package definitions from `psa.p4`.  See below for an example of
+instantiating these packages, including the instantiation of one
+instance of `PacketReplicationEngine` and one of
+`BufferingQueueingEngine` in the `PSA_Switch` package instantiation.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-counters.p4:Package_Instantiation_Example]
-~ End P4Example
+[source,p4]
+----
+include::examples/psa-example-counters.p4[tag=Package_Instantiation_Example]
+----
 
 
-## Buffering Queuing Engine {#sec-bqe}
+[#sec-bqe]
+=== Buffering Queuing Engine
 
 The `BufferingQueueingEngine` extern (abbreviated BQE) represents
 another part of the PSA pipeline, after egress, that is not
@@ -1812,70 +1794,80 @@ configured both directly using control plane APIs and by setting
 intrinsic metadata.
 
 The BQE extern must be instantiated exactly once, as the PRE must.
-See Section [#sec-pre] for additional discussion and example code.
+See <<sec-pre>> for additional discussion and example code.
 
 
-## Hashes {#sec-hash-algorithms}
+[#sec-hash-algorithms]
+=== Hashes
 
 Supported hash algorithms:
-~ Begin P4Example
-[INCLUDE=psa.p4:Hash_algorithms]
-~ End P4Example
 
-### Hash function
+[source,p4]
+----
+include::psa.p4[tag=Hash_algorithms]
+----
+
+==== Hash function
 
 Example usage:
 
-~ Begin P4Example
+[source,p4]
+----
 parser P() {
   Hash<bit<16>>(PSA_HashAlgorithm_t.CRC16) h;
   bit<16> hash_value = h.get_hash(buffer);
 }
-~ End P4Example
+----
 
 Parameters:
 
-- `algo` -- The algorithm to use for computation (see [#sec-hash-algorithms]).
-- `O`       -- The type of the return value of the hash.
+* `algo` -- The algorithm to use for computation (see <<sec-hash-algorithms>>).
+* `O`    -- The type of the return value of the hash.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Hash_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Hash_extern]
+----
 
-## Checksums {#sec-checksums}
+[#sec-checksums]
+=== Checksums
 
 PSA provides checksum functions compute an integer on the stream of
 bytes in packet headers. Checksums are often used as an integrity
 check to detect corrupted or otherwise malformed packets.
 
-### Basic checksum {#sec-basic-checksum}
+[#sec-basic-checksum]
+==== Basic checksum 
 
 The basic checksum extern provided in PSA supports arbitrary hash
 algorithms.
 
 Parameters:
 
-- `W`   -- The width of the checksum
+* `W` -- The width of the checksum
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Checksum_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Checksum_extern]
+----
 
-### Incremental checksum {#sec-incremental-checksum}
+[#sec-incremental-checksum]
+==== Incremental checksum
 
 PSA also provides an incremental checksum that comes equipped with an
 additional `subtract` method that can be used to remove data previously
 added. The checksum is computed using the `ONES_COMPLEMENT16` hash
 algorithm used with protocols such as IPv4, TCP, and UDP -- see [IETF
 RFC 1624](https://tools.ietf.org/html/rfc1624)
-and section [#appendix-internetchecksum-implementation] for details.
+and <<appendix-internetchecksum-implementation>> for details.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:InternetChecksum_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=InternetChecksum_extern]
+----
 
-### InternetChecksum examples {#sec-checksum-examples}
-
+[#sec-checksum-examples]
+==== InternetChecksum examples
 
 The partial program below demonstrates one way to use the `InternetChecksum`
 extern to verify whether the checksum field in a parsed IPv4 header is
@@ -1894,9 +1886,10 @@ for that purpose -- e.g. to hold an encoded value representing the last
 parser state reached, or the number of bytes extracted so far -- and then
 assign values to those fields within the parser state code.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-parser-checksum.p4:Parse_Error_Example]
-~ End P4Example
+[source,p4]
+----
+include::examples/psa-example-parser-checksum.p4[tag=Parse_Error_Example]
+----
 
 The partial program below demonstrates one way to use the `InternetChecksum`
 extern to calculate and then fill in a correct IPv4 header checksum in
@@ -1905,9 +1898,10 @@ fresh, so the outgoing checksum will be correct regardless of what
 changes might have been made to the IPv4 header fields in the Ingress
 (or Egress) control block that precedes it.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-parser-checksum.p4:Compute_New_IPv4_Checksum_Example]
-~ End P4Example
+[source,p4]
+----
+include::examples/psa-example-parser-checksum.p4[tag=Compute_New_IPv4_Checksum_Example]
+----
 
 As a final example, we can use the `InternetChecksum` to compute an
 incremental checksum for the TCP header. Recall the TCP checksum is
@@ -1919,41 +1913,46 @@ invoking `subtract` and then `add` on any fields that are modified by
 the program. For example, the `Ingress` control in the program below
 updates the IPv4 source address, recording the original source address
 in a metadata field:
-~ Begin P4Example
-[INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Table]
-~ End P4Example
+
+[source,p4]
+----
+include::examples/psa-example-incremental-checksum.p4[tag=Incremental_Checksum_Table]
+----
+
 The deparser first updates the IPv4 checksum as above, and then
 incrementally computes the TCP checksum.
-~ Begin P4Example
-[INCLUDE=examples/psa-example-incremental-checksum.p4:Incremental_Checksum_Example]
-~ End P4Example
 
-## Counters
+[source,p4]
+----
+include::examples/psa-example-incremental-checksum.p4[tag=Incremental_Checksum_Example]
+----
+
+=== Counters
 
 Counters are a mechanism for keeping statistics.  The control plane
 can read counter values.  A P4 program cannot read counter values,
 only update them.  If you wish to implement a feature involving
 sequence numbers in packets, for example, use Registers instead
-(Section [#sec-registers]).
+(<<sec-registers>>).
 
 Direct counters are counters associated with a particular P4 table,
 and are implemented by the extern `DirectCounter`.  There are also
 indexed counters, which are implemented by the extern `Counter`.  The
 primary differences between direct counters and indexed counters are:
 
-- Number of independently updatable counter values:
-  - A single instantiation of a direct counter always contains as many
+* Number of independently updatable counter values:
+  ** A single instantiation of a direct counter always contains as many
     independent counter values as the number of entries in the table
     with which it is associated.
-  - You must specify the number of independent counter values for an
+  ** You must specify the number of independent counter values for an
     indexed counter when instantiating it.  This number of counters
     need not be the same as the size of any table.
-- Where counter updates are allowed in the P4 program:
-  - For a direct counter, you may only invoke its `count` method from
+* Where counter updates are allowed in the P4 program:
+  ** For a direct counter, you may only invoke its `count` method from
     inside the actions of the table with which it is associated, and
     this always updates the counter value associated with the matching
     table entry.
-  - For an indexed counter, you may invoke its `count` method
+  ** For an indexed counter, you may invoke its `count` method
     anywhere in the P4 program where extern object method invocations
     are permitted (e.g. inside actions, or directly inside a control's
     `apply` block), and every such invocation must specify the index
@@ -1972,22 +1971,24 @@ how it determines the packet length used for byte counter updates.
 
 If you wish to keep counts of other quantities, or to have more
 precise control over the packet length used in a byte counter, you may
-use Registers to achieve that (Section [#sec-registers]).
+use Registers to achieve that (<<sec-registers>>).
 
 
-### Counter types
+==== Counter types
 
-~ Begin P4Example
-[INCLUDE=psa.p4:CounterType_defn]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=CounterType_defn]
+----
 
-### Counter
+==== Counter
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Counter_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Counter_extern]
+----
 
-See section [#appendix-counter-implementation] for pseudocode of an
+See <<appendix-counter-implementation>> for pseudocode of an
 example implementation of the Counter extern.
 
 PSA implementations must not update any counter values if an indexed
@@ -1996,11 +1997,13 @@ that they count such erroneous attempted updates, and record other
 information that can help an P4 programmer debug such errors.
 
 
-### Direct Counter {#sec-direct-counter}
+[#sec-direct-counter]
+==== Direct Counter
 
-~ Begin P4Example
-[INCLUDE=psa.p4:DirectCounter_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=DirectCounter_extern]
+----
 
 A `DirectCounter` instance must appear as the value of the
 `psa_direct_counter` table attribute for at most one table.  We call
@@ -2042,18 +2045,20 @@ it in the P4 program, or the control plane has made an explicit call
 to assign the table a default action.  If neither of these is true,
 then there is no default action assigned to the table.
 
-### Example program using counters
+==== Example program using counters
 
 The following partial P4 program demonstrates the instantiation and
 updating of `Counter` and `DirectCounter` externs.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part1]
+[source,p4]
+----
+include::examples/psa-example-counters.p4[tag=Counter_Example_Part1]
 
-[INCLUDE=examples/psa-example-counters.p4:Counter_Example_Part2]
-~ End P4Example
+include::examples/psa-example-counters.p4[tag=Counter_Example_Part2]
+----
 
-## Meters {#sec-meters}
+[#sec-meters]
+=== Meters
 
 Meters (RFC 2698) are a more complex mechanism for keeping statistics
 about packets, most often used for dropping
@@ -2090,19 +2095,19 @@ P4Runtime table entry as key.
 There are many other similarities between counters and meters,
 including:
 
-- The number of independently updatable meter values.
-- Where meter updates are allowed in a P4 program.
-- For `BYTES` type meters, the packet length used in the update is
+* The number of independently updatable meter values.
+* Where meter updates are allowed in a P4 program.
+* For `BYTES` type meters, the packet length used in the update is
   determined by the PSA implementation, and can vary from one PSA
   implementation to another.
 
 Further similarities between direct counters and direct meters
 include:
 
-- `DirectMeter` `execute` method calls must be performed within
+* `DirectMeter` `execute` method calls must be performed within
   actions invoked by the table that owns the `DirectMeter` instance.
   It is optional for such an action to call the `execute` method.
-- There must be a meter state associated with a `DirectMeter`
+* There must be a meter state associated with a `DirectMeter`
   instance's owner table, that can be updated when the table result is
   a miss.  As for a `DirectCounter`, this state only needs to exist if
   a default action is assigned to the table.
@@ -2123,7 +2128,8 @@ cannot occur if the value of `n_meters` of an indexed meter is $2^W$,
 and the type `S` used to construct the meter is `bit<W>`, since the
 index value could never be out of range.
 
-~ Begin P4Example
+[source,p4]
+----
 #define METER1_SIZE 100
 Meter<bit<7>>(METER1_SIZE, PSA_MeterType_t.BYTES) meter1;
 bit<7> idx;
@@ -2138,7 +2144,7 @@ if (idx < METER1_SIZE) {
     // may also choose to store an error flag in some metadata field.
     color1 = PSA_MeterColor_t.RED;
 }
-~ End P4Example
+----
 
 Any implementation will have a finite range that can be specified for
 the Peak Burst Size and Committed Burst Size.  An implementation
@@ -2158,31 +2164,36 @@ It is recommended that the maximum rate supported be at least the rate
 of the implementation's fastest port, and that the actual implemented
 rate should always be within plus or minus 0.1% of the requested rate.
 
-### Meter types
+==== Meter types
 
-~ Begin P4Example
-[INCLUDE=psa.p4:MeterType_defn]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=MeterType_defn]
+----
 
-### Meter colors
+==== Meter colors
 
-~ Begin P4Example
-[INCLUDE=psa.p4:MeterColor_defn]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=MeterColor_defn]
+----
 
-### Meter
+==== Meter
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Meter_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Meter_extern]
+----
 
-### Direct Meter
+==== Direct Meter
 
-~ Begin P4Example
-[INCLUDE=psa.p4:DirectMeter_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=DirectMeter_extern]
+----
 
-## Registers {#sec-registers}
+[#sec-registers]
+=== Registers
 
 Registers are stateful memories whose values can be read and written
 during packet forwarding under the control of the P4 program.  They
@@ -2210,20 +2221,22 @@ would be mapped to the same cell; the current cell value would
 be stored in metadata for the packet and a subsequent table could
 check that the flow was marked as active.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Register_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Register_extern]
+----
 
 Another example using registers is given below.  It implements a
 packet and byte counter, where the byte counter can be updated by a
 packet length specified in the P4 program, rather than one chosen by
 the PSA implementation.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-register2.p4:Register_Example2_Part1]
+[source,p4]
+----
+include::examples/psa-example-register2.p4[tag=Register_Example2_Part1]
 
-[INCLUDE=examples/psa-example-register2.p4:Register_Example2_Part2]
-~ End P4Example
+include::examples/psa-example-register2.p4[tag=Register_Example2_Part2]
+----
 
 Note the use of the `@atomic` annotation in the block enclosing the
 `read()` and `write()` method calls on the `Register` instance.  It is
@@ -2234,7 +2247,8 @@ annotation in this example, an implementation is allowed to process
 two packets `P1` and `P2` in parallel, and perform the register access
 operations in this order:
 
-~ Begin P4Example
+[source,p4]
+----
     // Possible order of operations for the example program if the
     // @atomic annotation is _not_ used.
 
@@ -2250,7 +2264,7 @@ operations in this order:
     port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  // for packet P1
     port_pkt_ip_bytes_in.write(istd.ingress_port, tmp);  // for packet P2
     // The write() from packet P1 is lost.
-~ End P4Example
+----
 
 Since different implementations may have different upper limits on the
 complexity of code that they will accept within an `@atomic` block, we
@@ -2271,14 +2285,14 @@ specification.
 As for indexed counters and meters, access to an index of a register
 that is at least the size of the register is out of bounds.  An out of
 bounds write has no effect on the state of the system.  An out of
-bounds read returns an undefined value.  See the example in Section
-[#sec-meters] for one way to write code to guarantee avoiding this
+bounds read returns an undefined value.  See the example in
+<<sec-meters>> for one way to write code to guarantee avoiding this
 undefined behavior.  Out of bounds register accesses are impossible
 for a register instance with type `S` declared as `bit<W>` and size
 $2^W$ entries.
 
 
-## Random
+=== Random
 
 The `Random` extern provides generation of pseudo-random numbers in a
 specified range with a uniform distribution.  If one wishes to
@@ -2292,12 +2306,13 @@ pseudo-random number generation.  For example, a particularly
 inexpensive implementation might use a linear feedback shift register
 to generate values.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Random_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Random_extern]
+----
 
-
-## Action Profile {#sec-action-profile}
+[#sec-action-profile]
+=== Action Profile
 
 Action profiles are used as table implementation attributes.
 
@@ -2308,18 +2323,18 @@ a resource in the P4 program. A table that uses this action profile
 must specify its `psa_implementation` attribute as the action profile
 instance.
 
-~ Figure {#fig-ap; caption: "Action profiles in PSA"; page-align: here;}
-![ap]
-~
-[ap]: figs/action_profile.png { width: 75%;}
+[#fig-ap]
+.Action profiles in PSA
+image::figs/action_profile.png[]
 
-Figure [#fig-ap] contrasts a direct table with a table that has an action
-profile implementation. A direct table, as seen in Figure [#fig-ap] (a) contains
-the action specification in each table entry. In this example, the table has a
-match key consisting of an LPM on header field `h.f`. The action is to set the
-port. As we can see, entries t1 and t3 have the same action, i.e. to set the
-port to 1. Action profiles enable sharing an action across multiple entries by
-using a separate table as shown in Figure [#fig-ap] (b).
+<<fig-ap>> contrasts a direct table with a table that has an action
+profile implementation. A direct table, as seen in <<fig-ap>> (a)
+contains the action specification in each table entry. In this example,
+the table has a match key consisting of an LPM on header field `h.f`.
+The action is to set the port. As we can see, entries t1 and t3 have the
+same action, i.e. to set the port to 1. Action profiles enable sharing
+an action across multiple entries by using a separate table as shown in
+<<fig-ap>> (b).
 
 A table with an action profile implementation has entries that point to a member
 reference instead of directly defining an action specification. A mapping from
@@ -2345,11 +2360,12 @@ controller-assigned reference for the desired member entry. Directly specifying
 the action as part of the table entry is not allowed for tables with an
 action profile implementation.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:ActionProfile_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=ActionProfile_extern]
+----
 
-### Action Profile Example
+==== Action Profile Example
 The P4 control block `Ctrl` in the example below instantiates an
 action profile `ap` that can contain at most 128 member entries. Table
 `indirect` uses this instance by specifying the `psa_implementation` attribute.
@@ -2357,7 +2373,8 @@ The control plane can add member entries to `ap`, where each member can
 specify either a `foo` or `NoAction` action. Table entries for `indirect`
 table must specify the action using the controller-assigned member reference.
 
-~ Begin P4Example
+[source,p4]
+----
 control Ctrl(inout H hdr, inout M meta) {
 
   action foo() { meta.foo = 1; }
@@ -2374,10 +2391,10 @@ control Ctrl(inout H hdr, inout M meta) {
     indirect.apply();
   }
 }
-~ End P4Example
+----
 
-
-## Action Selector {#sec-action-selector}
+[#sec-action-selector]
+=== Action Selector
 
 Action selectors are used as table implementation attributes.
 
@@ -2390,22 +2407,22 @@ a resource in the P4 program, similar to action profiles. Furthermore,
 a table that uses this action selector must specify its `psa_implementation` attribute
 as the action selector instance.
 
-~ Figure {#fig-as; caption: "Action selectors in PSA"; page-align: here;}
-![as]
-~
-[as]: figs/action_selector.png { width: 90%;}
+[#fig-as]
+.Action selectors in PSA
+image::figs/action_selector.png[]
 
-Figure [#fig-as] illustrates a table that has an action selector implementation.
+<<fig-as>> illustrates a table that has an action selector implementation.
 In this example, the table has a match key consisting of an LPM on header field
 `h.f`. A second match type `selector` is used to define the fields that are
 used to look up the action specification from the selector at runtime.
 
-A table with an action action selector implementation consists of entries that
-point to either an action profile member reference or an action profile group
-reference. An action selector instance can be logically visualized as two tables
-as shown in Figure [#fig-as]. The first table contains a mapping from group
-references to a set of member references. The second table contains a mapping
-from member references to action specifications.
+A table with an action action selector implementation consists of
+entries that point to either an action profile member reference or an
+action profile group reference. An action selector instance can be
+logically visualized as two tables as shown in <<fig-as>>. The first
+table contains a mapping from group references to a set of member
+references. The second table contains a mapping from member references
+to action specifications.
 
 When a packet matches a table entry at runtime, the controller-assigned
 reference of the action profile member or group is read. If the entry points to
@@ -2420,33 +2437,33 @@ Action selector members may only specify action types defined in the
 
 Minimum requirements for a PSA implementation of action selectors:
 
-+ Support non-empty groups where every action in the same group has
+* Support non-empty groups where every action in the same group has
   the same action name.
-+ Within the same group, support arbitrary action parameter values
+* Within the same group, support arbitrary action parameter values
   among different members of the group.
-+ Support different action names in different groups.
-+ No predictable data plane behavior is required if a table entry is
+* Support different action names in different groups.
+* No predictable data plane behavior is required if a table entry is
   matched that points at an empty group.
 
 Optional extensions:
 
-+ Support non-empty groups where in the same group, different actions
+* Support non-empty groups where in the same group, different actions
   can have different action names, as well as arbitrary action
   parameter values.
-+ Support table entries that point at an empty group.  When the entry
+* Support table entries that point at an empty group.  When the entry
   is matched, execute the action assigned to the table property
   `psa_empty_group_action`.
 
 The `psa_empty_group_action` property of a table is similar to the
 `default_action` property in the following ways:
 
-+ They both have actions as their values.
-+ The P4 source code specifies the initial value.
-+ If the table property `psa_empty_group_action` is not given in the
+* They both have actions as their values.
+* The P4 source code specifies the initial value.
+* If the table property `psa_empty_group_action` is not given in the
   P4 source code, its value is `NoAction()`.
-+ They may have a `const` modifier, indicating that control software
+* They may have a `const` modifier, indicating that control software
   is not allowed to change this action.
-+ In the absence of a `const` modifier, the control software is
+* In the absence of a `const` modifier, the control software is
   allowed to change the action assigned to `psa_empty_group_action`.
 
 PSA implementers should note that supporting empty groups with
@@ -2454,7 +2471,7 @@ predictable data plane behavior may be required in a future version of
 PSA.  In some cases, it may be possible for the combination of a PSA
 data plane plus its P4Runtime server software to achieve this desired
 behavior, as far as the P4Runtime client controller software can
-observe.  See Appendix [#appendix-empty-action-selector-groups].
+observe.  See <<appendix-empty-action-selector-groups>>.
 
 An action selector instance may be shared across multiple tables only if all such
 tables define the same set of actions in their `actions` attribute. Furthermore,
@@ -2479,10 +2496,13 @@ Table entries must specify the action using a reference to the desired member
 or group entry. Directly specifying the action as part of the table entry is not
 allowed for tables with an action selector implementation.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:ActionSelector_extern]
-~ End P4Example
-### Action Selector Example
+[source,p4]
+----
+include::psa.p4[tag=ActionSelector_extern]
+----
+
+==== Action Selector Example
+
 The P4 control block `Ctrl` in the example below instantiates an
 action selector `as` that can contain at most 128 member entries. The
 action selector uses a crc16 algorithm with output width of 10 bits
@@ -2494,11 +2514,12 @@ entries to `as`. Each member can specify either a `foo` or `NoAction` action.
 When programming the table entries, the control plane *does not* include the
 fields of match type `selector` in the match key. The selector match fields are
 instead used to compose a list that is passed to the action selector instance.
-In the example below, the list {hdr.ipv4.src_address, hdr.ipv4.protocol} is
+In the example below, the list `{hdr.ipv4.src_address, hdr.ipv4.protocol}` is
 passed as input to the crc16 hash algorithm used for dynamic member selection
 by action selector `as`.
 
-~ Begin P4Example
+[source,p4]
+----
 control Ctrl(inout H hdr, inout M meta) {
 
   action foo() { meta.foo = 1; }
@@ -2519,20 +2540,14 @@ control Ctrl(inout H hdr, inout M meta) {
     indirect_with_selection.apply();
   }
 }
-~ End P4Example
+----
 
 Note that the management of action selector entries in the presence of
 link failures is outside the scope of the PSA. Fast-failover requires
 information from the control plane and will be addressed as part of the
-P4Runtime API[^P4RuntimeAPI] working group.
+P4Runtime API{P4RuntimeAPI} working group.
 
-[^P4RuntimeAPI]: The P4Runtime API is defined as a Google Protocol
-    Buffer `.proto` file and an accompanying English specification document
-    here:
-    <https://github.com/p4lang/p4runtime>
-
-
-## Timestamps
+=== Timestamps
 
 A PSA implementation provides an `ingress_timestamp` value for every
 packet in the `Ingress` control block, as a field in the struct with
@@ -2553,13 +2568,12 @@ One expected use case for timestamps is to store them in tables or
 protocols, where precision on the order of milliseconds is sufficient
 for most protocols.
 
-Another expected use case is INT (In-band Network Telemetry[^INT]),
+Another expected use case is INT (In-band Network Telemetry{INT}),
 where precision on the order of microseconds or smaller is necessary
 to measure queueing latencies that differ by those amounts.  It takes
 only 0.74 microseconds to transmit a 9 Kbyte Ethernet jumbo frame on a
 100 gigabit per second link.
 
-[^INT]: <http://p4.org/p4/inband-network-telemetry>
 
 For these applications, it is recommended that an implementation's
 timestamp increments at least once every microsecond.  Incrementing
@@ -2567,9 +2581,8 @@ once per clock cycle in an ASIC or FPGA implementation would be a
 reasonable choice.  The timestamp should increment at a constant rate
 over time.  For example, it should not be a simple count of clock
 cycles in a device that implements dynamic frequency
-scaling[^DynamicFrequencyScaling].
+scaling{DynamicFrequencyScaling}.
 
-[^DynamicFrequencyScaling]: <https://en.wikipedia.org/wiki/Dynamic_frequency_scaling>
 
 Timestamps are of type `Timestamp_t`, which is type `bit<W>` for a
 value of `W` defined by the implementation.  Timestamps are expected
@@ -2579,9 +2592,9 @@ that wrapping around occurs at most once every hour.  Making the wrap
 time this long (or longer) makes timestamps more useful for several
 use cases.
 
-- Checking for timeouts of protocol hello / keep-alive traffic that is
+* Checking for timeouts of protocol hello / keep-alive traffic that is
   on the order of seconds or minutes.
-- If timestamps are placed into packets without converting them to
+* If timestamps are placed into packets without converting them to
   other formats, then external data analysis systems using those
   timestamps will in many cases need to do so, e.g. to compare
   timestamps stored in packets by different PSA devices.  These
@@ -2590,33 +2603,31 @@ use cases.
   references to the recorded data.  The extra data required for
   accurate conversion is lower, and the likelihood of conversion
   mistakes is lower, if the timestamp values wrap less often.
-- If timestamps are converted to other formats within a P4 program, it
+* If timestamps are converted to other formats within a P4 program, it
   will need access to parameters that are likely to change every wrap
   time, e.g. at least a "base value" to add some calculated value to.
   A straightforward way to do this requires the control plane to
   update these values at least once or twice per timestamp wrap time.
-- Programs that wish to use `(egress_timestamp - ingress_timestamp)`
+* Programs that wish to use `(egress_timestamp - ingress_timestamp)`
   to calculate the queueing latency experienced by a packet need the
   wrap time to exceed the maximum queueing latency.
 
 Examples of the number of bits required for wrap times of at least one
 hour:
 
-- A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
+* A 32-bit timestamp advancing by 1 per microsecond takes 1.19 hours
   to wrap.
-- A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
+* A 42-bit timestamp advancing by 1 per nanosecond takes 1.22 hours to
   wrap.
 
 A PSA implementation is not required to implement time
-synchronization, e.g. via PTP[^PTP] or NTP[^NTP].
-
-[^PTP]: <https://en.wikipedia.org/wiki/Precision_Time_Protocol>
-[^NTP]: <https://en.wikipedia.org/wiki/Network_Time_Protocol>
+synchronization, e.g. via PTP{PTP} or NTP{NTP}.
 
 The control plane API excerpt below is intended to be added as part of
 the P4Runtime API.
 
-~ Begin P4Example
+[source,p4]
+----
 // The TimestampInfo and Timestamp messages should be added to the
 // "oneof" inside of message "Entity".
 
@@ -2642,7 +2653,7 @@ message TimestampInfo {
 message Timestamp {
   bytes value = 1;
 }
-~ End P4Example
+----
 
 For every packet `P` that is processed by ingress and then egress,
 with the minimum possible latency in the packet buffer, it is
@@ -2670,7 +2681,7 @@ you can always calculate the number of ticks that have elapsed from
 timestamp $t1$ until timestamp $t2$ using the expression $(t2 - t1)$
 (if more than $2^W$ ticks have elapsed, there will be aliasing of the
 result).  For example, if timestamps were $W >= 4$ bits in size,
-$t1=2^{W}-5$, and $t2=3$, then $(t2-t1)=8$.  There is thus no need for
+$t1=2^\{W\}-5$, and $t2=3$, then $(t2-t1)=8$.  There is thus no need for
 conditional execution to calculate such elapsed times.
 
 It is sometimes useful to minimize storage costs by discarding some
@@ -2690,7 +2701,8 @@ that the remaining bits wrap every 8 seconds, and store those partial
 timestamps in the `Register` instance.
 
 
-## Packet Digest {#sec-packet-digest}
+[#sec-packet-digest]
+=== Packet Digest
 
 A digest is one mechanism to send a message from the data plane to the
 control plane.  Another is to send a packet to the control plane via
@@ -2745,25 +2757,26 @@ implementations maintain a count of digest messages that the data
 plane creates, but do not reach the control plane, independently for
 each digest instance.
 
-~ Begin P4Example
-[INCLUDE=psa.p4:Digest_extern]
-~ End P4Example
+[source,p4]
+----
+include::psa.p4[tag=Digest_extern]
+----
 
 Below is a part of an example program that demonstrates using a digest
 to notify the control plane about source Ethernet MAC addresses and
 ingress ports of packets that have not been seen before.
 
-~ Begin P4Example
-[INCLUDE=examples/psa-example-digest.p4:Digest_Example_Part1]
+[source,p4]
+----
+include::examples/psa-example-digest.p4[tag=Digest_Example_Part1]
 
-[INCLUDE=examples/psa-example-digest.p4:Digest_Example_Part2]
+include::examples/psa-example-digest.p4[tag=Digest_Example_Part2]
 
-[INCLUDE=examples/psa-example-digest.p4:Digest_Example_Part3]
-~ End P4Example
+include::examples/psa-example-digest.p4[tag=Digest_Example_Part3]
+----
 
-
-
-# Atomicity of control plane API operations {#sec-atomicity-of-control-plane-api-operations}
+[#sec-atomicity-of-control-plane-api-operations]
+== Atomicity of control plane API operations
 
 All table add, delete, and modify operations must be atomic relative
 to packet forwarding.  That is, for every table `apply` operation, and
@@ -2833,18 +2846,18 @@ called "back to front" or "pointer flipping", techniques used by
 existing control planes to achieve an effect that is similar to making
 a sequence of many table entry operations atomic relative to packet
 forwarding.  Recent research analyzes these techniques in a more
-general setting[^Cernyetal2016].
-
-[^Cernyetal2016]: Pavol Cerny, Nate Foster, Nilesh Jagnik, and Jedidiah McClurg, "Consistent Network Updates in Polynomial Time".  International Symposium on Distributed Computing (DISC), Paris, France, September 2016.
+general setting{Cernyetal2016}.
 
 
-# Appendix: Open Issues {@h1:"A"}
+[appendix]
+[#appendix-open-issues]
+== Open Issues
 
 As with any work in progress, we have a number of open issues that are under discussion in the
 working group. In addition to the TBDs in the document, there a number of larger issues that are
 summarized here:
 
-## Action Selectors
+=== Action Selectors
 
 The size parameter in the action_selector instance that defines the maximum number of members in a
 selector. In some cases it might be useful to allow the controller to dynamically provision
@@ -2854,19 +2867,17 @@ a common P4 program.
 We also need to formalize the interaction of action profiles and action selectors with counters and
 meters.
 
-## Observation and control of congestion
+=== Observation and control of congestion
 
 The current PSA does not provide any mechanisms to observe if
 particular output ports or queues are leading to congestion in the
 packet buffer.  Thus it is not possible without using mechanisms
 defined outside of PSA to implement a feature like Explicit Congestion
-Notification (ECN)[^ECN].  One possibility here is to define a small
+Notification (ECN){ECN}.  One possibility here is to define a small
 field, perhaps only 1 bit, that is part of the metadata associated
 with each packet as it begins egress processing.  This field would
 indicate "how much congestion" the packet experienced in the packet
 buffer.
-
-[^ECN]: <https://en.wikipedia.org/wiki/Explicit_Congestion_Notification>
 
 There is also currently no way defined in PSA for ingress P4 code to
 send information about a packet to the packet buffer that might
@@ -2884,23 +2895,22 @@ network protocols other than IP, including custom ones, a more general
 mechanism is desirable in PSA devices.
 
 
-## Enabling full implementation of In-band Network Telemetry
+=== Enabling full implementation of In-band Network Telemetry
 
 One promising use case for P4 programmable network devices is to
-implement In-band Network Telemetry[^INT].  While PSA mechanisms such
+implement In-band Network Telemetry{INT}.  While PSA mechanisms such
 as timestamps enable a significant portion of INT features to be
 implemented, they do not yet define any mechanisms to access
 information such as egress port link utilization or queue
-occupancy[^PSA_INT_Issue].
+occupancy{PSA-INT-Issue}.
 
-[^PSA_INT_Issue]: <https://github.com/p4lang/p4-spec/issues/510>
-
-
-## PSA profiles
+=== PSA profiles
 
 We are considering whether to specify different limits that a certain PSA implementation has to have in order for the implementation to be considered compliant. The main point of PSA is to enable a variety of devices, and thus limits may be artificial. On the other hand, for most interesting applications, it is necessary to support a minimum of functionality.
 
-# Appendix: Implementation of the InternetChecksum extern {#appendix-internetchecksum-implementation}
+[appendix]
+[#appendix-internetchecksum-implementation]
+== Implementation of the InternetChecksum extern
 
 Besides RFC 1461, RFC 1071 and RFC 1141 also contain useful tips on
 efficiently computing the Internet checksum, especially in software
@@ -2914,7 +2924,8 @@ returning a value from a function.
 The minimum internal state necessary for one instance of an
 `InternetChecksum` object is a 16-bit bit vector, here called `sum`.
 
-~ Begin P4Example
+[source,p4]
+----
 // This is one way to perform a normal one's complement sum of two
 // 16-bit values.
 bit<16> ones_complement_sum(in bit<16> x, in bit<16> y) {
@@ -2965,10 +2976,11 @@ bit<16> get_state() {
 void set_state(bit<16> checksum_state) {
     sum = checksum_state;
 }
-~ End P4Example
+----
 
-
-# Appendix: Example implementation of Counter extern {#appendix-counter-implementation}
+[appendix]
+[#appendix-counter-implementation]
+== Example implementation of Counter extern
 
 The example implementation below, in particular the function
 `next_counter_value`, is not intended to restrict PSA implementations.
@@ -2992,7 +3004,8 @@ invokes this operation frequently enough to prevent counters from ever
 wrapping or saturating, and adds the values read to larger counters in
 driver memory.
 
-~ Begin P4Example
+[source,p4]
+----
 Counter(bit<32> n_counters, PSA_CounterType_t type) {
     this.num_counters = n_counters;
     this.counter_vals = new array of size n_counters, each element with type W;
@@ -3041,21 +3054,24 @@ void count(in S index) {
         // See below for optional debug information to record.
     }
 }
-~ End P4Example
+----
 
 Optional debugging information that may be kept if an `index` value is
 out of range includes:
 
-- Number of times this occurs.
-- A FIFO of the first N out-of-range index values that occur, where N
+* Number of times this occurs.
+* A FIFO of the first N out-of-range index values that occur, where N
   is implementation-defined (e.g. it might only be 1).  Extra
   information to identify which `count()` method call in the P4
   program had the out-of-range `index` value is also recommended.
 
 
-# Appendix: Rationale for design {#appendix-rationale}
+[appendix]
+[#appendix-rationale]
+== Rationale for design
 
-## Why egress processing? {#appendix-rationale-egress}
+[#appendix-rationale-egress]
+=== Why egress processing?
 
 Question: Why is it useful to have separate ingress vs. egress
 processing in a switch device?
@@ -3069,14 +3085,14 @@ There are a few things that are trickier to do in such a device.
 
 
 1. Last-nanosecond changes to the packet
-
++
 If you want to measure the queuing latency through the device, and put
 a measurement of this quantity inside the packet somewhere, it is in
 general not possible to know the queueing latency before the packet is
 sent to the packet buffer.  There are _special cases_ where you can
 predict it, e.g. when there is a single FIFO queue feeding a constant
 bit rate output port, with nothing like Ethernet pause flow control.
-
++
 But if you have variable bit rate links, e.g. because of things like
 Ethernet pause flow control, or Wi-Fi signal quality changes, or if
 you have multiple class-of-service queues with a scheduling policy
@@ -3086,27 +3102,25 @@ The queueing latency depends upon unknown future events, such as
 whether Ethernet pause frames will arrive, or how many and what size
 of packets arriving in the near future will be put into which class of
 service queues for the same output port.
-
++
 In such cases, having egress processing for taking the measurement,
 after it is known and easy to calculate as "dequeue time - enqueue
 time", allows the egress processing to modify the packet further.
 
-
-
 2. Multicast efficiency and flexibility
-
++
 It is possible in a PSA device to handle multicast by doing a
 recirculate plus clone operation for each of N copies to be made, but
 this reduces the processing capacity of ingress that is available to
 newly arriving packets, in particular newly arriving packets that you
 might consider more important to keep than the multicast packets.
-
++
 By designing a packet buffer that can take a packet with a 'multicast
 group id', which the control plane configures to make copies to a
 selected set of output ports, it frees up the part of the system that
 performs ingress processing to accept new packets more quickly, and at
 a more predictable rate.
-
++
 There could still be a challenge in designing the packet replication
 portion of the system not to fall behind when many multicast packets
 to be replicated to many output ports arrive close together in time,
@@ -3114,7 +3128,7 @@ but it is fairly easy to separate the concerns of multicast from
 unicast packets.  For example, a device implementer could prioritize
 unicast packets so that they are not slowed down if multicast
 replication is falling behind.
-
++
 Once you have multicast designed in this way, there are still
 multicast use cases where one needs to process different copies of the
 packet differently.  For example, the copy going out port 5 might need
@@ -3128,7 +3142,8 @@ some kind of unique 'id' on each copy that egress processing can use
 to distinguish them.
 
 
-## No output port change during egress {#appendix-rationale-egress-cannot-change-output-port}
+[#appendix-rationale-egress-cannot-change-output-port]
+=== No output port change during egress
 
 Question: Why can't my P4 program change the output port during egress
 processing?
@@ -3188,7 +3203,8 @@ scheduling algorithm implementations are all built with a finite
 maximum packet scheduling rate.
 
 
-## Ingress deparser and egress parser {#appendix-rationale-ingress-deparser-egress-parser}
+[#appendix-rationale-ingress-deparser-egress-parser]
+=== Ingress deparser and egress parser
 
 Question: P4~14~ did not have an ingress deparser, or an egress
 parser.  Why does PSA have these things?
@@ -3230,7 +3246,9 @@ important if the I/O bandwidth of the packet buffer becomes a
 bottleneck.
 
 
-# Appendix: Multi-pipeline PSA devices {#appendix-multi-pipeline-psa-devices}
+[appendix]
+[#appendix-multi-pipeline-psa-devices]
+== Multi-pipeline PSA devices
 
 The highest packet rate network devices today are ASICs running at a
 clock rate on the order of 1 to 2 GHz.  This discussion will assume 1
@@ -3260,13 +3278,9 @@ achieves a packet processing rate of N times the clock rate, e.g. 2
 billion packets per second in a 1 GHz ASIC, the most straightforward
 way to do this is to take advantage of the fact that packet processing
 is (mostly) an embarrassingly parallel
-problem[^EmbarrassinglyParallel], and create a device with N
-pipelines[^PipelineNote], each pipeline processing packets at 1
+problem{EmbarrassinglyParallel}, and create a device with N
+pipelines{PipelineNote}, each pipeline processing packets at 1
 billion packets per second.
-
-[^EmbarrassinglyParallel]: <https://en.wikipedia.org/wiki/Embarrassingly_parallel>
-
-[^PipelineNote]: Here and elsewhere in P4 specification documents, the term "pipeline" refers to a portion of a P4 implementation that implements, for example, the behavior of IngressParser, Ingress, then IngressDeparser in PSA.  This is by now traditional in P4 specifications, and although we will not try to change that here, note that there are other reasonable hardware designs that can accomplish this goal that few would call a pipeline, e.g. a collection of CPU cores running in parallel, each processing different packets.
 
 A PSA device designed in this way would typically have N ingress
 pipelines, plus N egress pipelines.  It is common to
@@ -3365,8 +3379,9 @@ vendor and of target dependent tools to specify how PSA programs are
 mapped to multiple pipelines.  An implementation may use a copy of the
 PSA program on each pipeline, thus keeping pipelines fully isolated.
 
-
-# Appendix: Packet ordering {#appendix-packet-ordering}
+[appendix]
+[#appendix-packet-ordering]
+== Packet ordering
 
 This section describes _recommendations_ for PSA implementations on
 the order that packets are processed.  These are not requirements,
@@ -3385,12 +3400,12 @@ be transmitted on the port in the same relative order that they began
 egress processing.
 
 Recommendation 3: PRE unicast packets (i.e. those that follow the
-"enqueue one packet" path in the pseudocode of section
-[#sec-after-ingress]) that arrived from the same ingress port, did
-ingress processing once (i.e. were not resubmitted or recirculated),
-were sent to the PRE with the same `class_of_service` value, and
-destined for the same egress port, should begin egress processing in
-the same relative order as they began ingress processing.
+"enqueue one packet" path in the pseudocode of <<sec-after-ingress>>)
+that arrived from the same ingress port, did ingress processing once
+(i.e. were not resubmitted or recirculated), were sent to the PRE with
+the same `class_of_service` value, and destined for the same egress
+port, should begin egress processing in the same relative order as they
+began ingress processing.
 
 It is expected that some PSA implementations will implement the class
 of service mechanism by having a separate FIFO queue per class of
@@ -3406,8 +3421,8 @@ unicast traffic assigned to the same class of service will maintain
 its relative order through the device.
 
 Recommendation 4: Consider PRE multicast packets (i.e. those that
-follow the "Make 0 or more copies" path in the pseudocode of section
-[#sec-after-ingress]) that arrived on the same ingress port, did
+follow the "Make 0 or more copies" path in the pseudocode of
+<<sec-after-ingress>>) that arrived on the same ingress port, did
 ingress processing once, and were sent to the PRE with the same pair
 of values (`class_of_service`, `multicast_group`).  For copies of
 those original packets that are destined to the same egress port, and
@@ -3443,7 +3458,7 @@ use separate queues for multicast traffic versus unicast.
 We give some motivations for these recommendations below.
 
 1. Expectations of hosts
-
++
 While the Internet Protocol does not have strong ordering requirements
 for sequences of packets sent by one host to another, there are still
 widely deployed implementations of TCP that lead to significantly
@@ -3454,19 +3469,19 @@ issue, e.g. later Linux TCP implementations (since 2011 when version
 2.6.35 was released) are much more resilient to this problem than
 earlier versions, there are still many commonly deployed TCP
 implementations that suffer from this issue.  See references within
-Kandula et al's work[^Kandula2007] for some of the research done
+Kandula et al's work{Kandula2007} for some of the research done
 towards making TCP more robust in the face of network packet
 reordering.
-
++
 Such TCP implementations interpret acknowledgements with repeated
 cumulative acknowledgement sequence numbers as a likely indication of
 packet loss in the network, and reduce their sending window in an
 effort to avoid network congestion.
-
++
 While applications using UDP should also be aware of possible packet
 reordering in a network, some of them behave poorly if this reordering
-becomes common[^LG2002].
-
+becomes common{LG2002}.
++
 These expectations of hosts are a significant reason why ECMP (Equal
 Cost Multi Path) path selection and LAG (Link Aggregation Group) link
 selection are so often done by using a hash of packet header fields
@@ -3477,17 +3492,14 @@ cost of not balancing the load as evenly as possible.  If a network
 device's internal implementation reordered packets, it would be an
 independent source of network reordering.
 
-[^Kandula2007]: S. Kandula, D. Katabi, S. Sinha, and A. Berger, "Dynamic load balancing without packet reordering", ACM SIGCOMM Computer Communication Review, Vol. 37, No. 2, April 2007
-[^LG2002]: M. Laor and L. Gendel, "The effect of packet reordering in a backbone link on application throughput", IEEE Network, 2002.
-
 
 2. Implementation of stateful protocols
-
++
 This reason is much less significant than the previous one.  We
 mention it here primarily so implementers of networking protocols are
 aware of the issue.  This issue is only relevant for a relatively
 small fraction of network protocols.
-
++
 Some networking protocols add sequence numbers to packets, and require
 either dropping packets that arrive out of sequence number order at a
 later network point (e.g. GRE with sequence numbers enabled), or with
@@ -3497,18 +3509,19 @@ these protocols does the sequence number insertion or checking in a
 different order than packets are sent or received on a physical port,
 that is effectively another kind of network reordering that can affect
 the performance of these protocols.
-
++
 Similarly, there are some protocols like IP header compression, where
 multiple variants have been developed, some with more or less
 robustness in the face of network reordering.
 
 
-# Appendix: Supporting empty action selector groups {#appendix-empty-action-selector-groups}
+[appendix]
+[#appendix-empty-action-selector-groups]
+== Supporting empty action selector groups
 
-As mentioned in Section [#sec-action-selector], a PSA data plane
-implementation need not implement any specific defined behavior if one
-attempts to add a table entry for a key that points at a group that is
-currently empty.
+As mentioned in <<sec-action-selector>>, a PSA data plane implementation
+need not implement any specific defined behavior if one attempts to add
+a table entry for a key that points at a group that is currently empty.
 
 Some P4 users have expressed an interest in enabling a P4Runtime
 client (hereafter called the controller) to remove the last member of
@@ -3528,14 +3541,14 @@ group.
 Fully supporting empty action groups should meet all of these
 requirements:
 
-- All P4Runtime API operations such as adding a member to a group
+* All P4Runtime API operations such as adding a member to a group
   (even when changing from empty to 1 member), removing a member from
   a group (even when changing from 1 member to empty), modifying the
   action associated with a member, etc. should be atomic relative to
   data packet processing.  That is, every packet should be processed
   as if the table was in the old state, or the new state, with no
   undefined packet processing behavior.
-- The empty group action that is executed when the matching table
+* The empty group action that is executed when the matching table
   entry points at an empty group, may have an action name that is the
   same as, or different than, the action name used by the group when
   it was non-empty (if it was non-empty, and then became empty by
@@ -3597,8 +3610,8 @@ implement this via these steps:
 
 A PSA implementation with an agent that implements empty action
 selector groups in this way must implement each of the two steps for
-such transitions in an atomic way, as described in Section
-[#sec-atomicity-of-control-plane-api-operations], but it is allowed
+such transitions in an atomic way, as described in
+<<sec-atomicity-of-control-plane-api-operations>>, but it is allowed
 for one or more packets to be processed in the intermediate state that
 exists between the two steps.
 
@@ -3610,14 +3623,15 @@ name.
 
 Because a PSA implementation need not support multiple different
 action types in the same action selector group at the same time
-(mentioned in Section [#sec-action-selector]), a developer wishing to
+(mentioned in <<sec-action-selector>>), a developer wishing to
 take advantage of this in a portable way may need to modify one or
 more of the actions used in their tables that use action selectors.
 
 For example, if in the LAG port selection example mentioned earlier,
 there was only one action for a table `lag` defined like this:
 
-~ Begin P4Example
+[source,p4]
+----
     action set_output_port (PortId_t p) {
         user_meta.out_port = p;
     }
@@ -3643,13 +3657,13 @@ there was only one action for a table `lag` defined like this:
             // ... later ingress code goes here ...
         }
     }
-~ End P4Example
+----
 
 with a single action parameter equal to a physical port number of the
 device, one of the following approaches could be used, and of course
 there are likely to be other approaches not mentioned here.
 
-+ Approach 1: Use an invalid port number
+* Approach 1: Use an invalid port number
 
 Pick a value of type `PortId_t` that corresponds to no valid physical
 port of the device (TBD whether PSA should define such a value with a
@@ -3658,7 +3672,8 @@ for type `PortId_t`) and use that value for the empty group action of an
 empty group.  In the code after `lag.apply`, add an `if` statement
 checking for that invalid value, like this:
 
-~ Begin P4Example
+[source,p4]
+----
         apply {
             // ... earlier ingress code goes here ...
             lag.apply();
@@ -3669,15 +3684,16 @@ checking for that invalid value, like this:
             }
             // ... later ingress code goes here ...
         }
-~ End P4Example
+----
 
-+ Approach 2: Add extra parameters to the action
+* Approach 2: Add extra parameters to the action
 
 In this case, add a 1-bit parameter indicating whether to drop the
 packet later.  An `if` statement is still needed after applying the
 table.
 
-~ Begin P4Example
+[source,p4]
+----
     action set_output_port (PortId_t p, bit<1> drop) {
         user_meta.out_port = p;
         user_meta.drop = drop;
@@ -3695,47 +3711,48 @@ table.
             }
             // ... later ingress code goes here ...
         }
-~ End P4Example
+----
 
 In either case, an implementation might also support putting the `if`
 statement inside of the action `set_output_port`, but this is not
 required by PSA.
 
 
-# Appendix: Revision History {#appendix-revision-history}
+[appendix]
+[#appendix-revision-history]
+== Revision History
 
-
-## Changes made in version 1.2
+=== Changes made in version 1.2
 
 Version 1.2 was released December 22, 2022.
 
 Summary of changes.  For some of these, additional explanation is
 provided in sub-sections below.
 
-+ Add `@p4runtime_translation` annotations for all seven PSA numeric
+* Add `@p4runtime_translation` annotations for all seven PSA numeric
   types in `psa.p4` (all changes in file `psa.p4`).
-+ Add clarifications on `@p4runtime_translation` annotation behavior
-  (section [#sec-data-plane-vs-control-plane-values]).
-+ Add documentation about the behavior of each `match_kind` (section
-  [#sec-match-kinds]).
-+ Add explanation why there is no packet length field defined in PSA
-  (section [#sec-initial-values-egress]).
-+ Add match_kind `optional` (section [#sec-match-kinds]).
-+ Changed `psa.p4` file explicitly so that it is _not_ usable for
+* Add clarifications on `@p4runtime_translation` annotation behavior
+  (<<sec-data-plane-vs-control-plane-values>>).
+* Add documentation about the behavior of each `match_kind`
+  (<<sec-match-kinds>>).
+* Add explanation why there is no packet length field defined in PSA
+  (<<sec-initial-values-egress>>).
+* Add match_kind `optional` (<<sec-match-kinds>>).
+* Changed `psa.p4` file explicitly so that it is _not_ usable for
   compiling, by adding an `#error` preprocessor directive to it.
   Added a copy of `psa-for-bmv2.p4` from open source `p4c` compiler to
   `examples` directory for quick testing of correct syntax of example
   programs (all changes in file `psa.p4`).
-+ Remove control plane API function signatures from comments in file
+* Remove control plane API function signatures from comments in file
   `psa.p4` (all changes in file `psa.p4`).
-+ Replace `@noWarnUnused` with standard `@noWarn("unused")`
+* Replace `@noWarnUnused` with standard `@noWarn("unused")`
   annotations in `psa.p4` (all changes in file `psa.p4`).
-+ Add `assert` and `assume` extern functions (all changes in file `psa.p4`).
-+ Clarifications of the behavior for different possible values of
-  table property `psa_idle_timeout` (section [#sec-idle-timeout]).
+* Add `assert` and `assume` extern functions (all changes in file `psa.p4`).
+* Clarifications of the behavior for different possible values of
+  table property `psa_idle_timeout` (<<sec-idle-timeout>>).
 
 
-### Add match_kind `optional`
+==== Add match_kind `optional`
 
 This match kind was added to the v1model architecture in early 2020,
 and seems useful in that it (a) provides additional information about
@@ -3745,7 +3762,7 @@ table, and (b) the additional restrictions it has over match kind
 more efficiently than `ternary`.
 
 
-### Remove control plane API function signatures
+==== Remove control plane API function signatures
 
 As a historical note, the control plane API function signatures that
 were formerly given in comments preceded by the string
@@ -3760,25 +3777,25 @@ new to the PSA specification, who believed that those function
 signatures were required to be implemented.
 
 
-## Changes made in version 1.1
+=== Changes made in version 1.1
 
 Version 1.1 was released November 22, 2018.
 
 Summary of changes.  For some of these, additional explanation is
 provided in sub-sections below.
 
-+ Define numeric translation between P4Runtime API control plane and
+* Define numeric translation between P4Runtime API control plane and
   data plane values.
-+ Add the ability for packet clone sessions to create multiple copies.
-+ Add `psa_idle_timeout` table property.
-+ Add `psa_empty_group_action` table property.
-+ No longer require PSA implementation to support `Digest` extern
+* Add the ability for packet clone sessions to create multiple copies.
+* Add `psa_idle_timeout` table property.
+* Add `psa_empty_group_action` table property.
+* No longer require PSA implementation to support `Digest` extern
   instances in the egress pipeline.
-+ Several changes to the `psa.p4` include file.
-+ Several changes to example PSA programs in the `examples` directory.
+* Several changes to the `psa.p4` include file.
+* Several changes to example PSA programs in the `examples` directory.
 
 
-### Numeric translation between P4Runtime API values and data plane values
+==== Numeric translation between P4Runtime API values and data plane values
 
 There was a series of meetings after PSA v1.0 was released to refine
 the details of the plan to do numeric translation of values with type
@@ -3786,11 +3803,11 @@ the details of the plan to do numeric translation of values with type
 future).  PSA v1.1 reflects the latest design for how to accomplish
 this.  Changes can be found here:
 
-+ Section 4.1 "PSA type definitions"
-+ Section 4.4 "Data plane vs. control plane data representations"
+* Section 4.1 "PSA type definitions"
+* Section 4.4 "Data plane vs. control plane data representations"
 
 
-### Add the ability for packet clone sessions to create multiple copies
+==== Add the ability for packet clone sessions to create multiple copies
 
 In PSA v1.0, requesting to make a clone of a packet was restricted to
 creating a single clone, sent to a single output port.  In PSA v1.1
@@ -3798,13 +3815,13 @@ you may now configure a clone session with a set of
 `(egress_port, instance)` pairs, similar to how a multicast group can
 be configured.  Changes can be found here:
 
-+ Section 6.2. "Behavior of packets after ingress processing is complete"
-+ Section 6.4.5 "Multicast and clone copies" (formerly called "Multicast copies")
-+ Section 6.5 "Behavior of packets after egress processing is complete"
-+ Section 6.8 "Packet Cloning"
+* Section 6.2. "Behavior of packets after ingress processing is complete"
+* Section 6.4.5 "Multicast and clone copies" (formerly called "Multicast copies")
+* Section 6.5 "Behavior of packets after egress processing is complete"
+* Section 6.8 "Packet Cloning"
 
 
-### Add psa_idle_timeout table property
+==== Add psa_idle_timeout table property
 
 Adding this brings PSA v1.1 up to date with the support for this
 feature in the P4Runtime API.  Using this table property enables the
@@ -3813,10 +3830,10 @@ the last time each table entry was matched, and if an entry remains
 unmatched for longer than a time configured by the controller, then a
 notification message should be sent to the controller.
 
-+ Section 7.2.1 "Table entry timeout notification"
+* Section 7.2.1 "Table entry timeout notification"
 
 
-### Add psa_empty_group_action table property
+==== Add psa_empty_group_action table property
 
 PSA v1.0 did not specify the behavior of a table with an
 `ActionSelector` implementation, if a packet matched a table entry
@@ -3826,33 +3843,33 @@ PSA v1.1 recommends (but does not require) that implementations
 support a new `psa_empty_group_action` table property, whose value is
 an action that should be executed when this situation occurs.
 
-+ Section 7.12 "Action Selector"
+* Section 7.12 "Action Selector"
 
 
-### Other changes
+==== Other changes
 
 In PSA v1.0, the `Digest` extern was required to be supported in both
 the `IngressDeparser` and `EgressDeparser` control blocks.  It is now
 no longer required to be supported in the `EgressDeparser` control
 block.
 
-+ Table 5 "Summary of controls that can instantiate and invoke externs"
+* Table 5 "Summary of controls that can instantiate and invoke externs"
 
 
-### Changes to the psa.p4 include file
+==== Changes to the psa.p4 include file
 
-+ Updates for the latest plan on P4Runtime API numerical translation
+* Updates for the latest plan on P4Runtime API numerical translation
   of type `PortId_t` and `ClassOfService_t`.
-+ Eliminate obsolete `ValueSet` extern, because the `value_set`
+* Eliminate obsolete `ValueSet` extern, because the `value_set`
   construct was added to the P4~16~ language specification in version
   1.1.0.
-+ Fix a few typos in example control plane APIs in comments.
-+ Eliminate `PSA_SWITCH` `#define` macro with arguments, since the
+* Fix a few typos in example control plane APIs in comments.
+* Eliminate `PSA_SWITCH` `#define` macro with arguments, since the
   P4~16~ language spec does not require that the P4~16~ pre-processor
   support such macros.
 
 
-### Changes to example PSA programs in the `p4-16/psa/examples` directory
+==== Changes to example PSA programs in the `p4-16/psa/examples` directory
 
-+ Small changes required to bring them in harmony with the latest
+* Small changes required to bring them in harmony with the latest
   details on P4Runtime API numerical translation of type `PortId_t`.

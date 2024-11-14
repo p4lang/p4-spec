@@ -172,7 +172,7 @@ struct empty_metadata_t {
 struct fwd_metadata_t {
 }
 
-// BEGIN:PortId_Annotation_Example
+// tag::PortId_Annotation_Example[]
 header to_cpu_error_header_t {
     bit<8> error_idx;
     bit<1> ingress;
@@ -187,7 +187,7 @@ header to_cpu_error_header_t {
     // propagate to all variables of these types.
     PortIdInHeader_t port;
 }
-// END:PortId_Annotation_Example
+// end::PortId_Annotation_Example[]
 
 enum CloneReason_t {
     NONE,
