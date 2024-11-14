@@ -157,14 +157,7 @@ gem install asciidoctor-bibtex
 sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgraphicsmagick1-dev libmagickwand-dev ${OS_SPECIFIC_PACKAGES}
 gem install asciidoctor-mathematical
 gem install prawn-gmagick
-
-# As of 2024-Jul-04, the official rouge repo has support for P4
-# language syntax highlighting.
-git clone https://github.com/rouge-ruby/rouge
-cd rouge
-git log -n 1 | cat
-gem build rouge.gemspec
-gem install rouge-4.4.0.gem
+gem install rouge
 gem install asciidoctor-bibtex
 gem install asciidoctor-lists
 gem install prawn-gmagick
