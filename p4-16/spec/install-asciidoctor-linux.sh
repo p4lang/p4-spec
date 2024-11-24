@@ -154,7 +154,9 @@ gem install asciidoctor-pdf
 gem install asciidoctor-bibtex
 # Additional installations to enable installing
 # asciidoctor-mathematical and prawn-gmagick
-sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgraphicsmagick1-dev libmagickwand-dev ${OS_SPECIFIC_PACKAGES}
+# libreoffice is required for the P4Runtime API specification Makefile,
+# to generate png and svg format figure files from the .odg files.
+sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgraphicsmagick1-dev libmagickwand-dev libreoffice ${OS_SPECIFIC_PACKAGES}
 gem install asciidoctor-mathematical
 gem install prawn-gmagick
 gem install rouge
