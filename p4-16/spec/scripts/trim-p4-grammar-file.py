@@ -12,9 +12,9 @@ file like this one for the open source p4c compiler:
     https://github.com/p4lang/p4c/blob/main/frontends/parsers/p4/p4parser.ypp
 
 to make the resulting output file easier to compare against a
-grammar.mdk file from the P4_16 language specification repository here:
+grammar.adoc file from the P4_16 language specification repository here:
 
-    https://github.com/p4lang/p4-spec/blob/main/p4-16/spec/grammar.mdk
+    https://github.com/p4lang/p4-spec/blob/main/p4-16/spec/grammar.adoc
 """)
 parser.add_argument('filename')
 args = parser.parse_known_args()[0]

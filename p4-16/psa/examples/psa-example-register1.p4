@@ -63,7 +63,7 @@ struct headers {
     ipv4_t           ipv4;
 }
 
-// BEGIN:Register_Example1_Part1
+// tag::Register_Example1_Part1[]
 const bit<32> NUM_PORTS = 512;
 
 typedef bit<48> ByteCounter_t;
@@ -80,7 +80,7 @@ action update_pkt_ip_byte_count (inout PacketByteCountState_t s,
     s.pkt_count = s.pkt_count + 1;
     s.byte_count = s.byte_count + (ByteCounter_t) ip_length_bytes;
 }
-// END:Register_Example1_Part1
+// end::Register_Example1_Part1[]
 
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
@@ -105,7 +105,7 @@ parser IngressParserImpl(packet_in buffer,
     }
 }
 
-// BEGIN:Register_Example1_Part2
+// tag::Register_Example1_Part2[]
 control ingress(inout headers hdr,
                 inout metadata user_meta,
                 in    psa_ingress_input_metadata_t  istd,
@@ -126,7 +126,7 @@ control ingress(inout headers hdr,
         }
     }
 }
-// END:Register_Example1_Part2
+// end::Register_Example1_Part2[]
 
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,

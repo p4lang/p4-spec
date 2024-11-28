@@ -6,7 +6,7 @@
 - p4-16: This holds the official P4 16 spec and discussion materials.
 - The discussions of the design committee and the current open problems are held in [Google Docs](https://docs.google.com/document/d/1XSgdXeG1UuF1FM_XAqxDrHeN4dHZWBnJPKVS6SnGNwM/edit)
 - An archive of the meeting notes from 2020 to 2022 is in this [pdf document](p4-16/spec/docs/P4-LDWG-Old-Notes.pdf)
-- The latest version of the P4 specification is [1.2.4](https://p4.org/p4-spec/docs/P4-16-v1.2.4.html).
+- The latest version of the P4 specification is [1.2.5](https://p4.org/p4-spec/docs/P4-16-v1.2.5.html).
 - Portable Switch architecture discussion materials and meeting minutes are available [here](https://github.com/p4lang/p4-spec/wiki/PSA)
 
 # Modification Policy

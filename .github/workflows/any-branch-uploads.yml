@@ -1,0 +1,26 @@
+name: Any branch uploads
+
+on: workflow_dispatch
+
+jobs:
+  any-branch-uploads:
+    if: ${{ github.repository == 'p4lang/p4-spec' }}
+    runs-on: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build spec
+      run: |
+        docker run -v `pwd`/docs/v1:/usr/src/p4-spec p4lang/p4-spec-asciidoc:latest make
+        ls docs/v1/build
+    - name: Upload spec to S3 if needed
+      if: ${{ github.actor != 'dependabot[bot]' }}
+      uses: jakejarvis/s3-sync-action@v0.5.1
+      with:
+        args: --acl public-read --follow-symlinks --delete
+      env:
+        AWS_S3_BUCKET: 'p4-spec'
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-west-2'
+        SOURCE_DIR: 'docs/v1/build'
+        DEST_DIR: ci/${{ github.ref_name }} # only runs for push events

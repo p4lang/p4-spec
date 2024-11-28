@@ -63,7 +63,7 @@ struct headers {
 struct empty_metadata_t {
 }
 
-// BEGIN:Digest_Example_Part1
+// tag::Digest_Example_Part1[]
 struct mac_learn_digest_t {
     EthernetAddress srcAddr;
     PortId_t        ingress_port;
@@ -73,7 +73,7 @@ struct metadata {
     bool               send_mac_learn_msg;
     mac_learn_digest_t mac_learn_msg;
 }
-// END:Digest_Example_Part1
+// end::Digest_Example_Part1[]
 
 parser CommonParser(
     packet_in buffer,
@@ -135,7 +135,7 @@ parser EgressParserImpl(packet_in buffer,
     }
 }
 
-// BEGIN:Digest_Example_Part2
+// tag::Digest_Example_Part2[]
 // This is part of the functionality of a typical Ethernet learning bridge.
 
 // The control plane will typically enter the _same_ keys into the
@@ -187,7 +187,7 @@ control ingress(inout headers hdr,
         l2_tbl.apply();
     }
 }
-// END:Digest_Example_Part2
+// end::Digest_Example_Part2[]
 
 control egress(inout headers hdr,
                inout metadata meta,
@@ -207,7 +207,7 @@ control CommonDeparserImpl(packet_out packet,
     }
 }
 
-// BEGIN:Digest_Example_Part3
+// tag::Digest_Example_Part3[]
 control IngressDeparserImpl(packet_out packet,
                             out empty_metadata_t clone_i2e_meta,
                             out empty_metadata_t resubmit_meta,
@@ -225,7 +225,7 @@ control IngressDeparserImpl(packet_out packet,
         common_deparser.apply(packet, hdr);
     }
 }
-// END:Digest_Example_Part3
+// end::Digest_Example_Part3[]
 
 control EgressDeparserImpl(packet_out packet,
                            out empty_metadata_t clone_e2e_meta,

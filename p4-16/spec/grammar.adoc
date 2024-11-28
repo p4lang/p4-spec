@@ -1,12 +1,12 @@
-// BEGIN:p4program
+// tag::p4program[]
 p4program
     : /* empty */
     | p4program declaration
     | p4program ";"  /* empty declaration */
     ;
-// END:p4program
+// end::p4program[]
 
-// BEGIN:declaration
+// tag::declaration[]
 declaration
     : constantDeclaration
     | externDeclaration
@@ -19,9 +19,9 @@ declaration
     | matchKindDeclaration
     | functionDeclaration
     ;
-// END:declaration
+// end::declaration[]
 
-// BEGIN:nonTypeName
+// tag::nonTypeName[]
 nonTypeName
     : IDENTIFIER
     | APPLY
@@ -32,17 +32,17 @@ nonTypeName
     | TYPE
     | PRIORITY
     ;
-// END:nonTypeName
+// end::nonTypeName[]
 
-// BEGIN:name
+// tag::name[]
 name
     : nonTypeName
     | LIST
     | TYPE_IDENTIFIER
     ;
-// END:name
+// end::name[]
 
-// BEGIN:nonTableKwName
+// tag::nonTableKwName[]
 nonTableKwName
    : IDENTIFIER
    | TYPE_IDENTIFIER
@@ -51,44 +51,44 @@ nonTableKwName
    | TYPE
    | PRIORITY
    ;
-// END:nonTableKwName
+// end::nonTableKwName[]
 
-// BEGIN:optCONST
+// tag::optCONST[]
 optCONST
     : /* empty */
     | CONST
     ;
-// END:optCONST
+// end::optCONST[]
 
-// BEGIN:optAnnotations
+// tag::optAnnotations[]
 optAnnotations
     : /* empty */
     | annotations
     ;
-// END:optAnnotations
+// end::optAnnotations[]
 
-// BEGIN:annotations
+// tag::annotations[]
 annotations
     : annotation
     | annotations annotation
     ;
-// END:annotations
+// end::annotations[]
 
-// BEGIN:annotation
+// tag::annotation[]
 annotation
     : "@" name
     | "@" name "(" annotationBody ")"
     | "@" name "[" structuredAnnotationBody "]"
     ;
-// END:annotation
+// end::annotation[]
 
-// BEGIN:annotationBody
+// tag::annotationBody[]
 annotationBody
     : /* empty */
     | annotationBody "(" annotationBody ")"
     | annotationBody annotationToken
     ;
-// END:annotationBody
+// end::annotationBody[]
 
 annotationToken
     : UNEXPECTED_TOKEN
@@ -98,7 +98,9 @@ annotationToken
     | APPLY
     | BOOL
     | BIT
+    | BREAK
     | CONST
+    | CONTINUE
     | CONTROL
     | DEFAULT
     | ELSE
@@ -108,6 +110,7 @@ annotationToken
     | EXIT
     | EXTERN
     | FALSE
+    | FOR
     | HEADER
     | HEADER_UNION
     | IF
@@ -179,55 +182,55 @@ annotationToken
     | "@"
     ;
 
-// BEGIN:kvList
+// tag::kvList[]
 kvList
     : kvPair
     | kvList "," kvPair
     ;
-// END:kvList
+// end::kvList[]
 
-// BEGIN:kvPair
+// tag::kvPair[]
 kvPair
     : name "=" expression
     ;
-// END:kvPair
+// end::kvPair[]
 
-// BEGIN:parameterList
+// tag::parameterList[]
 parameterList
     : /* empty */
     | nonEmptyParameterList
     ;
-// END:parameterList
+// end::parameterList[]
 
-// BEGIN:nonEmptyParameterList
+// tag::nonEmptyParameterList[]
 nonEmptyParameterList
     : parameter
     | nonEmptyParameterList "," parameter
     ;
-// END:nonEmptyParameterList
+// end::nonEmptyParameterList[]
 
-// BEGIN:parameter
+// tag::parameter[]
 parameter
     : optAnnotations direction typeRef name
     | optAnnotations direction typeRef name "=" expression
     ;
-// END:parameter
+// end::parameter[]
 
-// BEGIN:direction
+// tag::direction[]
 direction
     : IN
     | OUT
     | INOUT
     | /* empty */
     ;
-// END:direction
+// end::direction[]
 
-// BEGIN:packageTypeDeclaration
+// tag::packageTypeDeclaration[]
 packageTypeDeclaration
     : optAnnotations PACKAGE name optTypeParameters
       "(" parameterList ")"
     ;
-// END:packageTypeDeclaration
+// end::packageTypeDeclaration[]
 
 instantiation
     : annotations typeRef "(" argumentList ")" name ";"
@@ -236,32 +239,32 @@ instantiation
     | typeRef "(" argumentList ")" name "=" objInitializer ";"
     ;
 
-// BEGIN:objInitializer
+// tag::objInitializer[]
 objInitializer
     : "{" objDeclarations "}"
     ;
-// END:objInitializer
+// end::objInitializer[]
 
-// BEGIN:objDeclarations
+// tag::objDeclarations[]
 objDeclarations
     : /* empty */
     | objDeclarations objDeclaration
     ;
-// END:objDeclarations
+// end::objDeclarations[]
 
-// BEGIN:objDeclaration
+// tag::objDeclaration[]
 objDeclaration
     : functionDeclaration
     | instantiation
     ;
-// END:objDeclaration
+// end::objDeclaration[]
 
-// BEGIN:optConstructorParameters
+// tag::optConstructorParameters[]
 optConstructorParameters
     : /* empty */
     | "(" parameterList ")"
     ;
-// END:optConstructorParameters
+// end::optConstructorParameters[]
 
 dotPrefix
     : "."
@@ -269,58 +272,58 @@ dotPrefix
 
 /**************************** PARSER ******************************/
 
-// BEGIN:parserDeclaration
+// tag::parserDeclaration[]
 parserDeclaration
     : parserTypeDeclaration optConstructorParameters
       "{" parserLocalElements parserStates "}"
     ;
-// END:parserDeclaration
+// end::parserDeclaration[]
 
-// BEGIN:parserLocalElements
+// tag::parserLocalElements[]
 parserLocalElements
     : /* empty */
     | parserLocalElements parserLocalElement
     ;
-// END:parserLocalElements
+// end::parserLocalElements[]
 
-// BEGIN:parserLocalElement
+// tag::parserLocalElement[]
 parserLocalElement
     : constantDeclaration
     | instantiation
     | variableDeclaration
     | valueSetDeclaration
     ;
-// END:parserLocalElement
+// end::parserLocalElement[]
 
-// BEGIN:parserTypeDeclaration
+// tag::parserTypeDeclaration[]
 parserTypeDeclaration
     : optAnnotations PARSER name optTypeParameters
       "(" parameterList ")"
     ;
-// END:parserTypeDeclaration
+// end::parserTypeDeclaration[]
 
-// BEGIN:parserStates
+// tag::parserStates[]
 parserStates
     : parserState
     | parserStates parserState
     ;
-// END:parserStates
+// end::parserStates[]
 
-// BEGIN:parserState
+// tag::parserState[]
 parserState
     : optAnnotations STATE name
       "{" parserStatements transitionStatement "}"
     ;
-// END:parserState
+// end::parserState[]
 
-// BEGIN:parserStatements
+// tag::parserStatements[]
 parserStatements
     : /* empty */
     | parserStatements parserStatement
     ;
-// END:parserStatements
+// end::parserStatements[]
 
-// BEGIN:parserStatement
+// tag::parserStatement[]
 parserStatement
     : assignmentOrMethodCallStatement
     | directApplication
@@ -330,85 +333,85 @@ parserStatement
     | parserBlockStatement
     | conditionalStatement
     ;
-// END:parserStatement
+// end::parserStatement[]
 
-// BEGIN:parserBlockStatement
+// tag::parserBlockStatement[]
 parserBlockStatement
     : optAnnotations "{" parserStatements "}"
     ;
-// END:parserBlockStatement
+// end::parserBlockStatement[]
 
-// BEGIN:transitionStatement
+// tag::transitionStatement[]
 transitionStatement
     : /* empty */
     | TRANSITION stateExpression
     ;
-// END:transitionStatement
+// end::transitionStatement[]
 
-// BEGIN:stateExpression
+// tag::stateExpression[]
 stateExpression
     : name ";"
     | selectExpression
     ;
-// END:stateExpression
+// end::stateExpression[]
 
-// BEGIN:selectExpression
+// tag::selectExpression[]
 selectExpression
     : SELECT "(" expressionList ")" "{" selectCaseList "}"
     ;
-// END:selectExpression
+// end::selectExpression[]
 
-// BEGIN:selectCaseList
+// tag::selectCaseList[]
 selectCaseList
     : /* empty */
     | selectCaseList selectCase
     ;
-// END:selectCaseList
+// end::selectCaseList[]
 
-// BEGIN:selectCase
+// tag::selectCase[]
 selectCase
     : keysetExpression ":" name ";"
     ;
-// END:selectCase
+// end::selectCase[]
 
-// BEGIN:keysetExpression
+// tag::keysetExpression[]
 keysetExpression
     : tupleKeysetExpression
     | simpleKeysetExpression
     ;
-// END:keysetExpression
+// end::keysetExpression[]
 
-// BEGIN:tupleKeysetExpression
+// tag::tupleKeysetExpression[]
 tupleKeysetExpression
     : "(" simpleKeysetExpression "," simpleExpressionList ")"
     | "(" reducedSimpleKeysetExpression ")"
     ;
-// END:tupleKeysetExpression
+// end::tupleKeysetExpression[]
 
-// BEGIN:optTrailingComma
+// tag::optTrailingComma[]
 optTrailingComma
     : /* empty */
     | ","
     ;
-// END:optTrailingComma
+// end::optTrailingComma[]
 
-// BEGIN:simpleExpressionList
+// tag::simpleExpressionList[]
 simpleExpressionList
     : simpleKeysetExpression
     | simpleExpressionList "," simpleKeysetExpression
     ;
-// END:simpleExpressionList
+// end::simpleExpressionList[]
 
-// BEGIN:reducedSimpleKeysetExpression
+// tag::reducedSimpleKeysetExpression[]
 reducedSimpleKeysetExpression
     : expression "&&&" expression
     | expression ".." expression
     | DEFAULT
     | "_"
     ;
-// END:reducedSimpleKeysetExpression
+// end::reducedSimpleKeysetExpression[]
 
-// BEGIN:simpleKeysetExpression
+// tag::simpleKeysetExpression[]
 simpleKeysetExpression
     : expression
     | expression "&&&" expression
@@ -416,9 +419,9 @@ simpleKeysetExpression
     | DEFAULT
     | "_"
     ;
-// END:simpleKeysetExpression
+// end::simpleKeysetExpression[]
 
-// BEGIN:valueSetDeclaration
+// tag::valueSetDeclaration[]
 valueSetDeclaration
   : optAnnotations
       VALUESET "<" baseType ">" "(" expression ")" name ";"
@@ -427,33 +430,33 @@ valueSetDeclaration
   | optAnnotations
       VALUESET "<" typeName ">" "(" expression ")" name ";"
   ;
-// END:valueSetDeclaration
+// end::valueSetDeclaration[]
 
 /*************************** CONTROL ************************/
 
-// BEGIN:controlDeclaration
+// tag::controlDeclaration[]
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
       /* controlTypeDeclaration cannot contain type parameters */
       "{" controlLocalDeclarations APPLY controlBody "}"
     ;
-// END:controlDeclaration
+// end::controlDeclaration[]
 
-// BEGIN:controlTypeDeclaration
+// tag::controlTypeDeclaration[]
 controlTypeDeclaration
     : optAnnotations CONTROL name optTypeParameters
       "(" parameterList ")"
     ;
-// END:controlTypeDeclaration
+// end::controlTypeDeclaration[]
 
-// BEGIN:controlLocalDeclarations
+// tag::controlLocalDeclarations[]
 controlLocalDeclarations
     : /* empty */
     | controlLocalDeclarations controlLocalDeclaration
     ;
-// END:controlLocalDeclarations
+// end::controlLocalDeclarations[]
 
-// BEGIN:controlLocalDeclaration
+// tag::controlLocalDeclaration[]
 controlLocalDeclaration
     : constantDeclaration
     | actionDeclaration
@@ -461,35 +464,35 @@ controlLocalDeclaration
     | instantiation
     | variableDeclaration
     ;
-// END:controlLocalDeclaration
+// end::controlLocalDeclaration[]
 
-// BEGIN:controlBody
+// tag::controlBody[]
 controlBody
     : blockStatement
     ;
-// END:controlBody
+// end::controlBody[]
 
 /*************************** EXTERN *************************/
 
-// BEGIN:externDeclaration
+// tag::externDeclaration[]
 externDeclaration
     : optAnnotations EXTERN nonTypeName optTypeParameters "{" methodPrototypes "}"
     | optAnnotations EXTERN functionPrototype ";"
     ;
-// END:externDeclaration
+// end::externDeclaration[]
 
-// BEGIN:methodPrototypes
+// tag::methodPrototypes[]
 methodPrototypes
     : /* empty */
     | methodPrototypes methodPrototype
     ;
-// END:methodPrototypes
+// end::methodPrototypes[]
 
-// BEGIN:functionPrototype
+// tag::functionPrototype[]
 functionPrototype
     : typeOrVoid name optTypeParameters "(" parameterList ")"
     ;
-// END:functionPrototype
+// end::functionPrototype[]
 
 methodPrototype
     : optAnnotations functionPrototype ";"
@@ -498,7 +501,7 @@ methodPrototype
 
 /************************** TYPES ****************************/
 
-// BEGIN:typeRef
+// tag::typeRef[]
 typeRef
     : baseType
     | typeName
@@ -507,54 +510,54 @@ typeRef
     | p4listType
     | tupleType
     ;
-// END:typeRef
+// end::typeRef[]
 
-// BEGIN:namedType
+// tag::namedType[]
 namedType
     : typeName
     | specializedType
     ;
-// END:namedType
+// end::namedType[]
 
-// BEGIN:prefixedType
+// tag::prefixedType[]
 prefixedType
     : TYPE_IDENTIFIER
     | dotPrefix TYPE_IDENTIFIER
     ;
-// END:prefixedType
+// end::prefixedType[]
 
-// BEGIN:typeName
+// tag::typeName[]
 typeName
     : prefixedType
     ;
-// END:typeName
+// end::typeName[]
 
-// BEGIN:p4listType
+// tag::p4listType[]
 p4listType
     : LIST "<" typeArg ">"
     ;
-// END:p4listType
+// end::p4listType[]
 
-// BEGIN:tupleType
+// tag::tupleType[]
 tupleType
     : TUPLE "<" typeArgumentList ">"
     ;
-// END:tupleType
+// end::tupleType[]
 
-// BEGIN:headerStackType
+// tag::headerStackType[]
 headerStackType
     : typeName "[" expression "]"
     | specializedType "[" expression "]"
     ;
-// END:headerStackType
+// end::headerStackType[]
 
-// BEGIN:specializedType
+// tag::specializedType[]
 specializedType
     : typeName "<" typeArgumentList ">"
     ;
-// END:specializedType
+// end::specializedType[]
 
-// BEGIN:baseType
+// tag::baseType[]
 baseType
     : BOOL
     | MATCH_KIND
@@ -569,69 +572,69 @@ baseType
     | INT "<" "(" expression ")" ">"
     | VARBIT "<" "(" expression ")" ">"
     ;
-// END:baseType
+// end::baseType[]
 
-// BEGIN:typeOrVoid
+// tag::typeOrVoid[]
 typeOrVoid
     : typeRef
     | VOID
     | IDENTIFIER     // may be a type variable
     ;
-// END:typeOrVoid
+// end::typeOrVoid[]
 
-// BEGIN:optTypeParameters
+// tag::optTypeParameters[]
 optTypeParameters
     : /* empty */
     | typeParameters
     ;
-// END:optTypeParameters
+// end::optTypeParameters[]
 
-// BEGIN:typeParameters
+// tag::typeParameters[]
 typeParameters
     : "<" typeParameterList ">"
     ;
-// END:typeParameters
+// end::typeParameters[]
 
-// BEGIN:typeParameterList
+// tag::typeParameterList[]
 typeParameterList
     : name
     | typeParameterList "," name
     ;
-// END:typeParameterList
+// end::typeParameterList[]
 
-// BEGIN:typeArg
+// tag::typeArg[]
 typeArg
     : typeRef
     | nonTypeName
     | VOID
     | "_"
     ;
-// END:typeArg
+// end::typeArg[]
 
-// BEGIN:typeArgumentList
+// tag::typeArgumentList[]
 typeArgumentList
     : /* empty */
     | typeArg
     | typeArgumentList "," typeArg
     ;
-// END:typeArgumentList
+// end::typeArgumentList[]
 
-// BEGIN:realTypeArg
+// tag::realTypeArg[]
 realTypeArg
     : typeRef
     | VOID
     | "_"
     ;
-// END:realTypeArg
+// end::realTypeArg[]
 
-// BEGIN:realTypeArgumentList
+// tag::realTypeArgumentList[]
 realTypeArgumentList
     : realTypeArg
     | realTypeArgumentList "," typeArg
     ;
-// END:realTypeArgumentList
+// end::realTypeArgumentList[]
 
-// BEGIN:typeDeclaration
+// tag::typeDeclaration[]
 typeDeclaration
     : derivedTypeDeclaration
     | typedefDeclaration ";"
@@ -639,87 +642,87 @@ typeDeclaration
     | controlTypeDeclaration ";"
     | packageTypeDeclaration ";"
     ;
-// END:typeDeclaration
+// end::typeDeclaration[]
 
-// BEGIN:derivedTypeDeclaration
+// tag::derivedTypeDeclaration[]
 derivedTypeDeclaration
     : headerTypeDeclaration
     | headerUnionDeclaration
     | structTypeDeclaration
     | enumDeclaration
     ;
-// END:derivedTypeDeclaration
+// end::derivedTypeDeclaration[]
 
-// BEGIN:headerTypeDeclaration
+// tag::headerTypeDeclaration[]
 headerTypeDeclaration
     : optAnnotations HEADER name optTypeParameters "{" structFieldList "}"
     ;
-// END:headerTypeDeclaration
+// end::headerTypeDeclaration[]
 
-// BEGIN:structTypeDeclaration
+// tag::structTypeDeclaration[]
 structTypeDeclaration
     : optAnnotations STRUCT name optTypeParameters "{" structFieldList "}"
     ;
-// END:structTypeDeclaration
+// end::structTypeDeclaration[]
 
-// BEGIN:headerUnionDeclaration
+// tag::headerUnionDeclaration[]
 headerUnionDeclaration
     : optAnnotations HEADER_UNION name optTypeParameters "{" structFieldList "}"
     ;
-// END:headerUnionDeclaration
+// end::headerUnionDeclaration[]
 
-// BEGIN:structFieldList
+// tag::structFieldList[]
 structFieldList
     : /* empty */
     | structFieldList structField
     ;
-// END:structFieldList
+// end::structFieldList[]
 
-// BEGIN:structField
+// tag::structField[]
 structField
     : optAnnotations typeRef name ";"
     ;
-// END:structField
+// end::structField[]
 
-// BEGIN:enumDeclaration
+// tag::enumDeclaration[]
 enumDeclaration
     : optAnnotations ENUM name "{" identifierList optTrailingComma "}"
     | optAnnotations ENUM typeRef name "{"
       specifiedIdentifierList optTrailingComma "}"
     ;
-// END:enumDeclaration
+// end::enumDeclaration[]
 
-// BEGIN:specifiedIdentifierList
+// tag::specifiedIdentifierList[]
 specifiedIdentifierList
     : specifiedIdentifier
     | specifiedIdentifierList "," specifiedIdentifier
     ;
-// END:specifiedIdentifierList
+// end::specifiedIdentifierList[]
 
-// BEGIN:specifiedIdentifier
+// tag::specifiedIdentifier[]
 specifiedIdentifier
     : name "=" initializer
     ;
-// END:specifiedIdentifier
+// end::specifiedIdentifier[]
 
-// BEGIN:errorDeclaration
+// tag::errorDeclaration[]
 errorDeclaration
     : ERROR "{" identifierList "}"
     ;
-// END:errorDeclaration
+// end::errorDeclaration[]
 
-// BEGIN:matchKindDeclaration
+// tag::matchKindDeclaration[]
 matchKindDeclaration
     : MATCH_KIND "{" identifierList optTrailingComma "}"
     ;
-// END:matchKindDeclaration
+// end::matchKindDeclaration[]
 
-// BEGIN:identifierList
+// tag::identifierList[]
 identifierList
     : name
     | identifierList "," name
     ;
-// END:identifierList
+// end::identifierList[]
 
 typedefDeclaration
     : optAnnotations TYPEDEF typeRef name
@@ -729,47 +732,59 @@ typedefDeclaration
 
 /*************************** STATEMENTS *************************/
 
-// BEGIN:assignmentOrMethodCallStatement
+// tag::assignmentOrMethodCallStatement[]
 assignmentOrMethodCallStatement
     : lvalue "(" argumentList ")" ";"
     | lvalue "<" typeArgumentList ">" "(" argumentList ")" ";"
     | lvalue "="  expression ";"
     ;
-// END:assignmentOrMethodCallStatement
+// end::assignmentOrMethodCallStatement[]
 
-// BEGIN:emptyStatement
+// tag::breakStatement[]
+breakStatement
+    : BREAK ";"
+    ;
+// end::breakStatement[]
+
+// tag::continueStatement[]
+continueStatement
+    : CONTINUE ";"
+    ;
+// end::continueStatement[]
+
+// tag::emptyStatement[]
 emptyStatement
     : ";"
     ;
-// END:emptyStatement
+// end::emptyStatement[]
 
-// BEGIN:exitStatement
+// tag::exitStatement[]
 exitStatement
     : EXIT ";"
     ;
-// END:exitStatement
+// end::exitStatement[]
 
-// BEGIN:returnStatement
+// tag::returnStatement[]
 returnStatement
     : RETURN ";"
     | RETURN expression ";"
     ;
-// END:returnStatement
+// end::returnStatement[]
 
-// BEGIN:conditionalStatement
+// tag::conditionalStatement[]
 conditionalStatement
     : IF "(" expression ")" statement
     | IF "(" expression ")" statement ELSE statement
     ;
-// END:conditionalStatement
+// end::conditionalStatement[]
 
 // To support direct invocation of a control or parser without instantiation
-// BEGIN:directApplication
+// tag::directApplication[]
 directApplication
     : typeName "." APPLY "(" argumentList ")" ";"
     | specializedType "." APPLY "(" argumentList ")" ";"
     ;
-// END:directApplication
+// end::directApplication[]
 
 statement
     : assignmentOrMethodCallStatement
@@ -779,71 +794,134 @@ statement
     | blockStatement
     | returnStatement
     | exitStatement
+    | breakStatement
+    | continueStatement
     | switchStatement
+    | loopStatement
     ;
 
-// BEGIN:blockStatement
+// tag::blockStatement[]
 blockStatement
     : optAnnotations "{" statOrDeclList "}"
     ;
-// END:blockStatement
+// end::blockStatement[]
 
-// BEGIN:statOrDeclList
+// tag::statOrDeclList[]
 statOrDeclList
     : /* empty */
     | statOrDeclList statementOrDeclaration
     ;
-// END:statOrDeclList
+// end::statOrDeclList[]
 
-// BEGIN:switchStatement
+// tag::switchStatement[]
 switchStatement
     : SWITCH "(" expression ")" "{" switchCases "}"
     ;
-// END:switchStatement
+// end::switchStatement[]
 
-// BEGIN:switchCases
+// tag::switchCases[]
 switchCases
     : /* empty */
     | switchCases switchCase
     ;
-// END:switchCases
+// end::switchCases[]
 
-// BEGIN:switchCase
+// tag::switchCase[]
 switchCase
     : switchLabel ":" blockStatement
     | switchLabel ":"  // fall-through
     ;
-// END:switchCase
+// end::switchCase[]
 
-// BEGIN:switchLabel
+// tag::switchLabel[]
 switchLabel
     : DEFAULT
     | nonBraceExpression
     ;
-// END:switchLabel
+// end::switchLabel[]
 
-// BEGIN:statementOrDeclaration
+// tag::loopStatement[]
+loopStatement
+    : optAnnotations FOR "(" optForInitStatements ";" expression ";"
+      optForUpdateStatements ")" statement
+    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    ;
+// end::loopStatement[]
+
+// tag::optForInitStatements[]
+optForInitStatements
+    : /* empty */
+    | forInitStatements
+    ;
+// end::optForInitStatements[]
+
+// tag::forInitStatements[]
+forInitStatements
+    : forInitStatement
+    | forInitStatements "," forInitStatement
+    ;
+// end::forInitStatements[]
+
+// tag::forInitStatement[]
+forInitStatement
+    : optAnnotations typeRef name optInitializer
+    | lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "=" expression
+    ;
+// end::forInitStatement[]
+
+// tag::optForUpdateStatements[]
+optForUpdateStatements
+    : /* empty */
+    | forUpdateStatements
+    ;
+// end::optForUpdateStatements[]
+
+// tag::forUpdateStatements[]
+forUpdateStatements
+    : forUpdateStatement
+    | forUpdateStatements "," forUpdateStatement
+    ;
+// end::forUpdateStatements[]
+
+// tag::forUpdateStatement[]
+forUpdateStatement
+    : lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "=" expression
+    ;
+// end::forUpdateStatement[]
+
+// tag::forCollectionExpr[]
+forCollectionExpr
+    : expression
+    | expression ".." erxpression
+    ;
+// end::forCollectionExpr[]
+
+// tag::statementOrDeclaration[]
 statementOrDeclaration
     : variableDeclaration
     | constantDeclaration
     | statement
     ;
-// END:statementOrDeclaration
+// end::statementOrDeclaration[]
 
 /************************* TABLE *********************************/
 
-// BEGIN:tableDeclaration
+// tag::tableDeclaration[]
 tableDeclaration
     : optAnnotations TABLE name "{" tablePropertyList "}"
     ;
-// END:tableDeclaration
+// end::tableDeclaration[]
 
-// BEGIN:tablePropertyList
+// tag::tablePropertyList[]
 tablePropertyList
     : tableProperty
     | tablePropertyList tableProperty
     ;
-// END:tablePropertyList
+// end::tablePropertyList[]
 
 tableProperty
     : KEY "=" "{" keyElementList "}"
@@ -852,151 +930,151 @@ tableProperty
     | optAnnotations optCONST nonTableKwName "=" initializer ";"
     ;
 
-// BEGIN:keyElementList
+// tag::keyElementList[]
 keyElementList
     : /* empty */
     | keyElementList keyElement
     ;
-// END:keyElementList
+// end::keyElementList[]
 
-// BEGIN:keyElement
+// tag::keyElement[]
 keyElement
     : expression ":" name optAnnotations ";"
     ;
-// END:keyElement
+// end::keyElement[]
 
-// BEGIN:actionList
+// tag::actionList[]
 actionList
     : /* empty */
     | actionList optAnnotations actionRef ";"
     ;
-// END:actionList
+// end::actionList[]
 
-// BEGIN:actionRef
+// tag::actionRef[]
 actionRef
     : prefixedNonTypeName
     | prefixedNonTypeName "(" argumentList ")"
     ;
-// END:actionRef
+// end::actionRef[]
 
-// BEGIN:entry
+// tag::entry[]
 entry
     : optCONST entryPriority keysetExpression ':' actionRef optAnnotations ';'
     | optCONST keysetExpression ':' actionRef optAnnotations ';'
     ;
-// END:entry
+// end::entry[]
 
-// BEGIN:entryPriority
+// tag::entryPriority[]
 entryPriority
  : PRIORITY '=' INTEGER ":"
  | PRIORITY '=' '(' expression ')' ":"
  ;
-// END:entryPriority
+// end::entryPriority[]
 
-// BEGIN:entriesList
+// tag::entriesList[]
 entriesList
     : /* empty */
     | entriesList entry
     ;
-// END:entriesList
+// end::entriesList[]
 
 /************************* ACTION ********************************/
 
-// BEGIN:actionDeclaration
+// tag::actionDeclaration[]
 actionDeclaration
     : optAnnotations ACTION name "(" parameterList ")" blockStatement
     ;
-// END:actionDeclaration
+// end::actionDeclaration[]
 
 /************************* VARIABLES *****************************/
 
-// BEGIN:variableDeclaration
+// tag::variableDeclaration[]
 variableDeclaration
     : annotations typeRef name optInitializer ";"
     | typeRef name optInitializer ";"
     ;
-// END:variableDeclaration
+// end::variableDeclaration[]
 
-// BEGIN:constantDeclaration
+// tag::constantDeclaration[]
 constantDeclaration
     : optAnnotations CONST typeRef name "=" initializer ";"
     ;
-// END:constantDeclaration
+// end::constantDeclaration[]
 
-// BEGIN:optInitializer
+// tag::optInitializer[]
 optInitializer
     : /* empty */
     | "=" initializer
     ;
-// END:optInitializer
+// end::optInitializer[]
 
-// BEGIN:initializer
+// tag::initializer[]
 initializer
     : expression
     ;
-// END:initializer
+// end::initializer[]
 
 /**************** Expressions ****************/
 
-// BEGIN:functionDeclaration
+// tag::functionDeclaration[]
 functionDeclaration
     : annotations functionPrototype blockStatement
     | functionPrototype blockStatement
     ;
-// END:functionDeclaration
+// end::functionDeclaration[]
 
-// BEGIN:argumentList
+// tag::argumentList[]
 argumentList
     : /* empty */
     | nonEmptyArgList
     ;
-// END:argumentList
+// end::argumentList[]
 
-// BEGIN:nonEmptyArgList
+// tag::nonEmptyArgList[]
 nonEmptyArgList
     : argument
     | nonEmptyArgList "," argument
     ;
-// END:nonEmptyArgList
+// end::nonEmptyArgList[]
 
-// BEGIN:argument
+// tag::argument[]
 argument
     : expression  /* positional argument */
     | name "=" expression  /* named argument */
     | "_"
     | name "=" "_"
     ;
-// END:argument
+// end::argument[]
 
-// BEGIN:expressionList
+// tag::expressionList[]
 expressionList
     : /* empty */
     | expression
     | expressionList "," expression
     ;
-// END:expressionList
+// end::expressionList[]
 
-// BEGIN:structuredAnnotationBody
+// tag::structuredAnnotationBody[]
 structuredAnnotationBody
     : expressionList optTrailingComma
     | kvList optTrailingComma
     ;
-// END:structuredAnnotationBody
+// end::structuredAnnotationBody[]
 
-// BEGIN:member
+// tag::member[]
 member
     : name
     ;
-// END:member
+// end::member[]
 
-// BEGIN:prefixedNonTypeName
+// tag::prefixedNonTypeName[]
 prefixedNonTypeName
     : nonTypeName
     | dotPrefix nonTypeName
     ;
-// END:prefixedNonTypeName
+// end::prefixedNonTypeName[]
 
-// BEGIN:lvalue
+// tag::lvalue[]
 lvalue
     : prefixedNonTypeName
     | THIS
@@ -1005,7 +1083,7 @@ lvalue
     | lvalue "[" expression ":" expression "]"
     | "(" lvalue ")"
     ;
-// END:lvalue
+// end::lvalue[]
 
 %left ","
 %nonassoc "?"
@@ -1076,7 +1154,7 @@ expression
     | "(" typeRef ")" expression
     ;
 
-// BEGIN:nonBraceExpression
+// tag::nonBraceExpression[]
 nonBraceExpression
     : INTEGER
     | STRING_LITERAL
@@ -1121,4 +1199,4 @@ nonBraceExpression
     | namedType "(" argumentList ")"
     | "(" typeRef ")" expression
     ;
-// END:nonBraceExpression
+// end::nonBraceExpression[]
