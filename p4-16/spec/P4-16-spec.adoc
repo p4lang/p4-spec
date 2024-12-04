@@ -9490,13 +9490,13 @@ program, but constants may.
 
 |             | top level | package | parser  | control | extern | function
 
-| package     | yes       |  no     | no      | no      |  no    |  no
+| package     | yes       |  yes    | no      | no      |  no    |  no
 
-| parser      |  no       |  no     | yes     | no      |  no    |  no
+| parser      |  no       |  yes    | yes     | no      |  no    |  no
 
-| control     |  no       |  no     | no      | yes     |  no    |  no
+| control     |  no       |  yes    | no      | yes     |  no    |  no
 
-| extern      | yes       |  no     | yes     | yes     |  no    |  no
+| extern      | yes       |  yes    | yes     | yes     |  no    |  no
 
 | function    | yes       |  no     | no      | no      |  no    |  no
 
@@ -9525,7 +9525,7 @@ extern functions), actions, and functions.
 
 | control     |  no       |  no     | no      | no      |  no
 
-| extern      | yes       | yes     | yes     | no      |  no
+| extern      |  yes      | yes     | yes     | no      |  no
 
 | table       |  no       |  no     | no      | no      |  no
 
@@ -9547,7 +9547,7 @@ The next table lists restrictions on what kinds of calls can be made
 from which places in a P4 program.  Calling a parser, control, or
 table means invoking its `apply()` method. Calling a value-set means using it
 in a select expression. The row for `extern` describes where extern method
-calls can be made from.
+or function calls can be made from.
 
 One way that an extern can be called from the top level of a parser or
 control is in an initializer expression for a declared variable,
@@ -9557,25 +9557,25 @@ e.g. `bit<32> x = rand.get();`.
 |===
 | This type 6+^| can be called at run time from this place in a P4 program
 
-|             .>| parser state .>| control apply block .>| parser or top level .>| action .>| extern .>| function
+|             .>| top level .>| parser state .>| control apply block .>| top level within a parser or control.>| action .>| extern .>| function
 
-| package     | N/A       | N/A     | N/A       | N/A     | N/A    | N/A
+| package     | N/A 	      | N/A       | N/A     | N/A       | N/A     | N/A    | N/A
 
-| parser      | yes       |  no     | no        | no      | no     | no
+| parser      | no            | yes       |  no     | no        | no      | no     | no
 
-| control     |  no       | yes     | no        | no      | no     | no
+| control     | no            |  no       | yes     | no        | no      | no     | no
 
-| extern      | yes       | yes     | yes       | yes     | no     | no
+| extern      | yes           | yes       | yes     | yes       | yes     | no     | yes
 
-| table       |  no       | yes     | no        | no      | no     | no
+| table       | no            |  no       | yes     | no        | no      | no     | no
 
-| value-set   | yes       | no      | no        | no      | no     | no
+| value-set   | no            | yes       | no      | no        | no      | no     | no
 
-| action      |  no       | yes     | no        | yes     | no     | no
+| action      | no            |  no       | yes     | no        | yes     | no     | no
 
-| function    | yes       | yes     | no        | yes     | no     | yes
+| function    | yes           | yes       | yes     | yes        | yes     | no     | yes
 
-| value types | N/A       | N/A     | N/A       | N/A     | N/A    | N/A
+| value types | N/A           | N/A       | N/A     | N/A       | N/A     | N/A    | N/A
 
 |===
 
