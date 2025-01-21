@@ -3841,18 +3841,21 @@ Additionally, the maximum size of a variable-length bit-string can be determined
 [#sec-casts]
 === Casts
 
-P4 provides a limited set of casts between types. A cast is written
-`(t) e`, where `t` is a type and `e` is an expression. Casts are only permitted in
-cases as defined in section <<sec-explicit-casts>> for explicit casts and
-section <<sec-implicit-casts>> for implicit casts. While this design is arguably
-more onerous for programmers, it has several benefits:
+P4 provides a set of casts between types. A cast is written
+`(t) e`, where `t` is a type and `e` is an expression. Casts in P4 are
+permitted only under the conditions specified in section <<sec-explicit-casts>>
+for explicit casts and section <<sec-implicit-casts>> for implicit casts.
+By allowing casts only in limited scenarios, this restriction is more
+onerous for programmers, but it also provides several benefits.
 
 * It makes user intent unambiguous.
 * It makes the costs associated with converting numeric values
   explicit. Implementing certain casts involves sign extensions,
   and thus can require significant computational resources on some targets.
 * It reduces the number of cases that have to be considered in the P4
-  specification. Some targets may not support all casts.
+  specification.
+
+Some targets may not support all casts.
 
 [#sec-explicit-casts]
 ==== Explicit casts
