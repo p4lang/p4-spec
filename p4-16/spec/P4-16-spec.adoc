@@ -7087,6 +7087,12 @@ order, stopping at the first matching entry. Architectures should
 define the significance of entry order (if any) for other kinds of
 tables.
 
+Because control-plane APIs cannot insert or remove entries of a table
+that is declared with `const entries`, the relative priorities of such a
+table's entries are determined solely by the program order of the entries.
+Therefore assigning numeric priorities to entries of a table that has
+`const entries` is not allowed.
+
 Depending on the `match_kind` of the keys, key set expressions may define
 one or multiple entries. The compiler will synthesize the correct number of
 entries to be installed in the table. Target constraints may further restrict
