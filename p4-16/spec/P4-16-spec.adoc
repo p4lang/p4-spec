@@ -5498,6 +5498,15 @@ types (e.g. ``struct``s) are copied recursively, and all components
 of ``header``s are copied, including "validity" bits. Assignment is
 not defined for `extern` values.
 
+An assignment may also be written with a binary arithmetic or bit manipulation
+operator immediately before the `=` sign.  This performs the binary operator on
+the old value of the left sub-expression and the right sub-expression and assigns
+the result to the l-value.  Thus an assignment like `A += B` is equivalent
+to `A = A + B`, except that `A` is only evaluated once.  This means that
+any side-effects within this operand (eg, a function call inside an array index
+or slice expression) only occur once.  This is not valid
+for comparison operators, logical operators, concat, range, or mask operators.
+
 [#sec-empty-stmt]
 === Empty statement
 
@@ -9045,6 +9054,8 @@ The P4 compiler should provide:
 == Revision History
 
 ===  Summary of changes made in unreleased version
+
+* Added compound assignment statements (<<sec-assignment>>)
 
 === Summary of changes made in version 1.2.5, released October 11, 2024
 
