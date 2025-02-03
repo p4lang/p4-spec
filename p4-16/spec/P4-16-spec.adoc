@@ -3510,6 +3510,25 @@ itself can be evaluated at compilation time. This restriction is
 designed to ensure that the width of the result of the conditional
 expression can be inferred statically at compile time.
 
+[#sec-string-ops]
+=== Operations on strings
+
+The only operation allowed on strings is concatenation, denoted by
+`++`. For string concatenation, both operands must be strings and
+the result is also a string. String concatenation can only be
+performed at compile time.
+
+[source,p4]
+----
+extern void log(string message);
+
+void foo(int<8> v) {
+  // ...
+  log("my log message " ++
+      "continuation of the log message");
+}
+----
+
 [#sec-bit-ops]
 === Operations on fixed-width bit types (unsigned integers)
 
@@ -3860,25 +3879,6 @@ finding this information in a section dedicated to type `varbit`.
   the packet being constructed.
 
 Additionally, the maximum size of a variable-length bit-string can be determined at compile-time (<<sec-minsizeinbits>>).
-
-[#sec-string-ops]
-=== Operations on strings
-
-The only operation allowed on strings is concatenation, denoted by
-`++`. For string concatenation, both operands must be strings and
-the result is also a string. String concatenation can only be
-performed at compile time.
-
-[source,p4]
-----
-extern void log(string message);
-
-void foo(int<8> v) {
-  // ...
-  log("my log message " ++
-      "continuation of the log message");
-}
-----
 
 [#sec-casts]
 === Casts
