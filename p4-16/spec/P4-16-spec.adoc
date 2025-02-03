@@ -5786,7 +5786,7 @@ include::grammar.adoc[tag=forInitStatement]
 include::grammar.adoc[tag=forUpdateStatement]
 ----
 
-The basic 3-clause `for` statement is similar to a C for statement.  The init statements
+The basic 3-clause `for` statement is similar to a C `for` statement.  The init statements
 will be executed prior to executing the loop.  The condition will be evaluated before
 each iteration, to determine if the loop should exit.  If the condition is false, the loop
 will exit without executing any statements from the loop body or update.
@@ -5805,9 +5805,8 @@ A `continue;` statement may be executed in a loop body to skip the rest of the c
 loop body, executing the update statements and then evaluating the condition to
 either execute the loop body again, or terminate the loop.
 
-The scope of any declaration in a for statement is limited to the for statement and its body.
+The scope of any declaration in a `for` statement is limited to the `for` statement and its body.
 
->>>>>>> upstream/main:p4-16/spec/P4-16-spec.mdk
 [#sec-packet-parsing]
 == Packet parsing
 
@@ -6607,8 +6606,8 @@ include::grammar.adoc[tag=valueSetDeclaration]
 ----
 
 Parser Value Sets support a `size` argument to provide hints to the compiler to
-reserve hardware resources to implement the value set. For example, this parser
-value set:
+reserve hardware resources to implement the value set. Thus, the `size` argument
+must be a compile-time known value. For example, this parser value set:
 
 [source,p4]
 ----
@@ -8144,6 +8143,8 @@ The following are local compile-time known values:
 - Structure-valued expressions, where all fields are local compile-time known values.
 - Expressions evaluating to a list type, where all elements are local compile-time known values.
 - Legal casts applied to local compile-time known values.
+- Indexing a local compile-time known stack or tuple value with a local compile-time known index.
+- Accessing a field of a local compile-time known struct, header, or header union value.
 - The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known values.
 - Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the type of `e` is not generic.
 
@@ -8156,6 +8157,8 @@ The following are compile-time known values:
 - Structure-valued expressions, where all fields are compile-time known values.
 - Expressions evaluating to a list type, where all elements are compile-time known values.
 - Legal casts applied to compile-time known values.
+- Indexing a compile-time known stack or tuple value with a compile-time known index.
+- Accessing a field of a compile-time known struct, header, or header union value.
 - The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/ `, `%`, `cast`, `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `/`, `>`, `<`, `==`, `!=`, `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all compile-time known values.
 - Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`, `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the the type of `e` is generic.
 
