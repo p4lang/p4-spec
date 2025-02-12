@@ -208,14 +208,8 @@ control EgressDeparserImpl(packet_out packet,
             });
         hdr.ipv4.hdrChecksum = ck.get();
         // Update TCP checksum
-        // This clear() call is necessary for correct behavior, since
-        // the same instance 'ck' is reused from above for the same
-        // packet.  If a second InternetChecksum instance other than
-        // 'ck' were used below instead, this clear() call would be
-        // unnecessary.
-        ck.clear();
-        // Subtract the original TCP checksum
-        ck.subtract(hdr.tcp.checksum);
+        // Initialize with the original TCP checksum
+        ck.initialize(hdr.tcp.checksum);
         // Subtract the effect of the original IPv4 source address,
         // which is part of the TCP 'pseudo-header' for the purposes
         // of TCP checksum calculation (see RFC 793), then add the
