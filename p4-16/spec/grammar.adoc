@@ -734,11 +734,17 @@ typedefDeclaration
 
 // tag::assignmentOrMethodCallStatement[]
 assignmentOrMethodCallStatement
-    : lvalue "(" argumentList ")" ";"
-    | lvalue "<" typeArgumentList ">" "(" argumentList ")" ";"
-    | lvalue "="  expression ";"
+    : assignmentOrMethodCallStatementWithoutSemicolon ";"
     ;
 // end::assignmentOrMethodCallStatement[]
+
+// tag::assignmentOrMethodCallStatementWithoutSemicolon[]
+assignmentOrMethodCallStatementWithoutSemicolon
+    : lvalue "(" argumentList ")"
+    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
+    | lvalue "="  expression
+    ;
+// end::assignmentOrMethodCallStatementWithoutSemicolon[]
 
 // tag::emptyStatement[]
 emptyStatement
@@ -797,7 +803,7 @@ statement
     | continueStatement
     | exitStatement
     | switchStatement
-    | loopStatement
+    | forStatement
     ;
 
 // tag::blockStatement[]
@@ -848,58 +854,49 @@ statementOrDeclaration
     ;
 // end::statementOrDeclaration[]
 
-// tag::loopStatement[]
-loopStatement
-    : optAnnotations FOR "(" optForInitStatements ";" expression ";"
-      optForUpdateStatements ")" statement
+// tag::forStatement[]
+forStatement
+    : optAnnotations FOR "(" forInitStatements ";" expression ";"
+      forUpdateStatements ")" statement
     | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    | optAnnotations FOR "(" annotations typeRef name IN forCollectionExpr ")" statement
     ;
-// end::loopStatement[]
-
-// tag::optForInitStatements[]
-optForInitStatements
-    : /* empty */
-    | forInitStatements
-    ;
-// end::optForInitStatements[]
+// end::forStatement[]
 
 // tag::forInitStatements[]
 forInitStatements
-    : forInitStatement
-    | forInitStatements "," forInitStatement
+    : /* empty */
+    | forInitStatementsNonEmpty
     ;
 // end::forInitStatements[]
 
-// tag::forInitStatement[]
-forInitStatement
-    : optAnnotations typeRef name optInitializer
-    | lvalue "(" argumentList ")"
-    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
-    | lvalue "=" expression
+// tag::forInitStatementsNonEmpty[]
+forInitStatementsNonEmpty
+    : declOrAssignmentOrMethodCallStatement
+    | forInitStatementsNonEmpty "," declOrAssignmentOrMethodCallStatement
     ;
-// end::forInitStatement[]
+// end::forInitStatementsNonEmpty[]
 
-// tag::optForUpdateStatements[]
-optForUpdateStatements
-    : /* empty */
-    | forUpdateStatements
+// tag::declOrAssignmentOrMethodCallStatement[]
+declOrAssignmentOrMethodCallStatement
+    : variableDeclarationWithoutSemicolon
+    | assignmentOrMethodCallStatementWithoutSemicolon
     ;
-// end::optForUpdateStatements[]
+// end::declOrAssignmentOrMethodCallStatement[]
 
 // tag::forUpdateStatements[]
 forUpdateStatements
-    : forUpdateStatement
-    | forUpdateStatements "," forUpdateStatement
+    : /* empty */
+    | forUpdateStatementsNonEmpty
     ;
 // end::forUpdateStatements[]
 
-// tag::forUpdateStatement[]
-forUpdateStatement
-    : lvalue "(" argumentList ")"
-    | lvalue "<" typeArgumentList ">" "(" argumentList ")"
-    | lvalue "=" expression
+// tag::forUpdateStatementsNonEmpty[]
+forUpdateStatementsNonEmpty
+    : assignmentOrMethodCallStatementWithoutSemicolon
+    | forUpdateStatementsNonEmpty "," assignmentOrMethodCallStatementWithoutSemicolon
     ;
-// end::forUpdateStatement[]
+// end::forUpdateStatementsNonEmpty[]
 
 // tag::forCollectionExpr[]
 forCollectionExpr
@@ -990,8 +987,12 @@ actionDeclaration
 
 // tag::variableDeclaration[]
 variableDeclaration
-    : annotations typeRef name optInitializer ";"
-    | typeRef name optInitializer ";"
+    : variableDeclarationWithoutSemicolon ";"
+    ;
+
+variableDeclarationWithoutSemicolon
+    : annotations typeRef name optInitializer
+    | typeRef name optInitializer
     ;
 // end::variableDeclaration[]
 
