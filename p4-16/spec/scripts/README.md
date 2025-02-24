@@ -6,5 +6,5 @@ directory to compare the spec's grammar.mdk file against that p4c
 repo's version of the grammar:
 
 ```bash
-./compare-grammar.sh ../grammar.mdk $HOME/p4c/frontends/parsers/p4/p4parser.ypp
+./compare-grammar.sh ../grammar.adoc $HOME/p4c/frontends/parsers/p4/p4parser.ypp
 ```

@@ -740,18 +740,6 @@ assignmentOrMethodCallStatement
     ;
 // end::assignmentOrMethodCallStatement[]
 
-// tag::breakStatement[]
-breakStatement
-    : BREAK ";"
-    ;
-// end::breakStatement[]
-
-// tag::continueStatement[]
-continueStatement
-    : CONTINUE ";"
-    ;
-// end::continueStatement[]
-
 // tag::emptyStatement[]
 emptyStatement
     : ";"
@@ -778,6 +766,18 @@ conditionalStatement
     ;
 // end::conditionalStatement[]
 
+// tag::breakStatement[]
+breakStatement
+    : BREAK ";"
+    ;
+// end::breakStatement[]
+
+// tag::continueStatement[]
+continueStatement
+    : CONTINUE ";"
+    ;
+// end::continueStatement[]
+
 // To support direct invocation of a control or parser without instantiation
 // tag::directApplication[]
 directApplication
@@ -793,9 +793,9 @@ statement
     | emptyStatement
     | blockStatement
     | returnStatement
-    | exitStatement
     | breakStatement
     | continueStatement
+    | exitStatement
     | switchStatement
     | loopStatement
     ;
@@ -839,6 +839,14 @@ switchLabel
     | nonBraceExpression
     ;
 // end::switchLabel[]
+
+// tag::statementOrDeclaration[]
+statementOrDeclaration
+    : variableDeclaration
+    | constantDeclaration
+    | statement
+    ;
+// end::statementOrDeclaration[]
 
 // tag::loopStatement[]
 loopStatement
@@ -896,17 +904,9 @@ forUpdateStatement
 // tag::forCollectionExpr[]
 forCollectionExpr
     : expression
-    | expression ".." erxpression
+    | expression ".." expression
     ;
 // end::forCollectionExpr[]
-
-// tag::statementOrDeclaration[]
-statementOrDeclaration
-    : variableDeclaration
-    | constantDeclaration
-    | statement
-    ;
-// end::statementOrDeclaration[]
 
 /************************* TABLE *********************************/
 
