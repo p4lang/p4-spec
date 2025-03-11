@@ -8538,15 +8538,15 @@ Statements can appear in several places:</p>
 <p>Within a <code>control</code> block</p>
 </li>
 <li>
-<p>Within an <code>action</code></p>
+<p>Within an <code>action</code> or function</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
 <p>There are restrictions for the kinds of statements that can appear in
-each of these places. For example, <code>return</code>s are not supported in
-parsers, and <code>switch</code> statements are only supported in control
-blocks. We present here the most general case, for control blocks.</p>
+each of these places. For example, neither <code>return</code>s nor <code>switch</code>
+statements are supported in parsers. We present here the most general
+case, for control blocks.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8777,7 +8777,8 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <div class="sect2">
 <h3 id="sec-switch-stmt">12.7. Switch statement</h3>
 <div class="paragraph">
-<p>The <code>switch</code> statement can only be used within <code>control</code> blocks.</p>
+<p>The <code>switch</code> statement can only be used within <code>control</code> blocks, <code>action</code>
+bodies, or function bodies.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8859,9 +8860,10 @@ separately in the following two subsections.</p>
 <div class="sect3">
 <h4 id="_switch_statement_with_action_run_expression">12.7.1. Switch statement with <code>action_run</code> expression</h4>
 <div class="paragraph">
-<p>For this variant of <code>switch</code> statement, the expression must be of the
-form <code>t.apply().action_run</code>, where <code>t</code> is the name of a table (see
-<a href="#sec-invoke-mau">Section 14.2.2</a>).  All switch labels must be names of
+<p>This type of <code>switch</code> statement can only be used within control <code>apply</code>
+blocks.  For this variant of <code>switch</code> statement, the expression must be
+of the form <code>t.apply().action_run</code>, where <code>t</code> is the name of a table
+(see <a href="#sec-invoke-mau">Section 14.2.2</a>).  All switch labels must be names of
 actions of the table <code>t</code>, or <code>default</code>.</p>
 </div>
 <div class="listingblock">
@@ -13174,7 +13176,16 @@ of the wrong type)</p>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_summary_of_changes_made_in_unreleased_version">A.1. Summary of changes made in unreleased version</h3>
-
+<div class="ulist">
+<ul>
+<li>
+<p>Clarified that numeric priorities cannot be assigned to entries of a table that has <code>const entries</code> (<a href="#sec-entries">Section 14.2.1.4</a>).</p>
+</li>
+<li>
+<p>Clarified that <code>switch</code> statements are allowed in action and function bodies, and that <code>switch</code> statements with <code>action_run</code> expressions are only allowed in control <code>apply</code> blocks (<a href="#sec-stmts">Chapter 12</a> and <a href="#sec-switch-stmt">Section 12.7</a>).</p>
+</li>
+</ul>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_summary_of_changes_made_in_version_1_2_5_released_october_11_2024">A.2. Summary of changes made in version 1.2.5, released October 11, 2024</h3>
@@ -15518,7 +15529,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-03-11 18:51:49 UTC
+Last updated 2025-03-11 19:27:33 UTC
 </div>
 </div>
 </body>
