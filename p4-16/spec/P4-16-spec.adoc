@@ -5463,12 +5463,12 @@ Statements can appear in several places:
 
 * Within `parser` states
 * Within a `control` block
-* Within an `action`
+* Within an `action` or function
 
 There are restrictions for the kinds of statements that can appear in
-each of these places. For example, ``return``s are not supported in
-parsers, and `switch` statements are only supported in control
-blocks. We present here the most general case, for control blocks.
+each of these places. For example, neither ``return``s nor `switch`
+statements are supported in parsers. We present here the most general
+case, for control blocks.
 
 [source,bison]
 ----
@@ -5621,7 +5621,8 @@ innermost `if` statement that does not have an `else` statement.
 [#sec-switch-stmt]
 === Switch statement
 
-The `switch` statement can only be used within `control` blocks.
+The `switch` statement can only be used within `control` blocks, `action`
+bodies, or function bodies.
 
 [source,bison]
 ----
@@ -5646,9 +5647,10 @@ separately in the following two subsections.
 
 ==== Switch statement with `action_run` expression
 
-For this variant of `switch` statement, the expression must be of the
-form `t.apply().action_run`, where `t` is the name of a table (see
-<<sec-invoke-mau>>).  All switch labels must be names of
+This type of `switch` statement can only be used within control `apply`
+blocks.  For this variant of `switch` statement, the expression must be
+of the form `t.apply().action_run`, where `t` is the name of a table
+(see <<sec-invoke-mau>>).  All switch labels must be names of
 actions of the table `t`, or `default`.
 
 [source,p4]
@@ -9073,6 +9075,9 @@ The P4 compiler should provide:
 == Revision History
 
 ===  Summary of changes made in unreleased version
+
+* Clarified that numeric priorities cannot be assigned to entries of a table that has `const entries` (<<sec-entries>>).
+* Clarified that `switch` statements are allowed in action and function bodies, and that `switch` statements with `action_run` expressions are only allowed in control `apply` blocks (<<sec-stmts>> and <<sec-switch-stmt>>).
 
 === Summary of changes made in version 1.2.5, released October 11, 2024
 
