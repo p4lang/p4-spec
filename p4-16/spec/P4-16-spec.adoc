@@ -8952,6 +8952,34 @@ to two controllable entities, which is illegal.
 The `@atomic` annotation, described in <<sec-concurrency>>
 can be used to enforce the atomic execution of a code block.
 
+==== Branch prediction annotations
+
+The `@likely` and `@unlikely` annotation can be used on blocks that
+are used in `if`-`else` or `switch` statements to hint when a branch
+is likely or unlikely to be taken.
+
+[source.p4]
+----
+if (error_failure) @unlikely {
+    /* code that is unlikely to execute as the condition is probably false */
+}
+
+switch(value) {
+    1: @likely {
+        /* code for the most common case */
+       }
+    2: { /* ... */ }
+    default: @unlikely {
+        /* code for rare case */
+    }
+}
+----
+
+These annotations have no effect on the semantics of the program; they are
+just hints to help an optimizer.  A warning may be issued if a `@likely`
+block is found to never execute or an `@unlikely` block will always execute,
+but is not required.
+
 [#sec-value-set-annotations]
 ==== Value set annotations
 
