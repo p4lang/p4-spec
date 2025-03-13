@@ -657,7 +657,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-03-11</span>
+<span id="revdate">2025-03-13</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -808,50 +808,51 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_conditional_operator">8.5.1. Conditional operator</a></li>
 </ul>
 </li>
-<li><a href="#sec-bit-ops">8.6. Operations on fixed-width bit types (unsigned integers)</a></li>
-<li><a href="#sec-int-ops">8.7. Operations on fixed-width signed integers</a></li>
-<li><a href="#sec-varint-ops">8.8. Operations on arbitrary-precision integers</a></li>
-<li><a href="#_concatenation_and_shifts">8.9. Concatenation and shifts</a>
+<li><a href="#sec-string-ops">8.6. Operations on strings</a></li>
+<li><a href="#sec-bit-ops">8.7. Operations on fixed-width bit types (unsigned integers)</a></li>
+<li><a href="#sec-int-ops">8.8. Operations on fixed-width signed integers</a></li>
+<li><a href="#sec-varint-ops">8.9. Operations on arbitrary-precision integers</a></li>
+<li><a href="#_concatenation_and_shifts">8.10. Concatenation and shifts</a>
 <ul class="sectlevel3">
-<li><a href="#sec-concatenation">8.9.1. Concatenation</a></li>
-<li><a href="#_a_note_about_shifts">8.9.2. A note about shifts</a></li>
+<li><a href="#sec-concatenation">8.10.1. Concatenation</a></li>
+<li><a href="#_a_note_about_shifts">8.10.2. A note about shifts</a></li>
 </ul>
 </li>
-<li><a href="#sec-varbit-string">8.10. Operations on variable-size bit types</a></li>
-<li><a href="#sec-casts">8.11. Casts</a>
+<li><a href="#sec-varbit-string">8.11. Operations on variable-size bit types</a></li>
+<li><a href="#sec-casts">8.12. Casts</a>
 <ul class="sectlevel3">
-<li><a href="#_explicit_casts">8.11.1. Explicit casts</a></li>
-<li><a href="#sec-implicit-casts">8.11.2. Implicit casts</a></li>
-<li><a href="#sec-illegal-arith">8.11.3. Illegal arithmetic expressions</a></li>
+<li><a href="#_explicit_casts">8.12.1. Explicit casts</a></li>
+<li><a href="#sec-implicit-casts">8.12.2. Implicit casts</a></li>
+<li><a href="#sec-illegal-arith">8.12.3. Illegal arithmetic expressions</a></li>
 </ul>
 </li>
-<li><a href="#sec-tuple-exprs">8.12. Operations on tuple expressions</a></li>
-<li><a href="#sec-structure-expressions">8.13. Operations on structure-valued expressions</a></li>
-<li><a href="#sec-list-exprs">8.14. Operations on lists</a></li>
-<li><a href="#sec-set-exprs">8.15. Operations on sets</a>
+<li><a href="#sec-tuple-exprs">8.13. Operations on tuple expressions</a></li>
+<li><a href="#sec-structure-expressions">8.14. Operations on structure-valued expressions</a></li>
+<li><a href="#sec-list-exprs">8.15. Operations on lists</a></li>
+<li><a href="#sec-set-exprs">8.16. Operations on sets</a>
 <ul class="sectlevel3">
-<li><a href="#sec-singleton-set">8.15.1. Singleton sets</a></li>
-<li><a href="#sec-universal-set">8.15.2. The universal set</a></li>
-<li><a href="#sec-cubes">8.15.3. Masks</a></li>
-<li><a href="#sec-ranges">8.15.4. Ranges</a></li>
-<li><a href="#sec-tuples-of-sets">8.15.5. Products</a></li>
+<li><a href="#sec-singleton-set">8.16.1. Singleton sets</a></li>
+<li><a href="#sec-universal-set">8.16.2. The universal set</a></li>
+<li><a href="#sec-cubes">8.16.3. Masks</a></li>
+<li><a href="#sec-ranges">8.16.4. Ranges</a></li>
+<li><a href="#sec-tuples-of-sets">8.16.5. Products</a></li>
 </ul>
 </li>
-<li><a href="#sec-ops-on-structs">8.16. Operations on struct types</a></li>
-<li><a href="#sec-ops-on-hdrs">8.17. Operations on headers</a></li>
-<li><a href="#sec-expr-hs">8.18. Operations on header stacks</a>
+<li><a href="#sec-ops-on-structs">8.17. Operations on struct types</a></li>
+<li><a href="#sec-ops-on-hdrs">8.18. Operations on headers</a></li>
+<li><a href="#sec-expr-hs">8.19. Operations on header stacks</a>
 <ul class="sectlevel3">
-<li><a href="#sec-hs-init">8.18.1. Header stack expressions</a></li>
+<li><a href="#sec-hs-init">8.19.1. Header stack expressions</a></li>
 </ul>
 </li>
-<li><a href="#sec-expr-hu">8.19. Operations on header unions</a></li>
-<li><a href="#sec-invocations">8.20. Method invocations and function calls</a></li>
-<li><a href="#sec-constructor">8.21. Constructor invocations</a></li>
-<li><a href="#sec-extern-operations">8.22. Operations on <code>extern</code> objects</a></li>
-<li><a href="#sec-newtype-operations">8.23. Operations on types introduced by <code>type</code></a></li>
-<li><a href="#sec-type-variable-operations">8.24. Operations on types that are type variables</a></li>
-<li><a href="#sec-uninitialized-values-and-writing-invalid-headers">8.25. Reading uninitialized values and writing fields of invalid headers</a></li>
-<li><a href="#sec-initializing-with-default-values">8.26. Initializing with default values</a></li>
+<li><a href="#sec-expr-hu">8.20. Operations on header unions</a></li>
+<li><a href="#sec-invocations">8.21. Method invocations and function calls</a></li>
+<li><a href="#sec-constructor">8.22. Constructor invocations</a></li>
+<li><a href="#sec-extern-operations">8.23. Operations on <code>extern</code> objects</a></li>
+<li><a href="#sec-newtype-operations">8.24. Operations on types introduced by <code>type</code></a></li>
+<li><a href="#sec-type-variable-operations">8.25. Operations on types that are type variables</a></li>
+<li><a href="#sec-uninitialized-values-and-writing-invalid-headers">8.26. Reading uninitialized values and writing fields of invalid headers</a></li>
+<li><a href="#sec-initializing-with-default-values">8.27. Initializing with default values</a></li>
 </ul>
 </li>
 <li><a href="#sec-minsizeinbits">9. Compile-time size determination</a></li>
@@ -2643,11 +2644,19 @@ validity checks on strings (i.e., it does not check that strings
 represent legal UTF-8 encodings).</p>
 </div>
 <div class="paragraph">
-<p>Since P4 does not provide any operations on strings,
-string literals are generally passed unchanged through the P4 compiler to
-other third-party tools or compiler-backends, including the
-terminating quotes. These tools can define their own handling of
-escape sequences (e.g., how to specify Unicode characters, or handle
+<p>Since P4 does not allow strings to exist at runtime, string literals
+are generally passed unchanged through the P4 compiler to
+other third-party tools or compiler-backends. The compiler can, however,
+perform compile-time concatenation (constant-folding) of concatenation
+expressions into single literal. When such concatenation is performed,
+the binary representation of the string literals (excluding the quotes)
+is concatenated in the order they appears in the source code. There are
+no escape sequences that would be treated specially when strings are
+concatenated.</p>
+</div>
+<div class="paragraph">
+<p>The backends and other tools can define their own handling of escape
+sequences (e.g., how to specify Unicode characters, or handle
 unprintable ASCII characters).</p>
 </div>
 <div class="paragraph">
@@ -2659,6 +2668,17 @@ unprintable ASCII characters).</p>
 <span style="color: #0a3069">"string \" with \" embedded \" quotes"</span>
 <span style="color: #0a3069">"string with embedded
 line terminator"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here is an example of concatenation expression and an equivalent string
+literal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0a3069">"one string \" with a quote inside;"</span> <span style="color: #0550ae">++</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">" "</span> <span style="color: #0550ae">++</span> <span style="color: #0a3069">"another string"</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+<span style="color: #6e7781">// can be constant folded to
+</span><span style="color: #0a3069">"one string \" with a quote inside; another string"</span></code></pre>
 </div>
 </div>
 </div>
@@ -2901,7 +2921,7 @@ lvalue
 </li>
 <li>
 <p>References to elements within header stacks (see
-<a href="#sec-expr-hs">Section 8.18</a>): indexing, and references to <code>last</code> and <code>next</code>.</p>
+<a href="#sec-expr-hs">Section 8.19</a>): indexing, and references to <code>last</code> and <code>next</code>.</p>
 </li>
 <li>
 <p>The result of a bit-slice operator <code>[m:l]</code>.</p>
@@ -3018,7 +3038,7 @@ is not <code>out</code>.</p>
 <li>
 <p>If a direction <code>out</code> parameter is of type header stack, all elements
 of the header stack are set to "invalid", and its <code>nextIndex</code> field
-is initialized to 0 (see <a href="#sec-expr-hs">Section 8.18</a>).</p>
+is initialized to 0 (see <a href="#sec-expr-hs">Section 8.19</a>).</p>
 </li>
 <li>
 <p>If a direction <code>out</code> parameter is a compound type, e.g. a struct or
@@ -3549,15 +3569,21 @@ description files; P4 programmers cannot declare new match kinds.</p>
 <h4 id="sec-bool-type">7.1.4. The Boolean type</h4>
 <div class="paragraph">
 <p>The Boolean type <code>bool</code> contains just two values, <code>false</code> and <code>true</code>.
-Boolean values are not integers or bit-strings.</p>
+Boolean values are not integers or bit-strings. Operations that can
+be performed on booleans are described in Section <a href="#sec-bool-exprs">Section 8.5</a>.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-string-type">7.1.5. Strings</h4>
 <div class="paragraph">
-<p>The type <code>string</code> represents strings.  There are no operations on
-string values; one cannot declare variables with a <code>string</code> type.
-Parameters with type <code>string</code> can be only directionless (see
+<p>The type <code>string</code> represents strings. The values of type <code>string</code> are
+either string literals, or concatenations of multiple <code>string</code>-typed
+expression. Operations that can be performed on strings are described in
+Section <a href="#sec-string-ops">Section 8.6</a>.</p>
+</div>
+<div class="paragraph">
+<p>One cannot declare variables with a <code>string</code> type. Parameters with
+type <code>string</code> can be only directionless (see Section
 <a href="#sec-calling-convention">Section 6.8</a>).
 P4 does not support string manipulation
 in the dataplane; the <code>string</code> type is only allowed for describing
@@ -3666,7 +3692,7 @@ non-negative integer.  When using an expression for
 the size, the expression must be parenthesized.
 Bitstrings with width 0 are
 allowed; they have no actual bits, and can only have the value 0.  See
-<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a> for additional details.
+<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a> for additional details.
 Note that <code>bit&lt;W&gt;</code> type refers to both cases of <code>bit&lt;W&gt;</code>
 and <code>bit&lt;(expression)&gt;</code> where the width is a compile-time known value.</p>
 </div>
@@ -3697,7 +3723,7 @@ bit values).</p>
 </div>
 <div class="paragraph">
 <p>All operations that can be performed on unsigned integers are
-described in <a href="#sec-bit-ops">Section 8.6</a>.</p>
+described in <a href="#sec-bit-ops">Section 8.7</a>.</p>
 </div>
 </div>
 <div class="sect4">
@@ -3728,7 +3754,7 @@ bit values).</p>
 </div>
 <div class="paragraph">
 <p>All operations that can be performed on signed integers are described
-in <a href="#sec-bit-ops">Section 8.6</a>.</p>
+in <a href="#sec-bit-ops">Section 8.7</a>.</p>
 </div>
 <div class="paragraph">
 <p>A signed integer with width 1 can only have two legal values: 0 and -1.</p>
@@ -3760,7 +3786,7 @@ values to always contain an integer number of bytes at runtime.</p>
 </div>
 <div class="paragraph">
 <p>All operations that can be performed on varbits are described in
-<a href="#sec-varbit-string">Section 8.10</a>.</p>
+<a href="#sec-varbit-string">Section 8.11</a>.</p>
 </div>
 </div>
 <div class="sect4">
@@ -3778,7 +3804,7 @@ described below.</p>
 </div>
 <div class="paragraph">
 <p>All operations that can be performed on arbitrary-precision integers
-are described in <a href="#sec-varint-ops">Section 8.8</a>.  The following example
+are described in <a href="#sec-varint-ops">Section 8.9</a>.  The following example
 shows three constant definitions whose values are arbitrary-precision
 integers.</p>
 </div>
@@ -4125,7 +4151,7 @@ addition, a header also contains a hidden Boolean "validity" field. When the
 variable with a header type is
 declared, its "validity" bit is automatically set to <code>false</code>. The "validity"
 bit can be manipulated by using the header methods <code>isValid()</code>, <code>setValid()</code>,
-and <code>setInvalid()</code>, as described in <a href="#sec-ops-on-hdrs">Section 8.17</a>.</p>
+and <code>setInvalid()</code>, as described in <a href="#sec-ops-on-hdrs">Section 8.18</a>.</p>
 </div>
 <div class="paragraph">
 <p>Note, nesting of headers is not supported. One reason is that it leads to
@@ -4266,7 +4292,7 @@ must be a local compile-time known value that is a positive
 integer. Nested header stacks are not supported. At runtime a stack
 contains <code>n</code> values with type <code>typeName</code>, only some of which may be
 valid. Expressions on header stacks are discussed in Section
-<a href="#sec-expr-hs">Section 8.18</a>.</p>
+<a href="#sec-expr-hs">Section 8.19</a>.</p>
 </div>
 <div class="paragraph">
 <p>For example, the following declarations,</p>
@@ -4287,7 +4313,7 @@ valid. Expressions on header stacks are discussed in Section
 of type <code>Mpls_h</code>.</p>
 </div>
 <div class="paragraph">
-<p>Operations on header stacks are described in <a href="#sec-expr-hs">Section 8.18</a>.</p>
+<p>Operations on header stacks are described in <a href="#sec-expr-hs">Section 8.19</a>.</p>
 </div>
 </div>
 <div class="sect3">
@@ -4330,7 +4356,7 @@ and IPv6 headers:</p>
 <p>A header union is not considered a type with fixed length.</p>
 </div>
 <div class="paragraph">
-<p>Operation on header unions are described in <a href="#sec-expr-hu">Section 8.19</a>.</p>
+<p>Operation on header unions are described in <a href="#sec-expr-hu">Section 8.20</a>.</p>
 </div>
 </div>
 <div class="sect3">
@@ -4383,7 +4409,7 @@ The type of tuples with n component types <code>T1</code>,&#8230;&#8203;,<code>T
 </div>
 <div class="paragraph">
 <p>Operations that manipulate tuple types are described in
-<a href="#sec-tuple-exprs">Section 8.12</a>.</p>
+<a href="#sec-tuple-exprs">Section 8.13</a>.</p>
 </div>
 <div class="paragraph">
 <p>The type <code>tuple&lt;&gt;</code> is a tuple type with no components.</p>
@@ -4410,7 +4436,7 @@ written as</p>
 </div>
 <div class="paragraph">
 <p>Operations that manipulate list types are described in
-<a href="#sec-list-exprs">Section 8.14</a>.</p>
+<a href="#sec-list-exprs">Section 8.15</a>.</p>
 </div>
 </div>
 <div class="sect3">
@@ -4739,7 +4765,7 @@ This expression can be used as a label in a <code>select</code> expression
 types cannot be named or declared by P4 programmers, they are only
 synthesized by the compiler internally and used for
 type-checking. Expressions with set types are described in
-<a href="#sec-set-exprs">Section 8.15</a>.</p>
+<a href="#sec-set-exprs">Section 8.16</a>.</p>
 </div>
 </div>
 <div class="sect4">
@@ -5562,7 +5588,7 @@ to the symbolic value <code>E.e2</code>, which corresponds to the fixed-width un
 </div>
 <div class="paragraph">
 <p>Because it is always safe to cast from an <code>enum</code> to its underlying fixed-width integer type,
-implicit casting from an <code>enum</code> to its fixed-width (signed or unsigned) integer type is also supported (see <a href="#sec-implicit-casts">Section 8.11.2</a>):</p>
+implicit casting from an <code>enum</code> to its fixed-width (signed or unsigned) integer type is also supported (see <a href="#sec-implicit-casts">Section 8.12.2</a>):</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -5793,7 +5819,7 @@ vice versa. As a consequence, a program that is valid in a language like C such 
 </div>
 <div class="paragraph">
 <p>See the discussion on arbitrary-precision types and implicit casts
-in <a href="#sec-implicit-casts">Section 8.11.2</a> for details on how the <code>0</code> in this
+in <a href="#sec-implicit-casts">Section 8.12.2</a> for details on how the <code>0</code> in this
 expression is evaluated.</p>
 </div>
 <div class="sect3">
@@ -5814,7 +5840,27 @@ expression can be inferred statically at compile time.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-bit-ops">8.6. Operations on fixed-width bit types (unsigned integers)</h3>
+<h3 id="sec-string-ops">8.6. Operations on strings</h3>
+<div class="paragraph">
+<p>The only operation allowed on strings is concatenation, denoted by
+<code>++</code>. For string concatenation, both operands must be strings and
+the result is also a string. String concatenation can only be
+performed at compile time.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> log<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">string</span> message<span style="color: #24292f;background-color: #f6f8fa">);</span>
+
+<span style="color: #953800">void</span> foo<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">int</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> v<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  <span style="color: #6e7781">// ...
+</span>  log<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"my log message "</span> <span style="color: #0550ae">++</span>
+      <span style="color: #0a3069">"continuation of the log message"</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="sec-bit-ops">8.7. Operations on fixed-width bit types (unsigned integers)</h3>
 <div class="paragraph">
 <p>This section discusses all operations that can be performed on
 expressions of type <code>bit&lt;W&gt;</code> for some width <code>W</code>, also known as
@@ -5967,7 +6013,7 @@ compile-time (<a href="#sec-minsizeinbits">Chapter 9</a>).</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-int-ops">8.7. Operations on fixed-width signed integers</h3>
+<h3 id="sec-int-ops">8.8. Operations on fixed-width signed integers</h3>
 <div class="paragraph">
 <p>This section discusses all operations that can be performed on expressions of type <code>int&lt;W&gt;</code>
 for some <code>W</code>. Recall that the <code>int&lt;W&gt;</code> denotes signed <code>W</code>-bit integers,
@@ -6115,7 +6161,7 @@ compile-time (<a href="#sec-minsizeinbits">Chapter 9</a>).</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-varint-ops">8.8. Operations on arbitrary-precision integers</h3>
+<h3 id="sec-varint-ops">8.9. Operations on arbitrary-precision integers</h3>
 <div class="paragraph">
 <p>The type <code>int</code> denotes arbitrary-precision integers. In P4, all
 expressions of type <code>int</code> must be compile-time known values.  The type
@@ -6206,7 +6252,7 @@ a positive value.</p>
 type <code>int</code> (except shifts). Binary operations cannot
 be used to combine values of type <code>int</code> with values of a fixed-width
 type (except shifts). However, the compiler automatically inserts casts from <code>int</code>
-to fixed-width types in certain situations---see <a href="#sec-casts">Section 8.11</a>.</p>
+to fixed-width types in certain situations---see <a href="#sec-casts">Section 8.12</a>.</p>
 </div>
 <div class="paragraph">
 <p>All computations on <code>int</code> values are carried out without loss of
@@ -6227,9 +6273,9 @@ to apply division and modulo to negative values.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_concatenation_and_shifts">8.9. Concatenation and shifts</h3>
+<h3 id="_concatenation_and_shifts">8.10. Concatenation and shifts</h3>
 <div class="sect3">
-<h4 id="sec-concatenation">8.9.1. Concatenation</h4>
+<h4 id="sec-concatenation">8.10.1. Concatenation</h4>
 <div class="paragraph">
 <p>Concatenation is applied to two bit-strings (signed or unsigned).
 It is denoted by the infix operator <code>++</code>.  The result is a bit-string
@@ -6239,7 +6285,7 @@ result is taken from the left operand.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_a_note_about_shifts">8.9.2. A note about shifts</h4>
+<h4 id="_a_note_about_shifts">8.10.2. A note about shifts</h4>
 <div class="paragraph">
 <p>The left operand of shifts can be any one out of unsigned bit-strings, signed bit-strings,
 and arbitrary-precision integers, and the right operand of shifts must be either
@@ -6297,7 +6343,7 @@ than 3 bits.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-varbit-string">8.10. Operations on variable-size bit types</h3>
+<h3 id="sec-varbit-string">8.11. Operations on variable-size bit types</h3>
 <div class="paragraph">
 <p>To support parsing headers with variable-length fields, P4 offers a
 type <code>varbit</code>. Each occurrence of the type <code>varbit</code> has a
@@ -6353,7 +6399,7 @@ the packet being constructed.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-casts">8.11. Casts</h3>
+<h3 id="sec-casts">8.12. Casts</h3>
 <div class="paragraph">
 <p>P4 provides a limited set of casts between types. A cast is written
 <code>(t) e</code>, where <code>t</code> is a type and <code>e</code> is an expression. Casts are only
@@ -6377,7 +6423,7 @@ specification. Some targets may not support all casts.</p>
 </ul>
 </div>
 <div class="sect3">
-<h4 id="_explicit_casts">8.11.1. Explicit casts</h4>
+<h4 id="_explicit_casts">8.12.1. Explicit casts</h4>
 <div class="paragraph">
 <p>The following casts are legal in P4:</p>
 </div>
@@ -6433,7 +6479,7 @@ emit a warning on overflow.</p>
 <p>casts between an <code>enum</code> with an explicit type and its underlying type</p>
 </li>
 <li>
-<p>casts of a key-value list to a struct type or a header type (see <a href="#sec-structure-expressions">Section 8.13</a>)</p>
+<p>casts of a key-value list to a struct type or a header type (see <a href="#sec-structure-expressions">Section 8.14</a>)</p>
 </li>
 <li>
 <p>casts of a tuple expression to a header stack type</p>
@@ -6450,7 +6496,7 @@ e.g., parsers or externs).</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-implicit-casts">8.11.2. Implicit casts</h4>
+<h4 id="sec-implicit-casts">8.12.2. Implicit casts</h4>
 <div class="paragraph">
 <p>To keep the language simple and avoid introducing hidden costs, P4
 only implicitly casts from <code>int</code> to fixed-width types and from enums
@@ -6521,7 +6567,7 @@ add implicit casts for <code>int</code> fields.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-illegal-arith">8.11.3. Illegal arithmetic expressions</h4>
+<h4 id="sec-illegal-arith">8.12.3. Illegal arithmetic expressions</h4>
 <div class="paragraph">
 <p>Many arithmetic expressions that would be allowed in other languages
 are illegal in P4. To illustrate, consider the following declarations:</p>
@@ -6645,7 +6691,7 @@ cannot guess the user intent, so P4 requires the user to disambiguate.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-tuple-exprs">8.12. Operations on tuple expressions</h3>
+<h3 id="sec-tuple-exprs">8.13. Operations on tuple expressions</h3>
 <div class="paragraph">
 <p>Tuples can be assigned to other tuples with the same type, passed as
 arguments and returned from functions, and can be initialized with
@@ -6728,7 +6774,7 @@ field in the structure:</p>
 <div class="paragraph">
 <p>A tuple expression can have an explicit structure or header type
 specified, and then it is converted automatically to a
-structure-valued expression (see <a href="#sec-structure-expressions">Section 8.13</a>):</p>
+structure-valued expression (see <a href="#sec-structure-expressions">Section 8.14</a>):</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6756,7 +6802,7 @@ is a <code>tuple</code> type.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-structure-expressions">8.13. Operations on structure-valued expressions</h3>
+<h3 id="sec-structure-expressions">8.14. Operations on structure-valued expressions</h3>
 <div class="paragraph">
 <p>One can write expressions that evaluate to a structure or header.  The
 syntax of these expressions is given by:</p>
@@ -6818,7 +6864,7 @@ once.</p>
 <p>Structure-valued expressions that have <code>...</code> as their last element are
 allowed to give values to only a subset of the fields of the struct or
 header type to which it evaluates.  Any field names not given a value
-explicitly will be given their default value (see <a href="#sec-initializing-with-default-values">Section 8.26</a>).</p>
+explicitly will be given their default value (see <a href="#sec-initializing-with-default-values">Section 8.27</a>).</p>
 </div>
 <div class="paragraph">
 <p>The order of the fields of the <code>struct</code> or <code>header</code> type does not need
@@ -6830,7 +6876,7 @@ the same structure-valued expression.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-list-exprs">8.14. Operations on lists</h3>
+<h3 id="sec-list-exprs">8.15. Operations on lists</h3>
 <div class="paragraph">
 <p>The value of a list is written using curly braces, with each element
 separated by a comma.  The left curly brace is preceded by a
@@ -6863,7 +6909,7 @@ compile-time (<a href="#sec-minsizeinbits">Chapter 9</a>).</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-set-exprs">8.15. Operations on sets</h3>
+<h3 id="sec-set-exprs">8.16. Operations on sets</h3>
 <div class="paragraph">
 <p>Some P4 expressions denote sets of values (<code>set&lt;T&gt;</code>, for some type <code>T</code>;
 see <a href="#sec-set-types">Section 7.2.9.1</a>). These expressions can
@@ -6923,7 +6969,7 @@ simpleKeysetExpression
 precedence; the just above the <code>?:</code> operator.</p>
 </div>
 <div class="sect3">
-<h4 id="sec-singleton-set">8.15.1. Singleton sets</h4>
+<h4 id="sec-singleton-set">8.16.1. Singleton sets</h4>
 <div class="paragraph">
 <p>In a set context, expressions denote singleton sets. For example, in
 the following program fragment,</p>
@@ -6940,7 +6986,7 @@ the following program fragment,</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-universal-set">8.15.2. The universal set</h4>
+<h4 id="sec-universal-set">8.16.2. The universal set</h4>
 <div class="paragraph">
 <p>In a set context, the expressions <code>default</code> or <code>_</code> denote the
 universal set, which contains all possible values of a given type:</p>
@@ -6955,7 +7001,7 @@ universal set, which contains all possible values of a given type:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-cubes">8.15.3. Masks</h4>
+<h4 id="sec-cubes">8.16.3. Masks</h4>
 <div class="paragraph">
 <p>The infix operator <code>&amp;&amp;&amp;</code> takes two arguments of the same numeric type (<a href="#sec-numeric-values">Section 7.4</a>),
 and creates a value of the same type.
@@ -6987,7 +7033,7 @@ keyset as in the example above.</p>
 <div class="paragraph">
 <p>Similar to other binary operations,
 the mask operator allows the compiler to automatically insert casts
-to unify the argument types in certain situations (<a href="#sec-implicit-casts">Section 8.11.2</a>).</p>
+to unify the argument types in certain situations (<a href="#sec-implicit-casts">Section 8.12.2</a>).</p>
 </div>
 <div class="paragraph">
 <p>P4 architectures may impose additional restrictions on the expressions
@@ -6997,7 +7043,7 @@ values.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-ranges">8.15.4. Ranges</h4>
+<h4 id="sec-ranges">8.16.4. Ranges</h4>
 <div class="paragraph">
 <p>The infix operator <code>..</code> takes two arguments of the same numeric type <code>T</code> (<a href="#sec-numeric-values">Section 7.4</a>),
 and creates a value of
@@ -7015,7 +7061,7 @@ first and the second, inclusively. For example:</p>
 <div class="paragraph">
 <p>Similar to other binary operations,
 the range operator allows the compiler to automatically insert casts
-to unify the argument types in certain situations (<a href="#sec-implicit-casts">Section 8.11.2</a>).</p>
+to unify the argument types in certain situations (<a href="#sec-implicit-casts">Section 8.12.2</a>).</p>
 </div>
 <div class="paragraph">
 <p>A range where the second value is smaller than the first one
@@ -7023,7 +7069,7 @@ represents an empty set.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-tuples-of-sets">8.15.5. Products</h4>
+<h4 id="sec-tuples-of-sets">8.16.5. Products</h4>
 <div class="paragraph">
 <p>Multiple sets can be combined using Cartesian product:</p>
 </div>
@@ -7042,16 +7088,16 @@ represents an empty set.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-ops-on-structs">8.16. Operations on struct types</h3>
+<h3 id="sec-ops-on-structs">8.17. Operations on struct types</h3>
 <div class="paragraph">
 <p>The only operation defined on expressions whose type is a <code>struct</code> is
 field access, written using dot (".") notation---e.g., <code>s.field</code>. If
 <code>s</code> is an l-value, then <code>s.field</code> is also an l-value. P4 also allows
 copying <code>struct</code>s using assignment when the source and target of the
 assignment have the same type. Finally, <code>struct</code>s can be initialized
-with a tuple expression, as discussed in <a href="#sec-tuple-exprs">Section 8.12</a>, or
+with a tuple expression, as discussed in <a href="#sec-tuple-exprs">Section 8.13</a>, or
 with a structure-valued expression, as described in
-<a href="#sec-structure-expressions">Section 8.13</a>.  Both of these cases must initialize all
+<a href="#sec-structure-expressions">Section 8.14</a>.  Both of these cases must initialize all
 fields of the structure. The size of a struct can be determined at
 compile-time (<a href="#sec-minsizeinbits">Chapter 9</a>).</p>
 </div>
@@ -7077,13 +7123,13 @@ different ways:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>See <a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a>
+<p>See <a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a>
 for a description of the behavior if <code>struct</code> fields are read without
 being initialized.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-ops-on-hdrs">8.17. Operations on headers</h3>
+<h3 id="sec-ops-on-hdrs">8.18. Operations on headers</h3>
 <div class="paragraph">
 <p>Headers provide the same operations as <code>struct</code>s. Assignment between
 headers also copies the "validity" header bit.</p>
@@ -7109,9 +7155,9 @@ of the header.</p>
 </div>
 <div class="paragraph">
 <p>Similar to a <code>struct</code>, a header object can be initialized with a tuple
-expression (see <a href="#sec-tuple-exprs">Section 8.12</a>) --- the tuple fields are assigned to the
+expression (see <a href="#sec-tuple-exprs">Section 8.13</a>) --- the tuple fields are assigned to the
 header fields in the order they appear --- or with a structure-valued
-expression (see <a href="#sec-ops-on-structs">Section 8.16</a>).  When initialized the header
+expression (see <a href="#sec-ops-on-structs">Section 8.17</a>).  When initialized the header
 automatically becomes valid:</p>
 </div>
 <div class="listingblock">
@@ -7163,14 +7209,14 @@ occurs in the single lexical token <code>{#}</code>, which may not have
 whitespace or any other characters between those shown.</p>
 </div>
 <div class="paragraph">
-<p>See <a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a>
+<p>See <a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a>
 for a description of the behavior if header fields are read without
 being initialized, or header fields are written to a currently invalid
 header.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-expr-hs">8.18. Operations on header stacks</h3>
+<h3 id="sec-expr-hs">8.19. Operations on header stacks</h3>
 <div class="paragraph">
 <p>A header stack is a fixed-size array of headers with the same
 type. The valid elements of a header stack need not be contiguous. P4
@@ -7213,7 +7259,7 @@ the result is also an l-value. The header may be invalid. Some implementations m
 A P4 compiler must give an error if an index that is a compile-time known value is out of range.</p>
 <div class="paragraph">
 <p>Accessing a header stack <code>hs</code> with an index less than <code>0</code> or
-greater than or equal to <code>hs.size</code> results in an undefined value.  See <a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a> for more
+greater than or equal to <code>hs.size</code> results in an undefined value.  See <a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a> for more
 details.</p>
 </div>
 <div class="paragraph">
@@ -7330,7 +7376,7 @@ stacks are equal if and only if all their corresponding elements are
 equal.  Note that the <code>nextIndex</code> value is not used in the equality comparison.</p>
 </div>
 <div class="sect3">
-<h4 id="sec-hs-init">8.18.1. Header stack expressions</h4>
+<h4 id="sec-hs-init">8.19.1. Header stack expressions</h4>
 <div class="paragraph">
 <p>One can write expressions that evaluate to a header stack.  The
 syntax of these expressions is given by:</p>
@@ -7371,7 +7417,7 @@ H<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-expr-hu">8.19. Operations on header unions</h3>
+<h3 id="sec-expr-hu">8.20. Operations on header unions</h3>
 <div class="paragraph">
 <p>A variable declared with a union type is initially invalid. For example:</p>
 </div>
@@ -7639,7 +7685,7 @@ the values of the valid fields are equal as headers).</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-invocations">8.20. Method invocations and function calls</h3>
+<h3 id="sec-invocations">8.21. Method invocations and function calls</h3>
 <div class="paragraph">
 <p>Method invocations and function calls can be invoked using the
 following syntax:</p>
@@ -7706,7 +7752,7 @@ f<span style="color: #24292f;background-color: #f6f8fa">(</span>xa<span style="c
 <p>The calling convention is copy-in/copy-out (<a href="#sec-calling-convention">Section 6.8</a>).  For generic functions the type arguments
 can be explicitly specified in the function call. The compiler only
 inserts implicit casts for direction <code>in</code> arguments to methods or
-functions as described in <a href="#sec-casts">Section 8.11</a>.  The types for all
+functions as described in <a href="#sec-casts">Section 8.12</a>.  The types for all
 other arguments must match the parameter types exactly.</p>
 </div>
 <div class="paragraph">
@@ -7722,7 +7768,7 @@ infer a type for the don&#8217;t care argument.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-constructor">8.21. Constructor invocations</h3>
+<h3 id="sec-constructor">8.22. Constructor invocations</h3>
 <div class="paragraph">
 <p>Several P4 constructs denote resources that are allocated at
 compilation time:</p>
@@ -7782,7 +7828,7 @@ target-dependent implementation property of a table:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-extern-operations">8.22. Operations on <code>extern</code> objects</h3>
+<h3 id="sec-extern-operations">8.23. Operations on <code>extern</code> objects</h3>
 <div class="paragraph">
 <p>The only operations that can be performed on <code>extern</code> objects are the
 following:</p>
@@ -7791,11 +7837,11 @@ following:</p>
 <ul>
 <li>
 <p>Instantiating an extern object using a constructor invocation, as described in
-<a href="#sec-constructor">Section 8.21</a>.</p>
+<a href="#sec-constructor">Section 8.22</a>.</p>
 </li>
 <li>
 <p>Invoking a method of an extern object instance using a method call expression, as
-described in <a href="#sec-invocations">Section 8.20</a>.</p>
+described in <a href="#sec-invocations">Section 8.21</a>.</p>
 </li>
 </ul>
 </div>
@@ -7811,7 +7857,7 @@ comparison is not defined.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-newtype-operations">8.23. Operations on types introduced by <code>type</code></h3>
+<h3 id="sec-newtype-operations">8.24. Operations on types introduced by <code>type</code></h3>
 <div class="paragraph">
 <p>Values with a type introduced by the <code>type</code> keyword provide only a few operations:</p>
 </div>
@@ -7841,7 +7887,7 @@ U32 x <span style="color: #0550ae">=</span> <span style="color: #24292f;backgrou
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-type-variable-operations">8.24. Operations on types that are type variables</h3>
+<h3 id="sec-type-variable-operations">8.25. Operations on types that are type variables</h3>
 <div class="paragraph">
 <p>Because functions, methods, control, and parsers can be generic,
 they offer the possibility of declaring values with types that
@@ -7873,9 +7919,9 @@ limitation, such values are currently of limited utility.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-uninitialized-values-and-writing-invalid-headers">8.25. Reading uninitialized values and writing fields of invalid headers</h3>
+<h3 id="sec-uninitialized-values-and-writing-invalid-headers">8.26. Reading uninitialized values and writing fields of invalid headers</h3>
 <div class="paragraph">
-<p>As mentioned in Section <a href="#sec-expr-hs">Section 8.18</a>, any reference to an element of
+<p>As mentioned in Section <a href="#sec-expr-hs">Section 8.19</a>, any reference to an element of
 a header stack <code>hs[index]</code> where <code>index</code> is a compile-time known value
 must give an error at compile time if the value of the index is out of
 range.  That section also defines the run time behavior of the
@@ -8050,7 +8096,7 @@ they do not have to be explicitly initialized to have a legal value.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-initializing-with-default-values">8.26. Initializing with default values</h3>
+<h3 id="sec-initializing-with-default-values">8.27. Initializing with default values</h3>
 <div class="paragraph">
 <p>A left-value can be initialized automatically with a default value of the
 suitable type using the syntax <code>...</code> (see <a href="#sec-default-values">Section 7.3</a>).  A value
@@ -8908,7 +8954,7 @@ to a result with one of these types:</p>
 <div class="paragraph">
 <p>All switch labels must be expressions with compile-time known values,
 and must have a type that can be implicitly cast to the type of the
-<code>switch</code> expression (see <a href="#sec-implicit-casts">Section 8.11.2</a>).  Switch
+<code>switch</code> expression (see <a href="#sec-implicit-casts">Section 8.12.2</a>).  Switch
 labels must not begin with a left brace character <code>{</code>, to avoid
 ambiguity with a block statement.</p>
 </div>
@@ -9757,7 +9803,7 @@ given by the following pseudocode:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The TCP options example from <a href="#sec-expr-hu">Section 8.19</a> also illustrates how <code>lookahead</code> can be used:</p>
+<p>The TCP options example from <a href="#sec-expr-hu">Section 8.20</a> also illustrates how <code>lookahead</code> can be used:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -10403,7 +10449,7 @@ fields whose types support equality comparisons.</p>
 <p>a <code>ternary</code> match kind on a key field means that the field in the
 table specifies a set of values for the key field using a value and
 a mask. The meaning of the <code>(value, mask)</code> pair is similar to the P4
-mask expressions, as described in <a href="#sec-cubes">Section 8.15.3</a>: a key field
+mask expressions, as described in <a href="#sec-cubes">Section 8.16.3</a>: a key field
 <code>k</code> matches the table entry when <code>k &amp; mask == value &amp; mask</code>.</p>
 </li>
 <li>
@@ -12971,9 +13017,10 @@ the default action, and never in the table.</p>
 <div class="paragraph">
 <p>The <code>@name</code> annotation directs the compiler to use a different
 local name when generating the external APIs used to manipulate a
-language element from the control plane. This annotation takes a string literal
-body.  In the
-following example, the fully-qualified name of the table is <code>c_inst.t1</code>.</p>
+language element from the control plane. This annotation takes a local
+compile-time known value of type <code>string</code> (typically a string literal).
+In the following example, the fully-qualified name of the table is
+<code>c_inst.t1</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -13122,12 +13169,14 @@ side effects that affect the function.</p>
 <div class="paragraph">
 <p>The <code>deprecated</code> annotation has a required string argument that is a
 message that will be printed by a compiler when a program is using the
-deprecated construct.  This is mostly useful for annotating library
-constructs, such as externs.</p>
+deprecated construct. This is mostly useful for annotating library
+constructs, such as externs. The parameter must be a local
+compile-time known value of type <code>string</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@deprecated</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"Please use the 'check' function instead"</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">#define</span> DEPR_V1_2_2 <span style="color: #0a3069">"Deprecated in v1.2.2"</span>
+<span style="color: #0550ae">@deprecated</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"Please use the 'check' function instead."</span> <span style="color: #0550ae">++</span> DEPR_V1_2_2<span style="color: #24292f;background-color: #f6f8fa">)</span>
 <span style="color: #cf222e">extern</span> Checker <span style="color: #24292f;background-color: #f6f8fa">{</span>
    <span style="color: #6e7781">/* body omitted */</span>
 <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
@@ -13140,7 +13189,8 @@ constructs, such as externs.</p>
 <p>The <code>noWarn</code> annotation has a required string argument that indicates
 a compiler warning that will be inhibited.  For example
 <code>@noWarn("unused")</code> on a declaration will prevent a compiler warning
-if that declaration is not used.</p>
+if that declaration is not used. The parameter must be a local
+compile-time known value of type <code>string</code>.</p>
 </div>
 </div>
 </div>
@@ -13184,6 +13234,9 @@ of the wrong type)</p>
 <li>
 <p>Clarified that <code>switch</code> statements are allowed in action and function bodies, and that <code>switch</code> statements with <code>action_run</code> expressions are only allowed in control <code>apply</code> blocks (<a href="#sec-stmts">Chapter 12</a> and <a href="#sec-switch-stmt">Section 12.7</a>).</p>
 </li>
+<li>
+<p>Added support for compile-time string concatenation using <code>++</code> operator (<a href="#sec-string-type">Section 7.1.5</a> and <a href="#sec-string-ops">Section 8.6</a>).</p>
+</li>
 </ul>
 </div>
 </div>
@@ -13208,19 +13261,19 @@ of the wrong type)</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Added header stack expressions (<a href="#sec-hs-init">Section 8.18.1</a>).</p>
+<p>Added header stack expressions (<a href="#sec-hs-init">Section 8.19.1</a>).</p>
 </li>
 <li>
-<p>Allow casts from a type to itself (<a href="#sec-casts">Section 8.11</a>).</p>
+<p>Allow casts from a type to itself (<a href="#sec-casts">Section 8.12</a>).</p>
 </li>
 <li>
-<p>Added an invalid header or header union expression <code>{#}</code> (<a href="#sec-ops-on-hdrs">Section 8.17</a> and <a href="#sec-expr-hu">Section 8.19</a>).</p>
+<p>Added an invalid header or header union expression <code>{#}</code> (<a href="#sec-ops-on-hdrs">Section 8.18</a> and <a href="#sec-expr-hu">Section 8.20</a>).</p>
 </li>
 <li>
 <p>Added a concept of numeric values (<a href="#sec-numeric-values">Section 7.4</a>).</p>
 </li>
 <li>
-<p>Added a section on operations on extern objects (<a href="#sec-extern-operations">Section 8.22</a>).</p>
+<p>Added a section on operations on extern objects (<a href="#sec-extern-operations">Section 8.23</a>).</p>
 </li>
 <li>
 <p>Added note in sections operations on types for types that support compile-time size determination.</p>
@@ -13259,13 +13312,13 @@ of the wrong type)</p>
 <p>Clarified implicit casts present in select expressions (<a href="#sec-select">Section 13.6</a>).</p>
 </li>
 <li>
-<p>Clarified that slices can be applied to arbitrary-precision integers (<a href="#sec-varint-ops">Section 8.8</a>).</p>
+<p>Clarified that slices can be applied to arbitrary-precision integers (<a href="#sec-varint-ops">Section 8.9</a>).</p>
 </li>
 <li>
 <p>Clarified that direct invocation is not possible for objects that have constructor arguments (<a href="#sec-direct-invocation">Section 15.1</a>).</p>
 </li>
 <li>
-<p>Added comparison for tuples as a legal operation (<a href="#sec-tuple-exprs">Section 8.12</a>).</p>
+<p>Added comparison for tuples as a legal operation (<a href="#sec-tuple-exprs">Section 8.13</a>).</p>
 </li>
 <li>
 <p>Clarified the behavior of <code>lookahead</code> on header-typed values (<a href="#sec-packet-lookahead">Section 13.8.3</a>).</p>
@@ -13274,10 +13327,10 @@ of the wrong type)</p>
 <p>Added <code>static_assert</code> function (<a href="#sec-static-assert">Chapter 19</a>).</p>
 </li>
 <li>
-<p>Clarified semantics of ranges where the start is bigger than the end (<a href="#sec-ranges">Section 8.15.4</a>).</p>
+<p>Clarified semantics of ranges where the start is bigger than the end (<a href="#sec-ranges">Section 8.16.4</a>).</p>
 </li>
 <li>
-<p>Allow ranges to be specified by serializable enums (<a href="#sec-ranges">Section 8.15.4</a>).</p>
+<p>Allow ranges to be specified by serializable enums (<a href="#sec-ranges">Section 8.16.4</a>).</p>
 </li>
 <li>
 <p>Specified type produced by the <code>*sizeInB*</code> methods (<a href="#sec-minsizeinbits">Chapter 9</a>).</p>
@@ -13338,10 +13391,10 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <p>Added <code>match_kind</code> as a base type (<a href="#sec-match-kind-type">Section 7.1.3</a>).</p>
 </li>
 <li>
-<p>Removed structure initializers as they are subsumed by structure-valued expressions (<a href="#sec-structure-expressions">Section 8.13</a>).</p>
+<p>Removed structure initializers as they are subsumed by structure-valued expressions (<a href="#sec-structure-expressions">Section 8.14</a>).</p>
 </li>
 <li>
-<p>Specified operations on values typed as type variables (<a href="#sec-type-variable-operations">Section 8.24</a>).</p>
+<p>Specified operations on values typed as type variables (<a href="#sec-type-variable-operations">Section 8.25</a>).</p>
 </li>
 <li>
 <p>Clarified semantics of compile-time known values (<a href="#sec-compile-time-known">Section 18.1</a>).</p>
@@ -13353,7 +13406,7 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <p>Clarified semantics of arbitrary precision integers (<a href="#sec-arbitrary-precision-integers">Section 7.1.6.5</a>).</p>
 </li>
 <li>
-<p>Clarified semantics of bit slices, shifts, and concatenation (<a href="#sec-bit-ops">Section 8.6</a>).</p>
+<p>Clarified semantics of bit slices, shifts, and concatenation (<a href="#sec-bit-ops">Section 8.7</a>).</p>
 </li>
 <li>
 <p>Clarified semantics of optional parameters (<a href="#sec-optional-parameters">Section 6.8.2</a>).</p>
@@ -13362,7 +13415,7 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <p>Clarified restrictions on extern method and function invocation (<a href="#sec-calling-restrictions">Appendix F</a>).</p>
 </li>
 <li>
-<p>Clarified semantics of implicit casts (<a href="#sec-implicit-casts">Section 8.11.2</a>).</p>
+<p>Clarified semantics of implicit casts (<a href="#sec-implicit-casts">Section 8.12.2</a>).</p>
 </li>
 </ul>
 </div>
@@ -13372,7 +13425,7 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Added support for accessing tuple fields (<a href="#sec-tuple-exprs">Section 8.12</a>).</p>
+<p>Added support for accessing tuple fields (<a href="#sec-tuple-exprs">Section 8.13</a>).</p>
 </li>
 <li>
 <p>Added support for generic structures (<a href="#sec-type-spec">Section 7.2.11</a>).</p>
@@ -13390,22 +13443,22 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <p>Added support for conditional statements and empty statements in parsers (<a href="#sec-parser-state-stmt">Section 13.4</a>).</p>
 </li>
 <li>
-<p>Added support for casts from <code>int</code> to <code>bool</code> (<a href="#sec-casts">Section 8.11</a>).</p>
+<p>Added support for casts from <code>int</code> to <code>bool</code> (<a href="#sec-casts">Section 8.12</a>).</p>
 </li>
 <li>
-<p>Added support for 0-width bitstrings and varbits (<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a>).</p>
+<p>Added support for 0-width bitstrings and varbits (<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a>).</p>
 </li>
 <li>
 <p>Clarified that <code>default_action</code> is <code>NoAction</code> if otherwise unspecified (<a href="#sec-tables">Section 14.2</a>).</p>
 </li>
 <li>
-<p>Clarified the types of expressions that may be used as indexes for header stacks (<a href="#sec-expr-hs">Section 8.18</a>).</p>
+<p>Clarified the types of expressions that may be used as indexes for header stacks (<a href="#sec-expr-hs">Section 8.19</a>).</p>
 </li>
 <li>
 <p>Clarified representation of Booleans in headers (<a href="#sec-header-types">Section 7.2.2</a>).</p>
 </li>
 <li>
-<p>Clarified representation of empty types (<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a>).</p>
+<p>Clarified representation of empty types (<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a>).</p>
 </li>
 <li>
 <p>Clarified that action data can be specified by the control plane, <code>default_action</code> table property, or <code>const entries</code> table property (<a href="#sec-actions">Section 14.1</a>).</p>
@@ -13424,13 +13477,13 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Added structure-value expressions (<a href="#sec-structure-expressions">Section 8.13</a>).</p>
+<p>Added structure-value expressions (<a href="#sec-structure-expressions">Section 8.14</a>).</p>
 </li>
 <li>
 <p>Added support for default values (<a href="#sec-default-values">Section 7.3</a>).</p>
 </li>
 <li>
-<p>Added support for concatenating signed strings (<a href="#sec-concatenation">Section 8.9.1</a>).</p>
+<p>Added support for concatenating signed strings (<a href="#sec-concatenation">Section 8.10.1</a>).</p>
 </li>
 <li>
 <p>Added key-value and list-structured annotations (<a href="#sec-annotations">Chapter 20</a>).</p>
@@ -13442,18 +13495,18 @@ of keys is empty (<a href="#sec-table-keys">Section 14.2.1.1</a>).</p>
 <p>Added <code>@noWarn</code> annotation (<a href="#sec-nowarn-anno">Section 20.3.9</a>).</p>
 </li>
 <li>
-<p>Generalized typing for masks to allow serializable <code>enum</code>s (<a href="#sec-cubes">Section 8.15.3</a>).</p>
+<p>Generalized typing for masks to allow serializable <code>enum</code>s (<a href="#sec-cubes">Section 8.16.3</a>).</p>
 </li>
 <li>
 <p>Restricted the right operands of bit shifts involving
-arbitrary-precision integers to be constant and positive (<a href="#sec-varint-ops">Section 8.8</a>).</p>
+arbitrary-precision integers to be constant and positive (<a href="#sec-varint-ops">Section 8.9</a>).</p>
 </li>
 <li>
 <p>Clarified copy-out behavior for <code>return</code> (<a href="#sec-return-stmt">Section 12.4</a>) and <code>exit</code> (<a href="#sec-exit-stmt">Section 12.5</a>)
 statements.</p>
 </li>
 <li>
-<p>Clarified semantics of invalid header stacks (<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.25</a>).</p>
+<p>Clarified semantics of invalid header stacks (<a href="#sec-uninitialized-values-and-writing-invalid-headers">Section 8.26</a>).</p>
 </li>
 <li>
 <p>Clarified initialization semantics (<a href="#sec-lvalues">Section 6.7</a> and
@@ -13515,7 +13568,7 @@ and eliminate annotations on const entries (<a href="#sec-entries">Section 14.2.
 <p>Clarified the significance of order of entries in <code>const entries</code> (<a href="#sec-entries">Section 14.2.1.4</a>).</p>
 </li>
 <li>
-<p>Added methods to calculate header size (<a href="#sec-ops-on-hdrs">Section 8.17</a>).</p>
+<p>Added methods to calculate header size (<a href="#sec-ops-on-hdrs">Section 8.18</a>).</p>
 </li>
 </ul>
 </div>
@@ -13575,7 +13628,7 @@ and eliminate annotations on const entries (<a href="#sec-entries">Section 14.2.
 </div>
 </li>
 <li>
-<p>Saturating arithmetic (<a href="#sec-bit-ops">Section 8.6</a>)</p>
+<p>Saturating arithmetic (<a href="#sec-bit-ops">Section 8.7</a>)</p>
 <div class="ulist">
 <ul>
 <li>
@@ -13615,7 +13668,7 @@ and eliminate annotations on const entries (<a href="#sec-entries">Section 14.2.
 </div>
 </li>
 <li>
-<p>Invalid headers (<a href="#sec-ops-on-hdrs">Section 8.17</a>)</p>
+<p>Invalid headers (<a href="#sec-ops-on-hdrs">Section 8.18</a>)</p>
 <div class="ulist">
 <ul>
 <li>
@@ -15529,7 +15582,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-03-11 19:27:33 UTC
+Last updated 2025-03-13 16:23:23 UTC
 </div>
 </div>
 </body>
