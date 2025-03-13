@@ -8610,7 +8610,19 @@ case, for control blocks.</p>
 assignmentOrMethodCallStatement
     : lvalue "(" argumentList ")" ";"
     | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")" ";"
-    | lvalue "="  expression ";"
+    | lvalue "=" expression ";"
+    | lvalue "*=" expression ";"
+    | lvalue "/=" expression ";"
+    | lvalue "%=" expression ";"
+    | lvalue "+=" expression ";"
+    | lvalue "-=" expression ";"
+    | lvalue "|+|=" expression ";"
+    | lvalue "|-|=" expression ";"
+    | lvalue "&lt;&lt;=" expression ";"
+    | lvalue "&gt;&gt;=" expression ";"
+    | lvalue "&amp;=" expression ";"
+    | lvalue "|=" expression ";"
+    | lvalue "^=" expression ";"
     ;</code></pre>
 </div>
 </div>
@@ -8626,6 +8638,16 @@ to a value, and finally copies the value into the l-value. Derived
 types (e.g. <code>struct</code>s) are copied recursively, and all components
 of <code>header</code>s are copied, including "validity" bits. Assignment is
 not defined for <code>extern</code> values.</p>
+</div>
+<div class="paragraph">
+<p>An assignment may also be written with a binary arithmetic or bit manipulation
+operator immediately before the <code>=</code> sign.  This performs the binary operator on
+the old value of the left sub-expression and the right sub-expression and assigns
+the result to the l-value.  Thus an assignment like <code>A += B</code> is equivalent
+to <code>A = A + B</code>, except that <code>A</code> is only evaluated once.  This means that
+any side-effects within this operand (eg, a function call inside an array index
+or slice expression) only occur once.  This is not valid
+for comparison operators, logical operators, concat, range, or mask operators.</p>
 </div>
 </div>
 <div class="sect2">
@@ -13240,6 +13262,9 @@ of the wrong type)</p>
 <li>
 <p>Added support for compile-time string concatenation using <code>++</code> operator (<a href="#sec-string-type">Section 7.1.5</a> and <a href="#sec-string-ops">Section 8.6</a>).</p>
 </li>
+<li>
+<p>Added compound assignment statements (<a href="#sec-assignment">Section 12.1</a>)</p>
+</li>
 </ul>
 </div>
 </div>
@@ -15188,7 +15213,19 @@ typedefDeclaration
 assignmentOrMethodCallStatement
     : lvalue "(" argumentList ")" ";"
     | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")" ";"
-    | lvalue "="  expression ";"
+    | lvalue "=" expression ";"
+    | lvalue "*=" expression ";"
+    | lvalue "/=" expression ";"
+    | lvalue "%=" expression ";"
+    | lvalue "+=" expression ";"
+    | lvalue "-=" expression ";"
+    | lvalue "|+|=" expression ";"
+    | lvalue "|-|=" expression ";"
+    | lvalue "&lt;&lt;=" expression ";"
+    | lvalue "&gt;&gt;=" expression ";"
+    | lvalue "&amp;=" expression ";"
+    | lvalue "|=" expression ";"
+    | lvalue "^=" expression ";"
     ;
 
 breakStatement
@@ -15585,7 +15622,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-03-13 16:24:58 UTC
+Last updated 2025-03-13 16:26:32 UTC
 </div>
 </div>
 </body>
