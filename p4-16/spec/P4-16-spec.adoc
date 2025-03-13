@@ -1225,11 +1225,18 @@ number of backslash characters (ASCII code 92). P4 does not make any
 validity checks on strings (i.e., it does not check that strings
 represent legal UTF-8 encodings).
 
-Since P4 does not provide any operations on strings,
-string literals are generally passed unchanged through the P4 compiler to
-other third-party tools or compiler-backends, including the
-terminating quotes. These tools can define their own handling of
-escape sequences (e.g., how to specify Unicode characters, or handle
+Since P4 does not allow strings to exist at runtime, string literals
+are generally passed unchanged through the P4 compiler to
+other third-party tools or compiler-backends. The compiler can, however,
+perform compile-time concatenation (constant-folding) of concatenation
+expressions into single literal. When such concatenation is performed,
+the binary representation of the string literals (excluding the quotes)
+is concatenated in the order they appears in the source code. There are
+no escape sequences that would be treated specially when strings are
+concatenated.
+
+The backends and other tools can define their own handling of escape
+sequences (e.g., how to specify Unicode characters, or handle
 unprintable ASCII characters).
 
 Here are 3 examples of string literals:
@@ -1241,6 +1248,17 @@ Here are 3 examples of string literals:
 "string with embedded
 line terminator"
 ----
+
+Here is an example of concatenation expression and an equivalent string
+literal:
+
+[source,p4]
+----
+"one string \" with a quote inside;" ++ (" " ++ "another string")
+// can be constant folded to
+"one string \" with a quote inside; another string"
+----
+
 
 [#sec-trailing-commas]
 ==== Optional trailing commas
@@ -1867,15 +1885,20 @@ Operations on values of type `match_kind` are described in
 ==== The Boolean type
 
 The Boolean type `bool` contains just two values, `false` and `true`.
-Boolean values are not integers or bit-strings.
+Boolean values are not integers or bit-strings. Operations that can
+be performed on booleans are described in Section <<sec-bool-exprs>>.
 
 [#sec-string-type]
 ==== Strings
 
-The type `string` represents strings.  There are no operations on
-string values; one cannot declare variables with a `string` type.
-Parameters with type `string` can be only directionless (see
-<<sec-calling-convention>>).
+The type `string` represents strings. The values of type `string` are
+either string literals, or concatenations of multiple `string`-typed
+expression. Operations that can be performed on strings are described in
+Section <<sec-string-ops>>.
+
+One cannot declare variables with a `string` type. Parameters with
+type `string` can be only directionless (see Section
+<<#sec-calling-convention>>).
 P4 does not support string manipulation
 in the dataplane; the `string` type is only allowed for describing
 compile-time known values (i.e., string literals, as discussed in
@@ -3486,6 +3509,25 @@ which cannot both be arbitrary-precision integers unless the condition
 itself can be evaluated at compilation time. This restriction is
 designed to ensure that the width of the result of the conditional
 expression can be inferred statically at compile time.
+
+[#sec-string-ops]
+=== Operations on strings
+
+The only operation allowed on strings is concatenation, denoted by
+`++`. For string concatenation, both operands must be strings and
+the result is also a string. String concatenation can only be
+performed at compile time.
+
+[source,p4]
+----
+extern void log(string message);
+
+void foo(int<8> v) {
+  // ...
+  log("my log message " ++
+      "continuation of the log message");
+}
+----
 
 [#sec-bit-ops]
 === Operations on fixed-width bit types (unsigned integers)
@@ -5463,12 +5505,12 @@ Statements can appear in several places:
 
 * Within `parser` states
 * Within a `control` block
-* Within an `action`
+* Within an `action` or function
 
 There are restrictions for the kinds of statements that can appear in
-each of these places. For example, ``return``s are not supported in
-parsers, and `switch` statements are only supported in control
-blocks. We present here the most general case, for control blocks.
+each of these places. For example, neither ``return``s nor `switch`
+statements are supported in parsers. We present here the most general
+case, for control blocks.
 
 [source,bison]
 ----
@@ -5630,7 +5672,8 @@ innermost `if` statement that does not have an `else` statement.
 [#sec-switch-stmt]
 === Switch statement
 
-The `switch` statement can only be used within `control` blocks.
+The `switch` statement can only be used within `control` blocks, `action`
+bodies, or function bodies.
 
 [source,bison]
 ----
@@ -5655,9 +5698,10 @@ separately in the following two subsections.
 
 ==== Switch statement with `action_run` expression
 
-For this variant of `switch` statement, the expression must be of the
-form `t.apply().action_run`, where `t` is the name of a table (see
-<<sec-invoke-mau>>).  All switch labels must be names of
+This type of `switch` statement can only be used within control `apply`
+blocks.  For this variant of `switch` statement, the expression must be
+of the form `t.apply().action_run`, where `t` is the name of a table
+(see <<sec-invoke-mau>>).  All switch labels must be names of
 actions of the table `t`, or `default`.
 
 [source,p4]
@@ -8910,9 +8954,10 @@ table t {
 
 The `@name` annotation directs the compiler to use a different
 local name when generating the external APIs used to manipulate a
-language element from the control plane. This annotation takes a string literal
-body.  In the
-following example, the fully-qualified name of the table is `c_inst.t1`.
+language element from the control plane. This annotation takes a local
+compile-time known value of type `string` (typically a string literal).
+In the following example, the fully-qualified name of the table is
+`c_inst.t1`.
 
 [source,p4]
 ----
@@ -8960,6 +9005,35 @@ to two controllable entities, which is illegal.
 
 The `@atomic` annotation, described in <<sec-concurrency>>
 can be used to enforce the atomic execution of a code block.
+
+[#sec-branch-annotations]
+==== Branch prediction annotations
+
+The `@likely` and `@unlikely` annotation can be used on blocks that
+are used in `if`-`else` or `switch` statements to hint when a branch
+is likely or unlikely to be taken.
+
+[source.p4]
+----
+if (error_failure) @unlikely {
+    /* code that is unlikely to execute as the condition is probably false */
+}
+
+switch(value) {
+    1: @likely {
+        /* code for the most common case */
+       }
+    2: { /* ... */ }
+    default: @unlikely {
+        /* code for rare case */
+    }
+}
+----
+
+These annotations have no effect on the semantics of the program; they are
+just hints to help an optimizer.  A warning may be issued if a `@likely`
+block is found to never execute or an `@unlikely` block will always execute,
+but is not required.
 
 [#sec-value-set-annotations]
 ==== Value set annotations
@@ -9015,12 +9089,14 @@ absence), allowing architecture-independent analysis of P4 programs.
 
 The `deprecated` annotation has a required string argument that is a
 message that will be printed by a compiler when a program is using the
-deprecated construct.  This is mostly useful for annotating library
-constructs, such as externs.
+deprecated construct. This is mostly useful for annotating library
+constructs, such as externs. The parameter must be a local
+compile-time known value of type `string`.
 
 [source,p4]
 ----
-@deprecated("Please use the 'check' function instead")
+#define DEPR_V1_2_2 "Deprecated in v1.2.2"
+@deprecated("Please use the 'check' function instead." ++ DEPR_V1_2_2)
 extern Checker {
    /* body omitted */
 }
@@ -9032,7 +9108,8 @@ extern Checker {
 The `noWarn` annotation has a required string argument that indicates
 a compiler warning that will be inhibited.  For example
 `@noWarn("unused")` on a declaration will prevent a compiler warning
-if that declaration is not used.
+if that declaration is not used. The parameter must be a local
+compile-time known value of type `string`.
 
 === Target-specific annotations
 
@@ -9055,6 +9132,10 @@ The P4 compiler should provide:
 
 ===  Summary of changes made in unreleased version
 
+* Clarified that numeric priorities cannot be assigned to entries of a table that has `const entries` (<<sec-entries>>).
+* Clarified that `switch` statements are allowed in action and function bodies, and that `switch` statements with `action_run` expressions are only allowed in control `apply` blocks (<<sec-stmts>> and <<sec-switch-stmt>>).
+* Added standard branch prediction annotations (<<sec-branch-annotations>>)
+* Added support for compile-time string concatenation using `++` operator (<<sec-string-type>> and <<sec-string-ops>>).
 * Added compound assignment statements (<<sec-assignment>>)
 
 === Summary of changes made in version 1.2.5, released October 11, 2024
