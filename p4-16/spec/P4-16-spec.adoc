@@ -5526,6 +5526,8 @@ statement
     ;
 
 include::grammar.adoc[tag=assignmentOrMethodCallStatement]
+
+include::grammar.adoc[tag=assignmentOrMethodCallStatementWithoutSemicolon]
 ----
 
 In addition, parsers support a `transition` statement (<<sec-transition>>).
@@ -5783,18 +5785,28 @@ for possible techniques that one might
 use to implement generalized switch statements.footnote:GeneralizedSwitchStatements[<https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md>]
 
 [#sec-loop-stmt]
-=== Loop statement
+=== For statement
 
-A `loop` statement executes a statement zero or more times, based on a
+A `for` statement executes a statement zero or more times, based on a
 condition or a range or collection.
 
 [source,bison]
 ----
-include::grammar.adoc[tag=loopStatement]
+include::grammar.adoc[tag=forStatement]
 
-include::grammar.adoc[tag=forInitStatement]
+include::grammar.adoc[tag=forInitStatements]
 
-include::grammar.adoc[tag=forUpdateStatement]
+include::grammar.adoc[tag=forInitStatementsNonEmpty]
+
+include::grammar.adoc[tag=declOrAssignmentOrMethodCallStatement]
+
+include::grammar.adoc[tag=forUpdateStatements]
+
+include::grammar.adoc[tag=forUpdateStatementsNonEmpty]
+
+include::grammar.adoc[tag=forCollectionExpr]
+
+include::grammar.adoc[tag=assignmentOrMethodCallStatementWithoutSemicolon]
 ----
 
 The basic 3-clause `for` statement is similar to a C `for` statement.  The init statements
@@ -9137,6 +9149,7 @@ The P4 compiler should provide:
 * Added standard branch prediction annotations (<<sec-branch-annotations>>)
 * Added support for compile-time string concatenation using `++` operator (<<sec-string-type>> and <<sec-string-ops>>).
 * Added compound assignment statements (<<sec-assignment>>)
+* Update the specification grammar for `for` loops to match the grammar used in the `p4c` implementation (<<sec-loop-stmt>>).
 
 === Summary of changes made in version 1.2.5, released October 11, 2024
 
