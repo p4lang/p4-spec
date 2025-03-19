@@ -657,7 +657,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-03-13</span>
+<span id="revdate">2025-03-19</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -884,7 +884,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_notes_common_to_all_switch_statements">12.7.3. Notes common to all switch statements</a></li>
 </ul>
 </li>
-<li><a href="#sec-loop-stmt">12.8. Loop statement</a></li>
+<li><a href="#sec-loop-stmt">12.8. For statement</a></li>
 </ul>
 </li>
 <li><a href="#sec-packet-parsing">13. Packet parsing</a>
@@ -8380,8 +8380,12 @@ initializer (as well as an optional annotation):</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">variableDeclaration
-    : annotations typeRef name optInitializer ";"
-    | typeRef name optInitializer ";"
+    : variableDeclarationWithoutSemicolon ";"
+    ;
+
+variableDeclarationWithoutSemicolon
+    : annotations typeRef name optInitializer
+    | typeRef name optInitializer
     ;
 
 optInitializer
@@ -8608,21 +8612,25 @@ case, for control blocks.</p>
     ;
 
 assignmentOrMethodCallStatement
-    : lvalue "(" argumentList ")" ";"
-    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")" ";"
-    | lvalue "=" expression ";"
-    | lvalue "*=" expression ";"
-    | lvalue "/=" expression ";"
-    | lvalue "%=" expression ";"
-    | lvalue "+=" expression ";"
-    | lvalue "-=" expression ";"
-    | lvalue "|+|=" expression ";"
-    | lvalue "|-|=" expression ";"
-    | lvalue "&lt;&lt;=" expression ";"
-    | lvalue "&gt;&gt;=" expression ";"
-    | lvalue "&amp;=" expression ";"
-    | lvalue "|=" expression ";"
-    | lvalue "^=" expression ";"
+    : assignmentOrMethodCallStatementWithoutSemicolon ";"
+    ;
+
+assignmentOrMethodCallStatementWithoutSemicolon
+    : lvalue "(" argumentList ")"
+    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")"
+    | lvalue "="  expression
+    | lvalue "*=" expression
+    | lvalue "/=" expression
+    | lvalue "%=" expression
+    | lvalue "+=" expression
+    | lvalue "-=" expression
+    | lvalue "|+|=" expression
+    | lvalue "|-|=" expression
+    | lvalue "&lt;&lt;=" expression
+    | lvalue "&gt;&gt;=" expression
+    | lvalue "&amp;=" expression
+    | lvalue "|=" expression
+    | lvalue "^=" expression
     ;</code></pre>
 </div>
 </div>
@@ -9043,30 +9051,66 @@ use to implement generalized switch statements.<sup class="footnote" id="_footno
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-loop-stmt">12.8. Loop statement</h3>
+<h3 id="sec-loop-stmt">12.8. For statement</h3>
 <div class="paragraph">
-<p>A <code>loop</code> statement executes a statement zero or more times, based on a
+<p>A <code>for</code> statement executes a statement zero or more times, based on a
 condition or a range or collection.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">loopStatement
-    : optAnnotations FOR "(" optForInitStatements ";" expression ";"
-      optForUpdateStatements ")" statement
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">forStatement
+    : optAnnotations FOR "(" forInitStatements ";" expression ";"
+      forUpdateStatements ")" statement
     | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    | optAnnotations FOR "(" annotations typeRef name IN forCollectionExpr ")" statement
     ;
 
-forInitStatement
-    : optAnnotations typeRef name optInitializer
-    | lvalue "(" argumentList ")"
-    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")"
-    | lvalue "=" expression
+forInitStatements
+    : /* empty */
+    | forInitStatementsNonEmpty
     ;
 
-forUpdateStatement
+forInitStatementsNonEmpty
+    : declOrAssignmentOrMethodCallStatement
+    | forInitStatementsNonEmpty "," declOrAssignmentOrMethodCallStatement
+    ;
+
+declOrAssignmentOrMethodCallStatement
+    : variableDeclarationWithoutSemicolon
+    | assignmentOrMethodCallStatementWithoutSemicolon
+    ;
+
+forUpdateStatements
+    : /* empty */
+    | forUpdateStatementsNonEmpty
+    ;
+
+forUpdateStatementsNonEmpty
+    : assignmentOrMethodCallStatementWithoutSemicolon
+    | forUpdateStatementsNonEmpty "," assignmentOrMethodCallStatementWithoutSemicolon
+    ;
+
+forCollectionExpr
+    : expression
+    | expression ".." expression
+    ;
+
+assignmentOrMethodCallStatementWithoutSemicolon
     : lvalue "(" argumentList ")"
     | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")"
-    | lvalue "=" expression
+    | lvalue "="  expression
+    | lvalue "*=" expression
+    | lvalue "/=" expression
+    | lvalue "%=" expression
+    | lvalue "+=" expression
+    | lvalue "-=" expression
+    | lvalue "|+|=" expression
+    | lvalue "|-|=" expression
+    | lvalue "&lt;&lt;=" expression
+    | lvalue "&gt;&gt;=" expression
+    | lvalue "&amp;=" expression
+    | lvalue "|=" expression
+    | lvalue "^=" expression
     ;</code></pre>
 </div>
 </div>
@@ -13265,6 +13309,9 @@ of the wrong type)</p>
 <li>
 <p>Added compound assignment statements (<a href="#sec-assignment">Section 12.1</a>)</p>
 </li>
+<li>
+<p>Update the specification grammar for <code>for</code> loops to match the grammar used in the <code>p4c</code> implementation (<a href="#sec-loop-stmt">Section 12.8</a>).</p>
+</li>
 </ul>
 </div>
 </div>
@@ -15211,29 +15258,25 @@ typedefDeclaration
 /*************************** STATEMENTS *************************/
 
 assignmentOrMethodCallStatement
-    : lvalue "(" argumentList ")" ";"
-    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")" ";"
-    | lvalue "=" expression ";"
-    | lvalue "*=" expression ";"
-    | lvalue "/=" expression ";"
-    | lvalue "%=" expression ";"
-    | lvalue "+=" expression ";"
-    | lvalue "-=" expression ";"
-    | lvalue "|+|=" expression ";"
-    | lvalue "|-|=" expression ";"
-    | lvalue "&lt;&lt;=" expression ";"
-    | lvalue "&gt;&gt;=" expression ";"
-    | lvalue "&amp;=" expression ";"
-    | lvalue "|=" expression ";"
-    | lvalue "^=" expression ";"
+    : assignmentOrMethodCallStatementWithoutSemicolon ";"
     ;
 
-breakStatement
-    : BREAK ";"
-    ;
-
-continueStatement
-    : CONTINUE ";"
+assignmentOrMethodCallStatementWithoutSemicolon
+    : lvalue "(" argumentList ")"
+    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")"
+    | lvalue "="  expression
+    | lvalue "*=" expression
+    | lvalue "/=" expression
+    | lvalue "%=" expression
+    | lvalue "+=" expression
+    | lvalue "-=" expression
+    | lvalue "|+|=" expression
+    | lvalue "|-|=" expression
+    | lvalue "&lt;&lt;=" expression
+    | lvalue "&gt;&gt;=" expression
+    | lvalue "&amp;=" expression
+    | lvalue "|=" expression
+    | lvalue "^=" expression
     ;
 
 emptyStatement
@@ -15254,6 +15297,14 @@ conditionalStatement
     | IF "(" expression ")" statement ELSE statement
     ;
 
+breakStatement
+    : BREAK ";"
+    ;
+
+continueStatement
+    : CONTINUE ";"
+    ;
+
 // To support direct invocation of a control or parser without instantiation
 directApplication
     : typeName "." APPLY "(" argumentList ")" ";"
@@ -15267,11 +15318,11 @@ statement
     | emptyStatement
     | blockStatement
     | returnStatement
-    | exitStatement
     | breakStatement
     | continueStatement
+    | exitStatement
     | switchStatement
-    | loopStatement
+    | forStatement
     ;
 
 blockStatement
@@ -15302,54 +15353,47 @@ switchLabel
     | nonBraceExpression
     ;
 
-loopStatement
-    : optAnnotations FOR "(" optForInitStatements ";" expression ";"
-      optForUpdateStatements ")" statement
-    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
-    ;
-
-optForInitStatements
-    : /* empty */
-    | forInitStatements
-    ;
-
-forInitStatements
-    : forInitStatement
-    | forInitStatements "," forInitStatement
-    ;
-
-forInitStatement
-    : optAnnotations typeRef name optInitializer
-    | lvalue "(" argumentList ")"
-    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")"
-    | lvalue "=" expression
-    ;
-
-optForUpdateStatements
-    : /* empty */
-    | forUpdateStatements
-    ;
-
-forUpdateStatements
-    : forUpdateStatement
-    | forUpdateStatements "," forUpdateStatement
-    ;
-
-forUpdateStatement
-    : lvalue "(" argumentList ")"
-    | lvalue "&lt;" typeArgumentList "&gt;" "(" argumentList ")"
-    | lvalue "=" expression
-    ;
-
-forCollectionExpr
-    : expression
-    | expression ".." erxpression
-    ;
-
 statementOrDeclaration
     : variableDeclaration
     | constantDeclaration
     | statement
+    ;
+
+forStatement
+    : optAnnotations FOR "(" forInitStatements ";" expression ";"
+      forUpdateStatements ")" statement
+    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    | optAnnotations FOR "(" annotations typeRef name IN forCollectionExpr ")" statement
+    ;
+
+forInitStatements
+    : /* empty */
+    | forInitStatementsNonEmpty
+    ;
+
+forInitStatementsNonEmpty
+    : declOrAssignmentOrMethodCallStatement
+    | forInitStatementsNonEmpty "," declOrAssignmentOrMethodCallStatement
+    ;
+
+declOrAssignmentOrMethodCallStatement
+    : variableDeclarationWithoutSemicolon
+    | assignmentOrMethodCallStatementWithoutSemicolon
+    ;
+
+forUpdateStatements
+    : /* empty */
+    | forUpdateStatementsNonEmpty
+    ;
+
+forUpdateStatementsNonEmpty
+    : assignmentOrMethodCallStatementWithoutSemicolon
+    | forUpdateStatementsNonEmpty "," assignmentOrMethodCallStatementWithoutSemicolon
+    ;
+
+forCollectionExpr
+    : expression
+    | expression ".." expression
     ;
 
 /************************* TABLE *********************************/
@@ -15413,8 +15457,12 @@ actionDeclaration
 /************************* VARIABLES *****************************/
 
 variableDeclaration
-    : annotations typeRef name optInitializer ";"
-    | typeRef name optInitializer ";"
+    : variableDeclarationWithoutSemicolon ";"
+    ;
+
+variableDeclarationWithoutSemicolon
+    : annotations typeRef name optInitializer
+    | typeRef name optInitializer
     ;
 
 constantDeclaration
@@ -15622,7 +15670,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-03-13 16:26:32 UTC
+Last updated 2025-03-19 22:03:25 UTC
 </div>
 </div>
 </body>
