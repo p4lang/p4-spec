@@ -657,7 +657,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-03-19</span>
+<span id="revdate">2025-03-31</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -4882,9 +4882,9 @@ to a target.</p>
     ;
 
 methodPrototype
-    : optAnnotations functionPrototype ';'
-    | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';' //constructor
+    : optAnnotations functionPrototype ";"
     | optAnnotations ABSTRACT functionPrototype ";"
+    | optAnnotations TYPE_IDENTIFIER "(" parameterList ")" ";"
     ;
 
 typeOrVoid
@@ -14749,6 +14749,11 @@ annotation
     | "@" name "[" structuredAnnotationBody "]"
     ;
 
+structuredAnnotationBody
+    : expressionList optTrailingComma
+    | kvList optTrailingComma
+    ;
+
 annotationBody
     : /* empty */
     | annotationBody "(" annotationBody ")"
@@ -15081,6 +15086,7 @@ functionPrototype
 
 methodPrototype
     : optAnnotations functionPrototype ";"
+    | optAnnotations ABSTRACT functionPrototype ";"
     | optAnnotations TYPE_IDENTIFIER "(" parameterList ")" ";"
     ;
 
@@ -15508,11 +15514,6 @@ expressionList
     | expressionList "," expression
     ;
 
-structuredAnnotationBody
-    : expressionList optTrailingComma
-    | kvList optTrailingComma
-    ;
-
 member
     : name
     ;
@@ -15670,7 +15671,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-03-19 22:03:25 UTC
+Last updated 2025-03-31 18:32:20 UTC
 </div>
 </div>
 </body>
