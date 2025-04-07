@@ -2784,7 +2784,7 @@ either by the number of arguments or by the names of the arguments,
 when calls are specifying argument names.  Argument type information
 is not used in disambiguating calls.
 
-Notice that overloading of parsers, controls, or packages is not allowed:
+Notice that overloading of abstract methods, parsers, controls, or packages is not allowed:
 
 [source,p4]
 ----
@@ -5453,10 +5453,15 @@ include::grammar.adoc[tag=objDeclarations]
 include::grammar.adoc[tag=objDeclaration]
 ----
 
+Abstract method implementations must use the same number of parameters, and
+the same parameter directions as those declared in the extern object declaration.
+Note that overloading of abstract methods is not allowed, thus an
+implementation could be matched to a declaration only with the method name.
+
 The abstract methods can only use the supplied arguments or refer to
-values that are in the top-level scope.  When calling another method
-of the same instance the `this` keyword is used to indicate the
-current object instance:
+values that are in the same initializer block or the top-level scope. 
+When calling another method of the same instance the `this` keyword is
+used to indicate the current object instance:
 
 [source,p4]
 ----
