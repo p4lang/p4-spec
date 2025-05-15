@@ -3615,10 +3615,20 @@ Bit-strings also support the following operations:
   `+0 <= L <= H < W+` are checked statically (where `W` is
   the length of the source bit-string). Note that both endpoints of
   the extraction are inclusive. The bounds are required to be
-  local compile-time known values so that the width of the result can be computed at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: `e[H:L] = x`.
+  local compile-time known values so that the width of the result can be computed
+  at compile time. Slices are also l-values, which means that P4 supports
+  assigning to a slice: `e[H:L] = x`.
   The effect of this statement is to set bits `H` through `L` (inclusive of
   both) of `e` to the bit-pattern represented by `x`, and leaves all other bits
-  of `e` unchanged.  A slice of an unsigned integer is an unsigned integer.
+  of `e` unchanged.  A slice is always an unsigned integer.
+  A slice may also be specified as `[L+:W]` where `L` is the lowest bit of the slice
+  and `W` is the width of the slice.  In this case, only `W` must be a non-negative
+  local compile-time known numeric value.  `L` must also be a numeric value and
+  some architectures may require it to be compile-time known.  It must also be
+  non-negative and in-range for the type.  Some architectures may allow variable indexing,
+  in which case an out of range value will be equivalent to a shift of that amount.
+  An index that is not compile-time known must be a `bit<W>` type in order to ensure that
+  it is non-negative.
 * Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of
   different signedness and width.  The result has the same signedness as the
@@ -3695,21 +3705,8 @@ The `int<W>` datatype also support the following operations:
 ** all result bits are zero when shifting a non-negative value right
 ** all result bits are one when shifting a negative value right
 * Extraction of a set of contiguous bits, also known as a slice,
-  denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
-  non-negative, local compile-time known values, and `H >= L` must be true.
-  The types of `H` and `L` (which do not need to be identical)
-  must be numeric (<<sec-numeric-values>>).
-  The result is an unsigned bit-string of width `H - L + 1`, including the bits
-  numbered from `L` (which becomes the least significant bit of the result)
-  to `H` (the most significant bit of the result) from the source operand.
-  The conditions `+0 <= L <= H < W+` are checked statically (where `W` is
-  the length of the source bit-string). Note that both endpoints of
-  the extraction are inclusive. The bounds are required to be values
-  that are known at compile time so that the width of the result can be
-  computed at compile time. Slices are also l-values, which means that P4
-  supports assigning to a slice: `e[H:L] = x`.
-  The effect of this statement is to set bits `H` through `L` of `e` to the
-  bit-pattern represented by `x`, and leaves all other bits of `e` unchanged.
+  denoted by `[H:L]` or `[L+:W]`, with the same semantics as slices of
+  bit strings.
   A slice of a signed integer is treated as an unsigned integer.
 * Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of different signedness and width.
