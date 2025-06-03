@@ -657,7 +657,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-03-31</span>
+<span id="revdate">2025-06-03</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -14293,7 +14293,7 @@ program, but constants may.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">package</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14302,7 +14302,7 @@ program, but constants may.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">parser</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14311,7 +14311,7 @@ program, but constants may.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">control</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14320,7 +14320,7 @@ program, but constants may.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">extern</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14478,35 +14478,41 @@ is a value type, or no value at all (specified by a return type of
 from which places in a P4 program.  Calling a parser, control, or
 table means invoking its <code>apply()</code> method. Calling a value-set means using it
 in a select expression. The row for <code>extern</code> describes where extern method
-calls can be made from.</p>
+or extern function calls can be made from. The row for <code>function</code> describes
+where calls to functions, but not extern functions, can be made from.</p>
 </div>
 <div class="paragraph">
 <p>One way that an extern can be called from the top level of a parser or
 control is in an initializer expression for a declared variable,
-e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
+e.g. <code>bit&lt;32&gt; x = rand.get();</code>. Here, the top level of a parser or control
+means either within a parser declaration, but outside of any of its parser
+state declarations, or within a control declaration, but outside its
+<code>apply { &#8230;&#8203; }</code> block.</p>
 </div>
 <table class="tableblock frame-all grid-all center" style="width: 90%;">
 <colgroup>
-<col style="width: 20%;">
-<col style="width: 13.3333%;">
-<col style="width: 13.3333%;">
-<col style="width: 13.3333%;">
-<col style="width: 13.3333%;">
-<col style="width: 13.3333%;">
-<col style="width: 13.3335%;">
+<col style="width: 17.647%;">
+<col style="width: 11.7647%;">
+<col style="width: 11.7647%;">
+<col style="width: 11.7647%;">
+<col style="width: 11.7647%;">
+<col style="width: 11.7647%;">
+<col style="width: 11.7647%;">
+<col style="width: 11.7648%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">This type</th>
-<th class="tableblock halign-center valign-top" colspan="6">can be called at run time from this place in a P4 program</th>
+<th class="tableblock halign-center valign-top" colspan="7">can be called at run time from this place in a P4 program</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-center valign-bottom"><p class="tableblock">top level</p></td>
 <td class="tableblock halign-center valign-bottom"><p class="tableblock">parser state</p></td>
 <td class="tableblock halign-center valign-bottom"><p class="tableblock">control apply block</p></td>
-<td class="tableblock halign-center valign-bottom"><p class="tableblock">parser or top level</p></td>
+<td class="tableblock halign-center valign-bottom"><p class="tableblock">top level within a parser or control</p></td>
 <td class="tableblock halign-center valign-bottom"><p class="tableblock">action</p></td>
 <td class="tableblock halign-center valign-bottom"><p class="tableblock">extern</p></td>
 <td class="tableblock halign-center valign-bottom"><p class="tableblock">function</p></td>
@@ -14519,9 +14525,11 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">parser</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14532,6 +14540,7 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">control</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14540,15 +14549,17 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">extern</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">table</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14558,6 +14569,7 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">value-set</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
@@ -14568,6 +14580,7 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">action</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
@@ -14576,9 +14589,10 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">function</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">no [1]</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">no</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">yes</p></td>
@@ -14591,9 +14605,13 @@ e.g. <code>bit&lt;32&gt; x = rand.get();</code>.</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">N/A</p></td>
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>[1] Calls to function <code>static_assert</code> are exceptionally allowed at the top level.</p>
+</div>
 <div class="paragraph">
 <p>There may not be any recursion in calls, neither by a thing calling
 itself directly, nor mutual recursion.</p>
@@ -15671,7 +15689,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-03-31 20:45:11 UTC
+Last updated 2025-06-03 00:34:11 UTC
 </div>
 </div>
 </body>
