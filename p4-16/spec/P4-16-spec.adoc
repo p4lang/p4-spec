@@ -1307,7 +1307,7 @@ There are also built-in types for
 representing constructs such as parsers, pipelines, actions, and
 tables. Users can
 construct new types based on these: structures, enumerations, headers,
-header stacks, header unions, etc.
+arrays, header stacks, header unions, etc.
 
 In this document we adopt the following conventions:
 
@@ -1416,6 +1416,7 @@ include::grammar.adoc[tag=lvalue]
 * Identifiers of a base or derived type.
 * Structure, header, and header union field member access operations
   (using the dot notation).
+* References to elements within arrays (see <<sec-expr-array>>)
 * References to elements within header stacks (see
   <<sec-expr-hs>>): indexing, and references to `last` and `next`.
 * The result of a bit-slice operator `[m:l]`.
@@ -1615,8 +1616,8 @@ There are additional benefits of using copy-in copy-out semantics:
 
 * It enables P4 to be compiled for architectures that do not support
   references (e.g., where all data is allocated to named
-  registers. Such architectures may require indices into header stacks that appear
-  in a program to be compile-time known values.)
+  registers. Such architectures may require indices into arrays and header
+  stacks that appear in a program to be compile-time known values.)
 * It simplifies some compiler analyses, since function parameters can
   never alias to each other within the function body.
 
@@ -2131,6 +2132,7 @@ additional types including:
 
 * `enum`
 * `header`
+* arrays
 * header stacks
 * `struct`
 * `header_union`
@@ -2398,22 +2400,30 @@ parsing steps.
 Notice that the names `isValid`, `setValid`, `minSizeInBits`, etc. are all
 valid header field names.
 
+[#sec-arrays]
+==== Arrays
+
+An array is a fixed-size vector of elements of the same type. It is defined as:
+
+[source,bison]
+----
+include::grammar.adoc[tag=arrayType]
+----
+
+where `typeRef` refers to the element type and the expression is a compile-time
+known value that is the size of the array.  For an array type such as `arr[n]`,
+`n-1` is the maximum defined index.
+
 [#sec-header-stacks]
 ==== Header stacks
 
 A header stack represents an array of headers or header unions. A header stack type is
-defined as:
-
-[source,bison]
-----
-include::grammar.adoc[tag=headerStackType]
-----
-
-where `typeName` is the name of a header or header union type. For a
+defined as an array declaration
+where `typeRef` is the name of a header or header union type. For a
 header stack `hs[n]`, the term `n` is the maximum defined size, and
 must be a local compile-time known value that is a positive
 integer. Nested header stacks are not supported. At runtime a stack
-contains `n` values with type `typeName`, only some of which may be
+contains `n` values with type `typeRef`, only some of which may be
 valid. Expressions on header stacks are discussed in Section
 <<#sec-expr-hs>>.
 
@@ -2549,39 +2559,43 @@ arbitrary-precision integer, without a width specified.
 |===
 | Element type 5+^| Container kind  
 
-|                | header    | header_union | struct or tuple | list | header stack
+|                | header    | header_union | struct or tuple | list | array [4] | header stack
 
-| `bit<W>`       | allowed   | error   |  allowed | allowed | error
+| `bit<W>`       | allowed   | error   |  allowed | allowed | allowed | error
 
-| `int<W>`       | allowed   | error   |  allowed | allowed | error
+| `int<W>`       | allowed   | error   |  allowed | allowed | allowed | error
 
-| `varbit<W>`    | allowed   | error   |  allowed | allowed | error
+| `varbit<W>`    | allowed   | error   |  allowed | allowed | allowed | error
 
-| `int`          | error     | error   |  error   | allowed | error
+| `int`          | error     | error   |  error   | allowed | error | error
 
-| `void`         | error     | error   |  error   | error   | error
+| `void`         | error     | error   |  error   | error   | error | error
 
-| `string`       | error     | error   |  error   | allowed | error
+| `string`       | error     | error   |  error   | allowed | error | error
 
-| `error`        | error     | error   |  allowed | allowed | error
+| `error`        | error     | error   |  allowed | allowed | error | error
 
-| `match_kind`   | error     | error   |  error   | allowed | error
+| `match_kind`   | error     | error   |  error   | allowed | error | error
 
-| `bool`         | allowed   | error   |  allowed | allowed | error
+| `bool`         | allowed   | error   |  allowed | allowed | allowed | error
 
-| `enumeration types` | allowed [1] | error   |  allowed | allowed | error
+| `enumeration types` | allowed [1] | error   |  allowed | allowed | allowed | error
 
-| `header types`    | error     | allowed |  allowed | allowed | allowed
+| `header types`    | error     | allowed |  allowed | allowed | NA [3] | allowed
 
-| `header stacks`   | error     | error   |  allowed | allowed | error
+| `array types` [4] | allowed | error | allowed | error? | allowed [5] | error
 
-| `header_unions` | error     | error   |  allowed | allowed | allowed
+| `header stacks`   | error     | error   |  allowed | allowed | error | error
 
-| `struct types`       | allowed [2] | error   |  allowed | allowed | error
+| `header_unions` | error     | error   |  allowed | allowed | NA [3] | allowed
 
-| `tuple types`        | error     | error   |  allowed | allowed | error
+| `struct types`       | allowed [2] | error   |  allowed | allowed | allowed | error
 
-| `list types`         | error     | error   |  error   | allowed | error
+| `tuple types`        | error     | error   |  allowed | allowed | error? | error
+
+| `list types`         | error     | error   |  error   | allowed | error? | error
+
+| `extern instances`   | error     | error   |  error   | erroe  | allowed [6] | error
 
 |===
 
@@ -2591,6 +2605,16 @@ underlying type and representation for `enum` elements.
 [2] A `struct` or nested `struct` type that has the same properties,
 used as a field in a `header` must contain only `bit<W>`, `int<W>`, a
 serializable `enum`, or a `bool`.
+
+[3] An array whose element type is a header or header union type is a
+header stack.
+
+[4] This is for array types that are not header stacks (the array element
+type is not a header or header_union.)
+
+[5] Architectures may disallow arrays of arrays.
+
+[6] Architectures may disallow arrays of extern instances.
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
@@ -2631,6 +2655,8 @@ The table below lists all types that may appear as base types in a
 | `bool`              | allowed            | allowed
 
 | enumeration types   | allowed            | error
+
+| array types         | allowed            | error
 
 | header types        | allowed            | error
 
@@ -2999,6 +3025,7 @@ as follows:
   even if 0 is actually not one of the named values in the enum.
 * For `enum` values without an underlying type the default value is the
   first value that appears in the `enum` type declaration.
+* For arrays the default value is that all elements have their default value.
 * For `header` types the default value is `invalid`.
 * For header stacks the default value is that all elements are invalid and the
   `nextIndex` is 0.
@@ -3917,7 +3944,7 @@ The following casts are legal in P4:
 * casts between a type introduced by `type` and the original type.
 * casts between an `enum` with an explicit type and its underlying type
 * casts of a key-value list to a struct type or a header type (see <<sec-structure-expressions>>)
-* casts of a tuple expression to a header stack type
+* casts of a tuple expression to an array or header stack type
 * casts of an invalid expression `+{#}+` to a header or a header union type
 * casts where the destination type is the same as the source type
   if the destination type appears in this list (this excludes 
@@ -3934,7 +3961,7 @@ expression with a fixed-width type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
 type, it can be implicitly cast to its underlying type whenever appropriate,
 including but not limited to in shifts, concatenation, bit slicing indexes,
-header stack indexes as well as other unary and binary operations.
+array and header stack indexes as well as other unary and binary operations.
 
 For example, given the following declarations,
 
@@ -4468,6 +4495,16 @@ See <<sec-uninitialized-values-and-writing-invalid-headers>>
 for a description of the behavior if header fields are read without
 being initialized, or header fields are written to a currently invalid
 header.
+
+[#sec-expr-array]
+=== Operations on arrays
+
+Arrays can be indexed with an expression to select one element of the
+array.  `arr[index]` refers to that element and is an l-value if `arr` is
+an l-value.
+
+Arrays can be assigned to another array with the same element type and
+size.
 
 [#sec-expr-hs]
 === Operations on header stacks
@@ -5357,7 +5394,7 @@ headers and other header-related types, which are initialized to invalid in the
 same way as described for direction `out` parameters in <<sec-calling-convention>>). The language places few restrictions on
 the types of the variables: most P4 types that can be written
 explicitly can be used (e.g., base types, `struct`, `header`,
-header stack, `tuple`). However, it is impossible to declare variables with type `int`,
+array, header stack, `tuple`). However, it is impossible to declare variables with type `int`,
 or with types that are only synthesized by the compiler (e.g., `set`)
 In addition, variables of type  `parser`, `control`, `package`,
 or `extern` types must be declared using instantiations (see <<sec-instantiations>>).
@@ -5648,7 +5685,7 @@ following behavior after the expression evaluation is interrupted.
    then neither expression `e2` nor `e3` are evaluated.
 ** If the expression is the right hand side of an assignment
    statement, or part of the calculation of the L-value on the left
-   hand side (e.g. the index expression of a header stack reference),
+   hand side (e.g. the index expression of an array or header stack reference),
    then no assignment occurs.
 ** If the expression is an argument passed to a function or method
    call, then the function/method call does not occur.
@@ -5816,7 +5853,7 @@ The update statements will be executed after the loop body and before evaluating
 condition again for the next iteration.
 
 The `for`-`in` statement executes the body once for each value in a range or each
-element in a list expression or header stack.  The list or range expression itself
+element in a list expression, array or header stack.  The list or range expression itself
 will only be evaluated once, before the first iteration of the loop.  All side effects
 in the list or range expression will occur before the first iteration of the loop body.
 
@@ -7907,11 +7944,11 @@ extern packet_out {
 ----
 
 The `emit` method supports appending the data contained in a
-header, header stack, `struct`, or header union to the output packet.
+header, array, header stack, `struct`, or header union to the output packet.
 
 - When applied to a header, `emit` appends the data in the header to
   the packet if it is valid and otherwise behaves like a no-op.
-- When applied to a header stack, `emit` recursively invokes itself to
+- When applied to an array or header stack, `emit` recursively invokes itself to
   each element of the stack.
 - When applied to a `struct` or header union, `emit` recursively
   invokes itself to each field.  Note, a `struct` must not contain
@@ -9389,7 +9426,7 @@ error {
     NoError,           /// No error.
     PacketTooShort,    /// Not enough bits in packet for 'extract'.
     NoMatch,           /// 'select' expression has no matches.
-    StackOutOfBounds,  /// Reference to invalid element of a header stack.
+    StackOutOfBounds,  /// Reference to invalid element of an array or header stack.
     HeaderTooShort,    /// Extracting too many bits into a varbit field.
     ParserTimeout,     /// Parser execution time limit exceeded.
     ParserInvalidArgument  /// Parser operation was called with a value
