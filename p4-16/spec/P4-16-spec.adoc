@@ -2583,7 +2583,7 @@ arbitrary-precision integer, without a width specified.
 
 | `header types`    | error     | allowed |  allowed | allowed | NA [3] | allowed
 
-| `array types` [4] | allowed | error | allowed | error? | allowed [5] | error
+| `array types` [4] | allowed | error | allowed | error [7] | allowed [5] | error
 
 | `header stacks`   | error     | error   |  allowed | allowed | error | error
 
@@ -2591,9 +2591,9 @@ arbitrary-precision integer, without a width specified.
 
 | `struct types`       | allowed [2] | error   |  allowed | allowed | allowed | error
 
-| `tuple types`        | error     | error   |  allowed | allowed | error? | error
+| `tuple types`        | error     | error   |  allowed | allowed | error [7] | error
 
-| `list types`         | error     | error   |  error   | allowed | error? | error
+| `list types`         | error     | error   |  error   | allowed | error [7] | error
 
 | `extern instances`   | error     | error   |  error   | erroe  | allowed [6] | error
 
@@ -2622,6 +2622,9 @@ type is not a header or header_union.)
 [5] Architectures may disallow arrays of arrays.
 
 [6] Architectures may disallow arrays of extern instances.
+
+[7] Currently these are disallowed because there doesn't seem to be any use case for
+    them, but there do not appear to be any particular pitfalls to allowing them.
 
 Rationale: `int` does not have precise storage requirements,
 unlike `bit<>` or `int<>` types. `match_kind`
