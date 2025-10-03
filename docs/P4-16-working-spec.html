@@ -657,7 +657,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2025-08-05</span>
+<span id="revdate">2025-10-03</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -2906,6 +2906,7 @@ lvalue
     | lvalue "." member
     | lvalue "[" expression "]"
     | lvalue "[" expression ":" expression "]"
+    | lvalue "[" expression "+" ":" expression "]"
     | "(" lvalue ")"
     ;</code></pre>
 </div>
@@ -6045,10 +6046,20 @@ most significant bit of the result) from the source operand. The conditions
 <code>0 &lt;= L &lt;= H &lt; W</code> are checked statically (where <code>W</code> is
 the length of the source bit-string). Note that both endpoints of
 the extraction are inclusive. The bounds are required to be
-local compile-time known values so that the width of the result can be computed at compile time. Slices are also l-values, which means that P4 supports assigning to a slice: <code>e[H:L] = x</code>.
+local compile-time known values so that the width of the result can be computed
+at compile time. Slices are also l-values, which means that P4 supports
+assigning to a slice: <code>e[H:L] = x</code>.
 The effect of this statement is to set bits <code>H</code> through <code>L</code> (inclusive of
 both) of <code>e</code> to the bit-pattern represented by <code>x</code>, and leaves all other bits
-of <code>e</code> unchanged.  A slice of an unsigned integer is an unsigned integer.</p>
+of <code>e</code> unchanged.  A slice is always an unsigned integer.
+A slice may also be specified as <code>[L+:W]</code> where <code>L</code> is the lowest bit of the slice
+and <code>W</code> is the width of the slice.  In this case, only <code>W</code> must be a non-negative
+local compile-time known numeric value.  <code>L</code> must also be a numeric value and
+some architectures may require it to be compile-time known.  It must also be
+non-negative and in-range for the type.  Some architectures may allow variable indexing,
+in which case an out of range value will be equivalent to a shift of that amount.
+An index that is not compile-time known must be a <code>bit&lt;W&gt;</code> type in order to ensure that
+it is non-negative.</p>
 </li>
 <li>
 <p>Concatenation of bit-strings and/or fixed-width signed integers, denoted by <code>++</code>.
@@ -6182,21 +6193,8 @@ a "correct" result:</p>
 </li>
 <li>
 <p>Extraction of a set of contiguous bits, also known as a slice,
-denoted by <code>[H:L]</code>, where <code>H</code> and <code>L</code> must be expressions that evaluate to
-non-negative, local compile-time known values, and <code>H &gt;= L</code> must be true.
-The types of <code>H</code> and <code>L</code> (which do not need to be identical)
-must be numeric (<a href="#sec-numeric-values">Section 7.4</a>).
-The result is an unsigned bit-string of width <code>H - L + 1</code>, including the bits
-numbered from <code>L</code> (which becomes the least significant bit of the result)
-to <code>H</code> (the most significant bit of the result) from the source operand.
-The conditions <code>0 &lt;= L &lt;= H &lt; W</code> are checked statically (where <code>W</code> is
-the length of the source bit-string). Note that both endpoints of
-the extraction are inclusive. The bounds are required to be values
-that are known at compile time so that the width of the result can be
-computed at compile time. Slices are also l-values, which means that P4
-supports assigning to a slice: <code>e[H:L] = x</code>.
-The effect of this statement is to set bits <code>H</code> through <code>L</code> of <code>e</code> to the
-bit-pattern represented by <code>x</code>, and leaves all other bits of <code>e</code> unchanged.
+denoted by <code>[H:L]</code> or <code>[L+:W]</code>, with the same semantics as slices of
+bit strings.
 A slice of a signed integer is treated as an unsigned integer.</p>
 </li>
 <li>
@@ -8942,6 +8940,7 @@ nonBraceExpression
     | prefixedNonTypeName
     | nonBraceExpression "[" expression "]"
     | nonBraceExpression "[" expression ":" expression "]"
+    | nonBraceExpression "[" expression "+" ":" expression "]"
     | "(" expression ")"
     | "!" expression %prec PREFIX
     | "~" expression %prec PREFIX
@@ -15603,6 +15602,7 @@ lvalue
     | lvalue "." member
     | lvalue "[" expression "]"
     | lvalue "[" expression ":" expression "]"
+    | lvalue "[" expression "+" ":" expression "]"
     | "(" lvalue ")"
     ;
 
@@ -15635,6 +15635,7 @@ expression
     | prefixedNonTypeName
     | expression "[" expression "]"
     | expression "[" expression ":" expression "]"
+    | expression "[" expression "+" ":" expression "]"
     | "{" expressionList optTrailingComma "}"
     | "{#}"
     | "{" kvList optTrailingComma "}"
@@ -15684,6 +15685,7 @@ nonBraceExpression
     | prefixedNonTypeName
     | nonBraceExpression "[" expression "]"
     | nonBraceExpression "[" expression ":" expression "]"
+    | nonBraceExpression "[" expression "+" ":" expression "]"
     | "(" expression ")"
     | "!" expression %prec PREFIX
     | "~" expression %prec PREFIX
@@ -15745,7 +15747,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2025-08-05 01:06:21 UTC
+Last updated 2025-10-03 18:57:03 UTC
 </div>
 </div>
 </body>
