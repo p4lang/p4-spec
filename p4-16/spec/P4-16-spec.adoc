@@ -1361,6 +1361,9 @@ declaration. (This is a departure from P4~14~, which
 allows declarations in any order. This requirement significantly simplifies the implementation of
 compilers for P4, allowing compilers to use additional information
 about declared identifiers to resolve ambiguities.)
+Except for functions and methods, which may be overloaded, duplicate
+declarations of the same name within the same scope are not allowed.
+<<sec-name-resolution>> describes how names are resolved in P4.
 
 [#sec-stateful-elems]
 ==== Stateful elements
@@ -1767,6 +1770,52 @@ control p() {
     const bit<8> z = x;    // reference to p's local x
     apply {}
 }
+----
+
+Declaring a duplicate identifier in the same scope is disallowed. This is
+different from shadowing. Shadowing occurs when an identifier declared in an
+_inner_ scope has the same name as an identifier declared in an _outer_ scope.
+Duplicate declarations occur when two identifiers with the same name are
+declared in the _same_ scope.
+
+[source,p4]
+----
+const bit<4> x = 1;
+control p() {
+    const bit<8> x = 8;   // x declaration shadows global x
+    const bit<4> x = 4;   // Error: duplicate declaration of x
+    apply {}
+}
+----
+
+Functions and methods are the only P4 constructs that support overloading:
+there _can_ exist multiple methods with the same name in the same scope. When
+overloading is used, the compiler must be able to disambiguate at compile-time
+which method or function is being called, either by the number of arguments or
+by the names of the arguments, when calls are specifying argument names.
+Argument type information is _not_ used in disambiguating calls.
+
+[source,p4]
+----
+extern void f(in bit<8> x);
+extern void f(in bit<8> y); // allowed: different parameter names
+extern void f(in bit<16> x, in bit<8> y); // allowed: different number of parameters
+extern void f(in bit<16> x, in bit<8> x); // Error: duplicate declaration of previous function
+----
+
+Notice that overloading of abstract methods, parsers, controls, or packages is
+not allowed:
+
+[source,p4]
+----
+parser p(packet_in p, out bit<32> value) {
+  ...
+}
+
+// The following will cause an error about a duplicate declaration
+//parser p(packet_in p, out Headers headers) {
+//   ...
+//}
 ----
 
 [#sec-name-visibility]
@@ -2818,28 +2867,6 @@ control d(packet_out b, in Hdr h) {
         b.emit(h.ipv4);       // write ipv4 header into output packet
     }                         // by calling emit method
 }
-----
-
-Functions and methods are the only P4 constructs that support
-overloading: there can exist multiple methods with the same name in
-the same scope.  When overloading is used, the compiler must be able to
-disambiguate at compile-time which method or function is being called,
-either by the number of arguments or by the names of the arguments,
-when calls are specifying argument names.  Argument type information
-is not used in disambiguating calls.
-
-Notice that overloading of abstract methods, parsers, controls, or packages is not allowed:
-
-[source,p4]
-----
-parser p(packet_in p, out bit<32> value) {
-  ...
-}
-
-// The following will cause an error about a duplicate declaration
-//parser p(packet_in p, out Headers headers) {
-//   ...
-//}
 ----
 
 [#sec-abstract-methods]
