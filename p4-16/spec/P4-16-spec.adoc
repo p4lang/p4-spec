@@ -5883,13 +5883,17 @@ The scope of any declaration in a `for` statement is limited to the `for` statem
 
 ==== Bounded for statement
 
-A bounded `for` statement is a `for` statement with stronger syntactic constraints to ensure its boundedness statically.
+A P4 implementation may support a bounded version of `for` statements with stronger syntactic constraints instead of general `for` statements to ensure its boundedness statically.
 
 [source,bison]
 ----
 include::grammar.adoc[tag=boundedForStatement]
 
-include::grammar.adoc[tag=assignmentStatementWithoutSemicolon]
+include::grammar.adoc[tag=boundedForInitStatement]
+
+include::grammar.adoc[tag=boundedForCondExpr]
+
+include::grammar.adoc[tag=boundedForUpdateStatement]
 ----
 
 `for`-`in` statements remain the same as general `for`-`in` statements as a `forCollectionExpr` always contains finitely many values. However, 3-clause `for` statements are not guaranteed to be bounded in general. The following constraints are added to bounded 3-clause `for` statements:
@@ -5897,7 +5901,7 @@ include::grammar.adoc[tag=assignmentStatementWithoutSemicolon]
 - Only one variable is mentioned in the initialization statement, condition expression, and the update statement. We call this variable the "loop variable".
 - There is only one init statement, which declares and initializes the loop variable.
 - The condition expression must be a binary expression `i < n` where `i` is the loop variable.
-- There is only one update statement, which must be an assignment statement `i = i + c`. `i` is the loop variable and `c` must be a positive local compile-time known value.
+- There is only one update statement, which must be an assignment statement `i += 1` where `i` is the loop variable.
 - The loop variable is a read-only variable within the loop body and the condition expression. It can only be overwritten by the update statement.
 
 The above constraints guarantee boundedness since the loop variable monotonically increases and has an upper bound.
