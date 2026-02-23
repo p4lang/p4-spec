@@ -5887,6 +5887,8 @@ The scope of any declaration in a `for` statement is limited to the `for` statem
 
 A P4 implementation may support a bounded version of `for` statements with stronger syntactic constraints instead of general `for` statements to ensure its boundedness statically.
 
+This is intended to be a _minimal_ subset of bounded `for` statements. A P4 implementation that supports bounded `for` statements may choose to implement a larger subset; furthermore, it may reject a `for` statement if its bound is too large, even if it is statically bounded.
+
 [source,bison]
 ----
 include::grammar.adoc[tag=boundedForStatement]
@@ -5900,15 +5902,15 @@ include::grammar.adoc[tag=boundedForUpdateStatement]
 
 `for`-`in` statements remain the same as general `for`-`in` statements as a `forCollectionExpr` always contains finitely many values. However, 3-clause `for` statements are not guaranteed to be bounded in general. The following constraints are added to bounded 3-clause `for` statements:
 
-- Only one variable is mentioned in the initialization statement, condition expression, and the update statement. We call this variable the "loop variable".
-- There is only one init statement, which declares and initializes the loop variable.
-- The condition expression must be a binary expression `i < n` where `i` is the loop variable and `n` is a local compile time known value.
-- There is only one update statement, which must be an assignment statement `i += 1` where `i` is the loop variable.
+- Only one variable is mentioned in the initialization statement, condition expression, and the update statement. We call this variable the "loop variable". The type of the loop variable must be `bit<W>` or `int<W>`.
+- The condition expression must be a binary expression `i < n` where `i` is the loop variable and `n` is a local compile-time known value.
+- There is only one update statement, which must be an assignment statement `i += c` where `i` is the loop variable and `c` is a positive local compile-time known value.
+- Referring to `n` and `c` above, the sum `n + c` should not overflow with respect to the type of the loop variable.
 - The loop variable is a read-only variable within the loop body and the condition expression. It can only be overwritten by the update statement.
 
 The above constraints guarantee boundedness since the loop variable monotonically increases and has an upper bound.
 
-The semantics of bounded `for` statements are the same as general `for` statements.
+The runtime semantics of bounded `for` statements are the same as general `for` statements.
 
 [#sec-packet-parsing]
 == Packet parsing
