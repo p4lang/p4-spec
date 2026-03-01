@@ -9,12 +9,14 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 
 ${SPEC}.pdf: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -v \
+		--failure-level ERROR \
 		-r asciidoctor-mathematical \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
 ${SPEC}.html: ${SPEC}.adoc grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -v \
+		--failure-level ERROR \
 		-r asciidoctor-mathematical \
 		-a rouge-css=$(ROUGE_CSS) $<
 

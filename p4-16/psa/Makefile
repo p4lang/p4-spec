@@ -8,17 +8,22 @@ all: ${SPEC}.pdf ${SPEC}.html charter
 
 ${SPEC}.pdf: ${SPEC}.adoc
 	asciidoctor-pdf -v \
+		--failure-level ERROR \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
 ${SPEC}.html: ${SPEC}.adoc
-	asciidoctor -v -a rouge-css=$(ROUGE_CSS) $<
+	asciidoctor -v \
+		--failure-level ERROR \
+		-a rouge-css=$(ROUGE_CSS) $<
 
 charter:
 	$(MAKE) -C charter
 
 clean:
-	${RM} -rf build
+	/bin/rm -f ${SPEC}.pdf ${SPEC}.html
+
+#	/bin/rm -f ${SPEC}.pdf ${SPEC}.html grammar.trimmed.adoc resources/figs/stem-*.png
 
 # Disabling warnings about uninitialized_out_param, because those
 # regularly occur with these example programs for the 'out
