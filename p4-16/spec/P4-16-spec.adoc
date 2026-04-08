@@ -3674,6 +3674,12 @@ Bit-strings also support the following operations:
   in which case an out of range value will be equivalent to a shift of that amount.
   An index that is not compile-time known must be a `bit<W>` type in order to ensure that
   it is non-negative.
+  Slices specified with `[L+:W]` are also l-values, which means that P4 supports
+  assigning to such a slice: `e[L+:W] = x`.
+  The effect of this statement is to set `W` bits starting from bit `L` of `e`
+  to the bit-pattern represented by `x`, and leaves all other bits of `e` unchanged.
+  If `L+W` exceeds the width of `e`, then only the bits that fall within the valid
+  range of `e` are modified.
 * Concatenation of bit-strings and/or fixed-width signed integers, denoted by `++`.
   The two operands must be either `bit<W>` or `int<W>`, and they can be of
   different signedness and width.  The result has the same signedness as the
