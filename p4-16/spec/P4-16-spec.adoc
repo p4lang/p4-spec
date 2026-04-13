@@ -8991,14 +8991,22 @@ target-dependent.
 [#sec-table-action-anno]
 ==== Annotations on the table action list
 
-The following two annotations can be used to give additional
+The following three annotations can be used to give additional
 information to the compiler and control-plane about actions in a
 table. These annotations have no bodies.
 
+Note that with no annotation, the action can be used as (a) the action of any
+number of table entries, or (b) the table's defalt action, or both (a) and (b)
+simultaneously, but cannot be configured as (c) the action of any number of
+the action selector's groups.
+
 - `@tableonly`: actions with this annotation can only appear
-  within the table, and never as default action.
+  within the table, but never as default nor the group action.
 - `@defaultonly`: actions with this annotation can only appear in
-  the default action, and never in the table.
+  the default action, but never in the table nor the group action.
+- `@groupaction`: actions with this annotation can only appear within the
+  group action, but never the table nor the default action.
+
 
 [source,p4]
 ----
@@ -9007,6 +9015,7 @@ table t {
        a,              // can appear anywhere
        @tableonly b,   // can only appear in the table
        @defaultonly c, // can only appear in the default action
+       @groupaction d, // can only appear in the group action
     }
     /* body omitted */
 }
@@ -9398,27 +9407,29 @@ The following table shows all P4 reserved annotations.
 |===
 | Annotation | Purpose | See Section
 
-| `atomic`      | specify atomic execution                           | <<sec-concurrency>>
+| `atomic`        | specify atomic execution                              | <<sec-concurrency>>
 
-| `defaultonly` | action can only appear in the default action       | <<sec-annotations>>
+| `defaultonly`   | action can only appear in the default action          | <<sec-annotations>>
 
-| `hidden`      | hides a controllable entity from the control plane | <<sec-name-annotations>>
+| `hidden`        | hides a controllable entity from the control plane    | <<sec-name-annotations>>
 
-| `match`       | specify `match_kind` of a field in a `value_set`   | <<sec-value-set>>
+| `match`         | specify `match_kind` of a field in a `value_set`      | <<sec-value-set>>
 
-| `name`        | assign local control-plane name                    | <<sec-name-annotations>>
+| `name`          | assign local control-plane name                       | <<sec-name-annotations>>
 
-| `optional`    | parameter is optional                              | <<sec-optional-parameters>>
+| `optional`      | parameter is optional                                 | <<sec-optional-parameters>>
 
-| `tableonly`   | action cannot be a default_action                  | <<sec-annotations>>
+| `tableonly`     | action can only appear in the table_action            | <<sec-annotations>>
 
-| `deprecated`  | Construct has been deprecated                      | <<sec-deprecated-anno>>
+| `deprecated`    | Construct has been deprecated                         | <<sec-deprecated-anno>>
 
-| `pure`        | pure function                                      | <<sec-extern-annotations>>
+| `pure`          | pure function                                         | <<sec-extern-annotations>>
 
-| `noSideEffects` | function with no side effects                    | <<sec-extern-annotations>>
+| `noSideEffects` | function with no side effects                         | <<sec-extern-annotations>>
 
-| `noWarn`      | Has a string argument; inhibits compiler warnings  | <<sec-nowarn-anno>>
+| `noWarn`        | Has a string argument; inhibits compiler warnings     | <<sec-nowarn-anno>>
+
+| `groupaction`   | action can only be in the group_action                | <<sec-annotations>>
 
 |===
 
