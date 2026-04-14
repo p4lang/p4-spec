@@ -7093,10 +7093,16 @@ not find a match for the supplied key.
 If present, the `default_action` property _must_ appear after the `action`
 property. It may be declared as `const`, indicating that it cannot
 be changed dynamically by the control-plane. The `default action`
-_must_ be one of the actions that appear in the actions list. In
-particular, the expressions passed as `in`, `out`, or `inout`
-parameters must be syntactically identical to the expressions used in
-one of the elements of the `actions` list.
+_must_ be one of the actions that appear in the actions list. That is,
+the default action must satisfy the following:
+
+- The name of the default action must be same as the action of the `actions`
+  list, after resolving them both to full hierarchical names.
+- The expressions passed as `in`, `out`, or `inout` parameters must be
+  syntactically identical to the expressions used in the action of the
+  `actions` list. A P4 implementation may choose to accept default actions 
+  with arguments that are semantically equivalent to the expressions in the
+  `actions` list, instead of requiring them to be syntacitcally identical.
 
 For example, in the above `table` we could set the default action
 as follows (marking it also as constant):
