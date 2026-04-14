@@ -6808,12 +6808,14 @@ statements or expressions.
 
 Actions can be executed in two ways:
 
-- Implicitly: by tables during match-action processing.
-- Explicitly: either from a `control` block or from another `action`.
-  In either case, the values for all action parameters
-  must be supplied explicitly, including values for the directionless
-  parameters. In this case, the directionless parameters behave like `in`
-  parameters.
+- Implicitly: by tables during match-action processing. For action
+  invocations specified via table properties (such as `default_action`
+  or `entries`), directionless parameters must be compile-time constant
+  values, as these arguments are supplied by the control plane.
+- Explicitly: via a call statement, either from a `control` block or from another `action`.
+  In this case, the values for all action parameters must be supplied explicitly,
+  including values for directionless parameters. Directionless parameters
+  behave like `in` parameters and need not be compile-time constant values.
 
 [#sec-tables]
 === Tables
