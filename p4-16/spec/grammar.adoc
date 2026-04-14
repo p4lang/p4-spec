@@ -926,6 +926,33 @@ forCollectionExpr
     ;
 // end::forCollectionExpr[]
 
+// tag::boundedForStatement[]
+forStatement
+    : optAnnotations FOR "(" boundedForInitStatement ";" boundedForCondExpr ";"
+      boundedForUpdateStatement ")" statement
+    | optAnnotations FOR "(" typeRef name IN forCollectionExpr ")" statement
+    | optAnnotations FOR "(" annotations typeRef name IN forCollectionExpr ")" statement
+    ;
+// end::boundedForStatement[]
+
+// tag::boundedForInitStatement[]
+boundedForInitStatement
+    : typeRef name "=" initializer
+    ;
+// end::boundedForInitStatement[]
+
+// tag::boundedForCondExpr[]
+boundedForCondExpr
+    : name '<' expression
+    ;
+// end::boundedForCondExpr[]
+
+// tag::boundedForUpdateStatement[]
+boundedForUpdateStatement
+    : name "+=" INTEGER
+    ;
+// end::boundedForUpdateStatement[]
+
 /************************* TABLE *********************************/
 
 // tag::tableDeclaration[]
