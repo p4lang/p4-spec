@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2017 The P4 Language Consortium
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Portable Switch Architecture
 
 ## Setup instructions
