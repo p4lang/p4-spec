@@ -1,3 +1,7 @@
+SPDX-FileCopyrightText: 2018 The P4 Language Consortium
+
+SPDX-License-Identifier: Apache-2.0
+
 Files with 'value-sets' in their name:
 
 Parser value sets were originally considered to be defined as an
