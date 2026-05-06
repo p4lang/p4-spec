@@ -169,9 +169,7 @@ sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-d
 SAVEDIR="${PWD}"
 mkdir -p "${HOME}"/install
 cd "${HOME}"/install
-ARCH=$(uname --machine)
-CMAKE="cmake-3.31.9-linux-${ARCH}"
-cmake-3.31.9-linux-aarch64
+CMAKE="cmake-3.31.9-linux-$(uname --machine)"
 curl -O "https://cmake.org/files/v3.31/${CMAKE_TGZ}.tar.gz"
 tar xkzf "${CMAKE}.tar.gz"
 export PATH="${PWD}/${CMAKE}/bin:${PATH}"
@@ -181,9 +179,7 @@ cd "${SAVEDIR}"
 gem install asciidoctor-mathematical
 gem install prawn-gmagick
 gem install rouge
-gem install asciidoctor-bibtex
 gem install asciidoctor-lists
-gem install prawn-gmagick
 
 which ruby
 ruby --version
