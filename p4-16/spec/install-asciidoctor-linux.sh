@@ -17,8 +17,7 @@
 linux_version_warning() {
     1>&2 echo "Found ID ${ID} and VERSION_ID ${VERSION_ID} in /etc/os-release"
     1>&2 echo "This script only supports these:"
-    1>&2 echo "    ID ubuntu, VERSION_ID in 20.04 22.04 24.04"
-    #1>&2 echo "    ID fedora, VERSION_ID in 36 37 38"
+    1>&2 echo "    ID ubuntu, VERSION_ID in 22.04 24.04 26.04"
     1>&2 echo ""
     1>&2 echo "Proceed installing manually at your own risk of"
     1>&2 echo "significant time spent figuring out how to make it all"
@@ -46,10 +45,6 @@ tried_but_got_build_errors=0
 if [ "${ID}" = "ubuntu" ]
 then
     case "${VERSION_ID}" in
-	20.04)
-	    supported_distribution=1
-	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf2.0-dev"
-	    ;;
 	22.04)
 	    supported_distribution=1
 	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf-2.0-dev"
@@ -61,19 +56,6 @@ then
 	26.04)
 	    supported_distribution=1
 	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf-2.0-dev"
-	    ;;
-    esac
-elif [ "${ID}" = "fedora" ]
-then
-    case "${VERSION_ID}" in
-	38)
-	    supported_distribution=0
-	    ;;
-	39)
-	    supported_distribution=0
-	    ;;
-	40)
-	    supported_distribution=0
 	    ;;
     esac
 fi
