@@ -58,6 +58,10 @@ then
 	    supported_distribution=1
 	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf-2.0-dev"
 	    ;;
+	26.04)
+	    supported_distribution=1
+	    OS_SPECIFIC_PACKAGES="libgdk-pixbuf-2.0-dev"
+	    ;;
     esac
 elif [ "${ID}" = "fedora" ]
 then
@@ -147,14 +151,33 @@ if [[ $UID == 0 ]]; then
 else
     source $HOME/.rvm/scripts/rvm
 fi
-rvm install ruby-3.3.1
-rvm use 3.3.1
+rvm install ruby-4.0.3
+rvm use 4.0.3
 gem install asciidoctor
 gem install asciidoctor-pdf
 gem install asciidoctor-bibtex
 # Additional installations to enable installing
 # asciidoctor-mathematical and prawn-gmagick
 sudo apt-get --yes install cmake flex libglib2.0-dev libcairo2-dev libpango1.0-dev libxml2-dev libwebp-dev libzstd-dev libgraphicsmagick1-dev libmagickwand-dev ${OS_SPECIFIC_PACKAGES}
+
+######################################################################
+# As of 2026-May-05, installing the ruby gem asciidoctor-mathematical
+# fails during building of native extensions on a system with a
+# too-recent version of cmake.  The most recent version of cmake that
+# I have tested successfully with is thus installed below and put
+# early in the command PATH.
+SAVEDIR="${PWD}"
+mkdir -p "${HOME}"/install
+cd "${HOME}"/install
+ARCH=$(uname --machine)
+CMAKE="cmake-3.31.9-linux-${ARCH}"
+cmake-3.31.9-linux-aarch64
+curl -O "https://cmake.org/files/v3.31/${CMAKE_TGZ}.tar.gz"
+tar xkzf "${CMAKE}.tar.gz"
+export PATH="${PWD}/${CMAKE}/bin:${PATH}"
+cd "${SAVEDIR}"
+######################################################################
+
 gem install asciidoctor-mathematical
 gem install prawn-gmagick
 gem install rouge
