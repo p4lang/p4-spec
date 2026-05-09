@@ -6,7 +6,7 @@
 - p4-16: This holds the official P4 16 spec and discussion materials.
 - The discussions of the design committee and the current open problems are held in [Google Docs](https://docs.google.com/document/d/1XSgdXeG1UuF1FM_XAqxDrHeN4dHZWBnJPKVS6SnGNwM/edit)
 - An archive of the meeting notes from 2020 to 2022 is in this [pdf document](p4-16/spec/docs/P4-LDWG-Old-Notes.pdf)
-- The latest version of the P4 specification is [1.2.5](https://p4.org/p4-spec/docs/P4-16-v1.2.5.html).
+- The latest version of the P4 specification is [1.2.5](https://p4.org/wp-content/uploads/sites/53/2024/10/P4-16-spec-v1.2.5.html).
 - Portable Switch architecture discussion materials and meeting minutes are available [here](https://github.com/p4lang/p4-spec/wiki/PSA)
 
 # Modification Policy
@@ -15,9 +15,9 @@ We use the following processes when making changes to the P4 language specificat
 
 ## Core Processes
 
-* Only members of the P4.org community may propose changes to the P4 language specification, and all contributed changes will be governed by the Apache-style license specified in the P4.org membership agreement.  The LDWG meets regularly once a month, but occasional extra meetings are being scheduled. Any member of the P4 organization is welcome to attend and participate in the design.  To receive announcements related to the language design you can subscribe to the [p4-design mailing list](https://groups.google.com/a/lists.p4.org/g/p4-design)
+- Only members of the P4.org community may propose changes to the P4 language specification, and all contributed changes will be governed by the Apache-style license specified in the P4.org membership agreement. The LDWG meets regularly once a month, but occasional extra meetings are being scheduled. Any member of the P4 organization is welcome to attend and participate in the design. To receive announcements related to the language design you can subscribe to the [p4-design mailing list](https://groups.google.com/a/lists.p4.org/g/p4-design)
 
-* We use [semantic versioning](http://semver.org/) to track changes to the P4 language specification: major version numbers track API-incompatible changes; minor version numbers track backward-compatible changes; and patch versions make backward-compatible bug fixes. Generally speaking, the P4 language design working group co-chairs will typically batch together multiple changes into a single release, as appropriate.
+- We use [semantic versioning](http://semver.org/) to track changes to the P4 language specification: major version numbers track API-incompatible changes; minor version numbers track backward-compatible changes; and patch versions make backward-compatible bug fixes. Generally speaking, the P4 language design working group co-chairs will typically batch together multiple changes into a single release, as appropriate.
 
 ## Detailed Processes
 
