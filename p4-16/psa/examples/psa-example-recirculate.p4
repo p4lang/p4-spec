@@ -143,7 +143,7 @@ parser EgressParserImpl(
     in psa_egress_parser_input_metadata_t istd,
     in empty_metadata_t normal_meta,
     in empty_metadata_t clone_i2e_meta,
-    in empty_metadata_t cloen_e2e_meta)
+    in empty_metadata_t clone_e2e_meta)
 {
     CommonParser() p;
 
