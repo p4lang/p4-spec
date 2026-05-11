@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2016 The P4 Language Consortium
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 This folder contains the following P4 files, all written in P4-16:
 
 - switch.p4: This is the original switch.p4 translated into P4-16.

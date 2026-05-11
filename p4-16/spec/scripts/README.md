@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2022 The P4 Language Consortium
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Comparing the specification `grammar.mdk` file against `p4c`'s grammar
 
 Assuming you have a local copy of a clone of the p4lang/p4c repository

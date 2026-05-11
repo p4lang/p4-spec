@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2018 The P4 Language Consortium
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Size property of P4 tables and parser value sets
 
 It would be convenient for users of P4 programmable devices if objects

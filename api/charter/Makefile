@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2017 The P4 Language Consortium
+#
+# SPDX-License-Identifier: Apache-2.0
+
 SPEC=P4_API_WG_charter
 ROUGE_STYLE=molokai
 ROUGE_CSS=style

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2016 The P4 Language Consortium
+#
+# SPDX-License-Identifier: Apache-2.0
+
 SPEC=P4-16-spec
 ROUGE_STYLE=github
 ROUGE_CSS=style
