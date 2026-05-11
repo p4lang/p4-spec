@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: 2017 The P4 Language Consortium
+#
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # This is a preprocessing script that takes as input a file (or list
 # of files), # in tex, and produces a tex file according to the 

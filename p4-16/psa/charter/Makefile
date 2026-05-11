@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 The P4 Language Consortium
+#
+# SPDX-License-Identifier: Apache-2.0
+
 CHARTER=P4_Arch_Charter
 ROUGE_STYLE=molokai
 ROUGE_CSS=style
