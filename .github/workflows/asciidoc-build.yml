@@ -96,6 +96,9 @@ jobs:
         name: api-charter
         path: api-charter
 
+    - name: Set short SHA
+      id: vars
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
     - name: Copy files
       run: |
@@ -111,7 +114,7 @@ jobs:
     - name: Commit changes
       run: |
         git add docs/P4-16-working-spec.{html,pdf} docs/PSA.{html,pdf} docs/P4_API_WG_charter.pdf docs/P4_Arch_Charter.html
-        git commit -am "docs for ${{ steps.vars.outputs.sha_short }}"
+        git commit -m "docs for ${{ steps.vars.outputs.sha_short }}"
 
     - name: Push commit to gh-pages branch
       run: git push -f origin gh-pages
