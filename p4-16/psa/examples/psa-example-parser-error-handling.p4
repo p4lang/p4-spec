@@ -263,8 +263,6 @@ error {
 typedef bit<32> PacketCounter_t;
 typedef bit<8>  ErrorIndex_t;
 
-const bit<9> NUM_ERRORS = 256;
-
 parser CommonParser(packet_in buffer,
                     out headers hdr,
                     inout metadata meta)
