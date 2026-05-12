@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# SPDX-FileCopyrightText: 2018 The P4 Language Consortium
+#
+# SPDX-License-Identifier: Apache-2.0
+
 print_supported_os_versions() {
     1>&2 echo "    Ubuntu 16.04"
     1>&2 echo "    Ubuntu 18.04"

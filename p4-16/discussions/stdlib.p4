@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2016 The P4 Language Consortium
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef _STDLIB_P4_
 #define _STDLIB_P4_
 

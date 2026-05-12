@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2016 The P4 Language Consortium
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "stdlib.p4"
 
 // Architecture definition file

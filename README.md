@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2016 The P4 Language Consortium
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # P4 programming language specifications
 
 - api: This folder keeps documents related to P4 run-time API discussions.
