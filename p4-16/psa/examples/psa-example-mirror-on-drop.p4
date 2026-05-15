@@ -37,22 +37,23 @@ header ipv4_t {
     bit<32> dstAddr;
 }
 
-struct fwd_metadata_t {
+struct empty_metadata_t {
+}
 
+struct fwd_metadata_t {
 }
 
 struct telemetry_metadata_t {
     bit<8> reason;
 }
 
-struct metadata {
-    fwd_metadata_t fwd_metadata;
+struct clone_i2e_metadata_t {
+    bit<8> clone_tag;
     telemetry_metadata_t telemetry_md;
-    clone_metadata_t cloned_header;
 }
 
-struct clone_metadata_t {
-    bit<8> clone_tag;
+struct metadata {
+    fwd_metadata_t fwd_metadata;
     telemetry_metadata_t telemetry_md;
 }
 
@@ -81,66 +82,45 @@ parser CommonParser(packet_in buffer,
     }
 }
 
-parser CloneParser(packet_in buffer,
-                   in psa_ingress_parser_input_metadata_t istd,
-                   inout clone_metadata_t clone_meta) {
-     state start {
-         transition select(buffer.lookahead<bit<8>>()) {
-            1 : parse_clone_meta;
-            default: reject;
-         }
-     }
-     state parse_clone_meta {
-     	 buffer.extract(clone_meta);
-	 transition accept;
-     }
-}
-
+// Per PSA spec Section 7.1, ingress packet_path can only be
+// NORMAL, RESUBMIT, or RECIRCULATE -- never a clone path.
 parser IngressParserImpl(packet_in buffer,
                          out headers parsed_hdr,
                          inout metadata user_meta,
-                         in psa_ingress_parser_input_metadata_t istd)
+                         in psa_ingress_parser_input_metadata_t istd,
+                         in empty_metadata_t resubmit_meta,
+                         in empty_metadata_t recirculate_meta)
 {
     CommonParser() p;
-    CloneParser() cp;
 
     state start {
-        transition select(istd.packet_path) {
-           PSA_PacketPath_t.CLONE: parse_clone_header; // FIXME: CLONE_I2E or CLONE_E2E
-           PSA_PacketPath_t.NORMAL: parse_ethernet;
-        }
-    }
-
-    state parse_clone_header {
-        cp.apply(buffer, istd, user_meta.clone_header);
-	transition accept;
-    }
-
-    state parse_ethernet {
         p.apply(buffer, parsed_hdr, user_meta);
-	transition accept;
+        transition accept;
     }
 }
 
 // clone a packet to CPU.
 control ingress(inout headers hdr,
                 inout metadata user_meta,
-                PacketReplicationEngine pre,
-                in  psa_ingress_input_metadata_t  istd,
-                out psa_ingress_output_metadata_t ostd)
+                in    psa_ingress_input_metadata_t  istd,
+                inout psa_ingress_output_metadata_t ostd)
 {
-    action mirror_on_drop(bit<8> reason, PortId_t port) {
-	ostd.clone = 1;
-	ostd.clone_port = port;
-        ostd.drop = 1;
- 	user_meta.telemetry_md.reason = reason;
+    action mirror_on_drop(bit<8> reason, CloneSessionId_t session_id) {
+        ostd.clone = true;
+        ostd.clone_session_id = session_id;
+        ostd.drop = true;
+        user_meta.telemetry_md.reason = reason;
     }
 
-    table system_acl() {
+    // Note: the original example referenced acl_metadata.acl_deny
+    // which had no definition in this file.  Using hdr.ipv4.isValid()
+    // as a placeholder key until the intended ACL metadata is defined.
+    table system_acl {
         key = {
-            acl_metadata.acl_deny : ternary;
+            hdr.ipv4.isValid() : exact;
         }
-        actions = { mirror_on_drop; }
+        actions = { mirror_on_drop; NoAction; }
+        default_action = NoAction;
     }
 
     apply {
@@ -151,7 +131,10 @@ control ingress(inout headers hdr,
 parser EgressParserImpl(packet_in buffer,
                         out headers parsed_hdr,
                         inout metadata user_meta,
-                        in psa_egress_parser_input_metadata_t istd)
+                        in psa_egress_parser_input_metadata_t istd,
+                        in metadata normal_meta,
+                        in clone_i2e_metadata_t clone_i2e_meta,
+                        in empty_metadata_t clone_e2e_meta)
 {
     CommonParser() p;
 
@@ -163,52 +146,53 @@ parser EgressParserImpl(packet_in buffer,
 
 control egress(inout headers hdr,
                inout metadata user_meta,
-               BufferingQueueingEngine bqe,
-               in  psa_egress_input_metadata_t  istd,
-               out psa_egress_output_metadata_t ostd)
+               in    psa_egress_input_metadata_t  istd,
+               inout psa_egress_output_metadata_t ostd)
 {
     apply { }
 }
 
-control DeparserImpl(packet_out packet, inout headers hdr) {
+control CommonDeparserImpl(packet_out packet, inout headers hdr) {
     apply {
-        packet.emit(hdr.eth);
+        packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
     }
 }
 
 control IngressDeparserImpl(packet_out packet,
-    clone_out clone,
-    inout headers hdr,
-    in userMetadata meta,
-    in psa_ingress_output_metadata_t istd) {
-    DeparserImpl() common_deparser;
+                            out clone_i2e_metadata_t clone_i2e_meta,
+                            out empty_metadata_t resubmit_meta,
+                            out metadata normal_meta,
+                            inout headers hdr,
+                            in metadata meta,
+                            in psa_ingress_output_metadata_t istd)
+{
+    CommonDeparserImpl() common_deparser;
     apply {
         // user is responsible for constructing the clone header,
         // it may include a user-defined tag to distinguish different
         // clone headers.
-        clone_metadata_t clone_md;
-        clone_md.tag = 8w1;
-        clone_md.telemetry_md = meta.telemetry_md;
-        if (istd.clone) {
-            clone.add_metadata(clone_md);
+        if (psa_clone_i2e(istd)) {
+            clone_i2e_meta.clone_tag = 8w1;
+            clone_i2e_meta.telemetry_md = meta.telemetry_md;
+        }
+        if (psa_normal(istd)) {
+            normal_meta = meta;
         }
         common_deparser.apply(packet, hdr);
     }
 }
 
 control EgressDeparserImpl(packet_out packet,
-    clone_out clone,
-    inout headers hdr,
-    in userMetadata meta,
-    in psa_egress_output_metadata_t istd,
-    in psa_egress_deparser_input_metadata_t edstd)
+                           out empty_metadata_t clone_e2e_meta,
+                           out empty_metadata_t recirculate_meta,
+                           inout headers hdr,
+                           in metadata meta,
+                           in psa_egress_output_metadata_t istd,
+                           in psa_egress_deparser_input_metadata_t edstd)
 {
-    DeparserImpl() common_deparser;
+    CommonDeparserImpl() common_deparser;
     apply {
-        if (istd.clone) {
-            clone.add_metadata({hdr.ipv4.srcAddr, hdr.ipv4.dstAddr});
-        }
         common_deparser.apply(packet, hdr);
     }
 }
