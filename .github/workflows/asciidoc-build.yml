@@ -66,21 +66,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        # Fetch all history for all branches
-        fetch-depth: 0
-
-    - name: Configure git
-      run: |
-        git config user.name "GitHub Actions"
-        git config user.email "p4lang@users.noreply.github.com"
-
-    - name: Rebase gh-pages branch
-      run: |
-        git fetch --all
-        git checkout main
-        git pull
-        git checkout gh-pages
-        git rebase --quiet main
+	 ref: gh-pages
+	 fetch-depth: 0
 
     - name: Download spec artifact
       uses: actions/download-artifact@v4
@@ -103,8 +90,6 @@ jobs:
 
     - name: Copy files
       run: |
-        pwd
-        ls -l *
         cp spec/P4-16-spec.html docs/P4-16-working-spec.html
         cp spec/P4-16-spec.pdf docs/P4-16-working-spec.pdf
         cp psa-spec/PSA.html docs/PSA.html
@@ -112,11 +97,13 @@ jobs:
         cp psa-spec/charter/P4_Arch_Charter.html docs/
         cp api-charter/P4_API_WG_charter.pdf docs/
 
-    - name: Commit changes
-      run: |
-        git add docs/P4-16-working-spec.{html,pdf} docs/PSA.{html,pdf} docs/P4_API_WG_charter.pdf docs/P4_Arch_Charter.html
-        git commit -am "docs for ${{ steps.vars.outputs.sha_short }}"
-
-    - name: Push commit to gh-pages branch
-      run: git push -f origin gh-pages
+    - name: Publish to gh-pages
+      uses: EndBug/add-and-commit@v9
+      with:
+	 add: 'docs/P4-16-working-spec.html docs/P4-16-working-spec.pdf docs/PSA.html docs/PSA.pdf docs/P4_API_WG_charter.pdf docs/P4_Arch_Charter.html'
+	 author_name: 'GitHub Actions'
+        author_email: 'p4lang@users.noreply.github.com'
+        message: 'Publish spec from GitHub Actions'
+        commit: '--amend'
+        push: 'origin gh-pages --force'
 
