@@ -7,6 +7,17 @@ name: Build and push specification files
 on: [push, pull_request]
 
 jobs:
+  verify-licenses:
+    runs-on: ubuntu-latest
+    name: Validate that all files have copyright and license info
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dev dependencies
+        run: |
+          ./CI/install-uv.sh
+      - name: Validate presence of copyright and license info (python w/reuse)
+        run: |
+          uvx reuse lint
   build:
     runs-on: ubuntu-24.04
     steps:
