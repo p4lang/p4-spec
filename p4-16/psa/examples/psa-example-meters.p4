@@ -1,17 +1,7 @@
 /*
-Copyright 2026 Contributors to the P4 Language Consortium
+Copyright 2026 The P4 Language Consortium
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+SPDX-License-Identifier: Apache-2.0
 */
 
 // This example demonstrates the use of Meter and DirectMeter externs
@@ -112,23 +102,22 @@ struct headers_t {
 // Constants
 // ---------------------------------------------------------------------------
 
-// tag::Meter_Example_Constants[]
 // Number of ports on the device. Each port has its own meter instance.
 const bit<32> NUM_PORTS = 512;
-// end::Meter_Example_Constants[]
 
 // ---------------------------------------------------------------------------
 // Common parser shared between ingress and egress pipelines
 // ---------------------------------------------------------------------------
 
 parser CommonParser(
-    packet_in       buffer,
-    out headers_t   parsed_hdr,
+    packet_in        buffer,
+    out headers_t    parsed_hdr,
     inout metadata_t user_meta)
 {
     state start {
         transition parse_ethernet;
     }
+
     state parse_ethernet {
         buffer.extract(parsed_hdr.ethernet);
         transition select(parsed_hdr.ethernet.etherType) {
@@ -136,6 +125,7 @@ parser CommonParser(
             default : accept;
         }
     }
+
     state parse_ipv4 {
         buffer.extract(parsed_hdr.ipv4);
         transition accept;
@@ -175,7 +165,6 @@ parser IngressParserImpl(
 //     upgraded to GREEN by a per-prefix meter.
 // ---------------------------------------------------------------------------
 
-// tag::Meter_Example_Ingress[]
 control ingress(
     inout headers_t                      hdr,
     inout metadata_t                     user_meta,
@@ -204,6 +193,7 @@ control ingress(
         // by the port meter so this meter cannot upgrade a RED packet.
         PSA_MeterColor_t final_color =
             per_prefix_meter.execute(user_meta.fwd_metadata.port_color);
+
         if (final_color == PSA_MeterColor_t.RED) {
             ingress_drop(ostd);
         } else {
@@ -222,11 +212,14 @@ control ingress(
         key = {
             hdr.ipv4.dstAddr : lpm;
         }
+
         actions = {
             forward;
             drop;
         }
+
         default_action = drop;
+
         // This table owns the per_prefix_meter DirectMeter instance.
         psa_direct_meter = per_prefix_meter;
     }
@@ -256,7 +249,6 @@ control ingress(
         }
     }
 }
-// end::Meter_Example_Ingress[]
 
 // ---------------------------------------------------------------------------
 // Egress control block
@@ -268,11 +260,9 @@ control egress(
     in    psa_egress_input_metadata_t   istd,
     inout psa_egress_output_metadata_t  ostd)
 {
-    // tag::Meter_Example_Egress[]
     // Count egress bytes per port using an indirect Meter so that the
     // egress pipeline can also apply rate limiting if desired.
-    // In this example we only observe the color but do not drop here;
-    // dropping policy is enforced in ingress.
+    // RED packets are dropped here to enforce egress rate limiting.
     Meter<PortId_t>(NUM_PORTS, PSA_MeterType_t.BYTES) port_bytes_out;
 
     apply {
@@ -282,12 +272,12 @@ control egress(
         // which in this example is intentional.
         PSA_MeterColor_t egress_color =
             port_bytes_out.execute(istd.egress_port);
+
         // Drop egress RED packets to enforce egress rate limiting.
         if (egress_color == PSA_MeterColor_t.RED) {
             egress_drop(ostd);
         }
     }
-    // end::Meter_Example_Egress[]
 }
 
 // ---------------------------------------------------------------------------
@@ -318,6 +308,7 @@ control IngressDeparserImpl(
     in psa_ingress_output_metadata_t    istd)
 {
     CommonDeparserImpl() cp;
+
     apply {
         cp.apply(buffer, hdr);
     }
@@ -337,6 +328,7 @@ control EgressDeparserImpl(
     in psa_egress_deparser_input_metadata_t  edstd)
 {
     CommonDeparserImpl() cp;
+
     apply {
         cp.apply(buffer, hdr);
     }
@@ -367,7 +359,6 @@ parser EgressParserImpl(
 // Package instantiation
 // ---------------------------------------------------------------------------
 
-// tag::Meter_Example_Package[]
 IngressPipeline(IngressParserImpl(),
                 ingress(),
                 IngressDeparserImpl()) ip;
@@ -376,5 +367,5 @@ EgressPipeline(EgressParserImpl(),
                egress(),
                EgressDeparserImpl()) ep;
 
-PSA_Switch(ip, PacketReplicationEngine(), ep, BufferingQueueingEngine()) main;
-// end::Meter_Example_Package[]
+PSA_Switch(ip, PacketReplicationEngine(), ep,
+           BufferingQueueingEngine()) main;
