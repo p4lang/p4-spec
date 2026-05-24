@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0
 - The discussions of the design committee and the current open problems are held in [Google Docs](https://docs.google.com/document/d/1XSgdXeG1UuF1FM_XAqxDrHeN4dHZWBnJPKVS6SnGNwM/edit)
 - An archive of the meeting notes from 2020 to 2022 is in this [pdf document](p4-16/spec/docs/P4-LDWG-Old-Notes.pdf)
 - The latest version of the P4 specification is [1.2.5](https://p4.org/wp-content/uploads/sites/53/2024/10/P4-16-spec-v1.2.5.html).
+- The working draft of the P4 specification is available [here](https://p4lang.github.io/p4-spec/docs/P4-16-working-spec.html).
 - Portable Switch architecture discussion materials and meeting minutes are available [here](https://github.com/p4lang/p4-spec/wiki/PSA)
 
 # Modification Policy
