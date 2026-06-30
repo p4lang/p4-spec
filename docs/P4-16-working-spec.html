@@ -659,7 +659,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-05-24</span>
+<span id="revdate">2026-06-30</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -3359,8 +3359,8 @@ default values.</p>
 <span style="color: #cf222e">control</span> controlProto<span style="color: #0550ae">&lt;</span>H<span style="color: #24292f;background-color: #f6f8fa">,</span> M<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H h<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">inout</span> M m<span style="color: #24292f;background-color: #f6f8fa">);</span>
 
 <span style="color: #cf222e">package</span> pack<span style="color: #0550ae">&lt;</span>HP<span style="color: #24292f;background-color: #f6f8fa">,</span> MP<span style="color: #24292f;background-color: #f6f8fa">,</span> HC<span style="color: #24292f;background-color: #f6f8fa">,</span> MC<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span>
-    <span style="color: #0550ae">@optional</span> parserProto<span style="color: #0550ae">&lt;</span>HP<span style="color: #24292f;background-color: #f6f8fa">,</span> MP<span style="color: #0550ae">&gt;</span> <span style="color: #0550ae">_</span><span style="color: #cf222e">parser</span><span style="color: #24292f;background-color: #f6f8fa">,</span>  <span style="color: #6e7781">// optional parameter
-</span>                             controlProto<span style="color: #0550ae">&lt;</span>HC<span style="color: #24292f;background-color: #f6f8fa">,</span> MC<span style="color: #0550ae">&gt;</span> <span style="color: #0550ae">_</span><span style="color: #cf222e">control</span> <span style="color: #0550ae">=</span> nothing<span style="color: #24292f;background-color: #f6f8fa">());</span> <span style="color: #6e7781">// default parameter value
+    <span style="color: #0550ae">@optional</span> parserProto<span style="color: #0550ae">&lt;</span>HP<span style="color: #24292f;background-color: #f6f8fa">,</span> MP<span style="color: #0550ae">&gt;</span> <span style="color: #0550ae">_</span>parser<span style="color: #24292f;background-color: #f6f8fa">,</span>  <span style="color: #6e7781">// optional parameter
+</span>                             controlProto<span style="color: #0550ae">&lt;</span>HC<span style="color: #24292f;background-color: #f6f8fa">,</span> MC<span style="color: #0550ae">&gt;</span> <span style="color: #0550ae">_</span>control <span style="color: #0550ae">=</span> nothing<span style="color: #24292f;background-color: #f6f8fa">());</span> <span style="color: #6e7781">// default parameter value
 </span>
 pack<span style="color: #24292f;background-color: #f6f8fa">()</span> main<span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// No value for _parser, _control is an instance of nothing()</span></code></pre>
 </div>
@@ -6134,7 +6134,13 @@ some architectures may require it to be compile-time known.  It must also be
 non-negative and in-range for the type.  Some architectures may allow variable indexing,
 in which case an out of range value will be equivalent to a shift of that amount.
 An index that is not compile-time known must be a <code>bit&lt;W&gt;</code> type in order to ensure that
-it is non-negative.</p>
+it is non-negative.
+Slices specified with <code>[L+:W]</code> are also l-values, which means that P4 supports
+assigning to such a slice: <code>e[L+:W] = x</code>.
+The effect of this statement is to set <code>W</code> bits starting from bit <code>L</code> of <code>e</code>
+to the bit-pattern represented by <code>x</code>, and leaves all other bits of <code>e</code> unchanged.
+If <code>L+W</code> exceeds the width of <code>e</code>, then only the bits that fall within the valid
+range of <code>e</code> are modified.</p>
 </li>
 <li>
 <p>Concatenation of bit-strings and/or fixed-width signed integers, denoted by <code>++</code>.
@@ -15837,7 +15843,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-05-24 17:24:24 UTC
+Last updated 2026-06-30 19:37:15 UTC
 </div>
 </div>
 </body>
