@@ -2437,6 +2437,29 @@ to select a member from the group, and the action specification
 corresponding to that member is applied. The dynamic selection algorithm is
 specified as a parameter when instantiating the action selector.
 
+==== Group Actions
+
+This feature is currently supported only for P4Runtime{P4RuntimeAPI}
+one-shot action selector programming.
+
+A group may be configured with a _group action_ that executes logically before
+the selected member action. An action used as a group action must be annotated
+with `@groupaction`.
+
+An action annotated with `@groupaction` may only be used as a group action. It
+must not be used as a table entry action or as a table default action.
+
+An action that is not annotated with `@groupaction` must not be used as a
+group action.
+
+The `@groupaction` annotation is not allowed in combination with `@tableonly`
+or `@defaultonly`. (For the semantics of `@tableonly` and `@defaultonly`,
+see the P4 language specification.)
+
+Because a single named action cannot be used both as a group action and as
+a table entry or default action, a P4 program that requires equivalent
+behavior in multiple contexts must define separate actions for each context.
+
 Action selector members may only specify action types defined in the
 `actions` attribute of the implemented table.
 
@@ -3721,6 +3744,23 @@ table.
 In either case, an implementation might also support putting the `if`
 statement inside of the action `set_output_port`, but this is not
 required by PSA.
+
+
+[appendix]
+[#appendix-psa-reserved-annotations]
+== PSA Reserved Annotations
+
+The following table shows PSA-specific reserved annotations. For P4 language
+reserved annotations such as `@tableonly` and `@defaultonly`, refer to the
+P4 language specification.
+
+[.center,cols="1,3,1",width=100%]
+|===
+| Annotation    | Purpose                                           | See Section
+
+| `@groupaction` | Action can only be used as an ActionSelector group action | <<sec-action-selector>>
+
+|===
 
 
 [appendix]
