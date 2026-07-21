@@ -2446,8 +2446,9 @@ A group may be configured with a _group action_ that executes logically before
 the selected member action. An action used as a group action must be annotated
 with `@groupaction`.
 
-An action annotated with `@groupaction` may only be used as a group action. It
-must not be used as a table entry action or as a table default action.
+As specified in the P4Runtime specification, attempting to use an action
+annotated with `@groupaction` as a table entry action or as a table default
+action must fail and return an appropriate error status.
 
 An action that is not annotated with `@groupaction` must not be used as a
 group action.
@@ -2456,9 +2457,9 @@ The `@groupaction` annotation is not allowed in combination with `@tableonly`
 or `@defaultonly`. (For the semantics of `@tableonly` and `@defaultonly`,
 see the P4 language specification.)
 
-Because a single named action cannot be used both as a group action and as
-a table entry or default action, a P4 program that requires equivalent
-behavior in multiple contexts must define separate actions for each context.
+Because an action cannot be used both as a group action and as a table entry
+or default action, a P4 program that requires equivalent behavior in multiple
+contexts must define separate actions for each context.
 
 Action selector members may only specify action types defined in the
 `actions` attribute of the implemented table.
