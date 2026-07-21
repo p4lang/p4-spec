@@ -659,7 +659,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Portable Switch Architecture (PSA)</h1>
 <div class="details">
 <span id="revnumber">version v1.2,</span>
-<span id="revdate">2026-06-30</span>
+<span id="revdate">2026-07-21</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -777,7 +777,8 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-action-selector">8.12. Action Selector</a>
 <ul class="sectlevel3">
-<li><a href="#_action_selector_example">8.12.1. Action Selector Example</a></li>
+<li><a href="#_group_actions">8.12.1. Group Actions</a></li>
+<li><a href="#_action_selector_example">8.12.2. Action Selector Example</a></li>
 </ul>
 </li>
 <li><a href="#_timestamps">8.13. Timestamps</a></li>
@@ -805,23 +806,24 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#appendix-multi-pipeline-psa-devices">Appendix E: Multi-pipeline PSA devices</a></li>
 <li><a href="#appendix-packet-ordering">Appendix F: Packet ordering</a></li>
 <li><a href="#appendix-empty-action-selector-groups">Appendix G: Supporting empty action selector groups</a></li>
-<li><a href="#appendix-revision-history">Appendix H: Revision History</a>
+<li><a href="#appendix-psa-reserved-annotations">Appendix H: PSA Reserved Annotations</a></li>
+<li><a href="#appendix-revision-history">Appendix I: Revision History</a>
 <ul class="sectlevel2">
-<li><a href="#_changes_made_in_version_1_2">H.1. Changes made in version 1.2</a>
+<li><a href="#_changes_made_in_version_1_2">I.1. Changes made in version 1.2</a>
 <ul class="sectlevel3">
-<li><a href="#_add_match_kind_optional">H.1.1. Add match_kind <code>optional</code></a></li>
-<li><a href="#_remove_control_plane_api_function_signatures">H.1.2. Remove control plane API function signatures</a></li>
+<li><a href="#_add_match_kind_optional">I.1.1. Add match_kind <code>optional</code></a></li>
+<li><a href="#_remove_control_plane_api_function_signatures">I.1.2. Remove control plane API function signatures</a></li>
 </ul>
 </li>
-<li><a href="#_changes_made_in_version_1_1">H.2. Changes made in version 1.1</a>
+<li><a href="#_changes_made_in_version_1_1">I.2. Changes made in version 1.1</a>
 <ul class="sectlevel3">
-<li><a href="#_numeric_translation_between_p4runtime_api_values_and_data_plane_values">H.2.1. Numeric translation between P4Runtime API values and data plane values</a></li>
-<li><a href="#_add_the_ability_for_packet_clone_sessions_to_create_multiple_copies">H.2.2. Add the ability for packet clone sessions to create multiple copies</a></li>
-<li><a href="#_add_psa_idle_timeout_table_property">H.2.3. Add psa_idle_timeout table property</a></li>
-<li><a href="#_add_psa_empty_group_action_table_property">H.2.4. Add psa_empty_group_action table property</a></li>
-<li><a href="#_other_changes">H.2.5. Other changes</a></li>
-<li><a href="#_changes_to_the_psa_p4_include_file">H.2.6. Changes to the psa.p4 include file</a></li>
-<li><a href="#_changes_to_example_psa_programs_in_the_p4_16psaexamples_directory">H.2.7. Changes to example PSA programs in the <code>p4-16/psa/examples</code> directory</a></li>
+<li><a href="#_numeric_translation_between_p4runtime_api_values_and_data_plane_values">I.2.1. Numeric translation between P4Runtime API values and data plane values</a></li>
+<li><a href="#_add_the_ability_for_packet_clone_sessions_to_create_multiple_copies">I.2.2. Add the ability for packet clone sessions to create multiple copies</a></li>
+<li><a href="#_add_psa_idle_timeout_table_property">I.2.3. Add psa_idle_timeout table property</a></li>
+<li><a href="#_add_psa_empty_group_action_table_property">I.2.4. Add psa_empty_group_action table property</a></li>
+<li><a href="#_other_changes">I.2.5. Other changes</a></li>
+<li><a href="#_changes_to_the_psa_p4_include_file">I.2.6. Changes to the psa.p4 include file</a></li>
+<li><a href="#_changes_to_example_psa_programs_in_the_p4_16psaexamples_directory">I.2.7. Changes to example PSA programs in the <code>p4-16/psa/examples</code> directory</a></li>
 </ul>
 </li>
 </ul>
@@ -4592,6 +4594,36 @@ to select a member from the group, and the action specification
 corresponding to that member is applied. The dynamic selection algorithm is
 specified as a parameter when instantiating the action selector.</p>
 </div>
+<div class="sect3">
+<h4 id="_group_actions">8.12.1. Group Actions</h4>
+<div class="paragraph">
+<p>This feature is currently supported only for P4Runtime<sup class="footnoteref">[<a class="footnote" href="#_footnotedef_2" title="View footnote.">2</a>]</sup>
+one-shot action selector programming.</p>
+</div>
+<div class="paragraph">
+<p>A group may be configured with a <em>group action</em> that executes logically before
+the selected member action. An action used as a group action must be annotated
+with <code>@groupaction</code>.</p>
+</div>
+<div class="paragraph">
+<p>As specified in the P4Runtime specification, attempting to use an action
+annotated with <code>@groupaction</code> as a table entry action or as a table default
+action must fail and return an appropriate error status.</p>
+</div>
+<div class="paragraph">
+<p>An action that is not annotated with <code>@groupaction</code> must not be used as a
+group action.</p>
+</div>
+<div class="paragraph">
+<p>The <code>@groupaction</code> annotation is not allowed in combination with <code>@tableonly</code>
+or <code>@defaultonly</code>. (For the semantics of <code>@tableonly</code> and <code>@defaultonly</code>,
+see the P4 language specification.)</p>
+</div>
+<div class="paragraph">
+<p>Because an action cannot be used both as a group action and as a table entry
+or default action, a P4 program that requires equivalent behavior in multiple
+contexts must define separate actions for each context.</p>
+</div>
 <div class="paragraph">
 <p>Action selector members may only specify action types defined in the
 <code>actions</code> attribute of the implemented table.</p>
@@ -4706,8 +4738,9 @@ allowed for tables with an action selector implementation.</p>
 <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
+</div>
 <div class="sect3">
-<h4 id="_action_selector_example">8.12.1. Action Selector Example</h4>
+<h4 id="_action_selector_example">8.12.2. Action Selector Example</h4>
 <div class="paragraph">
 <p>The P4 control block <code>Ctrl</code> in the example below instantiates an
 action selector <code>as</code> that can contain at most 128 member entries. The
@@ -6209,10 +6242,41 @@ required by PSA.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="appendix-revision-history">Appendix H: Revision History</h2>
+<h2 id="appendix-psa-reserved-annotations">Appendix H: PSA Reserved Annotations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following table shows PSA-specific reserved annotations. For P4 language
+reserved annotations such as <code>@tableonly</code> and <code>@defaultonly</code>, refer to the
+P4 language specification.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch center">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 60%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Annotation</th>
+<th class="tableblock halign-left valign-top">Purpose</th>
+<th class="tableblock halign-left valign-top">See Section</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>@groupaction</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action can only be used as an ActionSelector group action</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-action-selector">Section 8.12</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="appendix-revision-history">Appendix I: Revision History</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_changes_made_in_version_1_2">H.1. Changes made in version 1.2</h3>
+<h3 id="_changes_made_in_version_1_2">I.1. Changes made in version 1.2</h3>
 <div class="paragraph">
 <p>Version 1.2 was released December 22, 2022.</p>
 </div>
@@ -6266,7 +6330,7 @@ table property <code>psa_idle_timeout</code> (<a href="#sec-idle-timeout">Sectio
 </ul>
 </div>
 <div class="sect3">
-<h4 id="_add_match_kind_optional">H.1.1. Add match_kind <code>optional</code></h4>
+<h4 id="_add_match_kind_optional">I.1.1. Add match_kind <code>optional</code></h4>
 <div class="paragraph">
 <p>This match kind was added to the v1model architecture in early 2020,
 and seems useful in that it (a) provides additional information about
@@ -6277,7 +6341,7 @@ more efficiently than <code>ternary</code>.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_remove_control_plane_api_function_signatures">H.1.2. Remove control plane API function signatures</h4>
+<h4 id="_remove_control_plane_api_function_signatures">I.1.2. Remove control plane API function signatures</h4>
 <div class="paragraph">
 <p>As a historical note, the control plane API function signatures that
 were formerly given in comments preceded by the string
@@ -6294,7 +6358,7 @@ signatures were required to be implemented.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_changes_made_in_version_1_1">H.2. Changes made in version 1.1</h3>
+<h3 id="_changes_made_in_version_1_1">I.2. Changes made in version 1.1</h3>
 <div class="paragraph">
 <p>Version 1.1 was released November 22, 2018.</p>
 </div>
@@ -6330,7 +6394,7 @@ instances in the egress pipeline.</p>
 </ul>
 </div>
 <div class="sect3">
-<h4 id="_numeric_translation_between_p4runtime_api_values_and_data_plane_values">H.2.1. Numeric translation between P4Runtime API values and data plane values</h4>
+<h4 id="_numeric_translation_between_p4runtime_api_values_and_data_plane_values">I.2.1. Numeric translation between P4Runtime API values and data plane values</h4>
 <div class="paragraph">
 <p>There was a series of meetings after PSA v1.0 was released to refine
 the details of the plan to do numeric translation of values with type
@@ -6350,7 +6414,7 @@ this.  Changes can be found here:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_add_the_ability_for_packet_clone_sessions_to_create_multiple_copies">H.2.2. Add the ability for packet clone sessions to create multiple copies</h4>
+<h4 id="_add_the_ability_for_packet_clone_sessions_to_create_multiple_copies">I.2.2. Add the ability for packet clone sessions to create multiple copies</h4>
 <div class="paragraph">
 <p>In PSA v1.0, requesting to make a clone of a packet was restricted to
 creating a single clone, sent to a single output port.  In PSA v1.1
@@ -6376,7 +6440,7 @@ be configured.  Changes can be found here:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_add_psa_idle_timeout_table_property">H.2.3. Add psa_idle_timeout table property</h4>
+<h4 id="_add_psa_idle_timeout_table_property">I.2.3. Add psa_idle_timeout table property</h4>
 <div class="paragraph">
 <p>Adding this brings PSA v1.1 up to date with the support for this
 feature in the P4Runtime API.  Using this table property enables the
@@ -6394,7 +6458,7 @@ notification message should be sent to the controller.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_add_psa_empty_group_action_table_property">H.2.4. Add psa_empty_group_action table property</h4>
+<h4 id="_add_psa_empty_group_action_table_property">I.2.4. Add psa_empty_group_action table property</h4>
 <div class="paragraph">
 <p>PSA v1.0 did not specify the behavior of a table with an
 <code>ActionSelector</code> implementation, if a packet matched a table entry
@@ -6414,7 +6478,7 @@ an action that should be executed when this situation occurs.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_other_changes">H.2.5. Other changes</h4>
+<h4 id="_other_changes">I.2.5. Other changes</h4>
 <div class="paragraph">
 <p>In PSA v1.0, the <code>Digest</code> extern was required to be supported in both
 the <code>IngressDeparser</code> and <code>EgressDeparser</code> control blocks.  It is now
@@ -6430,7 +6494,7 @@ block.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_changes_to_the_psa_p4_include_file">H.2.6. Changes to the psa.p4 include file</h4>
+<h4 id="_changes_to_the_psa_p4_include_file">I.2.6. Changes to the psa.p4 include file</h4>
 <div class="ulist">
 <ul>
 <li>
@@ -6454,7 +6518,7 @@ support such macros.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_changes_to_example_psa_programs_in_the_p4_16psaexamples_directory">H.2.7. Changes to example PSA programs in the <code>p4-16/psa/examples</code> directory</h4>
+<h4 id="_changes_to_example_psa_programs_in_the_p4_16psaexamples_directory">I.2.7. Changes to example PSA programs in the <code>p4-16/psa/examples</code> directory</h4>
 <div class="ulist">
 <ul>
 <li>
@@ -6519,7 +6583,7 @@ details on P4Runtime API numerical translation of type <code>PortId_t</code>.</p
 <div id="footer">
 <div id="footer-text">
 Version v1.2<br>
-Last updated 2026-06-30 19:37:15 UTC
+Last updated 2026-07-21 18:27:06 UTC
 </div>
 </div>
 <script type="text/x-mathjax-config">
