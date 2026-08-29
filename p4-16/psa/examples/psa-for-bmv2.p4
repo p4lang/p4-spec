@@ -73,9 +73,12 @@ type EgressInstanceUint_t EgressInstance_t;
 type TimestampUint_t      Timestamp_t;
 typedef error   ParserError_t;
 
+@noWarn("unused")
 const PortId_t PSA_PORT_RECIRCULATE = (PortId_t) 0xfffffffa;
+@noWarn("unused")
 const PortId_t PSA_PORT_CPU = (PortId_t) 0xfffffffd;
 
+@noWarn("unused")
 const CloneSessionId_t PSA_CLONE_SESSION_TO_CPU = (CloneSessionId_t) 0;
 // end::Type_defns[]
 
@@ -158,46 +161,60 @@ type  TimestampInHeaderUint_t      TimestampInHeader_t;
  * from a 'bit<W2>' value to the final 'type', with the same width
  * W2. */
 
+@noWarn("unused")
 PortId_t psa_PortId_header_to_int (in PortIdInHeader_t x) {
     return (PortId_t) (PortIdUint_t) (PortIdInHeaderUint_t) x;
 }
+@noWarn("unused")
 MulticastGroup_t psa_MulticastGroup_header_to_int (in MulticastGroupInHeader_t x) {
     return (MulticastGroup_t) (MulticastGroupUint_t) (MulticastGroupInHeaderUint_t) x;
 }
+@noWarn("unused")
 CloneSessionId_t psa_CloneSessionId_header_to_int (in CloneSessionIdInHeader_t x) {
     return (CloneSessionId_t) (CloneSessionIdUint_t) (CloneSessionIdInHeaderUint_t) x;
 }
+@noWarn("unused")
 ClassOfService_t psa_ClassOfService_header_to_int (in ClassOfServiceInHeader_t x) {
     return (ClassOfService_t) (ClassOfServiceUint_t) (ClassOfServiceInHeaderUint_t) x;
 }
+@noWarn("unused")
 PacketLength_t psa_PacketLength_header_to_int (in PacketLengthInHeader_t x) {
     return (PacketLength_t) (PacketLengthUint_t) (PacketLengthInHeaderUint_t) x;
 }
+@noWarn("unused")
 EgressInstance_t psa_EgressInstance_header_to_int (in EgressInstanceInHeader_t x) {
     return (EgressInstance_t) (EgressInstanceUint_t) (EgressInstanceInHeaderUint_t) x;
 }
+@noWarn("unused")
 Timestamp_t psa_Timestamp_header_to_int (in TimestampInHeader_t x) {
     return (Timestamp_t) (TimestampUint_t) (TimestampInHeaderUint_t) x;
 }
 
+@noWarn("unused")
 PortIdInHeader_t psa_PortId_int_to_header (in PortId_t x) {
     return (PortIdInHeader_t) (PortIdInHeaderUint_t) (PortIdUint_t) x;
 }
+@noWarn("unused")
 MulticastGroupInHeader_t psa_MulticastGroup_int_to_header (in MulticastGroup_t x) {
     return (MulticastGroupInHeader_t) (MulticastGroupInHeaderUint_t) (MulticastGroupUint_t) x;
 }
+@noWarn("unused")
 CloneSessionIdInHeader_t psa_CloneSessionId_int_to_header (in CloneSessionId_t x) {
     return (CloneSessionIdInHeader_t) (CloneSessionIdInHeaderUint_t) (CloneSessionIdUint_t) x;
 }
+@noWarn("unused")
 ClassOfServiceInHeader_t psa_ClassOfService_int_to_header (in ClassOfService_t x) {
     return (ClassOfServiceInHeader_t) (ClassOfServiceInHeaderUint_t) (ClassOfServiceUint_t) x;
 }
+@noWarn("unused")
 PacketLengthInHeader_t psa_PacketLength_int_to_header (in PacketLength_t x) {
     return (PacketLengthInHeader_t) (PacketLengthInHeaderUint_t) (PacketLengthUint_t) x;
 }
+@noWarn("unused")
 EgressInstanceInHeader_t psa_EgressInstance_int_to_header (in EgressInstance_t x) {
     return (EgressInstanceInHeader_t) (EgressInstanceInHeaderUint_t) (EgressInstanceUint_t) x;
 }
+@noWarn("unused")
 TimestampInHeader_t psa_Timestamp_int_to_header (in Timestamp_t x) {
     return (TimestampInHeader_t) (TimestampInHeaderUint_t) (TimestampUint_t) x;
 }
