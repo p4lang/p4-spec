@@ -323,34 +323,47 @@ parserStates
 // tag::parserState[]
 parserState
     : optAnnotations STATE name
-      "{" parserStatements transitionStatement "}"
+      "{" parserStatOrDeclList transitionStatement "}"
     ;
 // end::parserState[]
 
-// tag::parserStatements[]
-parserStatements
-    : /* empty */
-    | parserStatements parserStatement
+// tag::parserStatementOrDeclaration[]
+parserStatementOrDeclaration
+    : variableDeclaration
+    | constantDeclaration
+    | parserStatement
     ;
-// end::parserStatements[]
+// end::parserStatementOrDeclaration[]
+
+// tag::parserStatOrDeclList[]
+parserStatOrDeclList
+    : /* empty */
+    | parserStatOrDeclList parserStatementOrDeclaration
+    ;
+// end::parserStatOrDeclList[]
 
 // tag::parserStatement[]
 parserStatement
     : assignmentOrMethodCallStatement
     | directApplication
     | emptyStatement
-    | variableDeclaration
-    | constantDeclaration
     | parserBlockStatement
-    | conditionalStatement
+    | parserConditionalStatement
     ;
 // end::parserStatement[]
 
 // tag::parserBlockStatement[]
 parserBlockStatement
-    : optAnnotations "{" parserStatements "}"
+    : optAnnotations "{" parserStatOrDeclList "}"
     ;
 // end::parserBlockStatement[]
+
+// tag::parserConditionalStatement[]
+parserConditionalStatement
+    : IF "(" expression ")" parserStatement
+    | IF "(" expression ")" parserStatement ELSE parserStatement
+    ;
+// end::parserConditionalStatement[]
 
 // tag::transitionStatement[]
 transitionStatement
