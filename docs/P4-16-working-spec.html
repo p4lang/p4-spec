@@ -2867,7 +2867,10 @@ states, all uses of a symbol must follow the symbol&#8217;s
 declaration. (This is a departure from P4<sub>14</sub>, which
 allows declarations in any order. This requirement significantly simplifies the implementation of
 compilers for P4, allowing compilers to use additional information
-about declared identifiers to resolve ambiguities.)</p>
+about declared identifiers to resolve ambiguities.)
+Except for functions and methods, which may be overloaded, duplicate
+declarations of the same name within the same scope are not allowed.
+<a href="#sec-name-resolution">Section 6.9</a> describes how names are resolved in P4.</p>
 </div>
 </div>
 <div class="sect3">
@@ -3433,6 +3436,55 @@ possible for the same name (name shadowing).</p>
 </span>    <span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> z <span style="color: #0550ae">=</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span>    <span style="color: #6e7781">// reference to p's local x
 </span>    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
 <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Declaring a duplicate identifier in the same scope is disallowed. This is
+different from shadowing. Shadowing occurs when an identifier declared in an
+<em>inner</em> scope has the same name as an identifier declared in an <em>outer</em> scope.
+Duplicate declarations occur when two identifiers with the same name are
+declared in the <em>same</em> scope.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">control</span> p<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">8</span><span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// x declaration shadows global x
+</span>    <span style="color: #cf222e">const</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span> x <span style="color: #0550ae">=</span> <span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// Error: duplicate declaration of x
+</span>    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Functions and methods are the only P4 constructs that support overloading:
+there <em>can</em> exist multiple methods with the same name in the same scope. When
+overloading is used, the compiler must be able to disambiguate at compile-time
+which method or function is being called, either by the number of arguments or
+by the names of the arguments, when calls are specifying argument names.
+Argument type information is <em>not</em> used in disambiguating calls.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// allowed: different parameter names
+</span><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// allowed: different number of parameters
+</span><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> f<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// Error: duplicate declaration of previous function</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that overloading of abstract methods, parsers, controls, or packages is
+not allowed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> p<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> p<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> value<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  <span style="color: #0550ae">...</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #6e7781">// The following will cause an error about a duplicate declaration
+//parser p(packet_in p, out Headers headers) {
+//   ...
+//}</span></code></pre>
 </div>
 </div>
 </div>
@@ -5080,30 +5132,6 @@ on a packet:</p>
         b<span style="color: #0550ae">.</span>emit<span style="color: #24292f;background-color: #f6f8fa">(</span>h<span style="color: #0550ae">.</span>ipv4<span style="color: #24292f;background-color: #f6f8fa">);</span>       <span style="color: #6e7781">// write ipv4 header into output packet
 </span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>                         <span style="color: #6e7781">// by calling emit method
 </span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Functions and methods are the only P4 constructs that support
-overloading: there can exist multiple methods with the same name in
-the same scope.  When overloading is used, the compiler must be able to
-disambiguate at compile-time which method or function is being called,
-either by the number of arguments or by the names of the arguments,
-when calls are specifying argument names.  Argument type information
-is not used in disambiguating calls.</p>
-</div>
-<div class="paragraph">
-<p>Notice that overloading of abstract methods, parsers, controls, or packages is not allowed:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> p<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> p<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> value<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
-  <span style="color: #0550ae">...</span>
-<span style="color: #24292f;background-color: #f6f8fa">}</span>
-
-<span style="color: #6e7781">// The following will cause an error about a duplicate declaration
-//parser p(packet_in p, out Headers headers) {
-//   ...
-//}</span></code></pre>
 </div>
 </div>
 <div class="sect5">
@@ -15873,7 +15901,7 @@ nonBraceExpression
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-09-14 16:22:36 UTC
+Last updated 2026-09-14 16:54:09 UTC
 </div>
 </div>
 </body>
