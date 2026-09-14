@@ -2096,7 +2096,7 @@ precision. This type is written as `int`.
 This type is reserved for integer literals and expressions that
 involve only literals. No P4 runtime value can have an `int`
 type; at compile time the compiler will convert all int values that
-have a runtime component to fixed-width types, according to the rules
+have a runtime component to fixed-width integer types, according to the rules
 described below.
 
 All operations that can be performed on arbitrary-precision integers
@@ -3373,7 +3373,7 @@ E  a = E.e2
 bit<8> y = a << 3; // sets y to 8 (a is automatically casted to bit<8> and then shifted)
 ----
 
-Implicit casting from an underlying fixed-width type to an enum is *not* supported.
+Implicit casting from an underlying fixed-width integer type to an enum is *not* supported.
 
 [source,p4]
 ----
@@ -3840,15 +3840,15 @@ a positive value.
 
 Each operand that participates in any of these operation must have
 type `int` (except shifts). Binary operations cannot
-be used to combine values of type `int` with values of a fixed-width
+be used to combine values of type `int` with values of a fixed-width integer
 type (except shifts). However, the compiler automatically inserts casts from `int`
-to fixed-width types in certain situations---see <<sec-casts>>.
+to fixed-width integer types in certain situations---see <<sec-casts>>.
 
 All computations on `int` values are carried out without loss of
 information. For example, multiplying two 1024-bit values may produce
 a 2048-bit value (note that concrete representation of `int`
 values is not specified). `int` values can be cast to `bit<w>`
-and `int<w>` values. Casting an `int` value to a fixed-width
+and `int<w>` values. Casting an `int` value to a fixed-width integer
 type will preserve the least-significant bits. If truncation causes
 significant bits to be lost, the compiler should emit a warning.
 
@@ -3998,10 +3998,10 @@ The following casts are legal in P4:
 ==== Implicit casts
 
 To keep the language simple and avoid introducing hidden costs, P4
-only implicitly casts from `int` to fixed-width types and from enums
+only implicitly casts from `int` to fixed-width (signed or unsigned) integer types and from enums
 with an underlying type to the underlying type. In particular,
 applying a binary operation (except shifts and concatenation) to an expression of type `int` and an
-expression with a fixed-width type will implicitly cast the `int`
+expression with a fixed-width integer type will implicitly cast the `int`
 expression to the type of the other expression. For enums with an underlying
 type, it can be implicitly cast to its underlying type whenever appropriate,
 including but not limited to in shifts, concatenation, bit slicing indexes,
