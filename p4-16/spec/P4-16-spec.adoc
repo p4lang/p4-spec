@@ -3684,6 +3684,14 @@ to bit-strings of the same width:
   and is computed by truncating the result to the output's width.
   P4 architectures may impose additional restrictions --- e.g., they may only
   allow multiplication by a non-negative integer power of two.
+* Truncating integer division, denoted by `/`.
+  The denominator must not be zero.
+  The result has the same width as the operands. Similar to multiplication,
+  P4 architectures may impose additional restrictions.
+* Modulo, denoted by `%`.
+  The denominator must not be zero.
+  The result has the same width as the operands. Similar to multiplication,
+  P4 architectures may impose additional restrictions.
 * Bitwise "and" between two bit-strings of the same width, denoted by `&`.
 * Bitwise "or" between two bit-strings of the same width, denoted by `|`.
 * Bitwise "complement" of a single bit-string, denoted by `~`.
@@ -3832,8 +3840,10 @@ expressions of type `int` must be compile-time known values.  The type
   Boolean result.
 * Numeric comparisons `+<,<=,>+`, and `>=`. These operations produce a Boolean result.
 * Multiplication, denoted by `*`.
-* Truncating integer division between positive values, denoted by `/`.
-* Modulo between positive values, denoted by `%`.
+* Truncating integer division, denoted by `/`.
+  The numerator must be non-negative and the denominator must be positive.
+* Modulo, denoted by `%`.
+  The numerator must be non-negative and the denominator must be positive.
 * Arithmetic shift left and right denoted by `<<` and `>>`. These operations produce an `int` result.
   The right operand must be either an unsigned value of type `bit<S>` or a compile-time known value that is a non-negative integer.
   The expression `a << b` is equal to latexmath:[a \times 2^b] while `a >> b`
