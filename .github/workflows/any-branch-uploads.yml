@@ -1,21 +1,23 @@
 # SPDX-FileCopyrightText: 2024 The P4 Language Consortium
 #
 # SPDX-License-Identifier: Apache-2.0
-
 name: Any branch uploads
-
 on: workflow_dispatch
-
 jobs:
   any-branch-uploads:
     if: ${{ github.repository == 'p4lang/p4-spec' }}
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Install asciidoc
+      run: sudo ./p4-16/spec/install-asciidoctor-linux.sh
     - name: Build spec
       run: |
-        docker run -v `pwd`/docs/v1:/usr/src/p4-spec p4lang/p4-spec-asciidoc:latest make
-        ls docs/v1/build
+        source /usr/local/rvm/scripts/rvm
+        make -C p4-16/spec
+        ls p4-16/spec
     - name: Upload spec to S3 if needed
       if: ${{ github.actor != 'dependabot[bot]' }}
       uses: jakejarvis/s3-sync-action@v0.5.1
