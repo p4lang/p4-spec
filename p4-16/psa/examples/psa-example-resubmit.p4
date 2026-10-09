@@ -124,7 +124,7 @@ control ingress(inout headers hdr,
     in  psa_ingress_input_metadata_t  istd,
     inout psa_ingress_output_metadata_t ostd)
 {
-    action do_resubmit (PortId_t port) {
+    action do_resubmit () {
         ostd.resubmit = true;
     }
     table t {

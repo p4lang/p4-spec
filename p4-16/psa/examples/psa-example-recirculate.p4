@@ -111,7 +111,7 @@ control ingress(inout headers hdr,
                 in  psa_ingress_input_metadata_t  istd,
                 inout psa_ingress_output_metadata_t ostd)
 {
-    action do_recirc (PortId_t port) {
+    action do_recirc () {
         send_to_port(ostd, PSA_PORT_RECIRCULATE);
     }
     table t {
