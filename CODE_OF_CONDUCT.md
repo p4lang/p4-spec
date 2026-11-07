@@ -1,7 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2019 The P4 Language Consortium
 
-SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: CC-BY-4.0
 -->
 
 We expect all ONF employees, member companies, and participants to abide by our [Code of Conduct](https://www.opennetworking.org/wp-content/themes/onf/img/onf-code-of-conduct.pdf).

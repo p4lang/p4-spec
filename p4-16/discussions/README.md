@@ -1,7 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2016 The P4 Language Consortium
 
-SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: CC-BY-4.0
 -->
 
 This folder contains the following P4 files, all written in P4-16:

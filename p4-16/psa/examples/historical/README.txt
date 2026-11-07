@@ -1,6 +1,6 @@
 SPDX-FileCopyrightText: 2018 The P4 Language Consortium
 
-SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: CC-BY-4.0
 
 Files with 'value-sets' in their name:
 
