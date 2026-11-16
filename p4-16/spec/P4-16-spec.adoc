@@ -3037,6 +3037,17 @@ parser P<H>(packet_in b,
              out Counters counters);
 ----
 
+A parser type declaration may not declare a default value for any of its
+parameters. This restriction applies only to parser type declarations; the
+parameters of a parser declaration (<<sec-parser-decl>>) may still have default
+values.
+
+[source,p4]
+----
+// illegal: default value in a parser type declaration
+parser P<H>(in H h, in bit<8> x = 0);
+----
+
 ===== Control type declarations
 
 A control type declaration describes the signature of a control block.
@@ -3046,8 +3057,9 @@ A control type declaration describes the signature of a control block.
 include::grammar.adoc[tag=controlTypeDeclaration]
 ----
 
-Control type declarations are similar to parser type
-declarations.
+Control type declarations are similar to parser type declarations. In
+particular, a control type declaration may not declare a default value for any
+of its parameters.
 
 [#sec-pkg-types]
 ==== Package types
